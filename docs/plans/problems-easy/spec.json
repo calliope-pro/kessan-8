@@ -1,13 +1,13 @@
 {
  "sample": {
   "company": "c09",
-  "fiscalYear": 2024
+  "fiscalYear": 2023
  },
  "problems": [
   {
    "id": "easy-001",
    "company": "c01",
-   "fiscalYear": 2027,
+   "fiscalYear": 2025,
    "tier": 1,
    "kind": null,
    "elements": []
@@ -15,7 +15,7 @@
   {
    "id": "easy-002",
    "company": "c01",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 1,
    "kind": "E-02",
    "elements": []
@@ -23,15 +23,15 @@
   {
    "id": "easy-003",
    "company": "c01",
-   "fiscalYear": 2025,
-   "tier": 2,
+   "fiscalYear": 2023,
+   "tier": 1,
    "kind": "E-01",
    "elements": []
   },
   {
    "id": "easy-004",
    "company": "c02",
-   "fiscalYear": 2027,
+   "fiscalYear": 2025,
    "tier": 2,
    "kind": null,
    "elements": [
@@ -41,15 +41,15 @@
   {
    "id": "easy-005",
    "company": "c02",
-   "fiscalYear": 2026,
-   "tier": 1,
+   "fiscalYear": 2024,
+   "tier": 2,
    "kind": "E-09",
    "elements": []
   },
   {
    "id": "easy-006",
    "company": "c02",
-   "fiscalYear": 2025,
+   "fiscalYear": 2023,
    "tier": 3,
    "kind": null,
    "elements": [
@@ -61,7 +61,7 @@
   {
    "id": "easy-007",
    "company": "c03",
-   "fiscalYear": 2027,
+   "fiscalYear": 2025,
    "tier": 1,
    "kind": null,
    "elements": []
@@ -69,7 +69,7 @@
   {
    "id": "easy-008",
    "company": "c03",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 2,
    "kind": "E-11",
    "elements": []
@@ -77,7 +77,7 @@
   {
    "id": "easy-009",
    "company": "c03",
-   "fiscalYear": 2025,
+   "fiscalYear": 2023,
    "tier": 1,
    "kind": "E-10",
    "elements": []
@@ -85,7 +85,7 @@
   {
    "id": "easy-010",
    "company": "c04",
-   "fiscalYear": 2027,
+   "fiscalYear": 2025,
    "tier": 2,
    "kind": null,
    "elements": [
@@ -96,7 +96,7 @@
   {
    "id": "easy-011",
    "company": "c04",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 1,
    "kind": "E-08",
    "elements": []
@@ -104,7 +104,7 @@
   {
    "id": "easy-012",
    "company": "c04",
-   "fiscalYear": 2025,
+   "fiscalYear": 2023,
    "tier": 3,
    "kind": "E-14",
    "elements": []
@@ -112,7 +112,7 @@
   {
    "id": "easy-013",
    "company": "c05",
-   "fiscalYear": 2027,
+   "fiscalYear": 2025,
    "tier": 1,
    "kind": null,
    "elements": []
@@ -120,7 +120,7 @@
   {
    "id": "easy-014",
    "company": "c05",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 3,
    "kind": "E-12",
    "elements": []
@@ -128,7 +128,7 @@
   {
    "id": "easy-015",
    "company": "c05",
-   "fiscalYear": 2025,
+   "fiscalYear": 2023,
    "tier": 2,
    "kind": null,
    "elements": [
@@ -139,7 +139,7 @@
   {
    "id": "easy-016",
    "company": "c06",
-   "fiscalYear": 2027,
+   "fiscalYear": 2025,
    "tier": 2,
    "kind": "E-13",
    "elements": []
@@ -147,7 +147,7 @@
   {
    "id": "easy-017",
    "company": "c06",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 1,
    "kind": null,
    "elements": []
@@ -155,15 +155,15 @@
   {
    "id": "easy-018",
    "company": "c07",
-   "fiscalYear": 2027,
-   "tier": 1,
+   "fiscalYear": 2025,
+   "tier": 2,
    "kind": "E-06",
    "elements": []
   },
   {
    "id": "easy-019",
    "company": "c07",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 3,
    "kind": null,
    "elements": [
@@ -176,7 +176,7 @@
   {
    "id": "easy-020",
    "company": "c08",
-   "fiscalYear": 2027,
+   "fiscalYear": 2025,
    "tier": 2,
    "kind": null,
    "elements": [
@@ -186,7 +186,7 @@
   {
    "id": "easy-021",
    "company": "c08",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 3,
    "kind": "E-16",
    "elements": []
@@ -194,7 +194,7 @@
   {
    "id": "easy-022",
    "company": "c09",
-   "fiscalYear": 2027,
+   "fiscalYear": 2025,
    "tier": 1,
    "kind": "E-04",
    "elements": []
@@ -202,7 +202,7 @@
   {
    "id": "easy-023",
    "company": "c09",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 2,
    "kind": null,
    "elements": [
@@ -213,15 +213,15 @@
   {
    "id": "easy-024",
    "company": "c10",
-   "fiscalYear": 2027,
-   "tier": 2,
+   "fiscalYear": 2025,
+   "tier": 1,
    "kind": "E-17",
    "elements": []
   },
   {
    "id": "easy-025",
    "company": "c10",
-   "fiscalYear": 2026,
+   "fiscalYear": 2024,
    "tier": 1,
    "kind": null,
    "elements": []
