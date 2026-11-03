@@ -1,0 +1,331 @@
+{
+  "id": "fixture-normal",
+  "difficulty": "easy",
+  "companyId": "fixture-c01",
+  "fiscalYear": 2027,
+  "tanshin": {
+    "header": {
+      "companyName": "第七試作電機株式会社",
+      "periodLabel": "2027年3月期",
+      "unit": "百万円"
+    },
+    "summary": {
+      "netSales": {
+        "current": 12400,
+        "previous": 11800,
+        "changeRate": 5.1
+      },
+      "operatingIncome": {
+        "current": 1240,
+        "previous": 1120,
+        "changeRate": 10.7
+      },
+      "ordinaryIncome": {
+        "current": 1310,
+        "previous": 1180,
+        "changeRate": 11.0
+      },
+      "netIncomeParent": {
+        "current": 860,
+        "previous": 760,
+        "changeRate": 13.2
+      },
+      "eps": 100.0,
+      "totalAssets": 15200,
+      "netAssets": 8208,
+      "equityRatio": 54.0,
+      "bps": 954.42,
+      "annualDividend": 30,
+      "payoutRatio": 30.0
+    },
+    "balanceSheet": {
+      "previous": {
+        "cash": 2100,
+        "receivables": 2900,
+        "inventories": 2050,
+        "otherCurrentAssets": 290,
+        "totalCurrentAssets": 7340,
+        "tangibleAssets": 5850,
+        "investments": 1450,
+        "totalFixedAssets": 7300,
+        "totalAssets": 14640,
+        "payables": 1520,
+        "shortTermDebt": 942,
+        "incomeTaxesPayable": 220,
+        "otherCurrentLiabilities": 460,
+        "totalCurrentLiabilities": 3142,
+        "longTermDebt": 3892,
+        "totalLiabilities": 7034,
+        "capitalStock": 1500,
+        "capitalSurplus": 1300,
+        "retainedEarnings": 4806,
+        "totalShareholdersEquity": 7606,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 7606,
+        "totalLiabilitiesAndNetAssets": 14640
+      },
+      "current": {
+        "cash": 2300,
+        "receivables": 3000,
+        "inventories": 2100,
+        "otherCurrentAssets": 300,
+        "totalCurrentAssets": 7700,
+        "tangibleAssets": 6000,
+        "investments": 1500,
+        "totalFixedAssets": 7500,
+        "totalAssets": 15200,
+        "payables": 1600,
+        "shortTermDebt": 900,
+        "incomeTaxesPayable": 200,
+        "otherCurrentLiabilities": 500,
+        "totalCurrentLiabilities": 3200,
+        "longTermDebt": 3792,
+        "totalLiabilities": 6992,
+        "capitalStock": 1500,
+        "capitalSurplus": 1300,
+        "retainedEarnings": 5408,
+        "totalShareholdersEquity": 8208,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 8208,
+        "totalLiabilitiesAndNetAssets": 15200
+      }
+    },
+    "incomeStatement": {
+      "previous": {
+        "netSales": 11800,
+        "costOfSales": 8378,
+        "grossProfit": 3422,
+        "sga": 2302,
+        "operatingIncome": 1120,
+        "nonOperatingIncome": 80,
+        "nonOperatingExpenses": 20,
+        "ordinaryIncome": 1180,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 20,
+        "incomeBeforeTax": 1160,
+        "incomeTaxes": 400,
+        "netIncome": 760,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 760
+      },
+      "current": {
+        "netSales": 12400,
+        "costOfSales": 8680,
+        "grossProfit": 3720,
+        "sga": 2480,
+        "operatingIncome": 1240,
+        "nonOperatingIncome": 90,
+        "nonOperatingExpenses": 20,
+        "ordinaryIncome": 1310,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 60,
+        "incomeBeforeTax": 1250,
+        "incomeTaxes": 390,
+        "netIncome": 860,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 860
+      }
+    },
+    "cashFlow": {
+      "incomeBeforeTax": 1250,
+      "depreciation": 700,
+      "interestDividendIncome": -90,
+      "interestExpense": 20,
+      "receivablesChange": -100,
+      "inventoriesChange": -50,
+      "payablesChange": 80,
+      "otherAssetsChange": -10,
+      "otherLiabilitiesChange": 40,
+      "subtotal": 1840,
+      "interestDividendReceived": 90,
+      "interestPaid": -20,
+      "incomeTaxesPaid": -410,
+      "operatingCashFlow": 1500,
+      "capex": -850,
+      "otherInvestingChange": -50,
+      "investingCashFlow": -900,
+      "shortTermDebtChange": -42,
+      "longTermDebtChange": -100,
+      "dividendsPaid": -258,
+      "financingCashFlow": -400,
+      "fxEffect": 0,
+      "netChangeInCash": 200,
+      "cashBeginning": 2100,
+      "cashEnding": 2300
+    },
+    "notes": {
+      "goingConcern": "該当事項はありません。",
+      "cashScope": "現金及び預金",
+      "segments": {
+        "previous": {
+          "segments": [
+            {
+              "name": "電機部品事業",
+              "netSales": 7500,
+              "profit": 820
+            },
+            {
+              "name": "産業機器事業",
+              "netSales": 4300,
+              "profit": 410
+            }
+          ],
+          "adjustment": -110,
+          "consolidatedNetSales": 11800,
+          "consolidatedOperatingIncome": 1120
+        },
+        "current": {
+          "segments": [
+            {
+              "name": "電機部品事業",
+              "netSales": 7900,
+              "profit": 900
+            },
+            {
+              "name": "産業機器事業",
+              "netSales": 4500,
+              "profit": 450
+            }
+          ],
+          "adjustment": -110,
+          "consolidatedNetSales": 12400,
+          "consolidatedOperatingIncome": 1240
+        }
+      },
+      "averageSharesThousand": 8600,
+      "bps": 954.42,
+      "eps": 100.0,
+      "subsequentEvents": "該当事項はありません。"
+    }
+  },
+  "ir": {
+    "header": {
+      "companyName": "第七試作電機株式会社",
+      "periodLabel": "2027年3月期",
+      "unit": "百万円"
+    },
+    "highlights": {
+      "netSales": {
+        "amount": 12400,
+        "changeRate": 5.1
+      },
+      "operatingIncome": {
+        "amount": 1240,
+        "changeRate": 10.7
+      },
+      "ordinaryIncome": {
+        "amount": 1310,
+        "changeRate": 11.0
+      },
+      "netIncomeParent": {
+        "amount": 860,
+        "changeRate": 13.2
+      },
+      "annualDividend": 30,
+      "payoutRatio": 30.0
+    },
+    "results": {
+      "netSales": {
+        "previous": 11800,
+        "current": 12400
+      },
+      "grossProfit": {
+        "previous": 3422,
+        "current": 3720
+      },
+      "grossMargin": {
+        "previous": 29.0,
+        "current": 30.0
+      },
+      "operatingIncome": {
+        "previous": 1120,
+        "current": 1240
+      },
+      "operatingMargin": {
+        "previous": 9.5,
+        "current": 10.0
+      }
+    },
+    "segments": {
+      "items": [
+        {
+          "name": "電機部品事業",
+          "netSales": {
+            "previous": 7500,
+            "current": 7900,
+            "changeRate": 5.3
+          },
+          "profit": {
+            "previous": 820,
+            "current": 900,
+            "changeRate": 9.8
+          },
+          "salesShare": 63.7
+        },
+        {
+          "name": "産業機器事業",
+          "netSales": {
+            "previous": 4300,
+            "current": 4500,
+            "changeRate": 4.7
+          },
+          "profit": {
+            "previous": 410,
+            "current": 450,
+            "changeRate": 9.8
+          },
+          "salesShare": 36.3
+        }
+      ],
+      "adjustment": {
+        "previous": -110,
+        "current": -110
+      },
+      "consolidatedOperatingIncome": {
+        "previous": 1120,
+        "current": 1240
+      }
+    },
+    "outlook": {
+      "forecast": {
+        "netSales": 13000,
+        "netSalesChangeRate": 4.8,
+        "operatingIncome": 1320,
+        "operatingIncomeChangeRate": 6.5,
+        "capex": 900,
+        "depreciation": 720,
+        "annualDividend": 30
+      },
+      "actual": {
+        "netSales": 12400,
+        "operatingIncome": 1240,
+        "capex": 850,
+        "depreciation": 700
+      }
+    },
+    "supplement": {
+      "capex": {
+        "previous": null,
+        "current": 850
+      },
+      "depreciation": {
+        "previous": null,
+        "current": 700
+      },
+      "interestBearingDebt": {
+        "previous": 4834,
+        "current": 4692
+      },
+      "cash": {
+        "previous": 2100,
+        "current": 2300
+      },
+      "netDebt": {
+        "previous": 2734,
+        "current": 2392
+      },
+      "equityRatio": 54.0
+    }
+  },
+  "anomaly": null
+}

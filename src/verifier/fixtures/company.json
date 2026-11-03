@@ -1,0 +1,10 @@
+{
+  "id": "fixture-c01",
+  "name": "第七試作電機株式会社",
+  "industry": "電機部品",
+  "segmentNames": [
+    "電機部品事業",
+    "産業機器事業"
+  ],
+  "fiscalYearEndMonth": 3
+}
