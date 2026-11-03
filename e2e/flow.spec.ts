@@ -597,3 +597,41 @@ test('E38: クリアのあと「クリア 1 回」。動きを減らす設定で
   await expect(page.getByTestId('record')).toContainText('クリア 1 回');
   expect(await page.locator('.screen').first().evaluate((el) => getComputedStyle(el).transitionDuration)).toBe('0s');
 });
+
+// ---- #98・#101 (docs/test-cases/release.md §3)
+
+for (const width of [320, 375, 1280]) {
+  test(`E41: 幅 ${width}px・高さ 400 で一番下までスクロールしても、閲覧票の帯と資料のタブが上に見え続ける`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 400 });
+    await startGame(page, SEED);
+    const check = async (where: string) => {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      const r = await page.evaluate(() => {
+        const band = document.querySelector('[data-testid="band"]')!.getBoundingClientRect();
+        const top = document.querySelector('.v-viewer-top')!.getBoundingClientRect();
+        return { scrolled: window.scrollY, bandTop: band.top, bandBottom: band.bottom, tabsTop: top.top };
+      });
+      expect(r.scrolled, `${where}: スクロールできる高さがある`).toBeGreaterThan(50);
+      expect(Math.abs(r.bandTop), `${where}: 帯が上端`).toBeLessThanOrEqual(1);
+      if (width <= 414) expect(r.bandBottom - r.bandTop, `${where}: スマホの帯は 1 行 (44 px 以下)`).toBeLessThanOrEqual(44);
+      expect(Math.abs(r.tabsTop - r.bandBottom), `${where}: タブが帯の真下`).toBeLessThanOrEqual(1);
+      await expect(page.getByTestId('band')).toBeInViewport();
+      await expect(page.locator('.v-viewer-top')).toBeInViewport();
+    };
+    await check('閲覧');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await answer(page, true);
+    await check('答え合わせ');
+  });
+}
+
+test('E42・E43: 幅 320 × 高さ 700 で判定すると、答え合わせの頭が見える (スクロールしない)。フォーカスは次へのボタン', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  const seed = seedWhere(isAnomaly('k-calc'));
+  await startGame(page, seed);
+  await answer(page, true);
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(100);
+  await expect(page.getByTestId('result')).toBeInViewport();
+  await expect(page.getByTestId('explanation')).toBeInViewport();
+  expect(await page.evaluate(() => document.activeElement?.textContent)).toBe('次の会社へ');
+});

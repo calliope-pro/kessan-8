@@ -1,6 +1,6 @@
 // 画面の組み立て。状態 (domain/game.ts の reduce) と、画面だけの状態 (context.ts の Local) から DOM を作り、操作を action にして返す。
 // 状態が変わるたびに、走行を保存し (sessionStorage)、判定の書き込みのときだけ記録を更新する (localStorage)。docs/design.md §5.4。
-import { draw } from '../domain/draw';
+import { canDraw, draw } from '../domain/draw';
 import { FIRST_VIEW, type Action, type GameState, initialState, reduce } from '../domain/game';
 import { markSampleSeen, loadRecords, recordTransition, saveRecords } from '../domain/records';
 import { mulberry32 } from '../domain/rng';
@@ -15,6 +15,19 @@ import { difficultyScreen, helpScreen, sampleScreen, titleScreen } from './scree
 import { introScreen, readingScreen, revealScreen } from './screens-play';
 import type { Viewer, ViewerProps } from './viewer-port';
 
+/** 閲覧票の帯 (.band) の高さを --band-h に入れる。帯は上に固定 (sticky)、資料の切替とタブはその真下に固定する (viewer.css が --band-h を使う)。 */
+let bandObserver: ResizeObserver | undefined;
+function trackBand(app: HTMLElement): void {
+  bandObserver?.disconnect();
+  const band = app.querySelector<HTMLElement>('.band');
+  const set = () => document.documentElement.style.setProperty('--band-h', `${band ? band.offsetHeight : 0}px`);
+  set();
+  if (band && typeof ResizeObserver !== 'undefined') {
+    bandObserver = new ResizeObserver(set);
+    bandObserver.observe(band);
+  }
+}
+
 export function mountApp(root: HTMLElement, deps: AppDeps): void {
   let state: GameState = loadState(deps.session, deps.pools.byId) ?? initialState;
   let records = loadRecords(deps.local);
@@ -23,14 +36,7 @@ export function mountApp(root: HTMLElement, deps: AppDeps): void {
   // 出題できるか (プールが、両方を持つ会社 8 社以上の条件を満たすか)。問題が置かれるまでは「準備中」
   const availability = new Map<Difficulty, boolean>();
   const available = (d: Difficulty): boolean => {
-    if (!availability.has(d)) {
-      try {
-        draw(deps.pools.byDifficulty[d], { difficulty: d, rng: mulberry32(1) });
-        availability.set(d, true);
-      } catch {
-        availability.set(d, false);
-      }
-    }
+    if (!availability.has(d)) availability.set(d, canDraw(deps.pools.byDifficulty[d], d));
     return availability.get(d)!;
   };
   const drawRun = (d: Difficulty): Problem[] | undefined => {
@@ -161,10 +167,12 @@ export function mountApp(root: HTMLElement, deps: AppDeps): void {
       'data-problem-id': run?.problems[run.round]?.id, 'data-round': run ? run.round + 1 : undefined, 'data-difficulty': run?.difficulty ?? (state.phase === 'cleared' ? state.difficulty : undefined),
     }, section);
     root.replaceChildren(app);
+    trackBand(app);
     if (screen === previous) window.scrollTo(0, y);
     else {
       window.scrollTo(0, 0);
-      app.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+      // フォーカスは残し、スクロールだけ止める (画面の頭を見せる。下の「次へ」のボタンまでスクロールさせない)
+      app.querySelector<HTMLElement>('[data-autofocus]')?.focus({ preventScroll: true });
     }
   }
 

@@ -14,7 +14,7 @@ function recordLine(rec: Records, difficulty: Difficulty): string {
 
 function footer(): HTMLElement {
   return h('footer', { class: 'note stack' },
-    h('p', {}, M.footer.disclaimer),
+    h('p', { class: 'disclaimer' }, M.footer.disclaimer),
     h('p', {}, M.footer.license, ' ', h('a', { href: M.footer.repo, rel: 'noopener noreferrer' }, 'kessan-8')));
 }
 
@@ -38,7 +38,8 @@ export function helpScreen(ctx: Ctx): HTMLElement {
     h('p', {}, M.help.rule), h('p', {}, M.help.normal), h('p', {}, M.help.tools), h('p', {}, M.help.judge),
     h('div', { class: 'row' },
       ctx.deps.sample && button(M.button.sample, () => ctx.patch({ screen: 'sample', sampleMode: 'browse', sampleFrom: 'help', sampleView: FIRST_VIEW }), { class: 'btn' }),
-      button(M.button.close, () => ctx.patch({ screen: 'main' }), { class: 'btn btn--primary', 'data-autofocus': true })));
+      button(M.button.close, () => ctx.patch({ screen: 'main' }), { class: 'btn btn--primary', 'data-autofocus': true })),
+    footer());
 }
 
 export function difficultyScreen(ctx: Ctx): HTMLElement {

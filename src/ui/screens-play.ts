@@ -21,7 +21,7 @@ function band(ctx: Ctx, run: Reading | Revealed): HTMLElement {
     h('strong', {}, M.reading.band(run.round + 1, ROUNDS_TO_CLEAR)), pips(run.round),
     h('span', { 'data-testid': 'time' }, timeLabel(run.round)),
     h('span', { class: 'emblem', 'aria-hidden': 'true' }, company?.emblem ?? ''),
-    h('span', {}, company?.name ?? problem.tanshin.header.companyName)), company);
+    h('span', { class: 'band-name' }, company?.name ?? problem.tanshin.header.companyName)), company);
 }
 
 export function introScreen(ctx: Ctx): HTMLElement {
