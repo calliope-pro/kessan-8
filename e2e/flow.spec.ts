@@ -180,7 +180,8 @@ test('E13: 正解の答え合わせで再読み込み → 同じ答え合わせ�
 test('E14: 読んでいる途中の再読み込みで、同じ問題・社数・印', async ({ page }) => {
   await startGame(page, SEED);
   const id = await problemId(page);
-  const cell = page.locator('dd[data-path]').first();
+  await page.getByRole('button', { name: '印', exact: true }).click();
+  const cell = page.locator('td[data-path]').first();
   const path = (await cell.getAttribute('data-path'))!;
   await cell.click();
   await expect(page.locator(`[data-path="${path}"][data-marked="true"]`)).toBeVisible();
@@ -297,7 +298,8 @@ test('E21: 印の照合: 異変の場所に付けた印は「当たり」', asyn
   const p = problemOf(await problemId(page));
   const place = p.anomaly!.places[0]!;
   await page.getByRole('tab', { name: /損益/ }).click();
-  await page.locator(`dd[data-path="tanshin.${'path' in place ? place.path : ''}"]`).click();
+  await page.getByRole('button', { name: '印', exact: true }).click();
+  await page.locator(`[data-path="tanshin.${'path' in place ? place.path : ''}"]`).click();
   await judgeWith(page, '異変あり');
   await expect(page.getByTestId('marks-match')).toContainText('当たり 1・外れ 0・見逃し 0');
 });
@@ -467,7 +469,7 @@ test('E30: 帯の社色・淡い色で、8 段すべてで読める。社が変�
 
 test('E31: 資料の紙面は社が変わっても同じ。机の面に質感 (グラデーション)・紙面に影', async ({ page }) => {
   await startGame(page, SEED);
-  const read = () => page.locator('.paper').evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, fg: getComputedStyle(el).color, shadow: getComputedStyle(el).boxShadow }));
+  const read = () => page.locator('.v-viewer').evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, fg: getComputedStyle(el).color, shadow: getComputedStyle(el).boxShadow }));
   const first = await read();
   expect(first.shadow).not.toBe('none');
   expect(await page.locator('.app').evaluate((el) => getComputedStyle(el).backgroundImage)).toContain('linear-gradient');
@@ -578,7 +580,8 @@ test('E37a: 印の照合: 印なしは見逃しだけ', async ({ page }) => {
 test('E37b: 印の照合: 場所以外の印は外れ + 見逃し', async ({ page }) => {
   const seed = seedWhere(isAnomaly('k-calc'));
   await startGame(page, seed);
-  await page.locator('dd[data-path="tanshin.header.companyName"]').click();
+  await page.getByRole('button', { name: '印', exact: true }).click();
+  await page.locator('[data-path="tanshin.header.companyName"]').click();
   await judgeWith(page, '異変あり');
   await expect(page.getByTestId('marks-match')).toContainText('当たり 0・外れ 1・見逃し 1');
 });

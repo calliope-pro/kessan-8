@@ -1,7 +1,7 @@
 // UA1〜UA8 (docs/test-cases/flow.md §1.3)
 import { describe, expect, it } from 'vitest';
 import { TEST_KINDS, makeProblem } from '../testing/fixtures';
-import { judge, screenOf, screensOf } from './answer';
+import { judge } from './answer';
 import type { AnomalyPlace } from './types';
 
 const normal = makeProblem({ id: 'p-n', difficulty: 'easy', companyId: 'c01' });
@@ -33,36 +33,5 @@ describe('判定 judge', () => {
     expect(j.places).toEqual([]);
     expect(j.explanation).toBeUndefined();
     expect(j.kindName).toBeUndefined();
-  });
-});
-
-describe('場所の画面 screenOf・screensOf', () => {
-  it('UA5: path の先頭が画面', () => {
-    expect(screenOf({ doc: 'tanshin', path: 'incomeStatement.current.ordinaryIncome' })).toEqual({ doc: 'tanshin', screen: 'incomeStatement' });
-    expect(screenOf({ doc: 'ir', path: 'segments.items.0.netSales.current' })).toEqual({ doc: 'ir', screen: 'segments' });
-  });
-
-  it('UA6: header の場所は、その資料の 1 画面目', () => {
-    expect(screenOf({ doc: 'tanshin', path: 'header.companyName' })).toEqual({ doc: 'tanshin', screen: 'summary' });
-    expect(screenOf({ doc: 'ir', path: 'header.companyName' })).toEqual({ doc: 'ir', screen: 'highlights' });
-  });
-
-  it('UA7: itemKey の場所は、項目キーの 2 番目が画面', () => {
-    expect(screenOf({ doc: 'tanshin', itemKey: 'tanshin.balanceSheet.cash' })).toEqual({ doc: 'tanshin', screen: 'balanceSheet' });
-    expect(screenOf({ doc: 'ir', itemKey: 'ir.outlook.netSales' })).toEqual({ doc: 'ir', screen: 'outlook' });
-  });
-
-  it('UA8: 複数の場所の画面は、場所の並びの順で重複なし', () => {
-    const places: AnomalyPlace[] = [
-      { doc: 'tanshin', path: 'balanceSheet.current.cash' },
-      { doc: 'tanshin', path: 'incomeStatement.current.netSales' },
-      { doc: 'tanshin', path: 'balanceSheet.previous.cash' },
-      { doc: 'ir', path: 'segments.items.0.netSales.current' },
-    ];
-    expect(screensOf(places)).toEqual([
-      { doc: 'tanshin', screen: 'balanceSheet' },
-      { doc: 'tanshin', screen: 'incomeStatement' },
-      { doc: 'ir', screen: 'segments' },
-    ]);
   });
 });

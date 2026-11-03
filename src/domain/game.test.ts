@@ -1,7 +1,6 @@
 // UG1〜UG18 (docs/test-cases/flow.md §1.4)
 import { describe, expect, it } from 'vitest';
 import { makePool } from '../testing/fixtures';
-import { screenOf } from './answer';
 import { draw } from './draw';
 import { type Action, type GameState, initialState, reduce } from './game';
 import { mulberry32 } from './rng';
@@ -91,12 +90,13 @@ describe('状態遷移 reduce', () => {
       const s0 = reduce(reading(seed), { type: 'TOGGLE_MARK', key: 'k1' });
       const r0 = s0 as Extract<GameState, { phase: 'reading' }>;
       const problem = r0.problems[0]!;
-      const s = reduce(s0, { type: 'ANSWER', answer: 'anomaly' }) as Extract<GameState, { phase: 'revealed' }>;
+      const target = { doc: 'tanshin', screen: 'cashFlow' } as const;
+      const s = reduce(s0, { type: 'ANSWER', answer: 'anomaly', view: target }) as Extract<GameState, { phase: 'revealed' }>;
       expect(s.phase).toBe('revealed');
       expect(s.answer).toBe('anomaly');
       expect(s.correct).toBe(problem.anomaly !== null);
       expect(s.marks).toEqual(['k1']);
-      if (problem.anomaly) expect(s.view).toEqual(screenOf(problem.anomaly.places[0]!));
+      if (problem.anomaly) expect(s.view).toEqual(target);
       else expect(s.view).toEqual(r0.view);
     }
   });

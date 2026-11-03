@@ -35,7 +35,8 @@ describe('舞台の配色 (V2)', () => {
 
   it('UT3: 資料の紙面の配色は段によらず 1 つの規則だけ (段の規則に紙面の色を入れない)', () => {
     expect(stage).not.toMatch(/--paper/);
-    expect(css('app')).toMatch(/\.paper\s*\{[^}]*background/);
+    expect(css('app')).toMatch(/\.v-viewer\s*\{[^}]*box-shadow/);
+    expect(readFileSync('src/ui/viewer/viewer.css', 'utf-8')).toMatch(/\.v-viewer\s*\{[^}]*--paper:[^}]*background:\s*var\(--paper\)/);
   });
 });
 

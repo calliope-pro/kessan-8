@@ -1,5 +1,5 @@
 // 資料束の表示 (Task #57) との接ぎ目。#28 (遊びの流れ) がこの口を呼び、#57 が `src/ui/viewer/index.ts` で `createViewer` を実装する。
-// #57 が届くまでは `src/ui/viewer-stub.ts` の仮の表示を使い、使う側の import は 1 行 (src/ui/viewer-impl.ts) だけを替える。
+// 実体は #57 の `src/ui/viewer/index.ts`。使う側の import は 1 行 (src/ui/viewer-impl.ts) だけ。
 import type { ScreenRef } from '../domain/screen';
 import type { AnomalyPlace, DocKind, Problem } from '../domain/types';
 
@@ -41,3 +41,9 @@ export interface Viewer {
 export type CreateViewer = (host: HTMLElement, events: ViewerEvents) => Viewer;
 
 export type { DocKind };
+
+/**
+ * 異変の場所がある画面 (答え合わせの最初の画面・「場所 n」のボタン)。どの場所がどの画面に出るかは、ビューアの画面の中身だけが知る
+ * (path の先頭は画面の ID とは限らない: columnDates・dates・statements)。実体は `src/ui/viewer/screen-of.ts`。
+ */
+export type ScreenOfPlace = (problem: Problem, place: AnomalyPlace) => ScreenRef;

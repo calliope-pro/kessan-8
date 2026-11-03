@@ -1,5 +1,4 @@
 // 状態遷移 (docs/design.md §5)。DOM に触らない純粋な関数。受け付けない action と phase の組み合わせは、状態を変えずに同じ値を返す。
-import { screenOf } from './answer';
 import type { Answer } from './answer';
 import { ROUNDS_TO_CLEAR } from './config';
 import { IR_SLIDES, TANSHIN_SCREENS } from './types';
@@ -47,7 +46,8 @@ export type Action =
   | { type: 'START' }
   | { type: 'PICK'; difficulty: Difficulty; problems: Problem[] }
   | { type: 'VIEW'; view: ScreenRef }
-  | { type: 'ANSWER'; answer: Answer }
+  /** view = 異変の場所の画面 (最初の場所。ui が screenOfPlace で作って持ってくる。domain から ui は読まない)。 */
+  | { type: 'ANSWER'; answer: Answer; view?: ScreenRef }
   | { type: 'NEXT' }
   | { type: 'RESTART'; problems: Problem[] }
   | { type: 'TO_DIFFICULTY' }
@@ -83,14 +83,13 @@ export function reduce(state: GameState, action: Action): GameState {
       const problem = state.problems[state.round];
       if (!problem) return state;
       const hasAnomaly = problem.anomaly !== null;
-      const first = problem.anomaly?.places[0];
       return {
         ...state,
         phase: 'revealed',
         answer: action.answer,
         correct: (action.answer === 'anomaly') === hasAnomaly,
-        // 異変のある問題は、最初の場所の画面を最初に示す
-        view: first ? screenOf(first) : state.view,
+        // 異変のある問題は、最初の場所の画面 (action の view) を最初に示す
+        view: hasAnomaly && action.view ? action.view : state.view,
       };
     }
     case 'NEXT': {

@@ -21,8 +21,8 @@ body { padding: 0; }
 .card { padding: 12px 16px; background: #fffdf7; color: #1b1b1b; border: 2px solid #1b1b1b; border-radius: 8px; }
 .card p { margin: 4px 0 8px; }
 
-/* 資料の紙面 (.paper): 段によらず、常に明るい同じ配色 (資料の本体を変えない。experience.md §2.1) */
-.paper { background: #fffdf7; color: #1b1b1b; border: 1px solid #b9b3a3; border-radius: 4px; padding: 8px; box-shadow: 0 2px 8px rgb(0 0 0 / 0.25); }
+/* 資料の紙面 (.v-viewer = 資料束の表示の root): 配色 (--paper・文字色) は viewer.css の 1 か所で、段によらず常に明るい同じ配色 (資料の本体を変えない。experience.md §2.1)。ここは机の上の見た目 (縁・影) だけ */
+.v-viewer { border: 1px solid #b9b3a3; border-radius: 4px; box-shadow: 0 2px 8px rgb(0 0 0 / 0.25); }
 
 /* 閲覧票の帯・進行・時刻・社章 */
 /* V3 閲覧票の帯: 会社の淡い色の地に、社色の縁。段の文字色に依らず読める色を自分で持つ (社色・淡い色は CSSOM で --company-main・--company-light に入る) */
@@ -57,16 +57,6 @@ body { padding: 0; }
 
 /* 確認 */
 .confirm { padding: 16px; background: #fffdf7; color: #1b1b1b; border: 3px solid #8b1e1e; border-radius: 8px; }
-
-/* 仮の資料表示 (資料束の表示 #57 が届くまで。src/ui/viewer-stub.ts) */
-.stub-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
-.stub-tabs .btn { min-height: 44px; flex: 1 1 60px; padding: 4px; }
-.stub-tabs .btn[aria-selected="true"] { background: #1f4e79; color: #fff; }
-.stub-cells { margin: 8px 0 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; overflow-wrap: anywhere; }
-.stub-cells dt { font-weight: 600; }
-.stub-cells dd { margin: 0; text-align: right; }
-.stub-cells [data-marked="true"] { box-shadow: inset 0 0 0 2px #1f4e79; }
-.stub-toolbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 61px; padding: 8px; background: #f4efe4; color: #1b1b1b; border-top: 1px solid #999; }
 
 @media (min-width: 640px) {
   .cards { grid-template-columns: 1fr 1fr; }

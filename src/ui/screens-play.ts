@@ -1,5 +1,5 @@
 // 会社の導入 (SC3)・資料の閲覧 + 判定 (SC4)・答え合わせ (SC5)。
-import { judge, screenOf } from '../domain/answer';
+import { judge } from '../domain/answer';
 import { ROUNDS_TO_CLEAR } from '../domain/config';
 import type { Reading, Revealed } from '../domain/game';
 import { matchMarks } from '../domain/marks';
@@ -8,6 +8,7 @@ import { button, h } from './dom';
 import { MESSAGES as M } from './messages';
 import { applyCompanyColors } from './company-style';
 import { timeLabel } from './stage';
+import { screenOfPlace } from './viewer/screen-of';
 
 const pips = (round: number) =>
   h('span', { class: 'pips', 'aria-hidden': 'true' },
@@ -42,7 +43,11 @@ export function introScreen(ctx: Ctx): HTMLElement {
 
 /** 判定のパネル (SC4-10)。開いてから短い間は入力を受けない (「判定する」の素早い 2 回押しで確定しないため)。 */
 function sheet(ctx: Ctx): HTMLElement[] {
-  const choose = (answer: 'anomaly' | 'normal') => () => ctx.dispatch({ type: 'ANSWER', answer });
+  const run = ctx.state as Reading;
+  const first = run.problems[run.round]?.anomaly?.places[0];
+  // 異変の場所の画面は、ビューアの画面の中身から引く (path の先頭は画面の ID とは限らない。design §4.1)
+  const view = first ? screenOfPlace(run.problems[run.round]!, first) : undefined;
+  const choose = (answer: 'anomaly' | 'normal') => () => ctx.dispatch({ type: 'ANSWER', answer, view });
   const buttons = [
     button(M.button.backToReading, () => ctx.patch({ panel: false }), { class: 'btn' }),
     button(M.button.normal, choose('normal'), { class: 'btn btn--primary' }),
@@ -89,7 +94,7 @@ export function revealScreen(ctx: Ctx): HTMLElement {
       j.kindName && h('p', {}, h('strong', {}, `${M.reveal.kind}: `), h('span', { 'data-testid': 'kind' }, j.kindName)),
       h('p', { 'data-testid': 'explanation' }, j.explanation)) : h('p', { 'data-testid': 'no-anomaly' }, M.reveal.noAnomaly),
     places.length > 1 && h('div', { class: 'places', 'data-testid': 'places' },
-      ...places.map((place, i) => button(M.reveal.place(i + 1, places.length), () => { ctx.patch({ placeIndex: i }); ctx.dispatch({ type: 'VIEW', view: screenOf(place) }); },
+      ...places.map((place, i) => button(M.reveal.place(i + 1, places.length), () => { ctx.patch({ placeIndex: i }); ctx.dispatch({ type: 'VIEW', view: screenOfPlace(problem, place) }); },
         { class: 'btn', 'aria-pressed': ctx.local.placeIndex === i ? 'true' : 'false' }))),
     match && h('p', { 'data-testid': 'marks-match' }, `${M.reveal.marks}: ${M.reveal.marksHit(match.hits.length)}・${M.reveal.marksMiss(match.misses.length)}・${M.reveal.marksMissed(match.missed.length)}`),
     viewer,
