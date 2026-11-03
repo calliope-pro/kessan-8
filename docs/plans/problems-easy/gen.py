@@ -139,7 +139,8 @@ def split_segments(co, sales, op, loss_index, adjust_ratio=0.03):
 
 def step(co, prev, year, knobs):
     """前期の状態 prev から、year 年の決算期の状態と、出力用の数字を作る。
-    疑わしく見える要素を付けない年は、利益の増減率が ±20% に収まるまで乱数を引き直す (異変の問題の土台が、目立つ増減を持たないように)。"""
+    疑わしく見える要素を付けない年は、利益の増減率が ±20% に収まるまで乱数を引き直す (異変の問題の土台が、目立つ増減を持たないように)。
+    例外: 要素のある年の翌年は、利益の戻りを許す (制限を外す)。そのため、異変の問題 easy-005・easy-022 には、前の期からの戻りとして大きな増減がある (答えは「あり」で判定は変わらない)。"""
     ni_prev = prev['is_']['netSales'] - prev['is_']['costOfSales'] - prev['is_']['sga'] + prev['is_']['nonOperatingIncome'] - prev['is_']['nonOperatingExpenses'] \
         + prev['is_']['extraordinaryGain'] - prev['is_']['extraordinaryLoss'] - prev['is_']['incomeTaxes']
     for _ in range(200):
