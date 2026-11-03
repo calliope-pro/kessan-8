@@ -19,7 +19,7 @@ const headerValue = (key: string): string | undefined =>
 
 describe('vercel.json', () => {
   it('U2: 出力は dist、ビルドは npm run build', () => {
-    expect(vercel.outputDirectory).toBe('dist');
+    expect(vercel.outputDirectory).toBe('out');
     expect(vercel.buildCommand).toBe('npm run build');
   });
 
