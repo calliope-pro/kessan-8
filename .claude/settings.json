@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "orchestra-tracker-github@calliope-pro-ai-plugin": true,
+    "orchestra@calliope-pro-ai-plugin": true
+  }
+}
