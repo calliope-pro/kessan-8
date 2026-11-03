@@ -476,7 +476,7 @@ export interface Problem {
 
 | 項目 | 値・守りかた | 出所 |
 | --- | --- | --- |
-| 初回の読み込み | 1 MB 未満。ビルド後の `dist` の全ファイルを gzip した長さの合計が 1,000,000 B 未満であることを、`npm run check:size` (`scripts/check-dist-size.mjs`) が確かめる。予算の値はこのスクリプトの 1 か所だけが持つ (素の Node で動かすため、TypeScript の `config.ts` からは読まない)。Node の版は `package.json` の `engines` (`>=22.12`) と CI (`node-version: 22`) で決める。ビルドのあとに回す (CI の job 1 のビルドの次)。スクリプトの振る舞いは、足場の単体テストが一時ディレクトリで確かめる (予算内で成功・超過で失敗) | 方針 |
+| 初回の読み込み | 1 MB 未満。ビルド後の `dist` の全ファイルを gzip した長さの合計が 1,000,000 B 未満であることを、`npm run check:size` (`scripts/check-dist-size.mjs`) が確かめる。予算の値はこのスクリプトの 1 か所だけが持つ (素の Node で動かすため、TypeScript の `config.ts` からは読まない)。Node の版は `package.json` の `engines` (`>=22.12`) と CI (`node-version: 22`) で決める。ビルドのあとに回す (CI の job 1 のビルドの次)。スクリプトの振る舞いは、隣の単体テスト `scripts/check-dist-size.test.ts` が一時ディレクトリで確かめる (予算内で成功・超過で失敗) | 方針 |
 | 外部への通信 | 無し。`vercel.json` の `Content-Security-Policy` を `default-src 'self'` にして、ブラウザにも守らせる。E2E も同じヘッダの下で回す (§7) | 方針の「セキュリティ」・失敗 3 |
 | 秘密 | 環境変数・鍵を使わない。`.gitignore` に `.env*`。CI は `contents: read` の権限だけ | 方針・要件 |
 | 実在の名前 | 会社の設定のテストで、実在の企業名 (一覧は持たない。確認の Sub-task の記録に従う) との衝突を確かめる。画面に出る社名・人名は `companies.json` だけが出所 | 要件・失敗 3 |
