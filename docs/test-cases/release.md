@@ -34,11 +34,6 @@
 
 ### 2.1 固定後に足したケース (#95。本物の問題で E2E を回して見つかった不具合。理由つき)
 
-| ID | 入力・操作 | 期待する観測結果 | 観点・理由 |
-| --- | --- | --- | --- |
-| UA5b | 場所 `columnDates.balanceSheet.current` / `dates.periodEnd` | 貸借対照表の画面 / 短信の 1 画面目 | 同値。理由: 本物の問題 (hard) に、画面の外にある値の場所があり、答え合わせの画面が 1 画面目 (サマリー) になって強調が出なかった (EP5 hard が赤) |
-| UA5c | 場所 `statements.N.text` (IR の文章)。問題の `ir.statements[N].slide` が `outlook` | IR の「見通し」の画面。無い番号は 1 画面目。複数の場所の画面は重複なし | 同値。同上 |
-| UG6b | 異変の場所が `statements.0.text`、その文章の slide が `supplement` で `ANSWER` | 見る画面が IR の補足 | 状態遷移。同上 |
-| UA12 | 本物の問題すべての異変の場所 | すべて、その資料の 10 画面のどれかに決まる。`statements.N`・`columnDates.<画面>` は上のとおりの画面 | データ全件 (単体。E2E は 1 種の 8 問しか通らないので、全件は単体で) |
+本物の問題 (hard) の異変の場所に、画面の外にある値 (IR の文章 `statements.N`・列見出しの日付 `columnDates.<画面>`) があり、答え合わせの画面が 1 画面目 (サマリー) になって強調が出なかった (EP5 hard が赤)。**この規則の持ち主は、本物のビューアの `screenOfPlace(problem, place)` (`ui/viewer/screen-of.ts`。技術責任者の決定: ビューアが正。二重にしない)**。当初 `domain/answer.ts` の `screenOf` に足したケース (UA5b・UA5c・UG6b・UA12) は、PR #84 の統合で `screenOfPlace` に一本化したので取り下げた。同じ確かめは `ui/viewer/screen-of.test.ts` (本物の問題の全部の場所が、選んだ画面に強調される要素を 1 つ以上持つ) と、EP5 (本番ビルドの E2E) が受け持つ。
 
 固定後にケースを足すときは理由をここに残す。本物のビューア (#89) の統合が main に入るまで、EP5 の `data-highlight` の確認は仮の表示の約束 (`src/ui/viewer-port.ts`) に従う。
