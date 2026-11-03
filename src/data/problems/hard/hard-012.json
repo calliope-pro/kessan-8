@@ -1,0 +1,428 @@
+{
+  "id": "hard-012",
+  "difficulty": "hard",
+  "companyId": "c05",
+  "fiscalYear": 2020,
+  "tier": 1,
+  "tanshin": {
+    "header": {
+      "companyName": "ブルネラ製薬株式会社",
+      "securitiesCode": "0805",
+      "periodLabel": "2020年12月期",
+      "unit": "百万円"
+    },
+    "summary": {
+      "netSales": {
+        "current": 34040,
+        "previous": 31970,
+        "changeRate": 6.5
+      },
+      "operatingIncome": {
+        "current": 3730,
+        "previous": 3490,
+        "changeRate": 6.9
+      },
+      "ordinaryIncome": {
+        "current": 3747,
+        "previous": 3499,
+        "changeRate": 7.1
+      },
+      "netIncomeParent": {
+        "current": 2547,
+        "previous": 2378,
+        "changeRate": 7.1
+      },
+      "operatingMargin": 11,
+      "roe": 8.4,
+      "eps": 169.8,
+      "totalAssets": 43591,
+      "netAssets": 31320,
+      "equity": 31320,
+      "equityRatio": 71.8,
+      "bps": 2088,
+      "annualDividend": 51,
+      "interimDividend": 20,
+      "annualDividendPrevious": 48,
+      "interimDividendPrevious": 19,
+      "dividendTotal": 765,
+      "payoutRatio": 30,
+      "accountingPolicyChange": false,
+      "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+    },
+    "dates": {
+      "periodEnd": "2020-12-31",
+      "previousPeriodEnd": "2019-12-31",
+      "disclosure": "2021-02-14",
+      "shareholdersMeeting": "2021-03-29"
+    },
+    "columnDates": {
+      "balanceSheet": {
+        "previous": "2019-12-31",
+        "current": "2020-12-31"
+      },
+      "incomeStatement": {
+        "previous": "2019-12-31",
+        "current": "2020-12-31"
+      },
+      "cashFlow": {
+        "previous": "2019-12-31",
+        "current": "2020-12-31"
+      }
+    },
+    "balanceSheet": {
+      "previous": {
+        "cash": 6234,
+        "receivables": 6650,
+        "inventories": 4987,
+        "otherCurrentAssets": 831,
+        "totalCurrentAssets": 18702,
+        "tangibleAssets": 14546,
+        "investments": 8312,
+        "totalFixedAssets": 22858,
+        "totalAssets": 41560,
+        "payables": 2494,
+        "shortTermDebt": 831,
+        "incomeTaxesPayable": 623,
+        "otherCurrentLiabilities": 1662,
+        "totalCurrentLiabilities": 5610,
+        "longTermDebt": 6442,
+        "totalLiabilities": 12052,
+        "capitalStock": 7377,
+        "capitalSurplus": 4426,
+        "retainedEarnings": 17705,
+        "totalShareholdersEquity": 29508,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 29508,
+        "totalLiabilitiesAndNetAssets": 41560
+      },
+      "current": {
+        "cash": 7300,
+        "receivables": 7063,
+        "inventories": 5447,
+        "otherCurrentAssets": 831,
+        "totalCurrentAssets": 20641,
+        "tangibleAssets": 14472,
+        "investments": 8478,
+        "totalFixedAssets": 22950,
+        "totalAssets": 43591,
+        "payables": 2721,
+        "shortTermDebt": 800,
+        "incomeTaxesPayable": 667,
+        "otherCurrentLiabilities": 1770,
+        "totalCurrentLiabilities": 5958,
+        "longTermDebt": 6313,
+        "totalLiabilities": 12271,
+        "capitalStock": 7377,
+        "capitalSurplus": 4426,
+        "retainedEarnings": 19517,
+        "totalShareholdersEquity": 31320,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 31320,
+        "totalLiabilitiesAndNetAssets": 43591
+      }
+    },
+    "incomeStatement": {
+      "previous": {
+        "netSales": 31970,
+        "costOfSales": 12010,
+        "grossProfit": 19960,
+        "sga": 16470,
+        "operatingIncome": 3490,
+        "nonOperatingIncome": 96,
+        "nonOperatingExpenses": 87,
+        "ordinaryIncome": 3499,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 52,
+        "incomeBeforeTax": 3447,
+        "incomeTaxes": 1069,
+        "netIncome": 2378,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 2378
+      },
+      "current": {
+        "netSales": 34040,
+        "costOfSales": 13050,
+        "grossProfit": 20990,
+        "sga": 17260,
+        "operatingIncome": 3730,
+        "nonOperatingIncome": 102,
+        "nonOperatingExpenses": 85,
+        "ordinaryIncome": 3747,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 56,
+        "incomeBeforeTax": 3691,
+        "incomeTaxes": 1144,
+        "netIncome": 2547,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 2547
+      }
+    },
+    "cashFlow": {
+      "incomeBeforeTax": 3691,
+      "depreciation": 1309,
+      "interestDividendIncome": -102,
+      "interestExpense": 85,
+      "receivablesChange": -413,
+      "inventoriesChange": -460,
+      "payablesChange": 227,
+      "otherAssetsChange": 0,
+      "otherLiabilitiesChange": 108,
+      "subtotal": 4445,
+      "interestDividendReceived": 102,
+      "interestPaid": -85,
+      "incomeTaxesPaid": -1100,
+      "operatingCashFlow": 3362,
+      "capex": -1235,
+      "otherInvestingChange": -166,
+      "investingCashFlow": -1401,
+      "shortTermDebtChange": -31,
+      "longTermBorrowings": 387,
+      "longTermRepayments": -516,
+      "dividendsPaid": -735,
+      "financingCashFlow": -895,
+      "fxEffect": 0,
+      "netChangeInCash": 1066,
+      "cashBeginning": 6234,
+      "cashEnding": 7300
+    },
+    "notes": {
+      "goingConcern": "該当事項はありません。",
+      "cashScope": "現金及び預金",
+      "segments": {
+        "previous": {
+          "segments": [
+            {
+              "name": "医療用医薬品事業",
+              "netSales": 22968,
+              "profit": 2830
+            },
+            {
+              "name": "一般用医薬品事業",
+              "netSales": 9002,
+              "profit": 940
+            }
+          ],
+          "adjustment": -280,
+          "consolidatedNetSales": 31970,
+          "consolidatedOperatingIncome": 3490
+        },
+        "current": {
+          "segments": [
+            {
+              "name": "医療用医薬品事業",
+              "netSales": 24387,
+              "profit": 3020
+            },
+            {
+              "name": "一般用医薬品事業",
+              "netSales": 9653,
+              "profit": 1010
+            }
+          ],
+          "adjustment": -300,
+          "consolidatedNetSales": 34040,
+          "consolidatedOperatingIncome": 3730
+        }
+      },
+      "averageSharesThousand": 15000,
+      "bps": 2088,
+      "eps": 169.8,
+      "subsequentEvents": "該当事項はありません。",
+      "accountingPolicyNote": "該当事項はありません。"
+    }
+  },
+  "ir": {
+    "header": {
+      "companyName": "ブルネラ製薬株式会社",
+      "securitiesCode": "0805",
+      "periodLabel": "2020年12月期",
+      "unit": "億円"
+    },
+    "highlights": {
+      "netSales": {
+        "amount": 340.4,
+        "changeRate": 6.5
+      },
+      "operatingIncome": {
+        "amount": 37.3,
+        "changeRate": 6.9
+      },
+      "ordinaryIncome": {
+        "amount": 37.5,
+        "changeRate": 7.1
+      },
+      "netIncomeParent": {
+        "amount": 25.5,
+        "changeRate": 7.1
+      },
+      "annualDividend": 51,
+      "payoutRatio": 30
+    },
+    "results": {
+      "netSales": {
+        "previous": 319.7,
+        "current": 340.4
+      },
+      "grossProfit": {
+        "previous": 199.6,
+        "current": 209.9
+      },
+      "grossMargin": {
+        "previous": 62.4,
+        "current": 61.7
+      },
+      "operatingIncome": {
+        "previous": 34.9,
+        "current": 37.3
+      },
+      "operatingMargin": {
+        "previous": 10.9,
+        "current": 11
+      },
+      "chart": {
+        "netSales": {
+          "axisMin": 0,
+          "previous": 319.7,
+          "current": 340.4
+        },
+        "operatingIncome": {
+          "axisMin": 0,
+          "previous": 34.9,
+          "current": 37.3
+        }
+      }
+    },
+    "segments": {
+      "items": [
+        {
+          "name": "医療用医薬品事業",
+          "netSales": {
+            "previous": 229.7,
+            "current": 243.9,
+            "changeRate": 6.2
+          },
+          "profit": {
+            "previous": 28.3,
+            "current": 30.2,
+            "changeRate": 6.7
+          },
+          "salesShare": 71.6
+        },
+        {
+          "name": "一般用医薬品事業",
+          "netSales": {
+            "previous": 90,
+            "current": 96.5,
+            "changeRate": 7.2
+          },
+          "profit": {
+            "previous": 9.4,
+            "current": 10.1,
+            "changeRate": 7.4
+          },
+          "salesShare": 28.4
+        }
+      ],
+      "adjustment": {
+        "previous": -2.8,
+        "current": -3
+      },
+      "consolidatedOperatingIncome": {
+        "previous": 34.9,
+        "current": 37.3
+      }
+    },
+    "outlook": {
+      "forecast": {
+        "netSales": 353.9,
+        "netSalesChangeRate": 4,
+        "operatingIncome": 39.2,
+        "operatingIncomeChangeRate": 5.1,
+        "capex": 13,
+        "depreciation": 13.6,
+        "annualDividend": 51
+      },
+      "actual": {
+        "netSales": 340.4,
+        "operatingIncome": 37.3,
+        "capex": 12.4,
+        "depreciation": 13.1
+      },
+      "subsequentEvent": null
+    },
+    "supplement": {
+      "capex": {
+        "previous": null,
+        "current": 12.4
+      },
+      "depreciation": {
+        "previous": null,
+        "current": 13.1
+      },
+      "interestBearingDebt": {
+        "previous": 72.7,
+        "current": 71.1
+      },
+      "cash": {
+        "previous": 62.3,
+        "current": 73
+      },
+      "netDebt": {
+        "previous": 10.4,
+        "current": -1.9
+      },
+      "equityRatio": 71.8
+    },
+    "statements": [
+      {
+        "slide": "highlights",
+        "text": "当期は増収増益であった。開発の進捗は引き続き慎重に見ている。",
+        "claims": [
+          {
+            "metric": "netSales",
+            "direction": "up"
+          },
+          {
+            "metric": "operatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "outlook",
+        "text": "次期は増収増益を見込むが、開発の結果により変動する可能性がある。",
+        "claims": [
+          {
+            "metric": "forecastNetSales",
+            "direction": "up"
+          },
+          {
+            "metric": "forecastOperatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "supplement",
+        "text": "営業活動によるキャッシュ・フローはプラスであった。",
+        "claims": [
+          {
+            "metric": "operatingCashFlow",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "highlights",
+        "text": "年間配当は増配とした。",
+        "claims": [
+          {
+            "metric": "dividend",
+            "direction": "up"
+          }
+        ]
+      }
+    ]
+  },
+  "anomaly": null
+}

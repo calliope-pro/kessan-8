@@ -1,0 +1,452 @@
+{
+  "id": "hard-008",
+  "difficulty": "hard",
+  "companyId": "c01",
+  "fiscalYear": 2020,
+  "tier": 1,
+  "tanshin": {
+    "header": {
+      "companyName": "ミオトリ精機株式会社",
+      "securitiesCode": "0801",
+      "periodLabel": "2020年3月期",
+      "unit": "百万円"
+    },
+    "summary": {
+      "netSales": {
+        "current": 26620,
+        "previous": 25810,
+        "changeRate": 3.1
+      },
+      "operatingIncome": {
+        "current": 2560,
+        "previous": 2390,
+        "changeRate": 7.1
+      },
+      "ordinaryIncome": {
+        "current": 2527,
+        "previous": 2351,
+        "changeRate": 7.5
+      },
+      "netIncomeParent": {
+        "current": 1717,
+        "previous": 1598,
+        "changeRate": 7.4
+      },
+      "operatingMargin": 9.6,
+      "roe": 11,
+      "eps": 143.08,
+      "totalAssets": 27070,
+      "netAssets": 16280,
+      "equity": 16280,
+      "equityRatio": 60.1,
+      "bps": 1356.67,
+      "annualDividend": 36,
+      "interimDividend": 14,
+      "annualDividendPrevious": 33,
+      "interimDividendPrevious": 13,
+      "dividendTotal": 432,
+      "payoutRatio": 25.2,
+      "accountingPolicyChange": false,
+      "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+    },
+    "dates": {
+      "periodEnd": "2020-03-31",
+      "previousPeriodEnd": "2019-03-31",
+      "disclosure": "2020-05-15",
+      "shareholdersMeeting": "2020-06-27"
+    },
+    "columnDates": {
+      "balanceSheet": {
+        "previous": "2019-03-31",
+        "current": "2020-03-31"
+      },
+      "incomeStatement": {
+        "previous": "2019-03-31",
+        "current": "2020-03-31"
+      },
+      "cashFlow": {
+        "previous": "2019-03-31",
+        "current": "2020-03-31"
+      }
+    },
+    "balanceSheet": {
+      "previous": {
+        "cash": 3097,
+        "receivables": 4388,
+        "inventories": 3613,
+        "otherCurrentAssets": 516,
+        "totalCurrentAssets": 11614,
+        "tangibleAssets": 11615,
+        "investments": 2581,
+        "totalFixedAssets": 14196,
+        "totalAssets": 25810,
+        "payables": 2323,
+        "shortTermDebt": 1032,
+        "incomeTaxesPayable": 258,
+        "otherCurrentLiabilities": 1032,
+        "totalCurrentLiabilities": 4645,
+        "longTermDebt": 6194,
+        "totalLiabilities": 10839,
+        "capitalStock": 3743,
+        "capitalSurplus": 2246,
+        "retainedEarnings": 8982,
+        "totalShareholdersEquity": 14971,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 14971,
+        "totalLiabilitiesAndNetAssets": 25810
+      },
+      "current": {
+        "cash": 3962,
+        "receivables": 4554,
+        "inventories": 3823,
+        "otherCurrentAssets": 516,
+        "totalCurrentAssets": 12855,
+        "tangibleAssets": 11582,
+        "investments": 2633,
+        "totalFixedAssets": 14215,
+        "totalAssets": 27070,
+        "payables": 2407,
+        "shortTermDebt": 1046,
+        "incomeTaxesPayable": 277,
+        "otherCurrentLiabilities": 1064,
+        "totalCurrentLiabilities": 4794,
+        "longTermDebt": 5996,
+        "totalLiabilities": 10790,
+        "capitalStock": 3743,
+        "capitalSurplus": 2246,
+        "retainedEarnings": 10291,
+        "totalShareholdersEquity": 16280,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 16280,
+        "totalLiabilitiesAndNetAssets": 27070
+      }
+    },
+    "incomeStatement": {
+      "previous": {
+        "netSales": 25810,
+        "costOfSales": 17080,
+        "grossProfit": 8730,
+        "sga": 6340,
+        "operatingIncome": 2390,
+        "nonOperatingIncome": 77,
+        "nonOperatingExpenses": 116,
+        "ordinaryIncome": 2351,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 35,
+        "incomeBeforeTax": 2316,
+        "incomeTaxes": 718,
+        "netIncome": 1598,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 1598
+      },
+      "current": {
+        "netSales": 26620,
+        "costOfSales": 17580,
+        "grossProfit": 9040,
+        "sga": 6480,
+        "operatingIncome": 2560,
+        "nonOperatingIncome": 80,
+        "nonOperatingExpenses": 113,
+        "ordinaryIncome": 2527,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 38,
+        "incomeBeforeTax": 2489,
+        "incomeTaxes": 772,
+        "netIncome": 1717,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 1717
+      }
+    },
+    "cashFlow": {
+      "incomeBeforeTax": 2489,
+      "depreciation": 1045,
+      "interestDividendIncome": -80,
+      "interestExpense": 113,
+      "receivablesChange": -166,
+      "inventoriesChange": -210,
+      "payablesChange": 84,
+      "otherAssetsChange": 0,
+      "otherLiabilitiesChange": 32,
+      "subtotal": 3307,
+      "interestDividendReceived": 80,
+      "interestPaid": -113,
+      "incomeTaxesPaid": -753,
+      "operatingCashFlow": 2521,
+      "capex": -1012,
+      "otherInvestingChange": -52,
+      "investingCashFlow": -1064,
+      "shortTermDebtChange": 14,
+      "longTermBorrowings": 372,
+      "longTermRepayments": -570,
+      "dividendsPaid": -408,
+      "financingCashFlow": -592,
+      "fxEffect": 0,
+      "netChangeInCash": 865,
+      "cashBeginning": 3097,
+      "cashEnding": 3962
+    },
+    "notes": {
+      "goingConcern": "該当事項はありません。",
+      "cashScope": "現金及び預金",
+      "segments": {
+        "previous": {
+          "segments": [
+            {
+              "name": "装置事業",
+              "netSales": 12939,
+              "profit": 1291
+            },
+            {
+              "name": "部品事業",
+              "netSales": 8490,
+              "profit": 903
+            },
+            {
+              "name": "保守サービス事業",
+              "netSales": 4381,
+              "profit": 387
+            }
+          ],
+          "adjustment": -191,
+          "consolidatedNetSales": 25810,
+          "consolidatedOperatingIncome": 2390
+        },
+        "current": {
+          "segments": [
+            {
+              "name": "装置事業",
+              "netSales": 13203,
+              "profit": 1383
+            },
+            {
+              "name": "部品事業",
+              "netSales": 8780,
+              "profit": 968
+            },
+            {
+              "name": "保守サービス事業",
+              "netSales": 4637,
+              "profit": 414
+            }
+          ],
+          "adjustment": -205,
+          "consolidatedNetSales": 26620,
+          "consolidatedOperatingIncome": 2560
+        }
+      },
+      "averageSharesThousand": 12000,
+      "bps": 1356.67,
+      "eps": 143.08,
+      "subsequentEvents": "該当事項はありません。",
+      "accountingPolicyNote": "該当事項はありません。"
+    }
+  },
+  "ir": {
+    "header": {
+      "companyName": "ミオトリ精機株式会社",
+      "securitiesCode": "0801",
+      "periodLabel": "2020年3月期",
+      "unit": "百万円"
+    },
+    "highlights": {
+      "netSales": {
+        "amount": 26620,
+        "changeRate": 3.1
+      },
+      "operatingIncome": {
+        "amount": 2560,
+        "changeRate": 7.1
+      },
+      "ordinaryIncome": {
+        "amount": 2527,
+        "changeRate": 7.5
+      },
+      "netIncomeParent": {
+        "amount": 1717,
+        "changeRate": 7.4
+      },
+      "annualDividend": 36,
+      "payoutRatio": 25.2
+    },
+    "results": {
+      "netSales": {
+        "previous": 25810,
+        "current": 26620
+      },
+      "grossProfit": {
+        "previous": 8730,
+        "current": 9040
+      },
+      "grossMargin": {
+        "previous": 33.8,
+        "current": 34
+      },
+      "operatingIncome": {
+        "previous": 2390,
+        "current": 2560
+      },
+      "operatingMargin": {
+        "previous": 9.3,
+        "current": 9.6
+      },
+      "chart": {
+        "netSales": {
+          "axisMin": 0,
+          "previous": 25810,
+          "current": 26620
+        },
+        "operatingIncome": {
+          "axisMin": 0,
+          "previous": 2390,
+          "current": 2560
+        }
+      }
+    },
+    "segments": {
+      "items": [
+        {
+          "name": "装置事業",
+          "netSales": {
+            "previous": 12939,
+            "current": 13203,
+            "changeRate": 2
+          },
+          "profit": {
+            "previous": 1291,
+            "current": 1383,
+            "changeRate": 7.1
+          },
+          "salesShare": 49.6
+        },
+        {
+          "name": "部品事業",
+          "netSales": {
+            "previous": 8490,
+            "current": 8780,
+            "changeRate": 3.4
+          },
+          "profit": {
+            "previous": 903,
+            "current": 968,
+            "changeRate": 7.2
+          },
+          "salesShare": 33
+        },
+        {
+          "name": "保守サービス事業",
+          "netSales": {
+            "previous": 4381,
+            "current": 4637,
+            "changeRate": 5.8
+          },
+          "profit": {
+            "previous": 387,
+            "current": 414,
+            "changeRate": 7
+          },
+          "salesShare": 17.4
+        }
+      ],
+      "adjustment": {
+        "previous": -191,
+        "current": -205
+      },
+      "consolidatedOperatingIncome": {
+        "previous": 2390,
+        "current": 2560
+      }
+    },
+    "outlook": {
+      "forecast": {
+        "netSales": 27356,
+        "netSalesChangeRate": 2.8,
+        "operatingIncome": 2650,
+        "operatingIncomeChangeRate": 3.5,
+        "capex": 1063,
+        "depreciation": 1087,
+        "annualDividend": 36
+      },
+      "actual": {
+        "netSales": 26620,
+        "operatingIncome": 2560,
+        "capex": 1012,
+        "depreciation": 1045
+      },
+      "subsequentEvent": null
+    },
+    "supplement": {
+      "capex": {
+        "previous": null,
+        "current": 1012
+      },
+      "depreciation": {
+        "previous": null,
+        "current": 1045
+      },
+      "interestBearingDebt": {
+        "previous": 7226,
+        "current": 7042
+      },
+      "cash": {
+        "previous": 3097,
+        "current": 3962
+      },
+      "netDebt": {
+        "previous": 4129,
+        "current": 3080
+      },
+      "equityRatio": 60.1
+    },
+    "statements": [
+      {
+        "slide": "highlights",
+        "text": "当期は増収増益となった。受注の動向を踏まえ、数字で振り返る。",
+        "claims": [
+          {
+            "metric": "netSales",
+            "direction": "up"
+          },
+          {
+            "metric": "operatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "outlook",
+        "text": "次期は増収増益を見込む。",
+        "claims": [
+          {
+            "metric": "forecastNetSales",
+            "direction": "up"
+          },
+          {
+            "metric": "forecastOperatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "supplement",
+        "text": "営業活動によるキャッシュ・フローはプラスであった。",
+        "claims": [
+          {
+            "metric": "operatingCashFlow",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "highlights",
+        "text": "年間配当は増配とした。",
+        "claims": [
+          {
+            "metric": "dividend",
+            "direction": "up"
+          }
+        ]
+      }
+    ]
+  },
+  "anomaly": null
+}
