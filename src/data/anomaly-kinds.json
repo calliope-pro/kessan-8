@@ -1,0 +1,734 @@
+[
+  {
+    "id": "E-01",
+    "family": "appearance",
+    "name": "転記違い (サマリーと財務諸表で数字が違う)",
+    "primaryRules": [
+      "sum-net-sales",
+      "sum-operating-income",
+      "sum-ordinary-income",
+      "sum-net-income-parent"
+    ],
+    "allowedRules": [
+      "sum-change-net-income-parent",
+      "sum-change-net-sales",
+      "sum-change-operating-income",
+      "sum-change-ordinary-income",
+      "sum-net-income-parent",
+      "sum-net-sales",
+      "sum-operating-income",
+      "sum-ordinary-income"
+    ]
+  },
+  {
+    "id": "E-02",
+    "family": "appearance",
+    "name": "桁の取り違え",
+    "primaryRules": [
+      "sum-net-sales",
+      "sum-operating-income",
+      "sum-ordinary-income",
+      "sum-net-income-parent"
+    ],
+    "allowedRules": [
+      "sum-change-net-income-parent",
+      "sum-change-net-sales",
+      "sum-change-operating-income",
+      "sum-change-ordinary-income",
+      "sum-net-income-parent",
+      "sum-net-sales",
+      "sum-operating-income",
+      "sum-ordinary-income"
+    ]
+  },
+  {
+    "id": "E-03",
+    "family": "appearance",
+    "name": "表記ルールの食い違い (単位・負の数)",
+    "primaryRules": [
+      "unit-consistency",
+      "sign-consistency"
+    ],
+    "allowedRules": [
+      "sign-consistency",
+      "unit-consistency"
+    ]
+  },
+  {
+    "id": "E-04",
+    "family": "appearance",
+    "name": "期・日付の食い違い",
+    "primaryRules": [
+      "dates-period-end",
+      "dates-order",
+      "dates-column-headings",
+      "header-period-label"
+    ],
+    "allowedRules": [
+      "dates-column-headings",
+      "dates-order",
+      "dates-period-end",
+      "header-period-label"
+    ]
+  },
+  {
+    "id": "E-05",
+    "family": "appearance",
+    "name": "科目名の誤字",
+    "primaryRules": [
+      "label-spelling"
+    ],
+    "allowedRules": [
+      "label-spelling"
+    ]
+  },
+  {
+    "id": "E-06",
+    "family": "appearance",
+    "name": "グラフの縦軸が 0 から始まらない",
+    "primaryRules": [
+      "chart-axis-zero"
+    ],
+    "allowedRules": [
+      "chart-axis-zero"
+    ]
+  },
+  {
+    "id": "E-07",
+    "family": "appearance",
+    "name": "グラフの棒と数字ラベルが合わない",
+    "primaryRules": [
+      "chart-bars"
+    ],
+    "allowedRules": [
+      "chart-bars"
+    ]
+  },
+  {
+    "id": "E-08",
+    "family": "appearance",
+    "name": "社名・証券コードの食い違い (短信と IR)",
+    "primaryRules": [
+      "header-company-name",
+      "header-securities-code"
+    ],
+    "allowedRules": [
+      "header-company-name",
+      "header-securities-code"
+    ]
+  },
+  {
+    "id": "E-09",
+    "family": "calculation",
+    "name": "貸借の足し算が合わない (小計・合計)",
+    "primaryRules": [
+      "bs-current-assets",
+      "bs-fixed-assets",
+      "bs-current-liabilities"
+    ],
+    "allowedRules": [
+      "bs-current-assets",
+      "bs-current-liabilities",
+      "bs-fixed-assets",
+      "bs-total-assets",
+      "bs-total-liabilities"
+    ]
+  },
+  {
+    "id": "E-10",
+    "family": "calculation",
+    "name": "損益の差引計算が合わない",
+    "primaryRules": [
+      "pl-gross-profit",
+      "pl-operating-income",
+      "pl-ordinary-income",
+      "pl-income-before-tax",
+      "pl-net-income",
+      "pl-net-income-parent"
+    ],
+    "allowedRules": [
+      "check-eps-product",
+      "ir-hl-change-net-income-parent",
+      "ir-hl-change-operating-income",
+      "ir-hl-change-ordinary-income",
+      "ir-results-gross-margin",
+      "ir-results-operating-margin",
+      "link-cf-start",
+      "link-retained-earnings",
+      "pl-gross-profit",
+      "pl-income-before-tax",
+      "pl-net-income",
+      "pl-net-income-parent",
+      "pl-operating-income",
+      "pl-ordinary-income",
+      "ratio-eps",
+      "ratio-operating-margin",
+      "ratio-roe",
+      "seg-consolidated-profit",
+      "sum-net-income-parent",
+      "sum-operating-income",
+      "sum-ordinary-income",
+      "xdoc-hl-net-income-parent",
+      "xdoc-hl-operating-income",
+      "xdoc-hl-ordinary-income",
+      "xdoc-outlook-actual-results",
+      "xdoc-results-gross-profit",
+      "xdoc-results-operating-income",
+      "xdoc-seg-consolidated"
+    ]
+  },
+  {
+    "id": "E-11",
+    "family": "calculation",
+    "name": "増減率の計算違い",
+    "primaryRules": [
+      "sum-change-net-sales",
+      "sum-change-operating-income",
+      "sum-change-ordinary-income",
+      "sum-change-net-income-parent"
+    ],
+    "allowedRules": [
+      "sum-change-net-income-parent",
+      "sum-change-net-sales",
+      "sum-change-operating-income",
+      "sum-change-ordinary-income"
+    ]
+  },
+  {
+    "id": "E-12",
+    "family": "calculation",
+    "name": "比率の計算違い (営業利益率・自己資本比率)",
+    "primaryRules": [
+      "ratio-operating-margin",
+      "ratio-equity-ratio"
+    ],
+    "allowedRules": [
+      "ratio-equity-ratio",
+      "ratio-operating-margin",
+      "xdoc-supp-equity-ratio"
+    ]
+  },
+  {
+    "id": "E-13",
+    "family": "calculation",
+    "name": "セグメントの合計が連結と合わない",
+    "primaryRules": [
+      "seg-sales-sum",
+      "seg-profit-sum"
+    ],
+    "allowedRules": [
+      "ir-seg-change-profit",
+      "ir-seg-change-sales",
+      "ir-seg-share",
+      "seg-profit-sum",
+      "seg-sales-sum",
+      "xdoc-seg-profit",
+      "xdoc-seg-sales"
+    ]
+  },
+  {
+    "id": "E-14",
+    "family": "calculation",
+    "name": "IR の中の計算値が合わない (前期比・構成比)",
+    "primaryRules": [
+      "ir-hl-change-net-sales",
+      "ir-hl-change-operating-income",
+      "ir-hl-change-ordinary-income",
+      "ir-hl-change-net-income-parent",
+      "ir-results-gross-margin",
+      "ir-results-operating-margin",
+      "ir-seg-change-sales",
+      "ir-seg-change-profit",
+      "ir-seg-share"
+    ],
+    "allowedRules": [
+      "ir-hl-change-net-income-parent",
+      "ir-hl-change-net-sales",
+      "ir-hl-change-operating-income",
+      "ir-hl-change-ordinary-income",
+      "ir-results-gross-margin",
+      "ir-results-operating-margin",
+      "ir-seg-change-profit",
+      "ir-seg-change-sales",
+      "ir-seg-share"
+    ]
+  },
+  {
+    "id": "E-15",
+    "family": "calculation",
+    "name": "キャッシュ・フロー計算書の足し算が合わない",
+    "primaryRules": [
+      "cf-subtotal",
+      "cf-operating",
+      "cf-investing",
+      "cf-financing",
+      "cf-net-change"
+    ],
+    "allowedRules": [
+      "cf-ending",
+      "cf-financing",
+      "cf-investing",
+      "cf-net-change",
+      "cf-operating",
+      "cf-subtotal"
+    ]
+  },
+  {
+    "id": "E-16",
+    "family": "calculation",
+    "name": "1 株当たり指標・配当金総額の計算違い",
+    "primaryRules": [
+      "ratio-eps",
+      "ratio-bps",
+      "ratio-dividend-total",
+      "ratio-payout"
+    ],
+    "allowedRules": [
+      "check-bps-product",
+      "check-eps-product",
+      "notes-per-share",
+      "ratio-bps",
+      "ratio-dividend-total",
+      "ratio-eps",
+      "ratio-payout",
+      "xdoc-hl-payout"
+    ]
+  },
+  {
+    "id": "E-17",
+    "family": "text",
+    "name": "文章と数字の矛盾 (増収増益・増益見込みなど)",
+    "primaryRules": [
+      "claims-direction"
+    ],
+    "allowedRules": [
+      "claims-direction"
+    ]
+  },
+  {
+    "id": "H-01",
+    "family": "accounting",
+    "name": "貸借が一致しない (資産 ≠ 負債 + 純資産)",
+    "primaryRules": [
+      "bs-balance"
+    ],
+    "allowedRules": [
+      "bs-balance",
+      "bs-current-assets",
+      "bs-current-liabilities",
+      "bs-liabilities-and-net-assets",
+      "bs-total-assets",
+      "bs-total-liabilities",
+      "check-bps-product",
+      "link-cf-cash-end",
+      "link-cf-income-taxes",
+      "link-cf-payables",
+      "link-cf-short-debt",
+      "notes-per-share",
+      "ratio-bps",
+      "ratio-equity-ratio",
+      "ratio-roe",
+      "sum-equity",
+      "sum-net-assets",
+      "sum-total-assets",
+      "xdoc-supp-cash",
+      "xdoc-supp-debt",
+      "xdoc-supp-equity-ratio"
+    ]
+  },
+  {
+    "id": "H-02",
+    "family": "accounting",
+    "name": "利益剰余金の増減が合わない",
+    "primaryRules": [
+      "link-retained-earnings"
+    ],
+    "allowedRules": [
+      "bs-balance",
+      "bs-liabilities-and-net-assets",
+      "bs-net-assets",
+      "bs-shareholders-equity",
+      "check-bps-product",
+      "link-retained-earnings",
+      "notes-per-share",
+      "ratio-bps",
+      "ratio-equity-ratio",
+      "ratio-roe",
+      "sum-equity",
+      "sum-net-assets",
+      "xdoc-supp-equity-ratio"
+    ]
+  },
+  {
+    "id": "H-03",
+    "family": "accounting",
+    "name": "CF の起点が当期純利益になっている",
+    "primaryRules": [
+      "link-cf-start"
+    ],
+    "allowedRules": [
+      "cf-ending",
+      "cf-net-change",
+      "cf-operating",
+      "cf-subtotal",
+      "link-cf-cash-end",
+      "link-cf-start"
+    ]
+  },
+  {
+    "id": "H-04",
+    "family": "accounting",
+    "name": "CF の期末残高が貸借の現金と合わない",
+    "primaryRules": [
+      "link-cf-cash-end"
+    ],
+    "allowedRules": [
+      "cf-ending",
+      "link-cf-cash-end"
+    ]
+  },
+  {
+    "id": "H-05",
+    "family": "accounting",
+    "name": "売上債権の増減が貸借の差と合わない",
+    "primaryRules": [
+      "link-cf-receivables"
+    ],
+    "allowedRules": [
+      "cf-ending",
+      "cf-net-change",
+      "cf-operating",
+      "cf-subtotal",
+      "link-cf-cash-end",
+      "link-cf-receivables"
+    ]
+  },
+  {
+    "id": "H-06",
+    "family": "accounting",
+    "name": "棚卸資産・仕入債務の増減が貸借の差と合わない",
+    "primaryRules": [
+      "link-cf-inventories",
+      "link-cf-payables"
+    ],
+    "allowedRules": [
+      "cf-ending",
+      "cf-net-change",
+      "cf-operating",
+      "cf-subtotal",
+      "link-cf-cash-end",
+      "link-cf-inventories",
+      "link-cf-payables"
+    ]
+  },
+  {
+    "id": "H-07",
+    "family": "accounting",
+    "name": "法人税等の支払額が合わない",
+    "primaryRules": [
+      "link-cf-income-taxes"
+    ],
+    "allowedRules": [
+      "cf-ending",
+      "cf-net-change",
+      "cf-operating",
+      "link-cf-cash-end",
+      "link-cf-income-taxes"
+    ]
+  },
+  {
+    "id": "H-08",
+    "family": "accounting",
+    "name": "借入金の増減が貸借と CF で合わない",
+    "primaryRules": [
+      "link-cf-short-debt",
+      "link-cf-long-debt"
+    ],
+    "allowedRules": [
+      "cf-ending",
+      "cf-financing",
+      "cf-net-change",
+      "link-cf-cash-end",
+      "link-cf-long-debt",
+      "link-cf-short-debt"
+    ]
+  },
+  {
+    "id": "H-09",
+    "family": "accounting",
+    "name": "設備投資・減価償却費と有形固定資産の増減が合わない",
+    "primaryRules": [
+      "link-tangible-assets"
+    ],
+    "allowedRules": [
+      "bs-balance",
+      "bs-fixed-assets",
+      "bs-total-assets",
+      "cf-investing",
+      "cf-subtotal",
+      "link-tangible-assets",
+      "ratio-equity-ratio",
+      "sum-total-assets",
+      "xdoc-outlook-actual-capex-depreciation",
+      "xdoc-supp-capex-depreciation",
+      "xdoc-supp-equity-ratio"
+    ]
+  },
+  {
+    "id": "H-10",
+    "family": "accounting",
+    "name": "資本金が増えたのに株式発行の収入が無い",
+    "primaryRules": [
+      "link-capital-unchanged"
+    ],
+    "allowedRules": [
+      "bs-balance",
+      "bs-liabilities-and-net-assets",
+      "bs-net-assets",
+      "bs-shareholders-equity",
+      "check-bps-product",
+      "link-capital-unchanged",
+      "notes-per-share",
+      "ratio-bps",
+      "ratio-equity-ratio",
+      "ratio-roe",
+      "sum-equity",
+      "sum-net-assets",
+      "xdoc-supp-equity-ratio"
+    ]
+  },
+  {
+    "id": "H-11",
+    "family": "accounting",
+    "name": "自己資本当期純利益率が期末だけで計算されている",
+    "primaryRules": [
+      "ratio-roe"
+    ],
+    "allowedRules": [
+      "ratio-roe"
+    ]
+  },
+  {
+    "id": "H-12",
+    "family": "accounting",
+    "name": "自己資本に非支配株主持分を含めている",
+    "primaryRules": [
+      "sum-equity"
+    ],
+    "allowedRules": [
+      "check-bps-product",
+      "notes-per-share",
+      "ratio-bps",
+      "ratio-equity-ratio",
+      "sum-equity",
+      "xdoc-supp-equity-ratio"
+    ]
+  },
+  {
+    "id": "H-13",
+    "family": "cross-document",
+    "name": "IR の金額が短信と違う",
+    "primaryRules": [
+      "xdoc-hl-net-sales",
+      "xdoc-hl-operating-income",
+      "xdoc-hl-ordinary-income",
+      "xdoc-hl-net-income-parent",
+      "xdoc-results-net-sales",
+      "xdoc-results-gross-profit",
+      "xdoc-results-operating-income",
+      "xdoc-supp-capex-depreciation",
+      "xdoc-supp-cash"
+    ],
+    "allowedRules": [
+      "chart-bars",
+      "ir-supp-net-debt",
+      "xdoc-hl-net-income-parent",
+      "xdoc-hl-net-sales",
+      "xdoc-hl-operating-income",
+      "xdoc-hl-ordinary-income",
+      "xdoc-results-gross-profit",
+      "xdoc-results-net-sales",
+      "xdoc-results-operating-income",
+      "xdoc-supp-capex-depreciation",
+      "xdoc-supp-cash"
+    ]
+  },
+  {
+    "id": "H-14",
+    "family": "cross-document",
+    "name": "IR の前期の数字が短信の前期と違う",
+    "primaryRules": [
+      "xdoc-results-net-sales",
+      "xdoc-results-gross-profit",
+      "xdoc-results-operating-income",
+      "xdoc-seg-sales",
+      "xdoc-seg-profit"
+    ],
+    "allowedRules": [
+      "chart-bars",
+      "ir-seg-reconcile",
+      "xdoc-results-gross-profit",
+      "xdoc-results-net-sales",
+      "xdoc-results-operating-income",
+      "xdoc-seg-profit",
+      "xdoc-seg-sales"
+    ]
+  },
+  {
+    "id": "H-15",
+    "family": "cross-document",
+    "name": "IR のセグメント別が短信の注記と違う",
+    "primaryRules": [
+      "xdoc-seg-sales",
+      "xdoc-seg-profit"
+    ],
+    "allowedRules": [
+      "ir-seg-reconcile",
+      "xdoc-seg-profit",
+      "xdoc-seg-sales"
+    ]
+  },
+  {
+    "id": "H-16",
+    "family": "cross-document",
+    "name": "IR の見通しの「当期の実績」が短信と違う",
+    "primaryRules": [
+      "xdoc-outlook-actual-results",
+      "xdoc-outlook-actual-capex-depreciation"
+    ],
+    "allowedRules": [
+      "claims-direction",
+      "ir-outlook-change-net-sales",
+      "ir-outlook-change-operating-income",
+      "xdoc-outlook-actual-capex-depreciation",
+      "xdoc-outlook-actual-results"
+    ]
+  },
+  {
+    "id": "H-17",
+    "family": "cross-document",
+    "name": "IR の単位換算の誤り (億円と百万円)",
+    "primaryRules": [
+      "xdoc-hl-net-sales",
+      "xdoc-hl-operating-income",
+      "xdoc-hl-ordinary-income",
+      "xdoc-hl-net-income-parent",
+      "xdoc-results-net-sales",
+      "xdoc-results-gross-profit",
+      "xdoc-results-operating-income",
+      "xdoc-supp-capex-depreciation",
+      "xdoc-supp-cash",
+      "xdoc-supp-debt"
+    ],
+    "allowedRules": [
+      "chart-bars",
+      "ir-supp-net-debt",
+      "xdoc-hl-net-income-parent",
+      "xdoc-hl-net-sales",
+      "xdoc-hl-operating-income",
+      "xdoc-hl-ordinary-income",
+      "xdoc-results-gross-profit",
+      "xdoc-results-net-sales",
+      "xdoc-results-operating-income",
+      "xdoc-supp-capex-depreciation",
+      "xdoc-supp-cash",
+      "xdoc-supp-debt"
+    ]
+  },
+  {
+    "id": "H-18",
+    "family": "cross-document",
+    "name": "IR の配当・比率が短信と違う",
+    "primaryRules": [
+      "xdoc-hl-dividend",
+      "xdoc-hl-payout",
+      "xdoc-supp-equity-ratio",
+      "ir-results-operating-margin"
+    ],
+    "allowedRules": [
+      "ir-results-operating-margin",
+      "xdoc-hl-dividend",
+      "xdoc-hl-payout",
+      "xdoc-supp-equity-ratio"
+    ]
+  },
+  {
+    "id": "H-19",
+    "family": "cross-document",
+    "name": "セグメントが IR から欠けている",
+    "primaryRules": [
+      "seg-count"
+    ],
+    "allowedRules": [
+      "ir-seg-reconcile",
+      "seg-count",
+      "segment-names"
+    ]
+  },
+  {
+    "id": "H-20",
+    "family": "cross-document",
+    "name": "IR の純有利子負債が貸借と合わない",
+    "primaryRules": [
+      "ir-supp-net-debt"
+    ],
+    "allowedRules": [
+      "ir-supp-net-debt"
+    ]
+  },
+  {
+    "id": "H-21",
+    "family": "cross-document",
+    "name": "IR の説明と短信の数字が矛盾する",
+    "primaryRules": [
+      "claims-direction"
+    ],
+    "allowedRules": [
+      "claims-direction"
+    ]
+  },
+  {
+    "id": "H-22",
+    "family": "notes",
+    "name": "「監査済み」と書かれている",
+    "primaryRules": [
+      "audit-note"
+    ],
+    "allowedRules": [
+      "audit-note"
+    ]
+  },
+  {
+    "id": "H-23",
+    "family": "notes",
+    "name": "会計方針の変更の有無が注記と食い違う",
+    "primaryRules": [
+      "accounting-policy-match"
+    ],
+    "allowedRules": [
+      "accounting-policy-match"
+    ]
+  },
+  {
+    "id": "H-24",
+    "family": "notes",
+    "name": "後発事象が「該当なし」なのに IR に期末後の出来事がある",
+    "primaryRules": [
+      "subsequent-event-match"
+    ],
+    "allowedRules": [
+      "subsequent-event-match"
+    ]
+  },
+  {
+    "id": "H-28",
+    "family": "accounting",
+    "name": "資産の部の科目名が負債の科目になっている",
+    "primaryRules": [
+      "account-section"
+    ],
+    "allowedRules": [
+      "account-section"
+    ]
+  }
+]
