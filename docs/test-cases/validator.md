@@ -410,6 +410,7 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | D26 | 正常な問題で Y2 の形 | `verifyDataset` の errors に `ir-display-mismatch` |
 | D27 | 異変の問題に同じ食い違い | `ir-display-mismatch` は出ない |
 | X4 | 株数 100,526 千株・EPS 8.56 (正しく丸めた値。8.56 × 100,526 ÷ 1,000 = 861 で純利益 860 と合わない) | `check-eps-product`・`check-bps-product` は当たらない (株数が 100,000 千株以上の会社には当てない。1 億株未満では当てる: V26・V27) |
+| L11 | `--require-complete=hrad`・`=medium`・`=` (値が easy・hard 以外) | 使いかたを出して終了コード 2 (打ち間違いで致命が効かなくなるのを防ぐ) |
 | L10 | `--require-complete=easy` / `=hard` / 指定なし | easy だけ揃ったデータで、`=easy` は 0、`=hard` と指定なしは 1 (難易度ごとに致命にできる) |
 
 N2 の運用: 問題データが揃ったら、CI の `npm run verify:data` を `--require-complete` にする (難易度ごとに `=easy`・`=hard` を先に足してもよい)。この作業は、最後に閉じる問題作りのチケット (#25 / #26) の受け入れ条件に書く。受け入れ条件 5・6 を受け持つのは `npm run verify:data` (design §7)。

@@ -109,4 +109,12 @@ describe('npm run verify:data', () => {
     expect(run('--dir', d2, '--require-complete=hard').code).toBe(1);
     expect(run('--dir', d2, '--require-complete').code).toBe(1);
   });
+
+  it('L11: --require-complete の値が easy・hard 以外 (打ち間違い) → 使いかたを出して終了コード 2', () => {
+    for (const bad of ['--require-complete=hrad', '--require-complete=medium', '--require-complete=']) {
+      const r = run('--dir', dataDir(), bad);
+      expect(r.code, bad).toBe(2);
+      expect(r.out).toContain('使いかた');
+    }
+  });
 });

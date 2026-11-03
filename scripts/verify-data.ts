@@ -11,6 +11,10 @@ const flag = (name: string) => args.includes(name);
 // --require-complete (全難易度) / --require-complete=easy / --require-complete=hard (その難易度の不足だけ致命)
 const requireArg = args.find((a) => a === '--require-complete' || a.startsWith('--require-complete='));
 const requireScope = requireArg?.split('=')[1];
+if (requireArg !== undefined && requireArg.includes('=') && !['easy', 'hard'].includes(requireScope ?? '')) {
+  console.error('使いかた: --require-complete[=easy|hard] (値は easy か hard)');
+  process.exit(2);
+}
 const dirAt = args.indexOf('--dir');
 const explicitDir = dirAt >= 0;
 const dir = explicitDir ? (args[dirAt + 1] ?? '') : 'src/data';
