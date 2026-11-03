@@ -227,7 +227,7 @@
    "averageSharesThousand": 25000,
    "bps": 1115.0,
    "eps": 154.4,
-   "subsequentEvents": "期末後に、新たな物流拠点の建設に関する契約を締結しました。契約金額は 1,200 百万円です。",
+   "subsequentEvents": "期末後に、研究用の新施設の建設に関する契約を締結しました。契約金額は 800 百万円です。",
    "accountingPolicyNote": "該当事項はありません。"
   }
  },
@@ -348,7 +348,7 @@
     "capex": 12.2,
     "depreciation": 11.3
    },
-   "subsequentEvent": "期末後に、新たな物流拠点の建設に関する契約を締結 (契約金額 12.0 億円)"
+   "subsequentEvent": "期末後に、研究用の新施設の建設に関する契約を締結した (契約金額 8.0 億円)"
   },
   "supplement": {
    "capex": {
