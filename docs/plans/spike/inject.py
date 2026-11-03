@@ -9,6 +9,7 @@ import sys
 from collections import Counter
 
 import gen
+import pipeline
 import verify
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 200
@@ -30,7 +31,7 @@ def _resum_summary(d):
     b0, b1, sm, sh = d["BS"]["前期末"], d["BS"]["当期末"], d["サマリー"], d["期中平均株式数(千株)"]
     eq0, eq1 = b0["純資産合計"] - b0["非支配株主持分"], b1["純資産合計"] - b1["非支配株主持分"]
     parent = d["PL"]["当期"]["親会社株主に帰属する当期純利益"]
-    sm["総資産"], sm["純資産"] = b1["資産合計"], b1["純資産合計"]
+    sm["総資産"], sm["純資産"], sm["自己資本"] = b1["資産合計"], b1["純資産合計"], eq1
     sm["自己資本比率"] = verify.rh(eq1 * 1000, b1["資産合計"]) / 10
     sm["1株当たり純資産"] = verify.rh(eq1 * 100000, sh) / 100
     sm["自己資本当期純利益率"] = verify.rh(parent * 2000, eq0 + eq1) / 10
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         exact = skipped = 0
         seen = Counter()
         for seed in range(N):
-            base = gen.generate(seed)
+            base, _ = pipeline.generate_checked(seed)
             d = copy.deepcopy(base)
             fn(d)
             failed = set(verify.verify(d)["hard_fail"])

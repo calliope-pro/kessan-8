@@ -10,6 +10,7 @@ import time
 from collections import Counter
 
 import gen
+import pipeline
 import verify
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
@@ -43,6 +44,17 @@ def batch(label, fn):
 
 batch("S2 構築による整合 (前提の範囲は妥当)", gen.generate)
 batch("S2 構築による整合 (前提の範囲を広げる: 売上 -40%〜+60%)", lambda s: gen.generate(s, plausible_drivers=False))
+# 棄却サンプリング: hard を通るまで引き直す。1 回目で通る割合と、引き直しの回数
+t = time.perf_counter()
+tries = Counter()
+for seed in range(N):
+    _, a = pipeline.generate_checked(seed)
+    tries[a] += 1
+dt = time.perf_counter() - t
+print(f"\n## S2 + 引き直し (整合に落ちたら種を変えて生成し直す)  (N={N})")
+print(f"- 1 回目で整合 (hard) を通った: {tries[1]}/{N} = {tries[1] / N:.2%}。引き直しの回数の分布 (試行回数: 件数): {dict(sorted(tries.items()))}")
+print(f"- 最終的に整合を通った: {sum(tries.values())}/{N} (50 回で通らなかった件は例外で止まる)。{dt / N * 1000:.2f} ms/件")
+
 batch("S1 素朴 (各項目を独立の乱数)", gen.generate_naive)
 
 # ---- 検証器が空振りしていないか: 1 つの数字を +1 して、何本の規則が落ちるか ----
@@ -52,7 +64,7 @@ blast = []
 bysec = {}
 undetected = Counter()
 for seed in range(50):
-    base = gen.generate(seed)
+    base, _ = pipeline.generate_checked(seed)
     leaves = []
     for sect in ("BS", "PL"):
         for col, tbl in base[sect].items():
@@ -63,7 +75,7 @@ for seed in range(50):
     for sect, col, k in leaves:
         d = copy.deepcopy(base)
         tbl = d[sect][col] if col else d[sect]
-        step = 1 if isinstance(tbl[k], int) and sect != "サマリー" else (0.1 if "率" in k or "性向" in k or "比率" in k else 0.01)
+        step = 1 if isinstance(tbl[k], int) else (0.1 if "率" in k or "性向" in k or "比率" in k else 0.01)
         if sect == "サマリー" and k == "年間配当金":
             step = 10
         tbl[k] = round(tbl[k] + step, 2)
