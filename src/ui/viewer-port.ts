@@ -13,7 +13,7 @@ export interface ViewerProps {
   /**
    * 印を付けた場所のキー (#28 の状態 `reading.marks` が持つ)。キーの形:
    * 数字・文のセルは `data-path` と同じ文字列 (`<doc>.<path>`。例 `tanshin.incomeStatement.current.ordinaryIncome`)、
-   * 行の名前は `data-item-key` と同じ項目キー (docs/design.md §4.1。例 `tanshin.incomeStatement.ordinaryIncome`)。
+   * 行の名前は `<doc>.item:<itemKey>` (項目キーは docs/design.md §4.1。例 `tanshin.item:tanshin.incomeStatement.ordinaryIncome`。数字のセルの `data-path` と区別するため `item:` を付ける)。
    */
   marks: readonly string[];
   /** 答え合わせで強調する場所。強調は、該当の要素 (`data-path` / `data-item-key`) に `data-highlight="true"` を付ける。reading では空。 */

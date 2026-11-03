@@ -14,7 +14,7 @@
 | 出題の回数 `draws` | `PICK`・`RESTART` のたびに 1 増える (「もう一度」の `PICK` も数える)。出題の乱数は、`?seed=N` があるとき種 N + `draws` (増やす前の値)。`draws` は保存し、再読み込みのあとも続ける | design §5.3 を、`cleared` からの `PICK` にも広げた (#59 で design.md を直す提案) |
 | 保存 | 走行 (状態の全体。問題は ID だけ) は `sessionStorage`、記録・見本の済は `localStorage`。外部への通信は無い。読み書きが失敗しても遊べる | experience.md §6.6 |
 | 画面だけの状態 (保存しない) | 遊びかた (SCH)・見本 (SC2)・会社の導入 (SC3)・最初へ戻る (SC6)・判定のパネルの開閉・難易度の選択の途中。再読み込みすると、保存された状態の画面に戻る | experience.md §6.4 |
-| 印 | 状態 `reading.marks` (印を付けた場所のキーの並び)。`revealed` に持ち越し、`NEXT`・`RESTART` で空にする。`reduce` はキーの中身を見ない。**キーの形は資料束の表示 (#57) との接ぎ目の約束**: 数字・文のセルは `data-path` と同じ文字列 (`<doc>.<path>`。例 `tanshin.incomeStatement.current.ordinaryIncome`)、行の名前は `data-item-key` と同じ項目キー (design §4.1。例 `tanshin.incomeStatement.ordinaryIncome`)。照合 (R3。UA9〜UA11) はこの形を前提にする。口の定義は `src/ui/viewer-port.ts` (このブランチに置く) | experience.md N3・R3、ux-tech-assessment §6-2 |
+| 印 | 状態 `reading.marks` (印を付けた場所のキーの並び)。`revealed` に持ち越し、`NEXT`・`RESTART` で空にする。`reduce` はキーの中身を見ない。**キーの形は資料束の表示 (#57) との接ぎ目の約束**: 数字・文のセルは `data-path` と同じ文字列 (`<doc>.<path>`。例 `tanshin.incomeStatement.current.ordinaryIncome`)、行の名前は `<doc>.item:<itemKey>` (項目キーは design §4.1。例 `tanshin.item:tanshin.incomeStatement.ordinaryIncome`。数字のセルの `data-path` と区別するため、`item:` を付ける。#57 の進める役と合意)。照合 (R3。UA9〜UA11) はこの形を前提にする。口の定義は `src/ui/viewer-port.ts` (このブランチに置く) | experience.md N3・R3、ux-tech-assessment §6-2 |
 | 記録 (P5) | 難易度ごとに、最高の到達社数 (`round + 1` の最大)・クリア回数・「異変あり」と正しく判定した問題の異変の種類 ID の集合。更新は判定 (`ANSWER`) の書き込みと同時に 1 回 | experience.md §6.6・N10 |
 | 見本 | **見本のファイルは 1 つを両方の難易度で共有する**。**「見本の済」は難易度ごとに数える**: その難易度で初めて遊ぶ前に見本が出て、見た・飛ばしたあとは、その難易度では出ない (別の難易度を初めて選ぶと、また出る)。いつでも「見本を見る」で開ける | #19 の包括レビュー B2 への責任者の決定、experience.md §3.3 (P0)・§6.6 (見本の済) |
 | 固定の文言 (ボタンの名前) | はじめる / 遊びかた / やさしい / むずかしい / 見本を見る / 始める / 飛ばす / 閉じる / 戻る / 資料を開く / 判定する / 異変あり / 異変なし / 読みに戻る / 次の会社へ / 結果を見る / 最初に戻る / もう一度 / 難易度を選び直す / 別の難易度 / タイトルへ | experience.md §6.5 |
@@ -64,7 +64,7 @@
 | UA7 | 場所 `{doc: tanshin, itemKey: tanshin.balanceSheet.cash}` | (短信, 貸借対照表) | 同値 |
 | UA8 | 場所が 3 つ (短信の 2 画面と IR の 1 画面、同じ画面が重複する並び) | 画面の一覧は、場所の並びの順で重複なしの 2〜3 画面 (答え合わせの画面送りに使う) | 組み合わせ (資料間の異変) |
 | UA9 | 印と場所の照合 (R3): 印が場所の 1 つにだけ当たる / 場所に当たらない印がある / 印が無い | 当たり・外れ・見逃しの数が、それぞれ (1, 0, 場所の数 − 1)・(0, 印の数, 場所の数)・(0, 0, 場所の数) | 同値・境界値 |
-| UA10 | 場所 `{itemKey: tanshin.incomeStatement.ordinaryIncome}` に、同じ行の数字の印 (`tanshin.incomeStatement.current.ordinaryIncome`・`tanshin.incomeStatement.previous.ordinaryIncome`)、行名の印 (`tanshin.incomeStatement.ordinaryIncome`)、別の行の印 (`tanshin.incomeStatement.current.operatingIncome`) | 前 3 つは当たり。別の行の印は外れ | 同値 (行の名前の異変は、同じ行の印で当たり) |
+| UA10 | 場所 `{itemKey: tanshin.incomeStatement.ordinaryIncome}` に、同じ行の数字の印 (`tanshin.incomeStatement.current.ordinaryIncome`・`tanshin.incomeStatement.previous.ordinaryIncome`)、行名の印 (`tanshin.item:tanshin.incomeStatement.ordinaryIncome`)、別の行の印 (`tanshin.incomeStatement.current.operatingIncome`) | 前 3 つは当たり。別の行の印は外れ | 同値 (行の名前の異変は、同じ行の印で当たり) |
 | UA11 | 行のキーの作り方: `incomeStatement.current.ordinaryIncome`・`summary.ordinaryIncome.changeRate`・`ir.outlook.forecast.netSales`・`ir.outlook.actual.netSales` | 期・予実の段と末尾の `changeRate`/`amount` を除き、資料の種類を頭に付けたキー (design §4.1 の項目キーと同じ。後の 2 つは同じキー) | 同値 |
 
 ### 1.4 状態遷移 (`reduce`)
