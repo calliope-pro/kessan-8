@@ -1,0 +1,442 @@
+{
+  "id": "hard-022",
+  "difficulty": "hard",
+  "companyId": "c03",
+  "fiscalYear": 2022,
+  "tier": 2,
+  "tanshin": {
+    "header": {
+      "companyName": "ソルベリマート株式会社",
+      "securitiesCode": "0803",
+      "periodLabel": "2022年2月期",
+      "unit": "百万円"
+    },
+    "summary": {
+      "netSales": {
+        "current": 118740,
+        "previous": 114990,
+        "changeRate": 3.3
+      },
+      "operatingIncome": {
+        "current": 3730,
+        "previous": 3760,
+        "changeRate": -0.8
+      },
+      "ordinaryIncome": {
+        "current": 3884,
+        "previous": 3896,
+        "changeRate": -0.3
+      },
+      "netIncomeParent": {
+        "current": 2414,
+        "previous": 2648,
+        "changeRate": -8.8
+      },
+      "operatingMargin": 3.1,
+      "roe": 10.8,
+      "eps": 80.47,
+      "totalAssets": 52996,
+      "netAssets": 23179,
+      "equity": 23179,
+      "equityRatio": 43.7,
+      "bps": 772.63,
+      "annualDividend": 26,
+      "interimDividend": 10,
+      "annualDividendPrevious": 26,
+      "interimDividendPrevious": 10,
+      "dividendTotal": 780,
+      "payoutRatio": 32.3,
+      "accountingPolicyChange": false,
+      "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+    },
+    "dates": {
+      "periodEnd": "2022-02-28",
+      "previousPeriodEnd": "2021-02-28",
+      "disclosure": "2022-04-14",
+      "shareholdersMeeting": "2022-05-27"
+    },
+    "columnDates": {
+      "balanceSheet": {
+        "previous": "2021-02-28",
+        "current": "2022-02-28"
+      },
+      "incomeStatement": {
+        "previous": "2021-02-28",
+        "current": "2022-02-28"
+      },
+      "cashFlow": {
+        "previous": "2021-02-28",
+        "current": "2022-02-28"
+      }
+    },
+    "balanceSheet": {
+      "previous": {
+        "cash": 7468,
+        "receivables": 2079,
+        "inventories": 9394,
+        "otherCurrentAssets": 1414,
+        "totalCurrentAssets": 20355,
+        "tangibleAssets": 26347,
+        "investments": 4903,
+        "totalFixedAssets": 31250,
+        "totalAssets": 51605,
+        "payables": 10534,
+        "shortTermDebt": 2290,
+        "incomeTaxesPayable": 428,
+        "otherCurrentLiabilities": 4139,
+        "totalCurrentLiabilities": 17391,
+        "longTermDebt": 12669,
+        "totalLiabilities": 30060,
+        "capitalStock": 4478,
+        "capitalSurplus": 2687,
+        "retainedEarnings": 14380,
+        "totalShareholdersEquity": 21545,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 21545,
+        "totalLiabilitiesAndNetAssets": 51605
+      },
+      "current": {
+        "cash": 8890,
+        "receivables": 2083,
+        "inventories": 9436,
+        "otherCurrentAssets": 1414,
+        "totalCurrentAssets": 21823,
+        "tangibleAssets": 26172,
+        "investments": 5001,
+        "totalFixedAssets": 31173,
+        "totalAssets": 52996,
+        "payables": 10697,
+        "shortTermDebt": 2215,
+        "incomeTaxesPayable": 390,
+        "otherCurrentLiabilities": 4274,
+        "totalCurrentLiabilities": 17576,
+        "longTermDebt": 12241,
+        "totalLiabilities": 29817,
+        "capitalStock": 4478,
+        "capitalSurplus": 2687,
+        "retainedEarnings": 16014,
+        "totalShareholdersEquity": 23179,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 23179,
+        "totalLiabilitiesAndNetAssets": 52996
+      }
+    },
+    "incomeStatement": {
+      "previous": {
+        "netSales": 114990,
+        "costOfSales": 85380,
+        "grossProfit": 29610,
+        "sga": 25850,
+        "operatingIncome": 3760,
+        "nonOperatingIncome": 345,
+        "nonOperatingExpenses": 209,
+        "ordinaryIncome": 3896,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 58,
+        "incomeBeforeTax": 3838,
+        "incomeTaxes": 1190,
+        "netIncome": 2648,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 2648
+      },
+      "current": {
+        "netSales": 118740,
+        "costOfSales": 88100,
+        "grossProfit": 30640,
+        "sga": 26910,
+        "operatingIncome": 3730,
+        "nonOperatingIncome": 356,
+        "nonOperatingExpenses": 202,
+        "ordinaryIncome": 3884,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 386,
+        "incomeBeforeTax": 3498,
+        "incomeTaxes": 1084,
+        "netIncome": 2414,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 2414
+      }
+    },
+    "cashFlow": {
+      "incomeBeforeTax": 3498,
+      "depreciation": 2108,
+      "interestDividendIncome": -356,
+      "interestExpense": 202,
+      "receivablesChange": -4,
+      "inventoriesChange": -42,
+      "payablesChange": 163,
+      "otherAssetsChange": 0,
+      "otherLiabilitiesChange": 135,
+      "subtotal": 5704,
+      "interestDividendReceived": 356,
+      "interestPaid": -202,
+      "incomeTaxesPaid": -1122,
+      "operatingCashFlow": 4736,
+      "capex": -1933,
+      "otherInvestingChange": -98,
+      "investingCashFlow": -2031,
+      "shortTermDebtChange": -75,
+      "longTermBorrowings": 760,
+      "longTermRepayments": -1188,
+      "dividendsPaid": -780,
+      "financingCashFlow": -1283,
+      "fxEffect": 0,
+      "netChangeInCash": 1422,
+      "cashBeginning": 7468,
+      "cashEnding": 8890
+    },
+    "notes": {
+      "goingConcern": "該当事項はありません。",
+      "cashScope": "現金及び預金",
+      "segments": {
+        "previous": {
+          "segments": [
+            {
+              "name": "食品小売事業",
+              "netSales": 71460,
+              "profit": 2030
+            },
+            {
+              "name": "衣料・生活雑貨事業",
+              "netSales": 34450,
+              "profit": 1420
+            },
+            {
+              "name": "テナント・金融事業",
+              "netSales": 9080,
+              "profit": 610
+            }
+          ],
+          "adjustment": -300,
+          "consolidatedNetSales": 114990,
+          "consolidatedOperatingIncome": 3760
+        },
+        "current": {
+          "segments": [
+            {
+              "name": "食品小売事業",
+              "netSales": 73850,
+              "profit": 2020
+            },
+            {
+              "name": "衣料・生活雑貨事業",
+              "netSales": 35390,
+              "profit": 1410
+            },
+            {
+              "name": "テナント・金融事業",
+              "netSales": 9500,
+              "profit": 600
+            }
+          ],
+          "adjustment": -300,
+          "consolidatedNetSales": 118740,
+          "consolidatedOperatingIncome": 3730
+        }
+      },
+      "averageSharesThousand": 30000,
+      "bps": 772.63,
+      "eps": 80.47,
+      "subsequentEvents": "該当事項はありません。",
+      "accountingPolicyNote": "該当事項はありません。"
+    }
+  },
+  "ir": {
+    "header": {
+      "companyName": "ソルベリマート株式会社",
+      "securitiesCode": "0803",
+      "periodLabel": "2022年2月期",
+      "unit": "億円"
+    },
+    "highlights": {
+      "netSales": {
+        "amount": 1187.4,
+        "changeRate": 3.3
+      },
+      "operatingIncome": {
+        "amount": 37.3,
+        "changeRate": -0.8
+      },
+      "ordinaryIncome": {
+        "amount": 38.8,
+        "changeRate": -0.3
+      },
+      "netIncomeParent": {
+        "amount": 24.1,
+        "changeRate": -8.8
+      },
+      "annualDividend": 26,
+      "payoutRatio": 32.3
+    },
+    "results": {
+      "netSales": {
+        "previous": 1149.9,
+        "current": 1187.4
+      },
+      "grossProfit": {
+        "previous": 296.1,
+        "current": 306.4
+      },
+      "grossMargin": {
+        "previous": 25.8,
+        "current": 25.8
+      },
+      "operatingIncome": {
+        "previous": 37.6,
+        "current": 37.3
+      },
+      "operatingMargin": {
+        "previous": 3.3,
+        "current": 3.1
+      },
+      "chart": {
+        "netSales": {
+          "axisMin": 0,
+          "previous": 1149.9,
+          "current": 1187.4
+        },
+        "operatingIncome": {
+          "axisMin": 0,
+          "previous": 37.6,
+          "current": 37.3
+        }
+      }
+    },
+    "segments": {
+      "items": [
+        {
+          "name": "食品小売事業",
+          "netSales": {
+            "previous": 714.6,
+            "current": 738.5,
+            "changeRate": 3.3
+          },
+          "profit": {
+            "previous": 20.3,
+            "current": 20.2,
+            "changeRate": -0.5
+          },
+          "salesShare": 62.2
+        },
+        {
+          "name": "衣料・生活雑貨事業",
+          "netSales": {
+            "previous": 344.5,
+            "current": 353.9,
+            "changeRate": 2.7
+          },
+          "profit": {
+            "previous": 14.2,
+            "current": 14.1,
+            "changeRate": -0.7
+          },
+          "salesShare": 29.8
+        },
+        {
+          "name": "テナント・金融事業",
+          "netSales": {
+            "previous": 90.8,
+            "current": 95,
+            "changeRate": 4.6
+          },
+          "profit": {
+            "previous": 6.1,
+            "current": 6,
+            "changeRate": -1.6
+          },
+          "salesShare": 8
+        }
+      ],
+      "adjustment": {
+        "previous": -3,
+        "current": -3
+      },
+      "consolidatedOperatingIncome": {
+        "previous": 37.6,
+        "current": 37.3
+      }
+    },
+    "outlook": {
+      "forecast": {
+        "netSales": 1252.6,
+        "netSalesChangeRate": 5.5,
+        "operatingIncome": 40,
+        "operatingIncomeChangeRate": 7.2,
+        "capex": 20.3,
+        "depreciation": 21.9,
+        "annualDividend": 26
+      },
+      "actual": {
+        "netSales": 1187.4,
+        "operatingIncome": 37.3,
+        "capex": 19.3,
+        "depreciation": 21.1
+      },
+      "subsequentEvent": null
+    },
+    "supplement": {
+      "capex": {
+        "previous": null,
+        "current": 19.3
+      },
+      "depreciation": {
+        "previous": null,
+        "current": 21.1
+      },
+      "interestBearingDebt": {
+        "previous": 149.6,
+        "current": 144.6
+      },
+      "cash": {
+        "previous": 74.7,
+        "current": 88.9
+      },
+      "netDebt": {
+        "previous": 74.9,
+        "current": 55.7
+      },
+      "equityRatio": 43.7
+    },
+    "statements": [
+      {
+        "slide": "highlights",
+        "text": "当期: 増収減益。既存店と新店の両方で売場を見直した。",
+        "claims": [
+          {
+            "metric": "netSales",
+            "direction": "up"
+          },
+          {
+            "metric": "operatingIncome",
+            "direction": "down"
+          }
+        ]
+      },
+      {
+        "slide": "outlook",
+        "text": "次期予想: 増収増益。",
+        "claims": [
+          {
+            "metric": "forecastNetSales",
+            "direction": "up"
+          },
+          {
+            "metric": "forecastOperatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "supplement",
+        "text": "営業キャッシュ・フロー: プラス。",
+        "claims": [
+          {
+            "metric": "operatingCashFlow",
+            "direction": "up"
+          }
+        ]
+      }
+    ]
+  },
+  "anomaly": null
+}
