@@ -30,6 +30,14 @@ body { padding: 0; }
 /* V3 閲覧票の帯: 会社の淡い色の地に、社色の縁。段の文字色に依らず読める色を自分で持つ (社色・淡い色は CSSOM で --company-main・--company-light に入る) */
 .band { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 32px; padding: 4px 12px; font-size: 0.95rem; color: #1b1b1b; background: var(--company-light, #fffdf7); border-left: 6px solid var(--company-main, #5d5a55); border-radius: 4px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); }
 .band strong { font-weight: 700; }
+.band-name { min-width: 0; }
+/* スマホ幅: 帯は 1 行に縮める (SC4-1。固定したままでも、上下の固定領域が決定 (experience §6.3 の 3b) を超えないように)。進行の丸は隠し、社名は省略表示 */
+@media (max-width: 640px) {
+  .band { flex-wrap: nowrap; gap: 6px; min-height: 32px; max-height: 44px; padding: 2px 8px; font-size: 0.85rem; overflow: hidden; }
+  .band .pips { display: none; }
+  .band > * { white-space: nowrap; }
+  .band-name { flex: 1 1 0; overflow: hidden; text-overflow: ellipsis; }
+}
 .pips { display: inline-flex; gap: 4px; }
 .pip { width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; }
 .pip[data-state="done"] { background: currentColor; }

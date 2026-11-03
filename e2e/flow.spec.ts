@@ -613,6 +613,7 @@ for (const width of [320, 375, 1280]) {
       });
       expect(r.scrolled, `${where}: スクロールできる高さがある`).toBeGreaterThan(50);
       expect(Math.abs(r.bandTop), `${where}: 帯が上端`).toBeLessThanOrEqual(1);
+      if (width <= 414) expect(r.bandBottom - r.bandTop, `${where}: スマホの帯は 1 行 (44 px 以下)`).toBeLessThanOrEqual(44);
       expect(Math.abs(r.tabsTop - r.bandBottom), `${where}: タブが帯の真下`).toBeLessThanOrEqual(1);
       await expect(page.getByTestId('band')).toBeInViewport();
       await expect(page.locator('.v-viewer-top')).toBeInViewport();
