@@ -8,8 +8,10 @@ kessan-8: 投資家向けの決算書・IR を題材にした、異変を探し�
 
 - tracker: github (アダプタ orchestra-tracker-github)
   - リポジトリ: calliope-pro/kessan-8
-  - Project: (準備中。番号が決まったらここに書く)
-  - フィールド: Status・優先度・見積もり (Number)・期限 (Date)
+  - Project: https://github.com/users/calliope-pro/projects/4 (番号 4)
+  - フィールド: Status (起票・着手可・作業・レビュー・確認待ち・完了)・優先度 (高・中・低)・見積もり (Number、単位は時間)・期限 (Date)
+  - 状態の更新: `.orchestra/status.sh <issue 番号> <状態> [見積もり] [期限]`
+  - 階層: sub-issue の入れ子。依存: Issue の dependencies (blocked by)
   - 種別: ラベル `type:epic`・`type:story`・`type:task`・`type:sub-task`
   - チーム: ラベル `team:business`・`team:develop`
 - notifier: session (責任者の会話の中。件に `Q<連番>` を振る)
