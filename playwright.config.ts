@@ -13,7 +13,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: origin, trace: 'retain-on-failure' },
   webServer: {
-    command: `npm run build && npm run preview -- --host 127.0.0.1 --port ${port} --strictPort`,
+    command: `VIEWER_DEMO=1 npm run build && npm run preview -- --host 127.0.0.1 --port ${port} --strictPort`,
     url: origin,
     reuseExistingServer: false,
     timeout: 120_000,

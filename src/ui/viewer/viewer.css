@@ -1,0 +1,204 @@
+/* 資料束の表示。資料の本体は全社・全問・全難易度で同じ書式・同じ配色 (紙面は常に明るい。docs/test-cases/viewer.md F13)。 */
+.viewer {
+  --paper: #fff;
+  --ink: #1b1f24;
+  --muted: #55606b;
+  --line: #d4dae0;
+  --accent: #1f4e79;
+  --emph: #eef2f6;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  background: var(--paper);
+  color: var(--ink);
+  font: 14px/1.5 system-ui, 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+  overflow-wrap: anywhere;
+}
+.viewer *,
+.viewer *::before,
+.viewer *::after {
+  box-sizing: border-box;
+}
+
+/* 上: 資料の切替とタブ (各 1 行・44px・上に固定) */
+.viewer-top {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.tabs {
+  display: flex;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+}
+.tab {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tabs-doc .tab {
+  font-size: 14px;
+  font-weight: 600;
+}
+.tab[aria-selected='true'] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+.tab[data-visited='true']:not([aria-selected='true']) {
+  color: var(--ink);
+}
+.tab:focus-visible,
+.pager-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+/* ページ名とページ送り */
+.page-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 4px;
+}
+.page-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.pager-btn {
+  flex: 0 0 auto;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pager-btn:disabled {
+  color: #9aa3ab;
+  cursor: default;
+}
+
+/* 資料の本体 */
+.viewer-body {
+  padding: 0 8px 24px;
+}
+.screen {
+  min-width: 0;
+}
+.doc-head {
+  padding: 8px 0;
+  border-bottom: 2px solid var(--accent);
+}
+.doc-head p {
+  margin: 0;
+}
+.doc-company {
+  font-size: 16px;
+  font-weight: 700;
+}
+.doc-code,
+.doc-extra {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 13px;
+}
+.doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.sec {
+  margin-top: 14px;
+}
+.sec-title {
+  margin: 0 0 4px;
+  padding-left: 6px;
+  border-left: 4px solid var(--accent);
+  font-size: 14px;
+}
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.tbl th,
+.tbl td {
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: baseline;
+}
+.row-label {
+  width: 38%;
+  text-align: left;
+  font-weight: 400;
+}
+.col-head {
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.col-label {
+  display: block;
+}
+.col-cell {
+  font-weight: 400;
+}
+.corner {
+  border-bottom: 1px solid var(--line);
+}
+.cell {
+  font-variant-numeric: tabular-nums;
+}
+td.cell {
+  text-align: right;
+}
+td.cell-text,
+td.cell-date,
+td.cell-flag {
+  text-align: left;
+}
+.emph .row-label,
+.emph .cell {
+  font-weight: 700;
+}
+.emph th,
+.emph td {
+  background: var(--emph);
+}
+.statements {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.statement {
+  margin: 0;
+  padding: 6px 8px;
+  background: var(--emph);
+  border-radius: 4px;
+}
