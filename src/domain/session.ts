@@ -17,7 +17,7 @@ export function serialize(state: GameState): string {
     case 'difficulty':
       return JSON.stringify(base);
     case 'cleared':
-      return JSON.stringify({ ...base, difficulty: state.difficulty });
+      return JSON.stringify({ ...base, difficulty: state.difficulty, problemIds: state.problems.map((p) => p.id) });
     case 'reading':
     case 'revealed': {
       const run = { difficulty: state.difficulty, problemIds: state.problems.map((p) => p.id), round: state.round, view: state.view, marks: state.marks };
@@ -57,17 +57,17 @@ export function hydrate(raw: unknown, lookup: (id: string) => Problem | undefine
     case 'difficulty':
       return { phase: 'difficulty', draws };
     case 'cleared':
-      return isDifficulty(v.difficulty) ? { phase: 'cleared', draws, difficulty: v.difficulty } : undefined;
     case 'reading':
     case 'revealed': {
       if (!isDifficulty(v.difficulty) || !isStrings(v.problemIds) || v.problemIds.length !== ROUNDS_TO_CLEAR) return undefined;
-      if (!isInt(v.round) || v.round < 0 || v.round >= ROUNDS_TO_CLEAR || !isView(v.view) || !isStrings(v.marks)) return undefined;
       const problems: Problem[] = [];
       for (const id of v.problemIds) {
         const p = lookup(id);
         if (!p || p.difficulty !== v.difficulty) return undefined;
         problems.push(p);
       }
+      if (v.phase === 'cleared') return { phase: 'cleared', draws, difficulty: v.difficulty, problems };
+      if (!isInt(v.round) || v.round < 0 || v.round >= ROUNDS_TO_CLEAR || !isView(v.view) || !isStrings(v.marks)) return undefined;
       const run: Run = { draws, difficulty: v.difficulty, problems, round: v.round, view: v.view, marks: v.marks };
       if (v.phase === 'reading') return { phase: 'reading', ...run };
       if ((v.answer !== 'anomaly' && v.answer !== 'normal') || typeof v.correct !== 'boolean') return undefined;

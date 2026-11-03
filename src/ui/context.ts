@@ -39,8 +39,6 @@ export interface Local {
   panel: boolean;
   /** 答え合わせで見ている場所の番号 (0 始まり。場所が 2 つ以上の異変のとき)。 */
   placeIndex: number;
-  /** 判定を書き込む前の最高到達 (最初へ戻る画面で、自己ベストを示す)。 */
-  bestBefore: number;
 }
 
 export interface Ctx {

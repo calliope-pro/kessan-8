@@ -479,3 +479,118 @@ test('E31: 資料の紙面は社が変わっても同じ。机の面に質感 (�
   expect(last.bg).toBe(first.bg);
   expect(last.fg).toBe(first.fg);
 });
+
+// ---- #85 (docs/test-cases/flow.md §2.2): #28 の包括レビュー N1〜N5 と責任者の決定
+
+test('E32: 最高到達 5 の記録で 1 社目を間違え、答え合わせで再読み込みしても「自己ベスト」は出ない', async ({ page }) => {
+  await startGame(page, SEED);
+  for (let i = 0; i < 4; i++) {
+    await answer(page, true);
+    await nextCompany(page);
+  }
+  await answer(page, false); // 5 社目で不正解 → 最高到達 5
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await page.getByRole('button', { name: 'もう一度' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await answer(page, false); // 1 社目で不正解
+  await page.reload();
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await expect(page.getByText('1 社目まで進みました')).toBeVisible();
+  await expect(page.getByText('最高到達: 5 社目')).toBeVisible();
+  await expect(page.getByTestId('new-best')).toHaveCount(0);
+});
+
+test('E33: クリアの完了票に、遊んだ 8 社の社名と社章が出る (再読み込みしても)', async ({ page }) => {
+  await startGame(page, SEED);
+  const names: string[] = [];
+  for (let i = 0; i < 8; i++) {
+    names.push((await page.getByTestId('band').innerText()).split('\n').pop()!.trim());
+    await answer(page, true);
+    if (i < 7) await nextCompany(page);
+  }
+  await page.getByRole('button', { name: '結果を見る' }).click();
+  const slip = page.getByTestId('completion-slip');
+  await expect(slip.getByTestId('slip-company')).toHaveCount(8);
+  await expect(slip.locator('.emblem')).toHaveCount(8);
+  expect(await slip.getByTestId('slip-company').allInnerTexts()).toEqual(names.map((n) => expect.stringContaining(n)));
+  await page.reload();
+  await expect(page.getByTestId('completion-slip').getByTestId('slip-company')).toHaveCount(8);
+});
+
+test('E34: タイトルに舞台の説明と入口の背景。導入のカードの見出しは「閲覧票」', async ({ page }) => {
+  await page.goto(`/?seed=${SEED}`);
+  await expect(page.getByText('資料室')).toBeVisible();
+  await expect(page.getByText('閲覧票').first()).toBeVisible();
+  await expect(page.getByTestId('entrance')).toBeVisible();
+  await expect(page.getByText('決算書と IR の異変を探して、8 社連続で見抜け')).toBeVisible();
+  await startGame(page, SEED + 1);
+  await page.getByTestId('to-title').click();
+  await page.getByRole('button', { name: 'タイトルへ戻る' }).click();
+  await page.getByRole('button', { name: 'はじめる' }).click();
+  await page.getByRole('button', { name: 'やさしい' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'intro');
+  await expect(page.getByTestId('intro-slip').getByRole('heading', { name: '閲覧票' })).toBeVisible();
+});
+
+test('E35: 見本は 2 つの難易度で同じ内容。2 回目の「むずかしい」では出ない', async ({ page }) => {
+  await page.goto(`/?seed=${SEED}`);
+  await page.getByRole('button', { name: 'はじめる' }).click();
+  await page.getByRole('button', { name: 'やさしい' }).click();
+  const easyNote = await page.getByTestId('sample-note').innerText();
+  await page.getByRole('button', { name: '始める' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await page.getByRole('button', { name: '難易度を選び直す' }).click();
+  await page.getByRole('button', { name: 'むずかしい' }).click();
+  expect(await page.getByTestId('sample-note').innerText()).toBe(easyNote);
+  await page.getByRole('button', { name: '始める' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await page.getByRole('button', { name: '難易度を選び直す' }).click();
+  await page.getByRole('button', { name: 'むずかしい' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'intro');
+});
+
+test('E36: 8 社目まで段と時刻が進み (18:00〜翌 1:00)、8 社目で不正解のあと最初へ戻ると 18:00', async ({ page }) => {
+  await startGame(page, SEED);
+  const times = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '翌 0:00', '翌 1:00'];
+  for (let i = 0; i < 8; i++) {
+    await expect(app(page)).toHaveAttribute('data-stage', String(i));
+    await expect(page.getByTestId('time')).toHaveText(times[i]!);
+    await answer(page, i < 7);
+    if (i < 7) await nextCompany(page);
+  }
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await expect(page.getByText('8 社目まで進みました')).toBeVisible();
+  await expect(page.getByTestId('rewind')).toContainText('18:00');
+  await expect(app(page)).toHaveAttribute('data-stage', '0');
+});
+
+test('E37a: 印の照合: 印なしは見逃しだけ', async ({ page }) => {
+  const seed = seedWhere(isAnomaly('k-calc'));
+  await startGame(page, seed);
+  await judgeWith(page, '異変あり');
+  await expect(page.getByTestId('marks-match')).toContainText('当たり 0・外れ 0・見逃し 1');
+});
+
+test('E37b: 印の照合: 場所以外の印は外れ + 見逃し', async ({ page }) => {
+  const seed = seedWhere(isAnomaly('k-calc'));
+  await startGame(page, seed);
+  await page.locator('dd[data-path="tanshin.header.companyName"]').click();
+  await judgeWith(page, '異変あり');
+  await expect(page.getByTestId('marks-match')).toContainText('当たり 0・外れ 1・見逃し 1');
+});
+
+test('E38: クリアのあと「クリア 1 回」。動きを減らす設定では遷移の長さが 0s', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await startGame(page, SEED);
+  for (let i = 0; i < 8; i++) {
+    await answer(page, true);
+    if (i < 7) await nextCompany(page);
+  }
+  await page.getByRole('button', { name: '結果を見る' }).click();
+  await expect(page.getByTestId('record')).toContainText('クリア 1 回');
+  expect(await page.locator('.screen').first().evaluate((el) => getComputedStyle(el).transitionDuration)).toBe('0s');
+});

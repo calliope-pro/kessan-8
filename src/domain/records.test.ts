@@ -16,7 +16,7 @@ const answer = (rec = emptyRecords(), o: Partial<Parameters<typeof recordAnswer>
 
 describe('記録', () => {
   it('UC1: 空の記録', () => {
-    for (const d of ['easy', 'hard'] as const) expect(emptyRecords()[d]).toEqual({ best: 0, clears: 0, kinds: [], history: [] });
+    for (const d of ['easy', 'hard'] as const) expect(emptyRecords()[d]).toEqual({ best: 0, bestBefore: 0, clears: 0, kinds: [], history: [] });
   });
 
   it('UC2: やさしいの 3 社目 (round 2) で答えると、やさしいの最高到達が 3。むずかしいは変わらない', () => {
@@ -31,6 +31,17 @@ describe('記録', () => {
     expect(r.easy.best).toBe(8);
     expect(answer(emptyRecords(), { round: 7, correct: false }).easy.clears).toBe(0);
     expect(answer(emptyRecords(), { round: 6, correct: true }).easy.clears).toBe(0);
+  });
+
+  it('UC10: bestBefore は、直前の判定の前の最高到達。往復し、無い古い値は 0', () => {
+    let r = answer(emptyRecords(), { round: 2 });
+    expect(r.easy).toMatchObject({ best: 3, bestBefore: 0 });
+    r = answer(answer(emptyRecords(), { round: 4 }), { round: 1 });
+    expect(r.easy).toMatchObject({ best: 5, bestBefore: 5 });
+    expect(parseRecords(stringifyRecords(r)).easy.bestBefore).toBe(5);
+    const old = JSON.parse(stringifyRecords(r)) as { easy: Record<string, unknown> };
+    delete old.easy.bestBefore;
+    expect(parseRecords(JSON.stringify(old)).easy.bestBefore).toBe(0);
   });
 
   it('UC4: 最高到達 5 のあとに 3 社目で答えても、5 のまま', () => {

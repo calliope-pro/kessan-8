@@ -12,6 +12,14 @@ describe('固定の文言', () => {
     expect(all.filter((s) => s.includes('番出口') || s.includes('8番') || s.includes('８番'))).toEqual([]);
   });
 
+  it('UT6: 副題は決めた文。「見逃さ」「見逃す」を使わない。説明に舞台 (資料室・閲覧票) がある', () => {
+    expect(MESSAGES.subtitle).toBe('決算書と IR の異変を探して、8 社連続で見抜け');
+    expect(flatten(MESSAGES).filter((s) => s.includes('見逃さ') || s.includes('見逃す'))).toEqual([]);
+    expect(MESSAGES.tagline).toContain('資料室');
+    expect(MESSAGES.tagline).toContain('閲覧票');
+    expect(MESSAGES.intro.slip).toBe('閲覧票');
+  });
+
   it('ボタンの名前 (docs/test-cases/flow.md §0) がそろっている', () => {
     const b = MESSAGES.button;
     expect([b.start, b.help, b.easy, b.hard, b.sample, b.begin, b.skip, b.close, b.back, b.openDocs, b.judge, b.anomaly, b.normal, b.backToReading, b.next, b.result, b.restartRun, b.again, b.reselect, b.otherDifficulty, b.toTitle]).toEqual([

@@ -18,7 +18,7 @@ import type { Viewer, ViewerProps } from './viewer-port';
 export function mountApp(root: HTMLElement, deps: AppDeps): void {
   let state: GameState = loadState(deps.session, deps.pools.byId) ?? initialState;
   let records = loadRecords(deps.local);
-  const local: Local = { screen: 'main', sampleMode: 'browse', sampleFrom: 'difficulty', pending: undefined, sampleView: FIRST_VIEW, confirm: false, panel: false, placeIndex: 0, bestBefore: 0 };
+  const local: Local = { screen: 'main', sampleMode: 'browse', sampleFrom: 'difficulty', pending: undefined, sampleView: FIRST_VIEW, confirm: false, panel: false, placeIndex: 0 };
 
   // 出題できるか (プールが、両方を持つ会社 8 社以上の条件を満たすか)。問題が置かれるまでは「準備中」
   const availability = new Map<Difficulty, boolean>();
@@ -53,7 +53,6 @@ export function mountApp(root: HTMLElement, deps: AppDeps): void {
     const prev = state;
     const next = reduce(prev, action);
     if (next === prev) return;
-    if (prev.phase === 'reading' && next.phase === 'revealed') local.bestBefore = records[prev.difficulty].best;
     const nextRecords = recordTransition(records, prev, next);
     if (nextRecords !== records) {
       records = nextRecords;

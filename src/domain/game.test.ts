@@ -116,8 +116,8 @@ describe('状態遷移 reduce', () => {
     }
   });
 
-  it('UG9: 8 社目の NEXT で cleared (難易度を持つ)', () => {
-    expect(cleared()).toMatchObject({ phase: 'cleared', difficulty: 'easy' });
+  it('UG9: 8 社目の NEXT で cleared (難易度と、遊んだ 8 問を持つ)', () => {
+    expect(cleared()).toMatchObject({ phase: 'cleared', difficulty: 'easy', problems: eight(1) });
   });
 
   it('UG10: 不正解のあとの NEXT は ignored', () => {

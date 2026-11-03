@@ -29,6 +29,7 @@ export function introScreen(ctx: Ctx): HTMLElement {
   const company = ctx.companyOf(problem);
   return h('section', { class: 'screen stack', 'data-screen': 'intro' },
     applyCompanyColors(h('div', { class: 'slip-card', 'data-testid': 'intro-slip' },
+      h('h2', {}, M.intro.slip),
       h('strong', {}, M.intro.roundOf(run.round + 1, ROUNDS_TO_CLEAR)), pips(run.round),
       h('span', {}, `${M.intro.time} ${timeLabel(run.round)}`),
       h('h1', {}, h('span', { class: 'emblem', 'aria-hidden': 'true' }, company?.emblem ?? ''), ' ', company?.name ?? problem.tanshin.header.companyName),

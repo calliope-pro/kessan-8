@@ -2,8 +2,8 @@
 // 「８番出口」の言い回しは使わない (docs/requirements.md の題名の行)。
 export const MESSAGES = {
   title: '８期連続',
-  subtitle: '決算書の異変、見逃しません。',
-  tagline: '架空の会社の決算短信と IR スライドを読み、異変の「あり・なし」を 8 社連続で見抜けばクリア。',
+  subtitle: '決算書と IR の異変を探して、8 社連続で見抜け',
+  tagline: 'あなたは資料室で、決算の資料を閲覧票と照らす係。架空の会社の決算短信と IR スライドを読み、異変の「あり・なし」を 8 社連続で見抜けばクリアです。',
   button: {
     start: 'はじめる',
     help: '遊びかた',
@@ -50,6 +50,7 @@ export const MESSAGES = {
   intro: {
     roundOf: (round: number, total: number) => `${round} / ${total} 社目`,
     time: '時刻',
+    slip: '閲覧票',
   },
   reading: {
     band: (round: number, total: number) => `${round} / ${total} 社目`,

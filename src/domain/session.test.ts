@@ -35,8 +35,12 @@ describe('走行の保存', () => {
   });
 
   it('US1: cleared も往復する', () => {
-    const c: GameState = { phase: 'cleared', difficulty: 'hard', draws: 3 };
+    const c: GameState = { phase: 'cleared', difficulty: 'easy', draws: 3, problems: eight };
     expect(hydrate(serialize(c), lookup)).toEqual(c);
+    const bad = JSON.parse(serialize(c)) as Record<string, unknown>;
+    expect(hydrate(JSON.stringify({ ...bad, problemIds: (bad.problemIds as string[]).slice(0, 7) }), lookup)).toBeUndefined();
+    expect(hydrate(JSON.stringify({ ...bad, problemIds: ['no-such-id', ...(bad.problemIds as string[]).slice(1)] }), lookup)).toBeUndefined();
+    expect(hydrate(JSON.stringify({ ...bad, problemIds: undefined }), lookup)).toBeUndefined();
   });
 
   it('US2: 保存した文字列は問題の本体を含まない (reading で 2 KiB 未満)', () => {

@@ -38,6 +38,8 @@ export interface Revealed extends Run {
 export interface Cleared extends Base {
   phase: 'cleared';
   difficulty: Difficulty;
+  /** 遊んだ 8 問 (完了票に 8 社の社章・社名を出す)。 */
+  problems: Problem[];
 }
 export type GameState = Title | PickDifficulty | Reading | Revealed | Cleared;
 
@@ -93,7 +95,7 @@ export function reduce(state: GameState, action: Action): GameState {
     }
     case 'NEXT': {
       if (state.phase !== 'revealed' || !state.correct) return state;
-      if (state.round + 1 >= ROUNDS_TO_CLEAR) return { phase: 'cleared', draws: state.draws, difficulty: state.difficulty };
+      if (state.round + 1 >= ROUNDS_TO_CLEAR) return { phase: 'cleared', draws: state.draws, difficulty: state.difficulty, problems: state.problems };
       return { phase: 'reading', draws: state.draws, difficulty: state.difficulty, problems: state.problems, round: state.round + 1, view: FIRST_VIEW, marks: [] };
     }
     case 'RESTART':

@@ -12,6 +12,8 @@ export const RECORDS_VERSION = 1;
 export interface DifficultyRecord {
   /** 最高の到達社数 (`round + 1` の最大)。 */
   best: number;
+  /** 直前の判定の前の最高到達 (最初へ戻る画面の「自己ベスト」を、再読み込みしても正しく出すため)。 */
+  bestBefore: number;
   clears: number;
   /** 「異変あり」と正しく判定した問題の異変の種類 ID (重複なし)。見逃して答え合わせで見ただけの種類は入れない。 */
   kinds: string[];
@@ -25,7 +27,7 @@ export interface Records {
   sampleSeen: Record<Difficulty, boolean>;
 }
 
-const emptyDifficulty = (): DifficultyRecord => ({ best: 0, clears: 0, kinds: [], history: [] });
+const emptyDifficulty = (): DifficultyRecord => ({ best: 0, bestBefore: 0, clears: 0, kinds: [], history: [] });
 export const emptyRecords = (): Records => ({ easy: emptyDifficulty(), hard: emptyDifficulty(), sampleSeen: { easy: false, hard: false } });
 
 export interface AnswerEvent {
@@ -42,6 +44,7 @@ export function recordAnswer(rec: Records, e: AnswerEvent): Records {
   const kind = e.problem.anomaly && e.answer === 'anomaly' ? e.problem.anomaly.kind : undefined;
   const next: DifficultyRecord = {
     best: Math.max(d.best, e.round + 1),
+    bestBefore: d.best,
     clears: d.clears + (e.correct && e.round + 1 >= ROUNDS_TO_CLEAR ? 1 : 0),
     kinds: kind !== undefined && !d.kinds.includes(kind) ? [...d.kinds, kind] : d.kinds,
     history: [...d.history.filter((id) => id !== e.problem.id), e.problem.id],
@@ -68,7 +71,7 @@ function parseDifficulty(x: unknown): DifficultyRecord | undefined {
   if (typeof x !== 'object' || x === null) return undefined;
   const v = x as Record<string, unknown>;
   return isCount(v.best) && isCount(v.clears) && isStrings(v.kinds) && isStrings(v.history)
-    ? { best: v.best, clears: v.clears, kinds: v.kinds, history: v.history }
+    ? { best: v.best, bestBefore: isCount(v.bestBefore) ? v.bestBefore : 0, clears: v.clears, kinds: v.kinds, history: v.history }
     : undefined;
 }
 

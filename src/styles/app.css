@@ -35,6 +35,10 @@ body { padding: 0; }
 .emblem { display: inline-block; min-width: 1.6em; text-align: center; padding: 0 4px; border-radius: 4px; color: var(--company-main, #1b1b1b); background: #fffdf7; border: 1px solid var(--company-main, #5d5a55); font-weight: 700; }
 .slip-card { display: grid; gap: 4px; padding: 12px 16px; background: var(--company-light, #fffdf7); color: #1b1b1b; border: 2px dashed var(--company-main, #5d5a55); border-radius: 8px; box-shadow: 0 2px 6px rgb(0 0 0 / 0.3); }
 
+/* V1・SC0-8 資料室の入口の背景 (CSS だけ。画像は使わない): 扉の枠と、閲覧票を置く机の面 */
+.entrance { height: 72px; border-radius: 8px 8px 0 0; background: linear-gradient(90deg, #4e342e 0 10%, #6d4c41 10% 90%, #4e342e 90%); border-bottom: 10px solid #3e2723; position: relative; box-shadow: 0 2px 6px rgb(0 0 0 / 0.3); }
+.entrance::after { content: ''; position: absolute; left: 50%; top: 10px; bottom: 0; width: 40%; transform: translateX(-50%); background: linear-gradient(#fbefc9, #e2d1aa); border-radius: 4px 4px 0 0; }
+
 /* 判定のパネル (下から開くシート) */
 .sheet-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); z-index: 20; }
 .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; padding: 16px; background: #fffdf7; color: #1b1b1b; border-top: 3px solid #1b1b1b; display: flex; flex-direction: column; gap: 8px; max-width: 960px; margin: 0 auto; }

@@ -21,6 +21,7 @@ function footer(): HTMLElement {
 export function titleScreen(ctx: Ctx): HTMLElement {
   const lines = (['easy', 'hard'] as const).map((d) => recordLine(ctx.records, d)).filter((s) => s !== '');
   return h('section', { class: 'screen stack', 'data-screen': 'title' },
+    h('div', { class: 'entrance', 'data-testid': 'entrance', 'aria-hidden': 'true' }),
     h('h1', {}, M.title),
     h('p', { class: 'lead' }, M.subtitle),
     h('p', {}, M.tagline),
