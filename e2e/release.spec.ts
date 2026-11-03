@@ -9,7 +9,7 @@ for (const width of [320, 375, 1280]) {
     await expect(note).toBeVisible();
     await expect(page.getByText('投資判断の助言ではありません')).toBeVisible();
     const size = await note.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(size).toBeGreaterThanOrEqual(14);
+    expect(size).toBeGreaterThanOrEqual(16); // 本文と同じ 16 px 以上 (experience.md SC0-6)
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });
 }

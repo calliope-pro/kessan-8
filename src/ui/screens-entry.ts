@@ -14,7 +14,7 @@ function recordLine(rec: Records, difficulty: Difficulty): string {
 
 function footer(): HTMLElement {
   return h('footer', { class: 'note stack' },
-    h('p', {}, M.footer.disclaimer),
+    h('p', { class: 'disclaimer' }, M.footer.disclaimer),
     h('p', {}, M.footer.license, ' ', h('a', { href: M.footer.repo, rel: 'noopener noreferrer' }, 'kessan-8')));
 }
 
