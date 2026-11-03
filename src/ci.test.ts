@@ -52,8 +52,8 @@ describe('.github/workflows/ci.yml', () => {
     expect(yml).not.toContain('secrets.');
   });
 
-  it('C3: job check の手順は ci → typecheck → test → build → check:size の順', () => {
-    const at = indexOfAll(jobs()['check'] ?? '', ['npm ci', 'npm run typecheck', 'npm test', 'npm run build', 'npm run check:size']);
+  it('C3: job check の手順は ci → typecheck → test → verify:data → build → check:size の順', () => {
+    const at = indexOfAll(jobs()['check'] ?? '', ['npm ci', 'npm run typecheck', 'npm test', 'npm run verify:data', 'npm run build', 'npm run check:size']);
     expect(at.every((i) => i >= 0)).toBe(true);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
   });
