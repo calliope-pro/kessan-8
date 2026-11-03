@@ -165,6 +165,8 @@ def generate(seed, plausible_drivers=True):
         return pct(a - b, b) if b else None
 
     summary = {
+        "売上高": pl1["売上高"], "営業利益": pl1["営業利益"], "経常利益": pl1["経常利益"],
+        "親会社株主に帰属する当期純利益": parent, "総資産": b1["資産合計"], "純資産": b1["純資産合計"],
         "売上高増減率": g_(pl1["売上高"], pl0["売上高"]),
         "営業利益増減率": g_(pl1["営業利益"], pl0["営業利益"]) if pl0["営業利益"] > 0 else None,
         "経常利益増減率": g_(pl1["経常利益"], pl0["経常利益"]) if pl0["経常利益"] > 0 else None,
