@@ -335,6 +335,9 @@ if __name__ == '__main__':
     ms = staged_summary(measured=True)
     print(f"  段階公開: 2 回目 {ms['stage2_total']:.1f} h・合計 {ms['total']:.1f} h・完成までの経路 {ms['elapsed']:.1f} h")
     print('  プール 25 問/難易度の追加 (+20 問):', ' '.join(f'{k} {pool_extension_hours(k, 20, True):.1f}h' for k in 'AB'))
-    for k, tv in (('A', 1.0), ('B', 1.0), ('C', T_MEASURED_MID)):
-        lo, hi = ai_range(k, tv)
-        print(f"  AI の利用枠 (出力トークン) 案 {k}: {lo/1e6:.1f}〜{hi/1e6:.1f} 百万" + ('' if k != 'C' else ' (上限は t = 1)'))
+    for k in 'AB':
+        lo, hi = ai_range(k)
+        print(f"  AI の利用枠 (出力トークン) 案 {k}: {lo/1e6:.1f}〜{hi/1e6:.1f} 百万")
+    lo, _ = ai_range('C', T_MEASURED_MID)
+    _, hi = ai_range('C', 1.0)
+    print(f"  AI の利用枠 (出力トークン) 案 C: {lo/1e6:.1f}〜{hi/1e6:.1f} 百万 (下限は t = {T_MEASURED_MID}、上限は t = 1)")
