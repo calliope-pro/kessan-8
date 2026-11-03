@@ -1,0 +1,187 @@
+[
+  {
+    "id": "c01",
+    "name": "ミオトリ精機株式会社",
+    "securitiesCode": "0801",
+    "industry": "精密機器",
+    "segmentNames": [
+      "装置事業",
+      "部品事業",
+      "保守サービス事業"
+    ],
+    "fiscalYearEndMonth": 3,
+    "irUnit": "百万円",
+    "emblem": "◆",
+    "colors": {
+      "main": "#1F4E79",
+      "light": "#E6EEF5"
+    },
+    "business": "工場向けの位置決め装置と部品を作り、保守サービスも手がける会社"
+  },
+  {
+    "id": "c02",
+    "name": "クレセラ食品株式会社",
+    "securitiesCode": "0802",
+    "industry": "食料品",
+    "segmentNames": [
+      "家庭用事業",
+      "業務用事業"
+    ],
+    "fiscalYearEndMonth": 3,
+    "irUnit": "百万円",
+    "emblem": "●",
+    "colors": {
+      "main": "#A8431A",
+      "light": "#F8EBE5"
+    },
+    "business": "冷凍の惣菜や乳製品を、家庭用と業務用に作って売る会社"
+  },
+  {
+    "id": "c03",
+    "name": "ソルベリマート株式会社",
+    "securitiesCode": "0803",
+    "industry": "小売業",
+    "segmentNames": [
+      "食品小売事業",
+      "衣料・生活雑貨事業",
+      "テナント・金融事業"
+    ],
+    "fiscalYearEndMonth": 2,
+    "irUnit": "億円",
+    "emblem": "■",
+    "colors": {
+      "main": "#0B6E4F",
+      "light": "#E4F1EC"
+    },
+    "business": "食品や衣料、生活雑貨の店を運営し、テナントへの貸出も行う会社"
+  },
+  {
+    "id": "c04",
+    "name": "ゼノメアシステムズ株式会社",
+    "securitiesCode": "0804",
+    "industry": "情報・通信業",
+    "segmentNames": [
+      "クラウド事業",
+      "受託開発事業"
+    ],
+    "fiscalYearEndMonth": 9,
+    "irUnit": "百万円",
+    "emblem": "▲",
+    "colors": {
+      "main": "#5B3FA8",
+      "light": "#EEEAF7"
+    },
+    "business": "企業向けの業務ソフトをクラウドで提供し、受託開発も行う会社"
+  },
+  {
+    "id": "c05",
+    "name": "ブルネラ製薬株式会社",
+    "securitiesCode": "0805",
+    "industry": "医薬品",
+    "segmentNames": [
+      "医療用医薬品事業",
+      "一般用医薬品事業"
+    ],
+    "fiscalYearEndMonth": 12,
+    "irUnit": "億円",
+    "emblem": "✚",
+    "colors": {
+      "main": "#A3243B",
+      "light": "#F7E7EA"
+    },
+    "business": "病院で使う医療用医薬品と、薬局で買える一般用医薬品を作る会社"
+  },
+  {
+    "id": "c06",
+    "name": "トラウネ建設株式会社",
+    "securitiesCode": "0806",
+    "industry": "建設業",
+    "segmentNames": [
+      "建築事業",
+      "土木事業",
+      "開発事業"
+    ],
+    "fiscalYearEndMonth": 3,
+    "irUnit": "億円",
+    "emblem": "⬢",
+    "colors": {
+      "main": "#7A4B00",
+      "light": "#F3EBDD"
+    },
+    "business": "建築と土木の工事を請け負い、開発事業も行う会社"
+  },
+  {
+    "id": "c07",
+    "name": "ザルツァ運輸株式会社",
+    "securitiesCode": "0807",
+    "industry": "陸運業",
+    "segmentNames": [
+      "貨物輸送事業",
+      "倉庫・センター運営事業"
+    ],
+    "fiscalYearEndMonth": 6,
+    "irUnit": "百万円",
+    "emblem": "◐",
+    "colors": {
+      "main": "#12687A",
+      "light": "#E3F0F2"
+    },
+    "business": "トラックで荷物を運ぶ貨物輸送と、倉庫・物流センターの運営を行う会社"
+  },
+  {
+    "id": "c08",
+    "name": "セレニア不動産株式会社",
+    "securitiesCode": "0808",
+    "industry": "不動産業",
+    "segmentNames": [
+      "賃貸事業",
+      "分譲事業",
+      "管理事業"
+    ],
+    "fiscalYearEndMonth": 12,
+    "irUnit": "億円",
+    "emblem": "◇",
+    "colors": {
+      "main": "#3D4A5C",
+      "light": "#E7EAEE"
+    },
+    "business": "オフィスビルや住宅の賃貸と分譲を行い、管理も請け負う会社"
+  },
+  {
+    "id": "c09",
+    "name": "キュルネ教育株式会社",
+    "securitiesCode": "0809",
+    "industry": "サービス業",
+    "segmentNames": [
+      "学習塾事業",
+      "通信講座事業"
+    ],
+    "fiscalYearEndMonth": 3,
+    "irUnit": "百万円",
+    "emblem": "★",
+    "colors": {
+      "main": "#A12B7C",
+      "light": "#F6E6F0"
+    },
+    "business": "学習塾を運営し、自宅で学べる通信講座も提供する会社"
+  },
+  {
+    "id": "c10",
+    "name": "ヨクトス商事株式会社",
+    "securitiesCode": "0810",
+    "industry": "卸売業",
+    "segmentNames": [
+      "機械・資材事業",
+      "食品原料事業",
+      "化成品事業"
+    ],
+    "fiscalYearEndMonth": 3,
+    "irUnit": "億円",
+    "emblem": "▼",
+    "colors": {
+      "main": "#5C6B1E",
+      "light": "#EDF0E2"
+    },
+    "business": "機械・資材、食品原料、化成品を国内外で仕入れて販売する会社"
+  }
+]
