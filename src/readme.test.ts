@@ -32,10 +32,11 @@ describe('README', () => {
     expect(existsSync('LICENSE')).toBe(true);
   });
 
-  it('UD5: 公開 URL の項は、公開前は未記入と分かる。実在しない URL を書かない', () => {
+  it('UD5: 公開 URL の項は、引き取りのあとに入れると分かる (いまの公開は一時的な URL)。一時的な URL・実在しない URL を書かない', () => {
     const section = readme.split(/^## /m).find((s) => s.startsWith('公開 URL')) ?? '';
-    expect(section).toContain('公開したら');
+    expect(section).toContain('引き取りのあと');
     expect(readme).not.toContain('vercel.app');
+    expect(readme).not.toContain('tmp.now');
   });
 
   it('UD6: 「８番出口」の語を含まない', () => {
