@@ -343,7 +343,7 @@
         "annualDividend": 0
       },
       "actual": {
-        "netSales": 45572.8,
+        "netSales": 45573,
         "operatingIncome": 990,
         "capex": 2087,
         "depreciation": 1904
@@ -426,7 +426,7 @@
         "path": "incomeStatement.current.netSales"
       }
     ],
-    "explanation": "IR スライド (見通し) が比較に使っている当期の売上高は 45,572.8 百万円 ですが、決算短信の損益計算書の当期の売上高は 43,820 百万円 (43,820.0 百万円) です。見通しの比較の基準が違っています。",
+    "explanation": "IR スライド (見通し) が比較に使っている当期の売上高は 45,573 百万円ですが、決算短信の損益計算書の当期の売上高は 43,820 百万円です。見通しの比較の基準が違っています。",
     "expectedRules": [
       "xdoc-outlook-actual-results"
     ]

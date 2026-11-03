@@ -436,7 +436,7 @@
         "path": "notes.segments.current.segments.1.profit"
       }
     ],
-    "explanation": "IR スライド (セグメント別) の一般用医薬品事業の利益は 12.2 億円 ですが、決算短信の注記のセグメント情報では 1,110 百万円 (11.1 億円) です。数字の並びが入れ替わっています。",
+    "explanation": "IR スライド (セグメント別) の一般用医薬品事業の利益は 12.2 億円ですが、決算短信の注記のセグメント情報では 1,110 百万円 (11.1 億円) です。数字の並びが入れ替わっています。",
     "expectedRules": [
       "ir-seg-reconcile",
       "xdoc-seg-profit"

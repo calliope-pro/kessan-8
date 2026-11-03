@@ -429,15 +429,15 @@
     "places": [
       {
         "doc": "tanshin",
+        "path": "balanceSheet.current.payables"
+      },
+      {
+        "doc": "tanshin",
         "path": "balanceSheet.current.totalAssets"
       },
       {
         "doc": "tanshin",
         "path": "balanceSheet.current.totalLiabilitiesAndNetAssets"
-      },
-      {
-        "doc": "tanshin",
-        "path": "cashFlow.payablesChange"
       }
     ],
     "explanation": "貸借対照表の資産合計は 12,662 百万円ですが、負債純資産合計は 12,742 百万円で、差は 80 です (どの小計も内訳の和と合っています)。貸借対照表は、資産の合計と、負債と純資産の合計が必ず一致します。買掛金が 80 多く書かれています。",

@@ -7,6 +7,10 @@ import { roundHalfAway as rh } from '../../src/verifier/math.ts';
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const n = (v) => Number(v).toLocaleString('ja-JP');
 const fmt1 = (v) => Number(v).toLocaleString('ja-JP', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** IR の単位に合わせて表示: 億円は小数第一位、百万円は整数。 */
+const fu = (v, unit) => (unit === '億円' ? fmt1(v) : n(v));
+/** 負の数は △ を付ける (資料の標準)。 */
+const sg = (v) => (v < 0 ? `△${n(-v)}` : n(v));
 const touches = (a, b) => a === b || a.startsWith(`${b}.`) || b.startsWith(`${a}.`);
 
 /** 貸借対照表の小計・合計を、内訳から再計算する。 */
@@ -87,7 +91,7 @@ export const INJECTORS = {
       q.ir.segments.adjustment[k] = (Math.round(oi * 10) - sum10) / 10;
     }
     return {
-      focus: [{ doc: 'ir', path: 'segments.items' }],
+      focus: [{ doc: 'ir', path: 'segments.items' }, { doc: 'tanshin', path: 'notes.segments.current.segments' }],
       explanation: `決算短信の注記のセグメントは ${q.tanshin.notes.segments.current.segments.length} つ (${q.tanshin.notes.segments.current.segments.map((s) => s.name).join('・')}) ですが、IR スライドのセグメント別には ${items.length} つしか載っていません。${dropped.name}が欠けています。`,
     };
   },
@@ -101,6 +105,7 @@ export const INJECTORS = {
     b.totalLiabilitiesAndNetAssets += d;
     return {
       focus: [
+        { doc: 'tanshin', path: 'balanceSheet.current.payables' },
         { doc: 'tanshin', path: 'balanceSheet.current.totalAssets' },
         { doc: 'tanshin', path: 'balanceSheet.current.totalLiabilitiesAndNetAssets' },
       ],
@@ -114,7 +119,7 @@ export const INJECTORS = {
     const unit = q.ir.header.unit;
     return {
       focus: [{ doc: 'ir', path: 'highlights.netSales.amount' }, { doc: 'tanshin', path: 'incomeStatement.current.netSales' }],
-      explanation: `IR スライド (ハイライト) の売上高は ${fmt1(swapped)} ${unit} ですが、決算短信の損益計算書の売上高は ${n(q.tanshin.incomeStatement.current.netSales)} 百万円 (${fmt1(a)} ${unit}) です。数字の並びが入れ替わっています。`,
+      explanation: `IR スライド (ハイライト) の売上高は ${fu(swapped, unit)} ${unit}ですが、決算短信の損益計算書の売上高は ${n(q.tanshin.incomeStatement.current.netSales)} 百万円 (${fu(a, unit)} ${unit}) です。数字の並びが入れ替わっています。`,
     };
   },
   'H-17': (q) => {
@@ -157,7 +162,7 @@ export const INJECTORS = {
     const b1 = q.tanshin.balanceSheet.current.receivables;
     return {
       focus: [{ doc: 'tanshin', path: 'cashFlow.receivablesChange' }],
-      explanation: `売掛金は ${n(b0)} 百万円から ${n(b1)} 百万円に${b1 > b0 ? '増えた' : '減った'}ので、キャッシュ・フロー計算書の「売上債権の増減額」は ${n(was)} (${was < 0 ? '資金が減る' : '資金が増える'}) と書くはずですが、${n(cf.receivablesChange)} と書かれています。符号が逆です。`,
+      explanation: `売掛金は ${n(b0)} 百万円から ${n(b1)} 百万円に${b1 > b0 ? '増えた' : '減った'}ので、キャッシュ・フロー計算書の「売上債権の増減額」は ${sg(was)} (${was < 0 ? '資金が減る' : '資金が増える'}) と書くはずですが、${sg(cf.receivablesChange)} と書かれています。符号が逆です。`,
     };
   },
   'H-06': (q) => {
@@ -169,7 +174,7 @@ export const INJECTORS = {
     const b1 = q.tanshin.balanceSheet.current.inventories;
     return {
       focus: [{ doc: 'tanshin', path: 'cashFlow.inventoriesChange' }],
-      explanation: `棚卸資産は ${n(b0)} 百万円から ${n(b1)} 百万円に${b1 > b0 ? '増えた' : '減った'}ので、キャッシュ・フロー計算書の「棚卸資産の増減額」は ${n(was)} (${was < 0 ? '資金が減る' : '資金が増える'}) のはずですが、${n(cf.inventoriesChange)} と書かれています。符号が逆です。`,
+      explanation: `棚卸資産は ${n(b0)} 百万円から ${n(b1)} 百万円に${b1 > b0 ? '増えた' : '減った'}ので、キャッシュ・フロー計算書の「棚卸資産の増減額」は ${sg(was)} (${was < 0 ? '資金が減る' : '資金が増える'}) のはずですが、${sg(cf.inventoriesChange)} と書かれています。符号が逆です。`,
     };
   },
   'H-15': (q) => {
@@ -180,19 +185,18 @@ export const INJECTORS = {
     const t = q.tanshin.notes.segments.current.segments[1];
     return {
       focus: [{ doc: 'ir', path: 'segments.items.1.profit.current' }, { doc: 'tanshin', path: 'notes.segments.current.segments.1.profit' }],
-      explanation: `IR スライド (セグメント別) の${it.name}の利益は ${fmt1(it.profit.current)} ${unit} ですが、決算短信の注記のセグメント情報では ${n(t.profit)} 百万円 (${fmt1(was)} ${unit}) です。数字の並びが入れ替わっています。`,
+      explanation: `IR スライド (セグメント別) の${it.name}の利益は ${fu(it.profit.current, unit)} ${unit}ですが、決算短信の注記のセグメント情報では ${n(t.profit)} 百万円 (${fu(was, unit)} ${unit}) です。数字の並びが入れ替わっています。`,
     };
   },
   'H-16': (q) => {
     const o = q.ir.outlook;
     const was = o.actual.netSales;
-    const wasScaled = Math.round(was * 10);
-    o.actual.netSales = Math.round(wasScaled * 1.04) / 10;
-    o.forecast.netSalesChangeRate = rh((Math.round(o.forecast.netSales * 10) - Math.round(o.actual.netSales * 10)) * 1000, Math.round(o.actual.netSales * 10)) / 10;
     const unit = q.ir.header.unit;
+    o.actual.netSales = unit === '億円' ? Math.round(was * 10 * 1.04) / 10 : Math.round(was * 1.04);
+    o.forecast.netSalesChangeRate = rh((Math.round(o.forecast.netSales * 10) - Math.round(o.actual.netSales * 10)) * 1000, Math.round(o.actual.netSales * 10)) / 10;
     return {
       focus: [{ doc: 'ir', path: 'outlook.actual.netSales' }, { doc: 'tanshin', path: 'incomeStatement.current.netSales' }],
-      explanation: `IR スライド (見通し) が比較に使っている当期の売上高は ${fmt1(o.actual.netSales)} ${unit} ですが、決算短信の損益計算書の当期の売上高は ${n(q.tanshin.incomeStatement.current.netSales)} 百万円 (${fmt1(was)} ${unit}) です。見通しの比較の基準が違っています。`,
+      explanation: `IR スライド (見通し) が比較に使っている当期の売上高は ${fu(o.actual.netSales, unit)} ${unit}ですが、決算短信の損益計算書の当期の売上高は ${n(q.tanshin.incomeStatement.current.netSales)} 百万円${unit === '億円' ? ` (${fu(was, unit)} ${unit})` : ''}です。見通しの比較の基準が違っています。`,
     };
   },
   'H-23': (q) => {
