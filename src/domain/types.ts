@@ -41,9 +41,7 @@ export interface Company {
   fiscalYearEndMonth: number;
   /** 事業の説明 1 文 (導入の 1 行の出所。数字・増減の語を含めない)。UX の部品 P2 を採るとき必須。 */
   business?: string;
-  /** 業種の配色 ID。UX の部品 V3 を採るとき必須。 */
-  palette?: string;
-  /** 社章の幾何形の指定 (形の名前とパラメータ)。生成は純粋な関数。UX の部品 V3 を採るとき必須。 */
+  /** 社章の幾何形の指定 (形の名前とパラメータ)。生成は純粋な関数。配色は industry から引く表 (ui の定数) で、ここには持たない。UX の部品 V3 を採るとき必須。 */
   emblem?: { shape: string; params?: number[] };
 }
 

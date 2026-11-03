@@ -7,6 +7,8 @@
 | 生成した正常データの整合・通過率・変異 (#10) | `python3 run.py 20000` | gen-measure.md |
 | 異変の注入 (#10) | `python3 inject.py 200` | gen-measure.md |
 | 案 B/C の総工数の再計算・逆転の判定 (#11) | `python3 reversal.py` | ../tech-assessment.md §3 |
+| UX 部品のスマホ幅の測定 (#41) | `python3 ux-mobile.py <出力ディレクトリ>` のあと Chrome (ux-mobile.py の冒頭の手順) | ../ux-tech-assessment.md §2 |
+| 難しさの段を入れた出題の手順の比較 (#41) | `python3 draw-tiers.py 400 50` | ../ux-tech-assessment.md §6-6 |
 | IR スライドが短信と整合するか (#14) | `python3 check_ir.py` | hand-q01-measure.md |
 | 問題データの転送量 (#11・#14) | `python3 transfer.py` | ../tech-assessment.md §2 #4 |
 | スマホ幅の表示 (#11) | 下 | ../tech-assessment.md §2 #3 |
