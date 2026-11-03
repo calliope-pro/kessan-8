@@ -153,7 +153,10 @@ export interface CashFlow {
   otherInvestingChange: number;
   investingCashFlow: number;
   shortTermDebtChange: number;
-  longTermDebtChange: number;
+  /** 長期借入れによる収入 (正)。財務活動の長期借入金は収入と支出を総額で別の行に出す (anomalies.md G4)。 */
+  longTermBorrowings: number;
+  /** 長期借入金の返済による支出 (負)。 */
+  longTermRepayments: number;
   dividendsPaid: number;
   financingCashFlow: number;
   fxEffect: number;
@@ -212,8 +215,12 @@ export interface Tanshin {
     equityRatio: number;
     bps: number;
     annualDividend: number;
+    /** 当期の中間配当 (1 株当たり、円。中間配当を置かない会社は 0)。期末配当 = annualDividend − interimDividend。 */
+    interimDividend: number;
     /** 前期の年間配当金 (円)。 */
     annualDividendPrevious: number;
+    /** 前期の中間配当 (1 株当たり、円。無ければ 0)。前期の期末配当 = annualDividendPrevious − interimDividendPrevious。 */
+    interimDividendPrevious: number;
     /** 配当金総額 (百万円)。 */
     dividendTotal: number;
     payoutRatio: number;
@@ -245,6 +252,7 @@ export const CLAIM_METRICS = [
   'forecastNetSales',
   'forecastOperatingIncome',
   'dividend',
+  'operatingCashFlow',
   'interestBearingDebt',
 ] as const;
 export type ClaimMetric = (typeof CLAIM_METRICS)[number];

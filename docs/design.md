@@ -270,7 +270,10 @@ export interface CashFlow {
   otherInvestingChange: number;
   investingCashFlow: number;
   shortTermDebtChange: number;
-  longTermDebtChange: number;
+  /** 長期借入れによる収入 (正)。財務活動の長期借入金は収入と支出を総額で別の行に出す (anomalies.md G4)。 */
+  longTermBorrowings: number;
+  /** 長期借入金の返済による支出 (負)。 */
+  longTermRepayments: number;
   dividendsPaid: number;
   financingCashFlow: number;
   fxEffect: number;
@@ -329,8 +332,12 @@ export interface Tanshin {
     equityRatio: number;
     bps: number;
     annualDividend: number;
+    /** 当期の中間配当 (1 株当たり、円。中間配当を置かない会社は 0)。期末配当 = annualDividend − interimDividend。 */
+    interimDividend: number;
     /** 前期の年間配当金 (円)。 */
     annualDividendPrevious: number;
+    /** 前期の中間配当 (1 株当たり、円。無ければ 0)。前期の期末配当 = annualDividendPrevious − interimDividendPrevious。 */
+    interimDividendPrevious: number;
     /** 配当金総額 (百万円)。 */
     dividendTotal: number;
     payoutRatio: number;
@@ -362,6 +369,7 @@ export const CLAIM_METRICS = [
   'forecastNetSales',
   'forecastOperatingIncome',
   'dividend',
+  'operatingCashFlow',
   'interestBearingDebt',
 ] as const;
 export type ClaimMetric = (typeof CLAIM_METRICS)[number];
@@ -523,7 +531,13 @@ export interface Problem {
 
 **「多め」の閾値** (検証器が難易度ごとの異変の問題で確かめる。足りないときは `shortfalls`): やさしい = appearance + calculation が異変の問題の **8 割以上**、むずかしい = accounting + cross-document が **6 割以上**。数字は設計の既定 (anomalies.md の種類の数: やさしい 17 のうち見た目・計算 16、むずかしい 28 のうち会計・資料間 22 から、実現できる範囲に置いた)。
 
-**型を足して表せるようにしたもの** (種類 → 足した項目): E-03(a) 画面ごとの単位 → `unitOverrides`／E-03(b) 負の数の表記 → `signOverrides`／E-04 期・日付 → `dates`・`columnDates`／E-05・H-28 科目名 → `itemKey` の場所と `labelOverrides`／E-06・E-07 グラフ → `results.chart`／E-08 証券コード → `Company.securitiesCode`・`DocHeader.securitiesCode`／E-12 営業利益率 → `summary.operatingMargin`／E-16 配当金総額 → `summary.dividendTotal`／E-17・H-21 文章 → `ir.statements`・`summary.annualDividendPrevious`／H-11 ROE → `summary.roe`／H-12 自己資本 → `summary.equity`／H-17 単位換算 → `Company.irUnit`／H-19 セグメント欠け → セグメントを配列に (2〜3)／H-22 → `summary.auditNote`／H-23 → `summary.accountingPolicyChange`・`notes.accountingPolicyNote`／H-24 → `outlook.subsequentEvent`。落ちるべき規則は `anomaly.expectedRules`。
+**型を足して表せるようにしたもの** (種類 → 足した項目): E-03(a) 画面ごとの単位 → `unitOverrides`／E-03(b) 負の数の表記 → `signOverrides`／E-04 期・日付 → `dates`・`columnDates`／E-05・H-28 科目名 → `itemKey` の場所と `labelOverrides`／E-06・E-07 グラフ → `results.chart`／E-08 証券コード → `Company.securitiesCode`・`DocHeader.securitiesCode`／E-12 営業利益率 → `summary.operatingMargin`／E-16 配当金総額 → `summary.dividendTotal`／G5・H-08 の配当と借入金 → `summary.interimDividend`・`interimDividendPrevious` (CF の配当金の支払額 = (前期の期末配当 + 当期の中間配当) × 株式数。anomalies.md G5)・`cashFlow.longTermBorrowings`・`longTermRepayments` (総額表示。G4)／E-17・H-21 文章 → `ir.statements`・`summary.annualDividendPrevious`／H-11 ROE → `summary.roe`／H-12 自己資本 → `summary.equity`／H-17 単位換算 → `Company.irUnit`／H-19 セグメント欠け → セグメントを配列に (2〜3)／H-22 → `summary.auditNote`／H-23 → `summary.accountingPolicyChange`・`notes.accountingPolicyNote`／H-24 → `outlook.subsequentEvent`。落ちるべき規則は `anomaly.expectedRules`。
+
+**規則 ID の対応**: `AnomalyKind.primaryRules`・`allowedRules` は、検証器 (Task #23) の規則 ID (英語。`docs/test-cases/validator.md` §1) で書く。anomalies.md の試作の ID (「連動-借入」など) との対応表は #23 が出す。存在しない ID は検証器が止める。
+
+**検証器が持つ非数値の規則** (数値の等式のほかに、種類の主な規則として要る。#23 の受け入れ条件): 単位の一貫 (画面ごとの単位が `header.unit` と同じ)・負の記号の一貫・科目名の辞書と科目と部の対応 (`labels.ts` ができてから)・グラフの軸の下端が 0 と棒の高さの比 = 数字の比・日付の順 (期末日 < 発表日 < 総会の日) と列見出し・文章の主張 (`statements.claims` の方向 = 短信の数字の動き)・監査の注意書き・会計方針の有無の対応 (summary と notes)・後発事象の対応 (notes と `outlook.subsequentEvent`)・証券コード・セグメントの数と名前の一致。
+
+**#40 に返す変更・お願い** (anomalies.md の側を直してもらうもの): ① T1 に連結キャッシュ・フローの要約と総資産経常利益率は出さない (型に持たない。§2 と E-15 の付随規則から外す) ② H-21 の主張は `CLAIM_METRICS` の 9 つの数字についてだけ書く。「無借金に近い」のような程度の語は主張にできない (`zero` は有利子負債が 0 のときだけ) ③ 配当は G5 のとおり、中間配当の有無を `interimDividend` で持つ。
 
 **問題に使わない種類として #40 に返すもの**: H-25 (継続企業の前提)・H-26 (売上の前倒しの疑い)・H-27 (在庫の水増しの疑い)。anomalies.md が確度 C (境界の判断が入る) とし、会計の分かる人の確認が済むまで使わないとしている種類で、型も検証器の規則も足さない (確認が済んで使うときは、規則を足すチケットを切る)。それ以外の 42 種類は、型の上で表せる。
 
