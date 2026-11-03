@@ -7,8 +7,8 @@ import kinds from './anomaly-kinds.json';
 import { FAMILY_DIFFICULTY } from '../domain/types';
 import type { AnomalyFamily } from '../domain/types';
 import { ANOMALY_RATIO } from '../domain/config';
-import { verifyProblem } from '../verifier/index';
-import type { Company, Problem } from '../domain/types';
+import { checkAnomaly, verifyDataset, verifyProblem } from '../verifier/index';
+import type { AnomalyKind, Company, Problem } from '../domain/types';
 
 interface Row {
   id: string;
@@ -202,6 +202,18 @@ describe('正常な問題の JSON (Sub-task #74)', () => {
     });
   });
 
+  it('J8: 決算発表日と株主総会の日は平日で、公開 (2026-11) より前 (日曜の決算発表などで、正常な問題が異変に見えない)', () => {
+    rows.forEach((r) => {
+      if (!existsSync(dataUrl(r.id))) return;
+      const d = load(r.id).tanshin.dates;
+      [d.disclosure, d.shareholdersMeeting].forEach((iso) => {
+        const day = new Date(`${iso}T00:00:00Z`).getUTCDay();
+        expect([0, 6].includes(day), `${r.id} ${iso}`).toBe(false);
+        expect(iso < '2026-11-01', `${r.id} ${iso}`).toBe(true);
+      });
+    });
+  });
+
   it('J6: 億円の会社の IR は、短信の百万円 ÷ 100 を小数第一位に四捨五入した値 (IR の売上高)', () => {
     normalRows.forEach((r) => {
       const p = load(r.id);
@@ -210,5 +222,83 @@ describe('正常な問題の JSON (Sub-task #74)', () => {
       const s = p.tanshin.incomeStatement.current.netSales;
       expect(p.ir.highlights.netSales.amount, r.id).toBe(unit === '億円' ? Math.round(s / 10) / 10 : s);
     });
+  });
+});
+
+// ── 異変の問題 (Sub-task #75・#76) ─────────────────────────────────────────────────
+describe('異変の問題の JSON (Sub-task #75)', () => {
+  const kindList = kinds as unknown as AnomalyKind[];
+  const anomalyRows = rows.filter((r) => r.kind !== null);
+  /** 数字を使う文言の種類 (答え合わせの文言に数字を含める。Anomaly.explanation の約束)。 */
+  const NUMERIC_KINDS = ['H-01', 'H-02', 'H-03', 'H-05', 'H-06', 'H-09', 'H-13', 'H-15', 'H-16', 'H-17', 'H-19', 'H-21', 'H-24'];
+
+  it('K1: 設計表の異変の 16 問が src/data/problems/hard/ にあり、id・難易度・会社・期・段・種類が設計表と同じ', () => {
+    expect(anomalyRows.length).toBe(16);
+    anomalyRows.forEach((r) => {
+      expect(existsSync(dataUrl(r.id)), r.id).toBe(true);
+      const p = load(r.id);
+      expect([p.id, p.difficulty, p.companyId, p.fiscalYear, p.tier]).toEqual([r.id, 'hard', r.company, r.fiscalYear, r.tier]);
+      expect(p.anomaly?.kind, r.id).toBe(r.kind);
+    });
+  });
+
+  it('K2: 異変は指定したところだけが破れている: 期待集合 = 実際に落ちた規則、主な規則を含む、許容集合に収まる、場所は実在し違反と対応する (検証器の checkAnomaly)', () => {
+    anomalyRows.forEach((r) => {
+      const p = load(r.id);
+      const result = verifyProblem(p, companyOf(r.company));
+      expect(checkAnomaly(p, kindList, result), r.id).toEqual([]);
+      expect(result.hard.length, r.id).toBeGreaterThan(0);
+    });
+  });
+
+  it('K3: 答え合わせの文言がある。数字を使う種類では、数字を含む。場所は 1 件以上', () => {
+    anomalyRows.forEach((r) => {
+      const a = load(r.id).anomaly as NonNullable<Problem['anomaly']>;
+      expect(a.explanation.trim().length, r.id).toBeGreaterThanOrEqual(30);
+      if (NUMERIC_KINDS.includes(r.kind as string)) expect(a.explanation, r.id).toMatch(/[0-9]/);
+      expect(a.places.length, r.id).toBeGreaterThan(0);
+    });
+  });
+
+  it('K4: 見た目の差し替えは H-28 の項目名だけ (単位・負の記号の差し替えは無い)', () => {
+    anomalyRows.forEach((r) => {
+      const p = load(r.id);
+      expect(p.unitOverrides, r.id).toBeUndefined();
+      expect(p.signOverrides, r.id).toBeUndefined();
+      if (r.kind === 'H-28') expect(p.labelOverrides).toEqual({ 'tanshin.balanceSheet.receivables': '買掛金' });
+      else expect(p.labelOverrides, r.id).toBeUndefined();
+    });
+  });
+
+  it('K5: 文章の異変 H-21 は、短信の別の画面を見ないと動きが分からない指標 (配当・営業 CF・有利子負債) の主張で、文は I1 (highlights) にある', () => {
+    const r = anomalyRows.find((x) => x.kind === 'H-21') as Row;
+    const p = load(r.id);
+    const added = p.ir.statements.at(-1) as Problem['ir']['statements'][number];
+    expect(added.slide).toBe('highlights');
+    added.claims.forEach((c) => expect(['dividend', 'operatingCashFlow', 'interestBearingDebt']).toContain(c.metric));
+  });
+
+  it('K6: 異変の系統は、会計 + 資料間が 6 割以上 (13/16)。注記は 3 つ。系統と難易度が合う', () => {
+    const fam = anomalyRows.map((r) => kindList.find((k) => k.id === r.kind)?.family);
+    expect(fam.filter((f) => f === 'accounting' || f === 'cross-document').length / fam.length).toBeGreaterThanOrEqual(0.6);
+    expect(fam.filter((f) => f === 'notes').length).toBe(3);
+  });
+});
+
+describe('むずかしいの問題の全体 (Sub-task #76)', () => {
+  const inputs = () =>
+    rows.map((r) => ({ file: `src/data/problems/hard/${r.id}.json`, value: JSON.parse(readFileSync(dataUrl(r.id), 'utf-8')) as unknown }));
+
+  it('A1: 32 問をデータ全件の検証 (verifyDataset) に通すと、致命が 0 件。むずかしいの数の不足 (問題数・両面の会社・異変の比・系統の偏り) も 0 件', () => {
+    const result = verifyDataset({ companies: companies as unknown[], kinds: kinds as unknown[], problems: inputs() });
+    expect(result.errors.map((e) => `${e.code} ${e.message}`)).toEqual([]);
+    expect(result.shortfalls.filter((s) => s.message.startsWith('hard:')).map((s) => s.message)).toEqual([]);
+    expect(result.soft.map((s) => `${s.code} ${s.message}`)).toEqual([]);
+    expect(result.stats.hard).toEqual({ total: 32, anomaly: 16, normal: 16 });
+  });
+
+  it('A2: 段の数が 11 : 9 : 5 の ±1 を 32 問に換算した値 (14 : 12 : 6) になっている (JSON の tier)', () => {
+    const tiers = rows.map((r) => (JSON.parse(readFileSync(dataUrl(r.id), 'utf-8')) as Problem).tier);
+    expect([1, 2, 3].map((t) => tiers.filter((x) => x === t).length)).toEqual([14, 12, 6]);
   });
 });

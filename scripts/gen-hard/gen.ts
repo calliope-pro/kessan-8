@@ -261,8 +261,10 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
   const y = spec.fiscalYear;
   const pe = new Date(Date.UTC(y, m - 1, lastDay(y, m)));
   const ppe = new Date(Date.UTC(y - 1, m - 1, lastDay(y - 1, m)));
-  const disc = new Date(pe.getTime() + 45 * 86400000);
-  const meet = new Date(pe.getTime() + 88 * 86400000);
+  // 発表日・総会の日は、土日なら次の平日にずらす (日曜の決算発表は不自然で、正常な問題が異変に見えるため)
+  const weekday = (d: Date) => { while ([0, 6].includes(d.getUTCDay())) d = new Date(d.getTime() + 86400000); return d; };
+  const disc = weekday(new Date(pe.getTime() + 45 * 86400000));
+  const meet = weekday(new Date(pe.getTime() + 88 * 86400000));
   const dates = { periodEnd: iso(pe), previousPeriodEnd: iso(ppe), disclosure: iso(disc), shareholdersMeeting: iso(meet) };
   const colDates = { previous: dates.previousPeriodEnd, current: dates.periodEnd };
   const periodLabel = `${y}年${m}月期`;
@@ -391,7 +393,7 @@ const TEXT = {
   highlights: (c: string, ns: boolean, oi: boolean) => {
     const w = ns && oi ? ['増収増益', '増収減益'][0] : ns ? '増収減益' : oi ? '減収増益' : '減収減益';
     const t: Record<string, string> = {
-      c01: `当期は${w}となった。受注の動向を踏まえ、数字で振り返る。`, c02: `当期は${w}となりました。家庭用・業務用ともに、おかげさまで引き続き取り組んでまいりました。`, c03: `当期: ${w}。既存店の動向を要点で示す。`,
+      c01: `当期は${w}となった。装置・部品・保守の 3 事業で受注を積み上げた。`, c02: `当期は${w}となりました。家庭用・業務用ともに、おかげさまで引き続き取り組んでまいりました。`, c03: `当期: ${w}。既存店と新店の両方で売場を見直した。`,
       c04: `当期は${w}。サービスの提供を継続し、基盤を活かして進めた。`, c05: `当期は${w}であった。開発の進捗は引き続き慎重に見ている。`, c06: `当期は${w}。安全と品質を最優先とした施工を継続。`,
       c07: `当期は${w}となった。便数と稼働を維持し、運行を続けた。`, c08: `当期は${w}となりました。保有資産の運営を着実に進めてまいりました。`, c09: `当期は${w}となりました。生徒一人ひとりに向き合い、運営を続けてまいりました。`, c10: `当期は${w}。取扱高は各セグメントの動向を反映した。`,
     };
