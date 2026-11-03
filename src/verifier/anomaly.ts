@@ -1,5 +1,5 @@
 // 異変の問題が、指定した所だけ破れているか (ケース表 §2.6)。anomalies.md G1 の 3 条件 + 問題ごとの期待集合。
-import { FAMILY_DIFFICULTY } from '../domain/types.ts';
+import { FAMILY_DIFFICULTY, IR_SLIDES, TANSHIN_SCREENS } from '../domain/types.ts';
 import type { AnomalyKind, AnomalyPlace, Problem } from '../domain/types.ts';
 import { LABELS } from '../domain/labels.ts';
 import { getPath } from './path.ts';
@@ -14,8 +14,8 @@ const sorted = (xs: string[]) => [...new Set(xs)].sort();
 const inSet = (xs: string[], set: string[]) => xs.filter((x) => !set.includes(x));
 const placeKey = (p: AnomalyPlace): string => ('itemKey' in p ? p.itemKey : `${p.doc}.${p.path}`);
 
-/** 同じか、一方が他方の親 (セグメント境界で)。 */
-const touches = (a: string, b: string): boolean => a === b || a.startsWith(`${b}.`) || b.startsWith(`${a}.`);
+/** 場所が、違反の path と同じか、その子 (違反の path が statements.0 のような入れ物のとき)。場所が親 (まとまり全体) の向きは許さない。 */
+const touches = (place: string, violationPath: string): boolean => place === violationPath || place.startsWith(`${violationPath}.`);
 
 export function anomalyIssues(problem: Problem, kinds: AnomalyKind[], result: VerifyResult): Issue[] {
   const issues: Issue[] = [];
@@ -47,13 +47,27 @@ export function anomalyIssues(problem: Problem, kinds: AnomalyKind[], result: Ve
     add('anomaly-mismatch', `期待集合が許容集合を越えている、または主な規則を含まない (期待: ${expected.join('、')})`);
   }
 
+  for (const [key, value] of Object.entries(problem.signOverrides ?? {})) {
+    const [doc, ...rest] = key.split('.');
+    const cell = doc === 'tanshin' || doc === 'ir' ? getPath(problem, doc, rest.join('.')) : undefined;
+    if (!(typeof cell === 'number' && cell < 0)) add('anomaly-mismatch', `負の記号の差し替えが負の数のセルを指していない: ${key} (${value})`);
+  }
+  for (const key of Object.keys(problem.unitOverrides ?? {})) {
+    const [doc, screen, ...rest] = key.split('.');
+    const screens: readonly string[] = doc === 'tanshin' ? TANSHIN_SCREENS : doc === 'ir' ? IR_SLIDES : [];
+    if (rest.length > 0 || !screens.includes(screen ?? '')) add('anomaly-mismatch', `単位の差し替えが画面を指していない: ${key}`);
+  }
+
   const keys = anomaly.places.map(placeKey);
   anomaly.places.forEach((place, i) => {
     const key = keys[i] as string;
     if ('itemKey' in place) {
       if (!(place.itemKey in LABELS)) add('anomaly-mismatch', `項目キーが labels に無い: ${place.itemKey}`);
-    } else if (getPath(problem, place.doc, place.path) === undefined) {
-      add('anomaly-mismatch', `場所が実在しない: ${key}`);
+    } else {
+      const value = getPath(problem, place.doc, place.path);
+      const isContainer = typeof value === 'object' && value !== null;
+      if (value === undefined) add('anomaly-mismatch', `場所が実在しない: ${key}`);
+      else if (isContainer && !result.hard.some((v) => v.paths.includes(key))) add('anomaly-mismatch', `場所が値でなくまとまりを指している: ${key}`);
     }
     if (!result.hard.some((v) => v.paths.some((p) => touches(key, p)))) add('anomaly-mismatch', `どの違反にも触れない場所: ${key}`);
   });

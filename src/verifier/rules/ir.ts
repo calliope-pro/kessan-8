@@ -1,6 +1,6 @@
 // IR スライドの中の式と、短信との一致 (ケース表 §1.5)。金額は company.irUnit の単位。比率は短信の百万円から計算する。
 import { irScaled, roundHalfAway, scaled10, tenths } from '../math.ts';
-import { all, eq, PERIODS, rule, sum } from './dsl.ts';
+import { eq, PERIODS, rule, sum } from './dsl.ts';
 import type { Ctx, Reader, Rule } from './dsl.ts';
 import { growthTenths, METRICS } from './summary.ts';
 
@@ -96,12 +96,14 @@ export const IR_RULES: Rule[] = [
   rule('xdoc-seg-consolidated', (each, ctx) => {
     for (const q of PERIODS) each((r) => xdoc(`連結の営業利益 (${q})`, r, `segments.consolidatedOperatingIncome.${q}`, r.t(is(q, 'operatingIncome')), ctx));
   }),
-  rule('xdoc-outlook-actual-results', (each, ctx) =>
-    each((r) => all(xdoc('当期の実績の売上高', r, 'outlook.actual.netSales', r.t(is('current', 'netSales')), ctx), xdoc('当期の実績の営業利益', r, 'outlook.actual.operatingIncome', r.t(is('current', 'operatingIncome')), ctx))),
-  ),
-  rule('xdoc-outlook-actual-capex-depreciation', (each, ctx) =>
-    each((r) => all(xdoc('当期の実績の設備投資', r, 'outlook.actual.capex', -r.t('cashFlow.capex'), ctx), xdoc('当期の実績の減価償却費', r, 'outlook.actual.depreciation', r.t('cashFlow.depreciation'), ctx))),
-  ),
+  rule('xdoc-outlook-actual-results', (each, ctx) => {
+    each((r) => xdoc('当期の実績の売上高', r, 'outlook.actual.netSales', r.t(is('current', 'netSales')), ctx));
+    each((r) => xdoc('当期の実績の営業利益', r, 'outlook.actual.operatingIncome', r.t(is('current', 'operatingIncome')), ctx));
+  }),
+  rule('xdoc-outlook-actual-capex-depreciation', (each, ctx) => {
+    each((r) => xdoc('当期の実績の設備投資', r, 'outlook.actual.capex', -r.t('cashFlow.capex'), ctx));
+    each((r) => xdoc('当期の実績の減価償却費', r, 'outlook.actual.depreciation', r.t('cashFlow.depreciation'), ctx));
+  }),
   ...(
     [
       ['net-sales', 'netSales'],
@@ -117,9 +119,10 @@ export const IR_RULES: Rule[] = [
       }),
     ),
   ),
-  rule('xdoc-supp-capex-depreciation', (each, ctx) =>
-    each((r) => all(xdoc('補足の設備投資', r, 'supplement.capex.current', -r.t('cashFlow.capex'), ctx), xdoc('補足の減価償却費', r, 'supplement.depreciation.current', r.t('cashFlow.depreciation'), ctx))),
-  ),
+  rule('xdoc-supp-capex-depreciation', (each, ctx) => {
+    each((r) => xdoc('補足の設備投資', r, 'supplement.capex.current', -r.t('cashFlow.capex'), ctx));
+    each((r) => xdoc('補足の減価償却費', r, 'supplement.depreciation.current', r.t('cashFlow.depreciation'), ctx));
+  }),
   rule('xdoc-supp-debt', (each, ctx) => {
     for (const q of PERIODS) each((r) => xdoc(`有利子負債 (${q})`, r, `supplement.interestBearingDebt.${q}`, r.t(bs(q, 'shortTermDebt')) + r.t(bs(q, 'longTermDebt')), ctx));
   }),

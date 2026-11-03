@@ -189,10 +189,10 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | ID | 入力 | 期待 |
 | --- | --- | --- |
 | N1 | `verifyProblem(基準問題, 会社)` | `hard` が空。`soft` も空 |
-| N2 | 基準問題の前期・当期を入れ替えず、`fiscalYear` だけ変える (2027 → 2026) | `hard` は `header-period-label` の 2 件 (短信・IR の見出し) だけ |
+| N2 | 基準問題の前期・当期を入れ替えず、`fiscalYear` だけ変える (2027 → 2026) | `hard` は `header-period-label` の 2 件 (短信・IR の見出し) と `dates-period-end` の 2 件 (期末日・前期末日) だけ |
 | N3 | 会社の `name` を変えて渡す | `header-company-name` の 2 件だけ |
 | N4 | 会社の `segmentNames` を入れ替えて渡す | `segment-names` だけ (短信・IR の両方の場所が `paths` に出る) |
-| N5 | 会社の `fiscalYearEndMonth` を 3 → 9 | `header-period-label` の 2 件と `dates-period-end` の 1 件だけ |
+| N5 | 会社の `fiscalYearEndMonth` を 3 → 9 | `header-period-label` の 2 件と `dates-period-end` の 2 件だけ |
 | N6 | **基準問題 B** (億円・3 セグメント。§0) と会社 B | `hard` が空。`soft` も空 (`億円` の換算・3 セグメントの規則が働く) |
 | N7 | 基準問題 B の IR の `header.unit` を `百万円` に | `header-unit` だけ |
 | N8 | 基準問題 B の `ir.highlights.netSales.amount` に +0.1 (億円) | `xdoc-hl-net-sales` だけ (IR の比率は短信から計算するので、IR の金額を変えても破れない) |
@@ -411,9 +411,22 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 - 実在の企業名との衝突の確認 (Task #24)
 - 会計の分かる人による soft の範囲の確認
 
+### 2.11 場所の検査の穴 (A19〜A24。#48 のレビュー 1 回目の B1・B2。赤から足したケース)
+
+| ID | 入力 | 期待 |
+| --- | --- | --- |
+| A19 | V1 の問題 (`k-balance`)、places = `tanshin.balanceSheet` (画面全体) | 「場所が値でなくまとまりを指している」と「場所に触れない違反」 |
+| A20 | 同じで places = `tanshin.balanceSheet.current` | 「場所が値でなくまとまりを指している」 |
+| A21 | 前期の売上高 (summary.netSales.previous) を +100、places = `summary.netSales.current` / 前期なら通る | 当期を指すと「場所に触れない違反」 (前期だけを読む違反に触れない)。前期を指せば 0 件 |
+| A22 | signOverrides のキーが正の数のセル (`tanshin.balanceSheet.current.cash`) | 「負の記号の差し替えが負の数のセルを指していない」 |
+| A23 | signOverrides のキーが画面全体 (`tanshin.cashFlow`) | 同上 |
+| A24 | signOverrides が負の数のセル (`tanshin.cashFlow.capex`) は通る / unitOverrides のキーが画面でない (`tanshin.cashFlow.capex`) | 前者は 0 件、後者は「単位の差し替えが画面を指していない」 |
+
+「触れる」の意味を狭めた: 場所が違反の path と同じか、**その子** (違反の path が `ir.statements.0` のような入れ物のとき) だけ。場所が親 (まとまり全体) の向きは許さない。あわせて、独立の等式を 1 回の評価にまとめていた規則 (sum-*・notes-per-share・link-cf-interest-*・link-capital-unchanged・xdoc-outlook-actual-*・xdoc-supp-capex-depreciation・dates-*) は、等式ごとに評価を分けた (違反の paths が、食い違った式のセルだけになる)。その結果 N2・N5 の `dates-period-end` は 1 件から 2 件 (期末日・前期末日) になった。**理由を残す**: これはレビューの指摘 (場所の検査が緩い) への対応で、実装に合わせてテストを緩めたのではなく、期待を厳しい側 (件数が増える) に直した。D12・L4 は、元の D12 (S3 相当) が S3 で equityRatio を変えると hard の ratio-equity-ratio・xdoc-supp-equity-ratio も破れて「errors 空」と両立しなかったため、soft だけが破れる問題 (株数 8,630 千株) に書き直した。
+
 ## 5. 確かめた記録 (Sub-task #48)
 
 - レッド: 実装の前に、テスト (N・V・C・S・A・SH・D・L ほか) は実装の無い状態で全件失敗 (`math.ts`・`index.ts` などが無い)。基準問題 B は実装より先に commit した (N6 が赤)。
-- グリーン: `npm run typecheck` が通り、`npx vitest run` で 13 ファイル 429 件 (X1〜X3 を足して 432 件) が緑。`npm run verify:data` は 0 件のデータで終了コード 0。
+- グリーン: `npm run typecheck` が通り、`npx vitest run` で 13 ファイル 429 件 (X1〜X3 を足して 432 件、レビュー 1 回目の A19〜A24 ほかで 439 件) が緑。規則 ID は hard 116・soft 12 (`HARD_RULE_IDS.length`)。`npm run verify:data` は 0 件のデータで終了コード 0。
 - 変異 (規則を壊して赤になることの確認): `pl-gross-profit` の式を壊す → 81 件赤。配当を四捨五入に → R8・D12・L4。増減率の分母 0 以下の扱いをやめる → S11。億円の比較を素の引き算に → N6・N7・N8・V53。**緑のまま残った変異が 2 つ**あり (IR の利益率を IR の値から計算する・claims の差 0 を up と扱う)、X1〜X3 を足して赤になることを確かめた。
 - `erasableSyntaxOnly` は、規則の道具 (`Reader`) に引数のプロパティ (`constructor(readonly ctx)`) を書いた時点で型検査が止めた (L9)。

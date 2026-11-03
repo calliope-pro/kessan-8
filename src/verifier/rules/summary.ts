@@ -1,6 +1,6 @@
 // サマリー・比率・注記の式 (ケース表 §1.3)。
 import { dividendAmount, hundredths, roundHalfAway, tenths } from '../math.ts';
-import { all, eq, rule } from './dsl.ts';
+import { eq, rule } from './dsl.ts';
 import type { Reader, Rule } from './dsl.ts';
 
 export const METRICS = [
@@ -23,9 +23,9 @@ export const equityOf = (r: Reader, q: 'previous' | 'current'): number => r.t(bs
 
 export const SUMMARY_RULES: Rule[] = [
   ...METRICS.map(([m, id]) =>
-    rule(`sum-${id}`, (each) =>
-      each((r) => all(eq(`${m} (当期)`, r.t(`summary.${m}.current`), r.t(is('current', m))), eq(`${m} (前期)`, r.t(`summary.${m}.previous`), r.t(is('previous', m))))),
-    ),
+    rule(`sum-${id}`, (each) => {
+      for (const q of ['current', 'previous'] as const) each((r) => eq(`${m} (${q})`, r.t(`summary.${m}.${q}`), r.t(is(q, m))));
+    }),
   ),
   rule('sum-total-assets', (each) => each((r) => eq('総資産', r.t('summary.totalAssets'), r.t(bs('current', 'totalAssets'))))),
   rule('sum-net-assets', (each) => each((r) => eq('純資産', r.t('summary.netAssets'), r.t(bs('current', 'totalNetAssets'))))),
@@ -72,7 +72,8 @@ export const SUMMARY_RULES: Rule[] = [
   rule('check-bps-product', (each) =>
     each((r) => eq('BPS × 株数 = 自己資本', roundHalfAway(hundredths(r.t('summary.bps')) * r.t('notes.averageSharesThousand'), 100000), r.t('summary.equity'))),
   ),
-  rule('notes-per-share', (each) =>
-    each((r) => all(eq('注記の EPS', r.t('notes.eps'), r.t('summary.eps')), eq('注記の BPS', r.t('notes.bps'), r.t('summary.bps')))),
-  ),
+  rule('notes-per-share', (each) => {
+    each((r) => eq('注記の EPS', r.t('notes.eps'), r.t('summary.eps')));
+    each((r) => eq('注記の BPS', r.t('notes.bps'), r.t('summary.bps')));
+  }),
 ];

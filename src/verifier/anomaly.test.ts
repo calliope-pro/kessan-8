@@ -146,4 +146,53 @@ describe('checkAnomaly', () => {
     const p = withAnomaly(mutate(v7(), 'difficulty', () => 'hard'), { kind: 'k-rate', expectedRules: ['sum-change-ordinary-income'] });
     expect(has(messages(p), '系統と難易度が合わない')).toBe(true);
   });
+
+  // ---- #48 レビュー 1 回目の B1・B2: 場所の検査の穴 (赤から) ----
+  describe('場所は、変えたセルを正確に指す', () => {
+    const v1Hard = (places: AnomalyPlace[]) => withAnomaly(v1(), { kind: 'k-balance', expectedRules: V1_RULES, places });
+
+    it('A19: 画面全体 (balanceSheet) を指す場所は通らない', () => {
+      const ms = messages(v1Hard([place('balanceSheet')]));
+      expect(has(ms, '値でなくまとまりを指している')).toBe(true);
+      expect(has(ms, '場所に触れない違反')).toBe(true);
+    });
+
+    it('A20: 期のまとまり (balanceSheet.current) を指す場所は通らない', () => {
+      const ms = messages(v1Hard([place('balanceSheet.current')]));
+      expect(has(ms, '値でなくまとまりを指している')).toBe(true);
+    });
+
+    it('A21: 前期を変えたのに、場所を当期にすると通らない (変えていないセルが強調されるため)', () => {
+      const p = withAnomaly(add(normalA(), 'tanshin.summary.netSales.previous', 100), {
+        kind: 'k-sales',
+        expectedRules: ['sum-net-sales', 'sum-change-net-sales'],
+        places: [place('summary.netSales.current')],
+      });
+      const result = verifyProblem(p, companyA());
+      const ms = checkAnomaly(p, [...KINDS, kind('k-sales', 'calculation', ['sum-net-sales'], ['sum-net-sales', 'sum-change-net-sales'])], result);
+      expect(has(ms, '場所に触れない違反')).toBe(true);
+      // 場所を前期にすれば通る
+      const ok = withAnomaly(p, { kind: 'k-sales', expectedRules: ['sum-net-sales', 'sum-change-net-sales'], places: [place('summary.netSales.previous')] });
+      expect(checkAnomaly(ok, [...KINDS, kind('k-sales', 'calculation', ['sum-net-sales'], ['sum-net-sales', 'sum-change-net-sales'])], verifyProblem(ok, companyA()))).toEqual([]);
+    });
+
+    it('A22: signOverrides のキーが正の数のセルを指す', () => {
+      const p = withAnomaly(set(normalA(), 'signOverrides', { 'tanshin.balanceSheet.current.cash': '-' }), { kind: 'k-sign', expectedRules: ['sign-consistency'], places: [place('balanceSheet.current.cash')] });
+      const ms = checkAnomaly(p, [...KINDS, kind('k-sign', 'appearance', ['sign-consistency'])], verifyProblem(p, companyA()));
+      expect(has(ms, '負の数のセルを指していない')).toBe(true);
+    });
+
+    it('A23: signOverrides のキーが画面全体を指す', () => {
+      const p = withAnomaly(set(normalA(), 'signOverrides', { 'tanshin.cashFlow': '-' }), { kind: 'k-sign', expectedRules: ['sign-consistency'], places: [place('cashFlow')] });
+      const ms = checkAnomaly(p, [...KINDS, kind('k-sign', 'appearance', ['sign-consistency'])], verifyProblem(p, companyA()));
+      expect(has(ms, '負の数のセルを指していない')).toBe(true);
+    });
+
+    it('A24: signOverrides が負の数のセルを指していれば通る / unitOverrides のキーが画面でない', () => {
+      const good = withAnomaly(set(normalA(), 'signOverrides', { 'tanshin.cashFlow.capex': '-' }), { kind: 'k-sign', expectedRules: ['sign-consistency'], places: [place('cashFlow.capex')] });
+      expect(checkAnomaly(good, [...KINDS, kind('k-sign', 'appearance', ['sign-consistency'])], verifyProblem(good, companyA()))).toEqual([]);
+      const bad = withAnomaly(set(normalA(), 'unitOverrides', { 'tanshin.cashFlow.capex': '千円' }), { kind: 'k-unit', expectedRules: ['unit-consistency'], places: [place('balanceSheet.unit')] });
+      expect(has(messages(bad), '画面を指していない')).toBe(true);
+    });
+  });
 });

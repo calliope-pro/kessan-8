@@ -17,7 +17,7 @@ describe('正常な問題 (N)', () => {
 
   it('N2: fiscalYear だけ変えると header-period-label が 2 件 (短信・IR)', () => {
     const r = verifyProblem(set(normalA(), 'fiscalYear', 2026), companyA());
-    expect(r.hard.map((v) => v.rule).sort()).toEqual(['dates-period-end', 'header-period-label', 'header-period-label']);
+    expect(r.hard.map((v) => v.rule).sort()).toEqual(['dates-period-end', 'dates-period-end', 'header-period-label', 'header-period-label']);
   });
 
   it('N3: 会社の name を変えると header-company-name が 2 件', () => {
@@ -36,7 +36,7 @@ describe('正常な問題 (N)', () => {
 
   it('N5: fiscalYearEndMonth を 9 にすると header-period-label が 2 件と dates-period-end が 1 件だけ', () => {
     const r = verifyProblem(normalA(), { ...companyA(), fiscalYearEndMonth: 9 });
-    expect(r.hard.map((v) => v.rule).sort()).toEqual(['dates-period-end', 'header-period-label', 'header-period-label']);
+    expect(r.hard.map((v) => v.rule).sort()).toEqual(['dates-period-end', 'dates-period-end', 'header-period-label', 'header-period-label']);
   });
 
   it('N6: 基準問題 B (億円・3 セグメント) は hard も soft も 0 件', () => {

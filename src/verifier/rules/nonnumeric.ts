@@ -93,13 +93,15 @@ export const NONNUMERIC_RULES: Rule[] = [
       for (const q of PERIODS) each((r) => eq(`${m} の棒 (${q}) = 数字`, r.i(`results.chart.${m}.${q}`), r.i(`results.${m}.${q}`)));
     }
   }),
-  rule('dates-period-end', (each, ctx) =>
-    each((r) => {
-      const expected = [iso(ctx.p.fiscalYear, ctx.c.fiscalYearEndMonth), iso(ctx.p.fiscalYear - 1, ctx.c.fiscalYearEndMonth)];
-      const actual = [r.raw('tanshin', 'dates.periodEnd'), r.raw('tanshin', 'dates.previousPeriodEnd')];
-      return actual[0] === expected[0] && actual[1] === expected[1] ? null : `期末日 ${actual.join('・')} ≠ ${expected.join('・')}`;
-    }),
-  ),
+  rule('dates-period-end', (each, ctx) => {
+    for (const [field, year] of [['periodEnd', ctx.p.fiscalYear], ['previousPeriodEnd', ctx.p.fiscalYear - 1]] as const) {
+      each((r) => {
+        const expected = iso(year, ctx.c.fiscalYearEndMonth);
+        const actual = r.raw('tanshin', `dates.${field}`);
+        return actual === expected ? null : `${field}: ${String(actual)} ≠ ${expected}`;
+      });
+    }
+  }),
   rule('dates-order', (each) =>
     each((r) => {
       const [end, disclosure, meeting] = ['periodEnd', 'disclosure', 'shareholdersMeeting'].map((k) => r.raw('tanshin', `dates.${k}`));
@@ -110,11 +112,13 @@ export const NONNUMERIC_RULES: Rule[] = [
   ),
   rule('dates-column-headings', (each) => {
     for (const screen of ['balanceSheet', 'incomeStatement', 'cashFlow']) {
-      each((r) => {
-        const actual = [r.raw('tanshin', `columnDates.${screen}.previous`), r.raw('tanshin', `columnDates.${screen}.current`)];
-        const expected = [r.raw('tanshin', 'dates.previousPeriodEnd'), r.raw('tanshin', 'dates.periodEnd')];
-        return actual[0] === expected[0] && actual[1] === expected[1] ? null : `${screen} の列見出し ${actual.join('・')} ≠ ${expected.join('・')}`;
-      });
+      for (const [col, field] of [['previous', 'previousPeriodEnd'], ['current', 'periodEnd']] as const) {
+        each((r) => {
+          const actual = r.raw('tanshin', `columnDates.${screen}.${col}`);
+          const expected = r.raw('tanshin', `dates.${field}`);
+          return actual === expected ? null : `${screen} の ${col} の列見出し ${String(actual)} ≠ ${String(expected)}`;
+        });
+      }
     }
   }),
   rule('claims-direction', (each, ctx) => {

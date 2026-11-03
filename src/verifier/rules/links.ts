@@ -1,6 +1,6 @@
 // 財務諸表のあいだの連動 (ケース表 §1.2)。当期 = 日本基準・間接法・資金の範囲は現金及び預金。
 import { dividendAmount } from '../math.ts';
-import { all, eq, rule } from './dsl.ts';
+import { eq, rule } from './dsl.ts';
 import type { Reader, Rule } from './dsl.ts';
 
 const b = (q: 'previous' | 'current', k: string) => `balanceSheet.${q}.${k}`;
@@ -24,12 +24,14 @@ export const LINK_RULES: Rule[] = [
   rule('link-cf-income-taxes', (each) =>
     each((r) => eq('法人税等の支払額', -r.t(cf('incomeTaxesPaid')), r.t(p1('incomeTaxes')) - rise(r, 'incomeTaxesPayable'))),
   ),
-  rule('link-cf-interest-income', (each) =>
-    each((r) => all(eq('受取利息及び配当金 (調整)', r.t(cf('interestDividendIncome')), -r.t(p1('nonOperatingIncome'))), eq('利息及び配当金の受取額', r.t(cf('interestDividendReceived')), r.t(p1('nonOperatingIncome'))))),
-  ),
-  rule('link-cf-interest-expense', (each) =>
-    each((r) => all(eq('支払利息 (調整)', r.t(cf('interestExpense')), r.t(p1('nonOperatingExpenses'))), eq('利息の支払額', r.t(cf('interestPaid')), -r.t(p1('nonOperatingExpenses'))))),
-  ),
+  rule('link-cf-interest-income', (each) => {
+    each((r) => eq('受取利息及び配当金 (調整)', r.t(cf('interestDividendIncome')), -r.t(p1('nonOperatingIncome'))));
+    each((r) => eq('利息及び配当金の受取額', r.t(cf('interestDividendReceived')), r.t(p1('nonOperatingIncome'))));
+  }),
+  rule('link-cf-interest-expense', (each) => {
+    each((r) => eq('支払利息 (調整)', r.t(cf('interestExpense')), r.t(p1('nonOperatingExpenses'))));
+    each((r) => eq('利息の支払額', r.t(cf('interestPaid')), -r.t(p1('nonOperatingExpenses'))));
+  }),
   rule('link-tangible-assets', (each) =>
     each((r) => eq('有形固定資産の増減', r.t(b('current', 'tangibleAssets')), r.t(b('previous', 'tangibleAssets')) - r.t(cf('capex')) - r.t(cf('depreciation')))),
   ),
@@ -52,7 +54,8 @@ export const LINK_RULES: Rule[] = [
   rule('link-nci', (each) =>
     each((r) => eq('非支配株主持分の増減', r.t(b('current', 'nonControllingInterests')), r.t(b('previous', 'nonControllingInterests')) + r.t(p1('netIncomeNonControlling')))),
   ),
-  rule('link-capital-unchanged', (each) =>
-    each((r) => all(eq('資本金', r.t(b('current', 'capitalStock')), r.t(b('previous', 'capitalStock'))), eq('資本剰余金', r.t(b('current', 'capitalSurplus')), r.t(b('previous', 'capitalSurplus'))))),
-  ),
+  rule('link-capital-unchanged', (each) => {
+    each((r) => eq('資本金', r.t(b('current', 'capitalStock')), r.t(b('previous', 'capitalStock'))));
+    each((r) => eq('資本剰余金', r.t(b('current', 'capitalSurplus')), r.t(b('previous', 'capitalSurplus'))));
+  }),
 ];

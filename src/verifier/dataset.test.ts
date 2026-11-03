@@ -164,6 +164,13 @@ describe('verifyDataset', () => {
     }
   });
 
+  it('D22b: 任意項目 (business・tip) の型の誤り', () => {
+    const c = { ...companyA(), business: 1 } as unknown as Company;
+    expect(codes(verifyDataset({ companies: [c], kinds: [], problems: [] }))).toContain('company-shape');
+    const k = { ...kindOf('k-tip', 'calculation', ['bs-balance']), tip: 1 } as unknown as ReturnType<typeof kindOf>;
+    expect(codes(verifyDataset({ companies: [], kinds: [k], problems: [] }))).toContain('kind-shape');
+  });
+
   it('D23: 期の表記が会社と違う → hard-violation (header-period-label)', () => {
     const p = set(normalVariant('easy-001', 'easy', 'fixture-c01'), 'fiscalYear', 2030);
     expect(verifyDataset(withProblem(base(), p)).errors.some((e) => e.code === 'hard-violation' && e.message.includes('header-period-label'))).toBe(true);
