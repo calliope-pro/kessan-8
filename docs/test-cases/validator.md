@@ -1,6 +1,6 @@
 # ケース表: 会計の整合の検証器 (Sub-task #47)
 
-Task #23。目的 (charter の失敗 1): 異変の無い問題が会計の整合をすべて満たし、異変の問題は**指定した所だけ**が破れていることを、全問に機械で確かめる。設計: [docs/design.md](../design.md) §4 (型)・§4.3 (プールの条件)・§7 (テストの置き場)。試作: `docs/plans/spike/verify.py` (必須 67・参考 12)・`check_ir.py` (36)。
+Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.5。異変の一覧 [anomalies.md](https://github.com/calliope-pro/kessan-8/blob/calliope/catalog/docs/plans/anomalies.md) の 45 種類を表せる)。目的 (charter の失敗 1): 異変の無い問題が会計の整合をすべて満たし、異変の問題は**指定した所だけ**が破れていることを、全問に機械で確かめる。設計: [docs/design.md](../design.md) §4 (型)・§4.3 (プールの条件)・§7 (テストの置き場)。試作: `docs/plans/spike/verify.py` (必須 67・参考 12)・`check_ir.py` (36)。
 
 ## 0. 公開する入口 (テストが外から呼ぶもの)
 
@@ -12,13 +12,14 @@ Task #23。目的 (charter の失敗 1): 異変の無い問題が会計の整合
 | `getPath(problem, doc, path)` (`path.ts`) | `doc` = `tanshin`/`ir`、`path` = 設計 §4.1 の `path` → その場所の値、無ければ `undefined` |
 | `numericCells(problem)` (`path.ts`) | 問題 → 数値のセルの `<doc>.<path>` の一覧 (短信・IR の全数値。`null` と文字列は除く) |
 | `verifyProblem(problem, company)` (`index.ts`) | 問題と会社 → `{ hard: Violation[]; soft: Violation[] }`。`Violation = { rule: string; paths: string[]; message: string }`。`paths` は `<doc>.<path>` で、規則が読んだセルのうち**食い違った式に関わるもの**。同じ規則が前期・当期の両方で破れたら 2 件 |
-| `HARD_RULE_IDS` / `SOFT_RULE_IDS` | 規則 ID の一覧 (§1)。`AnomalyKind.rules` が参照する |
-| `checkAnomaly(problem, kinds, result)` | 問題・異変の種類の一覧・`verifyProblem` の結果 → 食い違いのメッセージの配列 (空 = 異変の指定どおり) |
+| `HARD_RULE_IDS` / `SOFT_RULE_IDS` | 規則 ID の一覧 (§1)。`AnomalyKind.primaryRules`・`allowedRules` が参照する |
+| `itemKey(doc, path)`・`LABELS`・`SECTION_OF_ITEM` (`src/domain/labels.ts`) | 設計 §4.1 の項目キーの文法。`LABELS` = 項目キー → 標準の表示名 (日本語)、`SECTION_OF_ITEM` = 貸借対照表の項目キー → 部 (`asset`/`liability`/`equity`)。**画面の Task (#27) が使う共有の土台を、科目名の規則 (§1.6) のために #23 で作る** |
+| `checkAnomaly(problem, kinds, result)` | 問題・異変の種類の一覧・`verifyProblem` の結果 → 食い違いのメッセージの配列 (空 = 異変の指定どおり。意味は §2.6) |
 | `shapeErrors(value)` | 未検証の JSON → 型の形の誤りの配列 (空 = `Problem` の形) |
-| `verifyDataset(input)` | `{ companies, kinds, problems: [{ file, value }] }` → `{ errors, shortfalls, soft, stats }` (各要素は `{ code, problem?, message }`) |
-| CLI `npm run verify:data [-- --dir <データのディレクトリ>] [--require-complete] [--fail-on-soft]` | データ全件を検証。`errors` があれば終了コード 1 |
+| `verifyDataset(input)` | `{ companies, kinds, problems: [{ file, value }] }` → `{ errors, shortfalls, soft, stats }` (各要素は `{ code, problem?, message }`)。`companies`・`kinds` の中身の形も検証する |
+| CLI `npm run verify:data [-- --dir <データのディレクトリ>] [--require-complete] [--fail-on-soft]` | データ全件を検証。`errors` があれば終了コード 1。`companies.json`・`anomaly-kinds.json`・`problems/` が**無ければ 0 件として扱う** (ディレクトリそのものが無いのは、`--dir` を明示したときだけ誤り) |
 
-基準にする正常な問題 (**基準問題**): `src/verifier/fixtures/normal.problem.json` と `company.json`。試作の手書き 1 問 (`hand-q01-full.json`・`hand-q01-ir.json`、AI が手で書き、貸借・損益・CF の連動を 1 つずつ確かめたもの) を、設計の型の英語キーに写した。型に合うことは `satisfies Problem` でコンパイル時に確かめる。
+基準にする正常な問題 (**基準問題**): `src/verifier/fixtures/normal.problem.json` と `company.json`。試作の手書き 1 問 (`hand-q01-full.json`・`hand-q01-ir.json`、AI が手で書き、貸借・損益・CF の連動を 1 つずつ確かめたもの) を、設計の型の英語キーに写した。型に合うことは `shapeErrors` (実行時) と、型検査 (`tsc`。JSON の文字列はリテラル型にならないので `satisfies` は使わず、テストで `as Problem` に通す前に `shapeErrors` が空であることを確かめる) で確かめる。**基準問題 B**: 億円・3 セグメントの会社の基準問題 (`normal-b.problem.json`・`company-b.json`)。基準問題から、IR の金額を億円 (÷100、小数第一位) にし、セグメントを 3 つにして作る。値は IR の表示値どうしが完全に一致するものを選ぶ (#48 で実装と一緒に作り、N6 で固定する)。
 
 ## 1. 規則の一覧 (契約)
 
@@ -46,7 +47,7 @@ Task #23。目的 (charter の失敗 1): 異変の無い問題が会計の整合
 | cf-subtotal | subtotal = incomeBeforeTax + depreciation + interestDividendIncome + interestExpense + receivablesChange + inventoriesChange + payablesChange + otherAssetsChange + otherLiabilitiesChange |
 | cf-operating | operatingCashFlow = subtotal + interestDividendReceived + interestPaid + incomeTaxesPaid |
 | cf-investing | investingCashFlow = capex + otherInvestingChange |
-| cf-financing | financingCashFlow = shortTermDebtChange + longTermDebtChange + dividendsPaid |
+| cf-financing | financingCashFlow = shortTermDebtChange + longTermBorrowings + longTermRepayments + dividendsPaid |
 | cf-net-change | netChangeInCash = operatingCashFlow + investingCashFlow + financingCashFlow + fxEffect |
 | cf-ending | cashEnding = cashBeginning + netChangeInCash |
 
@@ -68,12 +69,15 @@ Task #23。目的 (charter の失敗 1): 異変の無い問題が会計の整合
 | link-tangible-assets | 当期 BS.tangibleAssets = 前期 BS.tangibleAssets − CF.capex − CF.depreciation |
 | link-cf-other-investing | CF.otherInvestingChange = −(BS.investments の増加) |
 | link-cf-short-debt | CF.shortTermDebtChange = BS.shortTermDebt の増加 |
-| link-cf-long-debt | CF.longTermDebtChange = BS.longTermDebt の増加 |
+| link-cf-long-debt | CF.longTermBorrowings + CF.longTermRepayments = BS.longTermDebt の増加 (総額表示。anomalies.md G4) |
+| link-cf-dividends-paid | −CF.dividendsPaid = ((summary.annualDividendPrevious − interimDividendPrevious) + summary.interimDividend) × notes.averageSharesThousand ÷ 1,000 (前期の期末配当 + 当期の中間配当。anomalies.md G5。百万円、四捨五入) |
 | link-retained-earnings | 当期 BS.retainedEarnings = 前期 + 当期 PL.netIncomeParent + CF.dividendsPaid |
 | link-nci | 当期 BS.nonControllingInterests = 前期 + 当期 PL.netIncomeNonControlling |
 | link-capital-unchanged | BS.capitalStock と capitalSurplus が前期と当期で等しい |
 
 ### 1.3 サマリー・注記・比率
+
+増減率の規則 (sum-change-*・ir-hl-change-*・ir-seg-change-*・ir-outlook-change-*) は、**分母 (前期の値) が 0 以下のときは当たらない** (例外にしない)。その状態は参考の規則 soft-rates-expressible が報告する (型の `changeRate: number` は「－」を書けないため、正常な問題では分母を正に保つ)。
 
 | ID | 式 |
 | --- | --- |
@@ -85,7 +89,12 @@ Task #23。目的 (charter の失敗 1): 異変の無い問題が会計の整合
 | ratio-equity-ratio | summary.equityRatio = (当期 BS.totalNetAssets − nonControllingInterests) ÷ 当期 BS.totalAssets (% 小数第一位) |
 | ratio-bps | summary.bps = (当期 BS.totalNetAssets − nonControllingInterests) ÷ notes.averageSharesThousand (円、小数第二位) |
 | ratio-payout | summary.payoutRatio = summary.annualDividend ÷ summary.eps (JPX 作成要領 p.27。% 小数第一位。eps が 0 以下のときは規則に当たらない) |
-| ratio-dividend-total | −CF.dividendsPaid = summary.annualDividend × notes.averageSharesThousand ÷ 1,000 (百万円) |
+| ratio-dividend-total | summary.dividendTotal = summary.annualDividend × notes.averageSharesThousand ÷ 1,000 (百万円、四捨五入) |
+| sum-equity | summary.equity = 当期 BS.totalNetAssets − nonControllingInterests |
+| ratio-operating-margin | summary.operatingMargin = 当期 PL.operatingIncome ÷ netSales (% 小数第一位) |
+| ratio-roe | summary.roe = 当期 PL.netIncomeParent ÷ ((前期 equity + 当期 equity) ÷ 2) (% 小数第一位。equity = BS.totalNetAssets − nonControllingInterests) |
+| check-eps-product | 別経路: summary.eps × notes.averageSharesThousand ÷ 1,000 = 当期 PL.netIncomeParent (百万円、四捨五入。一致しない = 遊び手が検算すると正常が異変に見える)。averageSharesThousand が 1 億株 (100,000 千株) 以上の会社は、丸めの誤差でこの規則を満たせないので使わない |
+| check-bps-product | 別経路: summary.bps × notes.averageSharesThousand ÷ 1,000 = summary.equity (同上) |
 | notes-per-share | notes.eps = summary.eps かつ notes.bps = summary.bps |
 | seg-sales-sum | notes のセグメント売上高の合計 = consolidatedNetSales (両期) |
 | seg-profit-sum | セグメント利益の合計 + adjustment = consolidatedOperatingIncome (両期) |
@@ -98,10 +107,14 @@ Task #23。目的 (charter の失敗 1): 異変の無い問題が会計の整合
 | --- | --- |
 | header-company-name | header.companyName = company.name |
 | header-period-label | header.periodLabel = `<fiscalYear>年<fiscalYearEndMonth>月期` |
-| header-unit | header.unit = `百万円` |
+| header-securities-code | header.securitiesCode = company.securitiesCode (短信・IR) |
+| header-unit | header.unit = 短信は `百万円`、IR は company.irUnit |
 | segment-names | 短信 notes のセグメント名と IR segments.items の名前が、company.segmentNames と同じ並びで等しい |
+| seg-count | 短信 notes (前期・当期) と IR segments.items のセグメントの数が、company.segmentNames の数 (2 か 3) と等しい (IR から欠けるのは H-19) |
 
 ### 1.5 IR スライドの中の式と、短信との一致 (xdoc = 資料間)
+
+**単位**: IR の金額は company.irUnit の単位。`億円` の会社は、短信の百万円 ÷ 100 を小数第一位まで四捨五入 (0.5 は遠い側へ。12,456 → 124.6) した値と比べる (`toIrUnit(百万円, irUnit)`)。**比率** (増減率・利益率・構成比) は、両方の項が短信にある場合は短信の百万円の値から計算した値と比べ (単位に依らない)、IR にだけある項 (次期の予想) を含む場合は IR の表示値から計算する。IR の中の足し算・引き算 (ir-seg-reconcile・ir-supp-net-debt) は表示値どうしで完全に一致させる。
 
 | ID | 式 |
 | --- | --- |
@@ -124,7 +137,25 @@ Task #23。目的 (charter の失敗 1): 異変の無い問題が会計の整合
 | ir-supp-net-debt | supplement.netDebt = interestBearingDebt − cash (両期、IR の中の値) |
 | xdoc-supp-equity-ratio | supplement.equityRatio = summary.equityRatio |
 
-### 1.6 参考の規則 (soft。遊び手に正常と見えるための範囲。破れても異変ではないので、報告するが既定では失敗にしない)
+### 1.6 数値の等式でない規則 (種類の主な規則として要る。anomalies.md の E-03〜E-08・E-17・H-21〜H-24・H-28。design §4.5)
+
+| ID | 式・判定 | 読む場所 |
+| --- | --- | --- |
+| unit-consistency | `unitOverrides` の各項目の値が、その資料の `header.unit` と等しい (正常な問題は `unitOverrides` が無いので満たす) | `<doc>.<画面の ID>.unit` |
+| sign-consistency | `signOverrides` の各項目の値が、標準の負の記号 `△` と等しい | その `<doc>.<path>` |
+| label-spelling | `labelOverrides` の各項目の値が、その項目キーの標準の表示名 (`LABELS`) と等しいか、別の項目の標準の表示名であること。**どちらでもない値 (誤字) があれば破れる** | `<doc>.<項目キー>` |
+| account-section | `labelOverrides` の値が**別の部**(貸借対照表の資産・負債・純資産) の項目の標準の表示名であれば破れる (「売掛金」→「買掛金」) | `<doc>.<項目キー>` |
+| chart-axis-zero | `ir.results.chart.*.axisMin` が 0 | `ir.results.chart.<項目>.axisMin` |
+| chart-bars | 棒の高さが表示の数字と同じ: `chart.netSales.previous/current` = `results.netSales.previous/current`、operatingIncome も同じ | `ir.results.chart.<項目>.<期>` |
+| dates-period-end | `dates.periodEnd` が company の決算期末 (`fiscalYear` 年 `fiscalYearEndMonth` 月の末日) で、`previousPeriodEnd` が 1 年前の同じ末日 | `tanshin.dates.*` |
+| dates-order | `periodEnd` < `disclosure` < `shareholdersMeeting` (ISO の文字列の大小) | `tanshin.dates.*` |
+| dates-column-headings | `columnDates` のすべての列が `dates.previousPeriodEnd`・`periodEnd` と等しい | `tanshin.columnDates.*` |
+| claims-direction | `ir.statements[].claims[]` の方向が数字の動きと合う。`netSales`・`operatingIncome`・`ordinaryIncome`・`netIncomeParent` = 短信の当期 − 前期の符号 (up = 増、down = 減)、`forecastNetSales`・`forecastOperatingIncome` = 次期の予想 − 当期の実績の符号、`dividend` = summary.annualDividend − annualDividendPrevious の符号、`operatingCashFlow` = 営業 CF の符号 (up = プラス、down = マイナス)、`interestBearingDebt` = 当期 − 前期の符号 (zero = 当期が 0) | `ir.statements.<添字>` |
+| audit-note | `summary.auditNote` = 「決算短信は公認会計士又は監査法人の監査の対象外です」 | `tanshin.summary.auditNote` |
+| accounting-policy-match | `summary.accountingPolicyChange` = (`notes.accountingPolicyNote` が「該当事項はありません。」でない) | `tanshin.summary.accountingPolicyChange`・`tanshin.notes.accountingPolicyNote` |
+| subsequent-event-match | (`notes.subsequentEvents` が「該当事項はありません。」) = (`ir.outlook.subsequentEvent` が `null`) | `tanshin.notes.subsequentEvents`・`ir.outlook.subsequentEvent` |
+
+### 1.7 参考の規則 (soft。遊び手に正常と見えるための範囲。破れても異変ではないので、報告するが既定では失敗にしない)
 
 soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・soft-current-ratio (流動比率 0.8〜4)・soft-equity-ratio-range (自己資本比率 20〜80%)・soft-operating-margin-range (営業利益率 −5〜25%)・soft-sales-growth-range (売上高増減率 ±20%)・soft-operating-profit-positive (営業利益 > 0)・soft-tax-rate-range (実効税率 25〜40%。税引前利益が 0 以下なら当たらない)・soft-ocf-vs-operating-income (営業 CF ÷ 営業利益 0.3〜3)・soft-cash-vs-sales (現金 ÷ 売上高 3〜40%)・soft-payout-max (配当性向 100% 以下)・soft-rates-expressible (増減率の分母になる前期の値が正、eps が正)・soft-payout-cross-path (配当性向 = 配当金総額 ÷ 純利益 を小数第一位まで)。範囲の数字は試作 (gen-measure.md) の仮定で、会計の分かる人の確認は未実施。
 
@@ -137,12 +168,18 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | R1 | `roundHalfAway(5, 2)`・`(−5, 2)` | 3・−3 (0.5 は遠い側) |
 | R2 | `roundHalfAway(4, 2)`・`(7, 3)`・`(−7, 3)`・`(1, 3)` | 2・2・−2・0 |
 | R3 | `roundHalfAway(0, 5)`・`(1, 2)`・`(−1, 2)` | 0・1・−1 |
-| R4 | `roundHalfAway(1, 0)` | 例外 (0 で割らない) |
+| R4 | `roundHalfAway(1, 0)` | 例外 (0 で割らない)。規則の側は、増減率の分母が 0 以下のときこの関数を呼ばない (§1.3。S11) |
+| R5 | `toIrUnit(12456, '億円')`・`toIrUnit(12450, '億円')`・`toIrUnit(-12450, '億円')`・`toIrUnit(12456, '百万円')` | 124.6・124.5・−124.5・12456 (12,450 ÷ 100 = 124.50 は小数第一位でちょうど 124.5) |
+| R6 | `toIrUnit(12449, '億円')`・`toIrUnit(12455, '億円')` | 124.5・124.6 (小数第二位の 5 は切り上げ) |
 | P1 | 基準問題で `getPath(…, 'tanshin', 'balanceSheet.current.cash')` | 2300 |
 | P2 | 配列の添字 `getPath(…, 'ir', 'segments.items.0.netSales.current')` | 7900 |
 | P3 | `getPath(…, 'tanshin', 'header.companyName')` | `第七試作電機株式会社` |
 | P4 | 存在しない `balanceSheet.current.nothing`・`balanceSheet.nothing.cash` | どちらも `undefined` |
-| P5 | `numericCells(基準問題)` | すべて `tanshin.` か `ir.` で始まり、`null` のセルと文字列のセルを含まない。件数は短信 + IR の数値の数 (実装前に基準問題から数えて固定する: 後述の C1 の対象) |
+| P6 | 単位の場所 `getPath(…, 'tanshin', 'balanceSheet.unit')`・存在しない画面 `nothing.unit` | 前者は短信の `header.unit` (`百万円`)、後者は `undefined` |
+| I1 | `itemKey('tanshin', 'incomeStatement.current.ordinaryIncome')`・`('tanshin', 'summary.ordinaryIncome.changeRate')`・`('ir', 'segments.items.0.netSales.current')`・`('ir', 'outlook.forecast.netSales')`・`('ir', 'outlook.actual.netSales')` | `tanshin.incomeStatement.ordinaryIncome`・`tanshin.summary.ordinaryIncome`・`ir.segments.items.0.netSales`・`ir.outlook.netSales`・`ir.outlook.netSales` (設計 §4.1 の文法) |
+| I2 | 短信・IR のすべての数値のセルの `itemKey` | どれも `LABELS` に標準の表示名がある (抜けた項目名が無い)。短信の貸借対照表の項目は `SECTION_OF_ITEM` に部がある |
+| I3 | `LABELS` の値 | 空でなく、同じ部の中で重複しない |
+| P5 | `numericCells(基準問題)` | すべて `tanshin.` か `ir.` で始まり、`null` のセルと文字列のセルを含まない。件数は、テストが基準問題を独立にたどって数えた数値のセルの数と等しい (C1 の対象) |
 
 ### 2.2 正常な問題と、ありえない書き方
 
@@ -152,7 +189,10 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | N2 | 基準問題の前期・当期を入れ替えず、`fiscalYear` だけ変える (2027 → 2026) | `hard` は `header-period-label` の 2 件 (短信・IR の見出し) だけ |
 | N3 | 会社の `name` を変えて渡す | `header-company-name` の 2 件だけ |
 | N4 | 会社の `segmentNames` を入れ替えて渡す | `segment-names` だけ (短信・IR の両方の場所が `paths` に出る) |
-| N5 | 会社の `fiscalYearEndMonth` を 3 → 9 | `header-period-label` の 2 件だけ |
+| N5 | 会社の `fiscalYearEndMonth` を 3 → 9 | `header-period-label` の 2 件と `dates-period-end` の 1 件だけ |
+| N6 | **基準問題 B** (億円・3 セグメント。§0) と会社 B | `hard` が空。`soft` も空 (`億円` の換算・3 セグメントの規則が働く) |
+| N7 | 基準問題 B の IR の `header.unit` を `百万円` に | `header-unit` だけ |
+| N8 | 基準問題 B の IR の売上高 (億円) を、短信の換算と 0.1 億円ずらす | `xdoc-hl-net-sales` と、売上高を読む IR の式 (ir-results などが読む場合は該当の規則) のみ。ずれが 0.1 未満なら (表示の丸めの内) 破れない |
 
 ### 2.3 1 つのセルを変えたとき、破れる規則が**ちょうど**これ (V。基準問題から、指定のセルに加算する)
 
@@ -164,7 +204,7 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | V2 | tanshin.balanceSheet.current.cash +100 | bs-current-assets, link-cf-cash-end, xdoc-supp-cash |
 | V3 | tanshin.balanceSheet.current.totalCurrentAssets +100 | bs-current-assets, bs-total-assets |
 | V4 | tanshin.balanceSheet.current.retainedEarnings +100 | bs-shareholders-equity, link-retained-earnings |
-| V5 | tanshin.balanceSheet.current.totalNetAssets +100 | bs-net-assets, bs-liabilities-and-net-assets, sum-net-assets, ratio-equity-ratio, ratio-bps |
+| V5 | tanshin.balanceSheet.current.totalNetAssets +100 | bs-net-assets, bs-liabilities-and-net-assets, sum-net-assets, sum-equity, ratio-equity-ratio, ratio-roe, ratio-bps |
 | V6 | tanshin.incomeStatement.current.ordinaryIncome +100 | pl-ordinary-income, pl-income-before-tax, sum-ordinary-income, xdoc-hl-ordinary-income |
 | V7 | tanshin.summary.ordinaryIncome.changeRate +2.0 | sum-change-ordinary-income |
 | V8 | tanshin.summary.netSales.current +100 | sum-net-sales, sum-change-net-sales |
@@ -185,13 +225,35 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | V23 | ir.header.periodLabel を `2026年3月期` に | header-period-label |
 | V24 | tanshin.notes.segments.current.segments.1.name を別の名前に | segment-names |
 | V25 | tanshin.summary.payoutRatio +3.0 | ratio-payout, xdoc-hl-payout |
-| V26 | tanshin.notes.averageSharesThousand +400 | ratio-eps, ratio-bps, ratio-dividend-total |
-| V27 | tanshin.summary.eps +10 | ratio-eps, notes-per-share, ratio-payout |
+| V26 | tanshin.notes.averageSharesThousand +400 | ratio-eps, ratio-bps, ratio-dividend-total, link-cf-dividends-paid, check-eps-product, check-bps-product |
+| V27 | tanshin.summary.eps +10 | ratio-eps, notes-per-share, ratio-payout, check-eps-product |
 | V28 | ir.outlook.forecast.netSalesChangeRate +1.0 | ir-outlook-change-net-sales |
 | V29 | ir.highlights.annualDividend +2 | xdoc-hl-dividend |
 | V30 | tanshin.cashFlow.interestDividendIncome +10 | cf-subtotal, link-cf-interest-income |
 | V31 | tanshin.balanceSheet.previous.totalAssets +100 | bs-total-assets, bs-balance |
 | V32 | tanshin.balanceSheet.previous.receivables +100 | bs-current-assets, link-cf-receivables |
+| V33 | tanshin.cashFlow.longTermBorrowings +100 | cf-financing, link-cf-long-debt |
+| V34 | tanshin.cashFlow.longTermRepayments −100 | cf-financing, link-cf-long-debt |
+| V35 | tanshin.summary.interimDividend +5 | link-cf-dividends-paid |
+| V36 | tanshin.summary.dividendTotal +10 | ratio-dividend-total |
+| V37 | tanshin.summary.equity +100 | sum-equity, check-bps-product |
+| V38 | tanshin.summary.operatingMargin +2.0 | ratio-operating-margin |
+| V39 | tanshin.summary.roe +1.0 | ratio-roe |
+| V40 | tanshin.summary.auditNote を `監査済みです` に | audit-note |
+| V41 | tanshin.summary.accountingPolicyChange を `true` に | accounting-policy-match |
+| V42 | tanshin.dates.disclosure を `2027-03-01` に | dates-order |
+| V43 | tanshin.columnDates.incomeStatement.current を `2028-03-31` に | dates-column-headings |
+| V44 | ir.results.chart.operatingIncome.current を 900 に | chart-bars |
+| V45 | ir.results.chart.netSales.axisMin を 11000 に | chart-axis-zero |
+| V46 | ir.statements.0.claims.0.direction を `down` に (netSales が増収なのに減少と主張) | claims-direction |
+| V47 | ir.outlook.subsequentEvent を `期末後に子会社の売却を決定した。` に | subsequent-event-match |
+| V48 | tanshin.header.securitiesCode を `0810` に | header-securities-code (paths は tanshin.header.securitiesCode のみ) |
+| V49 | unitOverrides = `{ 'tanshin.balanceSheet': '千円' }` を足す | unit-consistency (paths は tanshin.balanceSheet.unit) |
+| V50 | signOverrides = `{ 'tanshin.cashFlow.capex': '-' }` を足す | sign-consistency (paths は tanshin.cashFlow.capex) |
+| V51 | labelOverrides = `{ 'tanshin.incomeStatement.operatingIncome': '営業利金' }` を足す | label-spelling (paths は tanshin.incomeStatement.operatingIncome) |
+| V52 | labelOverrides = `{ 'tanshin.balanceSheet.receivables': '買掛金' }` を足す | account-section だけ (買掛金は別の部の標準の名前なので、誤字ではない) |
+| V53 | ir.segments.items の 2 つ目を除く (要素 1 つ) | seg-count, segment-names, ir-seg-reconcile (無い要素を読む式は評価しない) |
+| V54 | tanshin.notes.segments.current.segments を 3 つ目の `{ name: 'x', netSales: 0, profit: 0 }` つきにする | seg-count, segment-names (0 の足しは合計に影響しない) |
 
 加えて、`paths` の確認: V1 の `bs-total-assets` の `paths` に `tanshin.balanceSheet.current.totalAssets` が含まれ、`balanceSheet.previous` のセルは含まれない。V31 の `paths` は `previous` のセルだけ。
 
@@ -199,9 +261,9 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 
 | ID | 入力 | 期待 |
 | --- | --- | --- |
-| C1 | `numericCells(基準問題)` の**各セル**を 1 つずつ変える (整数は +1、% の項目は +0.1、1 株当たりは +0.01) | どのセルでも、`hard` が 1 件以上あり、そのどれかの `paths` が**変えたセル**を含む。ただし**守られていないと明示した次のセルだけは除く**: ir.outlook.forecast.capex・depreciation・annualDividend (次期の予想で、他の式が無い) |
+| C1 | `numericCells(基準問題)` の**各セル**を 1 つずつ変える (整数は +1、% の項目は +0.1、1 株当たりは +0.01。**ただし増減率だけが守るセル (ir.outlook.forecast.netSales・operatingIncome) は、表示の丸めを越える量 = 値の 1% を足す**: +1 は増減率の小数第一位に吸い込まれて破れない) | どのセルでも、`hard` が 1 件以上あり、そのどれかの `paths` が**変えたセル**を含む。ただし**守られていないと明示した次のセルだけは除く**: ir.outlook.forecast.capex・depreciation・annualDividend (次期の予想で、他の式が無い) |
 | C2 | 除外したセルの一覧 | 上の 3 つだけ (実装で増やさない。増やすときはケース表に理由を足す) |
-| C3 | 文字列のセルのうち、見出し (社名・期・単位) を `x` に変える | それぞれ header-company-name・header-period-label・header-unit が破れる (短信・IR 両方)。注記の文 (goingConcern・cashScope・subsequentEvents) と commentary は式が無いので破れない (明示) |
+| C3 | 文字列のセルのうち、見出し (社名・証券コード・期・単位) と、決まった文のセル (summary.auditNote・notes.accountingPolicyNote・notes.subsequentEvents・日付の文字列) を `x` に変える | 見出しは header-company-name・header-securities-code・header-period-label・header-unit が破れる (短信・IR 両方)。auditNote は audit-note、accountingPolicyNote は accounting-policy-match、subsequentEvents は subsequent-event-match、日付は dates-* のどれかが破れる。式が無く破れないと**明示するのは** goingConcern・cashScope・`ir.statements[].text` の文面 (主張の構造 `claims` が守る) |
 
 ### 2.5 参考の規則 (S。各ケースで、指定の ID が `soft` に出る。`hard` は問わない)
 
@@ -223,23 +285,30 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 
 ### 2.6 異変の指定どおりにだけ破れているか (A。`checkAnomaly`)
 
-異変の種類の例 (テスト内の表): `k-balance` = rules [bs-total-assets, bs-balance, sum-total-assets, ratio-equity-ratio]、`k-rate` = [sum-change-ordinary-income]、`k-company` = [header-company-name]、`k-text` = [] (式で見つけられない注記の誤植)。問題は基準問題から V1・V7・V21 の変更を施したもの。
+意味 (anomalies.md G1 と design §4.1 の「期待集合」): 異変の問題は、(a) `anomaly.expectedRules` が**実際に落ちた hard の規則の集合と等しい**、(b) その集合が種類の `primaryRules` を**1 つ以上含み**、(c) 種類の `allowedRules` に**収まる**、(d) `expectedRules` 自体も `allowedRules` に収まり `primaryRules` を含む、(e) どの違反の `paths` も `places` のどれかに触れ、どの `places` も違反の `paths` のどれかに触れる、(f) `places` が実在する場所を指す、(g) `explanation` が空でない。種類の `primaryRules` が空の種類は存在しない (D 参照)。
+
+異変の種類の例 (テスト内の表): `k-rate` = calculation・primary/allowed [sum-change-ordinary-income]、`k-balance` = accounting・primary [bs-balance]・allowed [bs-total-assets, bs-balance, sum-total-assets, ratio-equity-ratio]、`k-balance-narrow` = 同じで allowed から ratio-equity-ratio を除く、`k-company` = appearance・primary/allowed [header-company-name]、`k-typo` = appearance・primary/allowed [label-spelling]、`k-unit` = appearance・primary/allowed [unit-consistency]。問題は基準問題から V1・V7・V21・V49・V51 の変更を施したもの。
 
 | ID | 入力 | 期待 |
 | --- | --- | --- |
-| A1 | V7 の問題、`anomaly = { kind: 'k-rate', places: [{ doc: 'tanshin', path: 'summary.ordinaryIncome.changeRate' }], explanation: '…' }` | メッセージ 0 件 |
-| A2 | A1 の問題で `kind` を `k-balance` に | 「破れた規則が種類の指定と違う」(実際 {sum-change-ordinary-income}、指定 {…}) |
-| A3 | V1 の問題 (`k-balance`)、`places` が `tanshin.balanceSheet.current.totalAssets` | 0 件 |
-| A4 | A3 で `places` を `tanshin.balanceSheet.current.cash` (食い違いに関わらないセル) に | 「どの違反にも触れない場所」と「場所に触れない違反」 |
-| A5 | A3 で `places` を 2 つ (totalAssets と cash) | 「違反に触れない場所」(cash) |
-| A6 | A1 で `places` の `path` を存在しない `summary.nothing` に | 「場所が実在しない」 |
-| A7 | V21 の問題、`k-company`、places = `ir.header.companyName` | 0 件 |
-| A8 | 基準問題のまま (式が破れていない) で `anomaly = { kind: 'k-rate', … }` | 「指定した規則が破れていない」 |
-| A9 | `k-text` (rules が空) の問題で、基準問題の `notes.goingConcern` の文だけを変え、places = `tanshin.notes.goingConcern` | 0 件 (規則が空なら、違反が 0 件で場所が実在すればよい) |
-| A10 | A9 の問題で、さらに V1 の変更も入れる | 「規則が空の種類なのに式が破れている」 |
-| A11 | `explanation` が空文字 | 「答え合わせの文言が空」 |
-| A12 | 正常な問題 (`anomaly: null`) に `labelOverrides` がある | 「正常な問題に項目名の差し替え」 |
-| A13 | `anomaly.kind` が一覧に無い | 「異変の種類が一覧に無い」 |
+| A1 | V7 の問題、`k-rate`、`expectedRules = [sum-change-ordinary-income]`、places = `tanshin.summary.ordinaryIncome.changeRate` | メッセージ 0 件 |
+| A2 | A1 で `expectedRules = [sum-change-net-sales]` | 「期待集合が実際に落ちた規則と違う」 (実際・期待の両方を含む) |
+| A3 | V7 の問題に `k-balance`、`expectedRules` は実際どおり | 「主な規則のどれも落ちていない」 |
+| A4 | V1 の問題に `k-balance-narrow`、`expectedRules` は実際どおり (4 つ) | 「許容集合の外の規則が落ちている」 (ratio-equity-ratio) |
+| A5 | V1 の問題に `k-balance`、`expectedRules` が実際 + `link-cf-start` (種類の許容集合の外) | 「期待集合が許容集合を越えている」と「期待集合が実際と違う」 |
+| A6 | V1 の問題に `k-balance`、`expectedRules` は実際どおり、places = `tanshin.balanceSheet.current.totalAssets` | 0 件 |
+| A7 | A6 で places を `tanshin.balanceSheet.current.cash` (食い違いに関わらないセル) に | 「どの違反にも触れない場所」と「場所に触れない違反」 |
+| A8 | A6 で places を 2 つ (totalAssets と cash) | 「違反に触れない場所」 (cash) だけ |
+| A9 | A1 で places の path を存在しない `summary.nothing` に | 「場所が実在しない」 |
+| A10 | V21 の問題、`k-company`、`expectedRules = [header-company-name]`、places = `ir.header.companyName` | 0 件 |
+| A11 | 基準問題のまま (式が破れていない) に `k-rate` の異変を付ける (`expectedRules = [sum-change-ordinary-income]`) | 「期待集合が実際に落ちた規則 (なし) と違う」 |
+| A12 | V51 の問題、`k-typo`、`expectedRules = [label-spelling]`、places = `{ doc: 'tanshin', itemKey: 'tanshin.incomeStatement.operatingIncome' }` | 0 件 (項目名の場所が、`label-spelling` の違反の paths に触れる) |
+| A13 | A12 で itemKey を `tanshin.nothing.nothing` に | 「項目キーが labels に無い」と「場所に触れない違反」 |
+| A14 | V49 の問題、`k-unit`、places = `{ doc: 'tanshin', path: 'balanceSheet.unit' }` | 0 件 (画面の単位の場所が実在する) |
+| A15 | `explanation` が空文字 | 「答え合わせの文言が空」 |
+| A16 | 正常な問題 (`anomaly: null`) に `labelOverrides`・`unitOverrides`・`signOverrides` のどれか | 「正常な問題に見た目の差し替え」 (3 通りそれぞれ) |
+| A17 | `anomaly.kind` が一覧に無い | 「異変の種類が一覧に無い」 |
+| A18 | `k-rate` の問題で、難易度が `hard` (calculation はやさしいの系統) | 「系統と難易度が合わない」 |
 
 ### 2.7 型の形 (SH。`shapeErrors`)
 
@@ -257,10 +326,17 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | SH10 | `anomaly.places` が空配列 | 誤り (1 件以上) |
 | SH11 | `anomaly.places[0].doc` が `pdf` | 誤り |
 | SH12 | ルートが配列・`null`・文字列 | 誤り 1 件 (「問題がオブジェクトでない」)。以降の検証を止める (例外にならない) |
+| SH13 | `tanshin.notes.segments.current.segments` が 3 要素 | 空 (許す。2 か 3)。4 要素・1 要素は誤り |
+| SH14 | `unitOverrides`・`signOverrides` の値が数値 | 誤り (文字列だけ) |
+| SH15 | `anomaly.places[0]` が `path` と `itemKey` の両方を持つ・どちらも持たない | どちらも誤り (ちょうど 1 つ) |
+| SH16 | `anomaly.expectedRules` が無い・文字列の配列でない | 誤り |
+| SH17 | `ir.statements[0].claims[0].direction` が `flat`・`metric` が未知 | どちらも誤り |
+| SH18 | `ir.statements[0].slide` が `nothing` | 誤り |
+| SH19 | `tanshin.cashFlow.longTermBorrowings` を消す (旧名 `longTermDebtChange` を足す) | 誤り 2 件 (欠落と未知のキー) |
 
 ### 2.8 データ全件 (D。`verifyDataset`)
 
-入力は、基準問題を `easy-001`(`problems/easy/easy-001.json`) として置き、会社 `fixture-c01`、異変の種類の例の表を使う。`errors` は致命 (CI を落とす)、`shortfalls` は「数が足りない」(完成の段階で効く)。
+入力は、基準問題を `easy-001` (`problems/easy/easy-001.json`) として置き、会社 `fixture-c01`、異変の種類の例の表を使う。`errors` は致命 (CI を落とす)、`shortfalls` は「数が足りない」(完成の段階で効く)。
 
 | ID | 入力 | 期待 |
 | --- | --- | --- |
@@ -271,15 +347,24 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | D5 | 同じ `id` が 2 ファイル | code `duplicate-id` |
 | D6 | 異変の問題の `kind` が一覧に無い | code `unknown-kind` |
 | D7 | 正常な問題が 1 件でも `hard` を破る (V1 の変更) | code `hard-violation` (規則 ID と場所を含む)。`problem` に ID |
-| D8 | 異変の問題が種類の指定と違う (A2 相当) | code `anomaly-mismatch` |
+| D8 | 異変の問題が種類の指定と違う (A2 相当) | code `anomaly-mismatch` (メッセージに A の食い違い) |
 | D9 | 型の形が誤り (SH2) | code `shape` だけを出し、その問題の規則の検証は行わない (落ちない) |
-| D10 | `AnomalyKind.rules` に存在しない規則 ID (`bs-nothing`) | code `unknown-rule` (kind の ID を含む) |
+| D10 | `AnomalyKind.primaryRules`・`allowedRules` に存在しない規則 ID (`bs-nothing`) | code `unknown-rule` (種類の ID を含む) |
 | D11 | 会社の `id` が重複 / 異変の種類の `id` が重複 | code `duplicate-company`・`duplicate-kind` |
 | D12 | `soft` の違反だけ (S3 相当) | `errors` 空。`soft` に出る (`--fail-on-soft` で致命) |
 | D13 | 難易度ごとの問題数が 25 未満 | `shortfalls` に code `pool-size` (easy・hard それぞれ)。`errors` ではない |
 | D14 | 異変あり・なしの両方を持つ会社が難易度ごとに 8 社未満 | `shortfalls` に code `both-sided-companies` |
-| D15 | 25 問・8 社が両面に揃ったデータ (基準問題の複製 25 件に、ID と会社 ID だけ変える。異変あり 25 件のうち…) | `shortfalls` 空。※複製は id・companyId・難易度だけを変えた正常な問題と、V7 の変更を施した異変の問題を使う |
+| D15 | **満たすデータ**: 難易度ごとに、会社 8 社 × (正常 1 + 異変 1) = 16 件 + 9 件 (異変 4・正常 5) = 25 件 (異変 12・正常 13)。異変は V7 の変更を施した `k-rate`、系統の割合は D17 の閾値を満たすように、`k-rate` (calculation) をやさしいに、`k-balance` (accounting) をむずかしいにする | `shortfalls` 空、`errors` 空 |
 | D16 | 問題 0 件・会社 0 社・種類 0 件 | `errors` 空、`shortfalls` に pool-size (easy・hard) と both-sided-companies |
+| D17 | D15 のやさしいで、異変 12 件のうち 4 件を appearance・calculation 以外の系統の種類 (text) にする (appearance + calculation が 8/12 = 67% < 80%) / むずかしいで accounting + cross-document を 6 割未満にする | `shortfalls` に code `family-balance` (難易度を含む) |
+| D18 | D15 で異変の数を 5 (比 0.5 × 25 = 12.5 の ±3 の外) にする | `shortfalls` に code `anomaly-ratio` |
+| D19 | 種類の `primaryRules` が空 | code `kind-no-primary` |
+| D20 | 種類の `primaryRules` が `allowedRules` に含まれない | code `kind-primary-not-allowed` |
+| D21 | 種類の `family` が未知 / 異変の問題の難易度が `FAMILY_DIFFICULTY[kind.family]` と違う | code `kind-shape`・`family-difficulty-mismatch` |
+| D22 | 会社の形が誤り (`irUnit: '千円'`・`segmentNames` が 4 つ・`colors` が無い・`securitiesCode` が無い) | code `company-shape` (どれも) |
+| D23 | 問題の `fiscalYear`・会社の `fiscalYearEndMonth` から作る期の表記と見出しが違う | `hard-violation` (header-period-label) |
+| D24 | 会社のセグメントが 3 つで、問題の短信・IR が 2 つ | `hard-violation` (seg-count) |
+| D25 | 正常な問題に `labelOverrides` がある (値は標準と同じでも) | code `override-on-normal` |
 
 ### 2.9 CLI (L。`npm run verify:data`)
 
@@ -292,21 +377,23 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | L3 | 数が足りない (D13) だけ | 既定は終了コード 0。`--require-complete` を付けると 1 |
 | L4 | 参考の規則だけ (D12) | 既定は終了コード 0。`--fail-on-soft` を付けると 1 |
 | L5 | JSON として壊れたファイル | 終了コード 1。出力にファイルのパス (他のファイルの検証は続ける) |
-| L6 | ディレクトリが無い | 終了コード 1。「読めません」 |
-| L7 | リポジトリの本物のデータ (`src/data`、いまは問題 0 件) | 終了コード 0 (CI がこの状態で通る) |
+| L6 | `--dir` を明示して、そのディレクトリが無い | 終了コード 1。「読めません」 |
+| L7 | `--dir` を付けない (既定の `src/data`)。そこに `companies.json`・`anomaly-kinds.json`・`problems/` が無い (いまの状態) | 終了コード 0。0 件として扱い、「数が足りない」の警告が出る。**CI はこの状態で通る** |
+| L8 | `--dir` はあるが `anomaly-kinds.json` だけ無く、異変の問題がある | 終了コード 1 (`unknown-kind`)。無いファイルは 0 件として扱うだけ |
+| L9 | CLI の実行に使う TypeScript に、型を消すだけでは動かない書き方 (enum・引数のプロパティ) を持ち込まない | `tsconfig.json` の `erasableSyntaxOnly: true` で型検査が捕まえる。`verbatimModuleSyntax: true` で型だけの import が `import type` になる (相対 import は `.ts` の拡張子つき) |
 
 ## 3. 受け入れ条件との対応
 
 | 受け入れ条件 (Task #23) | ケース |
 | --- | --- |
 | 試作の規則を、設計の言語とデータの形で作り直す | §1 (規則の一覧)・N1・V1〜V32・C1〜C3・S1〜S13 |
-| 異変の問題は指定した所だけが破れている | A1〜A13・D8 |
+| 異変の問題は指定した所だけが破れている | A1〜A18・D8・D17〜D21 |
 | 単体テストがある | 全ケース (Vitest) |
-| 全問を検証するコマンドが CI で回る | L1〜L7・D1〜D16。CI のケースは #49 で `ci.yml` に足す (`ci.test.ts` の C3 を `npm run verify:data` の位置つきに直す) |
+| 全問を検証するコマンドが CI で回る | L1〜L9・D1〜D25。CI のケースは #49 で `ci.yml` に足す (`ci.test.ts` の C3 を `npm run verify:data` の位置つきに直す) |
 
 ## 4. 範囲外
 
 - 会社の設定・異変の種類の一覧そのもの (Task #24)・問題の制作 (#25・#26)。いまは基準問題だけで検証する
-- 項目名の差し替え (`labelOverrides`) のキーが `labels.ts` にあること・値が標準と違うこと (`labels.ts` の `itemKey` は画面の Task #27 の成果物。そこで `labels.ts` ができたら、データの検証に足す。設計 §7 の該当行は #27 の受け入れ条件に回す)
+- `labels.ts` の**画面側の使いかた** (表示名を画面に出す・`data-item-key` を付ける・全項目キーが画面に出る確認) は画面の Task #27。ここ (#23) は、検証器が使う `itemKey`・`LABELS`・`SECTION_OF_ITEM` を作る
 - 実在の企業名との衝突の確認 (Task #24)
 - 会計の分かる人による soft の範囲の確認

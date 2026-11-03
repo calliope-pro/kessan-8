@@ -6,5 +6,12 @@
     "電機部品事業",
     "産業機器事業"
   ],
-  "fiscalYearEndMonth": 3
+  "fiscalYearEndMonth": 3,
+  "securitiesCode": "0899",
+  "irUnit": "百万円",
+  "emblem": "◆",
+  "colors": {
+    "main": "#1F4E79",
+    "light": "#E6EEF5"
+  }
 }
