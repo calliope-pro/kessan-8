@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const dirs: string[] = [];
 afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })));
 
-function dataDir(opts: { companies?: Company[] | null; kinds?: AnomalyKind[] | null; problems?: Problem[]; raw?: Record<string, string> } = {}): string {
+function dataDir(opts: { companies?: Company[] | null; kinds?: AnomalyKind[] | null; problems?: Problem[]; raw?: Record<string, string>; samples?: Record<string, unknown> } = {}): string {
   const d = mkdtempSync(`${tmpdir()}/verify-data-`);
   dirs.push(d);
   if (opts.companies !== null) writeFileSync(`${d}/companies.json`, JSON.stringify(opts.companies ?? [{ ...companyA(), id: 'fixture-c01' }]));
@@ -19,6 +19,10 @@ function dataDir(opts: { companies?: Company[] | null; kinds?: AnomalyKind[] | n
   for (const p of opts.problems ?? [normalVariant('easy-001', 'easy', 'fixture-c01')]) {
     mkdirSync(`${d}/problems/${p.difficulty}`, { recursive: true });
     writeFileSync(`${d}/problems/${p.difficulty}/${p.id}.json`, JSON.stringify(p));
+  }
+  for (const [name, value] of Object.entries(opts.samples ?? {})) {
+    mkdirSync(`${d}/samples`, { recursive: true });
+    writeFileSync(`${d}/samples/${name}`, JSON.stringify(value));
   }
   for (const [name, text] of Object.entries(opts.raw ?? {})) {
     mkdirSync(`${d}/problems/easy`, { recursive: true });
@@ -116,5 +120,23 @@ describe('npm run verify:data', () => {
       expect(r.code, bad).toBe(2);
       expect(r.out).toContain('使いかた');
     }
+  });
+
+  it('L12: samples/*.json の見本を正常な問題として検証する (壊れた見本は終了コード 1)', () => {
+    const company = { ...companyA(), id: 'c-sample' };
+    const good = { problem: normalVariant('sample', 'easy', 'c-sample'), notes: { summary: '正常です' } };
+    const base = { companies: [{ ...companyA(), id: 'fixture-c01' }, company] };
+    const ok = run('--dir', dataDir({ ...base, samples: { 'sample.json': good } }));
+    expect(ok.code).toBe(0);
+    expect(ok.out).toContain('見本 1 件');
+    const bad = { ...good, problem: add(good.problem, 'tanshin.balanceSheet.current.totalAssets', 100) };
+    const r = run('--dir', dataDir({ ...base, samples: { 'sample.json': bad } }));
+    expect(r.code).toBe(1);
+    expect(r.out).toContain('samples/sample.json');
+    expect(r.out).toContain('bs-total-assets');
+  });
+
+  it('L13: samples/ が無ければ 0 件として扱う', () => {
+    expect(run('--dir', dataDir()).out).toContain('見本 0 件');
   });
 });

@@ -20,6 +20,8 @@ export interface DatasetInput {
   companies: unknown[];
   kinds: unknown[];
   problems: { file: string; value: unknown }[];
+  /** 見本 (samples/*.json)。`{ problem, notes }`。正常な問題として検証するが、プールには入れない。 */
+  samples?: { file: string; value: unknown }[];
 }
 
 export interface DatasetResult {
@@ -27,6 +29,8 @@ export interface DatasetResult {
   shortfalls: Entry[];
   soft: Entry[];
   stats: Record<Difficulty, { total: number; anomaly: number; normal: number }>;
+  /** 検証した見本の数。 */
+  samples: number;
 }
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'hard'];
@@ -70,6 +74,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
   duplicates(kinds.map((k) => k.id)).forEach((id) => errors.push({ code: 'duplicate-kind', message: `異変の種類の id が重複: ${id}` }));
 
   // 問題
+  let sampleCount = 0;
   const valid: Problem[] = [];
   for (const { file, value } of input.problems) {
     const shape = shapeErrors(value);
@@ -102,6 +107,36 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
   }
   duplicates(valid.map((p) => p.id)).forEach((id) => errors.push({ code: 'duplicate-id', problem: id, message: `問題の id が重複: ${id}` }));
 
+  // 見本: 正常な問題として検証する。プールの数には入れず、プールと同じ会社 × 期でないこと (見本が出題に混ざらない)
+  const poolPairs = new Set(valid.map((p) => `${p.companyId}×${p.fiscalYear}`));
+  for (const { file, value } of input.samples ?? []) {
+    const sampleErrors: string[] = [];
+    const record = typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+    if (record === null) sampleErrors.push('見本がオブジェクトでない');
+    else {
+      const notes = record.notes;
+      if (typeof notes !== 'object' || notes === null || Array.isArray(notes) || Object.values(notes).some((v) => typeof v !== 'string')) sampleErrors.push('notes: 文字列の record でない');
+      sampleErrors.push(...shapeErrors(record.problem).map((m) => `problem ${m}`));
+    }
+    if (sampleErrors.length > 0) {
+      sampleErrors.forEach((m) => errors.push({ code: 'sample-shape', message: `${file}: ${m}` }));
+      continue;
+    }
+    const p = (record as { problem: Problem }).problem;
+    const add = (code: string, message: string) => errors.push({ code, problem: p.id, message: `${file}: ${message}` });
+    if (p.anomaly !== null) add('sample-anomaly', '見本は正常な問題でなければならない (anomaly が null)');
+    if (valid.some((q) => q.id === p.id)) add('duplicate-id', `見本の id ${p.id} がプールの問題と同じ`);
+    if (poolPairs.has(`${p.companyId}×${p.fiscalYear}`)) add('sample-overlaps-pool', `見本の会社 × 期 (${p.companyId} × ${p.fiscalYear}) がプールの問題と同じ`);
+    const company = companies.find((c) => c.id === p.companyId);
+    if (!company) {
+      add('unknown-company', `会社 ${p.companyId} が一覧に無い`);
+      continue;
+    }
+    for (const v of verify(p, company).hard) add('hard-violation', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
+    for (const v of verifyIrDisplay(p, company)) add('ir-display-mismatch', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
+    sampleCount++;
+  }
+
   // 数が足りない
   for (const d of DIFFICULTIES) {
     const pool = valid.filter((p) => p.difficulty === d);
@@ -124,5 +159,5 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
       }
     }
   }
-  return { errors, shortfalls, soft, stats };
+  return { errors, shortfalls, soft, stats, samples: sampleCount };
 }

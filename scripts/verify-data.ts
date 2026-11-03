@@ -54,12 +54,16 @@ const problems = listJson(join(dir, 'problems'))
   .map((file) => ({ file, value: readJson(file) }))
   .filter((p) => p.value !== undefined);
 
-const result = verifyDataset({ companies: array(join(dir, 'companies.json')), kinds: array(join(dir, 'anomaly-kinds.json')), problems });
+const samples = listJson(join(dir, 'samples'))
+  .map((file) => ({ file, value: readJson(file) }))
+  .filter((s) => s.value !== undefined);
+
+const result = verifyDataset({ companies: array(join(dir, 'companies.json')), kinds: array(join(dir, 'anomaly-kinds.json')), problems, samples });
 const errors = [...jsonErrors, ...result.errors];
 
 const line = (e: Entry) => `  [${e.code}]${e.problem ? ` ${e.problem}` : ''} ${e.message}`;
 const { easy, hard } = result.stats;
-console.log(`${dir}: ${easy.total + hard.total} 問を検証 (easy ${easy.total}: 異変 ${easy.anomaly}・正常 ${easy.normal} / hard ${hard.total}: 異変 ${hard.anomaly}・正常 ${hard.normal})`);
+console.log(`${dir}: ${easy.total + hard.total} 問を検証 (easy ${easy.total}: 異変 ${easy.anomaly}・正常 ${easy.normal} / hard ${hard.total}: 異変 ${hard.anomaly}・正常 ${hard.normal} / 見本 ${result.samples} 件)`);
 if (!explicitDir && !existsSync(dir)) console.log('  データのディレクトリがまだ無い (0 件として扱う)');
 if (errors.length > 0) console.error(`致命 ${errors.length} 件:\n${errors.map(line).join('\n')}`);
 const fatalShortfalls = requireArg === undefined ? [] : result.shortfalls.filter((e) => requireScope === undefined || e.difficulty === requireScope);
