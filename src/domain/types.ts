@@ -39,6 +39,12 @@ export interface Company {
   segmentNames: [string, string];
   /** 決算期末の月 (3 = 3 月期)。 */
   fiscalYearEndMonth: number;
+  /** 事業の説明 1 文 (導入の 1 行の出所。数字・増減の語を含めない)。UX の部品 P2 を採るとき必須。 */
+  business?: string;
+  /** 業種の配色 ID。UX の部品 V3 を採るとき必須。 */
+  palette?: string;
+  /** 社章の幾何形の指定 (形の名前とパラメータ)。生成は純粋な関数。UX の部品 V3 を採るとき必須。 */
+  emblem?: { shape: string; params?: number[] };
 }
 
 /** 異変の種類の一覧 (src/data/anomaly-kinds.json)。 */
@@ -47,6 +53,8 @@ export interface AnomalyKind {
   stage: AnomalyStage;
   /** 遊び手に見せる名前 (答え合わせで使う)。 */
   name: string;
+  /** 種類ごとの一般的な見かた 1 行。UX の部品 R7 を採るとき必須。 */
+  tip?: string;
   /** この種類の異変で破れる、検証器の規則 ID。正常な問題ではすべて成り立ち、この種類の問題ではこれだけが破れる。 */
   rules: string[];
 }
@@ -260,6 +268,8 @@ export interface Problem {
   companyId: string;
   /** 決算期の年 (2027 = 2027年3月期)。 */
   fiscalYear: number;
+  /** 難しさの段 (1 = 目立つ、3 = 紛らわしい)。正常な問題にも付ける。UX の部品 P1 を採るとき必須。 */
+  tier?: 1 | 2 | 3;
   tanshin: Tanshin;
   ir: IrDeck;
   /** 項目名の差し替え (見た目の異変用)。キーは項目キー (docs/design.md §4.1)。正常な問題には無い。 */

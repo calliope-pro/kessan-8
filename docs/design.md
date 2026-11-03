@@ -149,6 +149,12 @@ export interface Company {
   segmentNames: [string, string];
   /** 決算期末の月 (3 = 3 月期)。 */
   fiscalYearEndMonth: number;
+  /** 事業の説明 1 文 (導入の 1 行の出所。数字・増減の語を含めない)。UX の部品 P2 を採るとき必須。 */
+  business?: string;
+  /** 業種の配色 ID。UX の部品 V3 を採るとき必須。 */
+  palette?: string;
+  /** 社章の幾何形の指定 (形の名前とパラメータ)。生成は純粋な関数。UX の部品 V3 を採るとき必須。 */
+  emblem?: { shape: string; params?: number[] };
 }
 
 /** 異変の種類の一覧 (src/data/anomaly-kinds.json)。 */
@@ -157,6 +163,8 @@ export interface AnomalyKind {
   stage: AnomalyStage;
   /** 遊び手に見せる名前 (答え合わせで使う)。 */
   name: string;
+  /** 種類ごとの一般的な見かた 1 行。UX の部品 R7 を採るとき必須。 */
+  tip?: string;
   /** この種類の異変で破れる、検証器の規則 ID。正常な問題ではすべて成り立ち、この種類の問題ではこれだけが破れる。 */
   rules: string[];
 }
@@ -370,6 +378,8 @@ export interface Problem {
   companyId: string;
   /** 決算期の年 (2027 = 2027年3月期)。 */
   fiscalYear: number;
+  /** 難しさの段 (1 = 目立つ、3 = 紛らわしい)。正常な問題にも付ける。UX の部品 P1 を採るとき必須。 */
+  tier?: 1 | 2 | 3;
   tanshin: Tanshin;
   ir: IrDeck;
   /** 項目名の差し替え (見た目の異変用)。キーは項目キー (docs/design.md §4.1)。正常な問題には無い。 */
@@ -486,5 +496,5 @@ export interface Problem {
 | Task | この設計から |
 | --- | --- |
 | #22 問題 (#23 検証器・#24 会社と異変の一覧・#25/#26 問題の制作) | `Problem` の形 (§4.2) で作る。検証器は `src/verifier/` に置き、規則 ID を `anomaly-kinds.json` の `rules` と対応させる。試作の `docs/plans/spike/verify.py` (67 の必須規則 + 12 の参考規則) が出発点 |
-| #27 画面・#28 遊びの流れ | `ui/` に置く。状態は §5 の `reduce` を使い、数字と文言は問題データから読む。`data-path` を各セルに持たせる (§4.1)。UI/UX の案 (#19) が素の DOM で足りないと分かったら、フレームワーク導入をチケットで提案する |
+| #27 画面・#28 遊びの流れ | UX の部品が要る追加項目は [docs/plans/ux-tech-assessment.md](plans/ux-tech-assessment.md) §4.2 (型には任意項目として足してある。部品が選ばれたら検証器で必須にする)。`ui/` に置く。状態は §5 の `reduce` を使い、数字と文言は問題データから読む。`data-path` を各セルに持たせる (§4.1)。UI/UX の案 (#19) が素の DOM で足りないと分かったら、フレームワーク導入をチケットで提案する |
 | #30 公開 | Vercel の取り込みは人間の作業 (open-decisions D-R6)。`vercel.json` は #37 で用意する |
