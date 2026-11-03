@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "家庭用事業",
-              "netSales": 8990,
+              "netSales": 8900,
               "profit": 356
             },
             {
               "name": "業務用事業",
-              "netSales": 6460,
+              "netSales": 6550,
               "profit": 292
             }
           ],
@@ -210,12 +210,12 @@
           "segments": [
             {
               "name": "家庭用事業",
-              "netSales": 9140,
+              "netSales": 9310,
               "profit": 374
             },
             {
               "name": "業務用事業",
-              "netSales": 6760,
+              "netSales": 6590,
               "profit": 306
             }
           ],
@@ -297,30 +297,30 @@
         {
           "name": "家庭用事業",
           "netSales": {
-            "previous": 8990,
-            "current": 9140,
-            "changeRate": 1.7
+            "previous": 8900,
+            "current": 9310,
+            "changeRate": 4.6
           },
           "profit": {
             "previous": 356,
             "current": 374,
             "changeRate": 5.1
           },
-          "salesShare": 57.5
+          "salesShare": 58.6
         },
         {
           "name": "業務用事業",
           "netSales": {
-            "previous": 6460,
-            "current": 6760,
-            "changeRate": 4.6
+            "previous": 6550,
+            "current": 6590,
+            "changeRate": 0.6
           },
           "profit": {
             "previous": 292,
             "current": 306,
             "changeRate": 4.8
           },
-          "salesShare": 42.5
+          "salesShare": 41.4
         }
       ],
       "adjustment": {
@@ -376,7 +376,7 @@
     "statements": [
       {
         "slide": "highlights",
-        "text": "当期は増収増益となりました。家庭用・業務用ともに、おかげさまで引き続き取り組んでまいりました。",
+        "text": "当期は増収増益となりました。家庭用・業務用ともに、引き続き取り組んでまいりました。",
         "claims": [
           {
             "metric": "netSales",

@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "クラウド事業",
-              "netSales": 5540,
+              "netSales": 5500,
               "profit": 854
             },
             {
               "name": "受託開発事業",
-              "netSales": 2340,
+              "netSales": 2380,
               "profit": 366
             }
           ],
@@ -210,12 +210,12 @@
           "segments": [
             {
               "name": "クラウド事業",
-              "netSales": 5670,
+              "netSales": 5700,
               "profit": 877
             },
             {
               "name": "受託開発事業",
-              "netSales": 2510,
+              "netSales": 2480,
               "profit": 376
             }
           ],
@@ -297,30 +297,30 @@
         {
           "name": "クラウド事業",
           "netSales": {
-            "previous": 5540,
-            "current": 5670,
-            "changeRate": 2.3
+            "previous": 5500,
+            "current": 5700,
+            "changeRate": 3.6
           },
           "profit": {
             "previous": 854,
             "current": 877,
             "changeRate": 2.7
           },
-          "salesShare": 69.3
+          "salesShare": 69.7
         },
         {
           "name": "受託開発事業",
           "netSales": {
-            "previous": 2340,
-            "current": 2510,
-            "changeRate": 7.3
+            "previous": 2380,
+            "current": 2480,
+            "changeRate": 4.2
           },
           "profit": {
             "previous": 366,
             "current": 376,
             "changeRate": 2.7
           },
-          "salesShare": 30.7
+          "salesShare": 30.3
         }
       ],
       "adjustment": {

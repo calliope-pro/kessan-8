@@ -193,8 +193,8 @@
           "segments": [
             {
               "name": "賃貸事業",
-              "netSales": 11530,
-              "profit": 2250
+              "netSales": 11430,
+              "profit": 2240
             },
             {
               "name": "分譲事業",
@@ -203,8 +203,8 @@
             },
             {
               "name": "管理事業",
-              "netSales": 3010,
-              "profit": 370
+              "netSales": 3110,
+              "profit": 380
             }
           ],
           "adjustment": -280,
@@ -215,7 +215,7 @@
           "segments": [
             {
               "name": "賃貸事業",
-              "netSales": 12240,
+              "netSales": 12090,
               "profit": 2450
             },
             {
@@ -225,7 +225,7 @@
             },
             {
               "name": "管理事業",
-              "netSales": 3130,
+              "netSales": 3280,
               "profit": 410
             }
           ],
@@ -307,16 +307,16 @@
         {
           "name": "賃貸事業",
           "netSales": {
-            "previous": 115.3,
-            "current": 122.4,
-            "changeRate": 6.2
+            "previous": 114.3,
+            "current": 120.9,
+            "changeRate": 5.8
           },
           "profit": {
-            "previous": 22.5,
+            "previous": 22.4,
             "current": 24.5,
-            "changeRate": 8.9
+            "changeRate": 9.4
           },
-          "salesShare": 55.7
+          "salesShare": 55
         },
         {
           "name": "分譲事業",
@@ -335,16 +335,16 @@
         {
           "name": "管理事業",
           "netSales": {
-            "previous": 30.1,
-            "current": 31.3,
-            "changeRate": 4
+            "previous": 31.1,
+            "current": 32.8,
+            "changeRate": 5.5
           },
           "profit": {
-            "previous": 3.7,
+            "previous": 3.8,
             "current": 4.1,
-            "changeRate": 10.8
+            "changeRate": 7.9
           },
-          "salesShare": 14.2
+          "salesShare": 14.9
         }
       ],
       "adjustment": {

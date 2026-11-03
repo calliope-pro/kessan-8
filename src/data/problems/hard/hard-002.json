@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "学習塾事業",
-              "netSales": 3770,
+              "netSales": 3790,
               "profit": 363
             },
             {
               "name": "通信講座事業",
-              "netSales": 2040,
+              "netSales": 2020,
               "profit": 155
             }
           ],
@@ -210,12 +210,12 @@
           "segments": [
             {
               "name": "学習塾事業",
-              "netSales": 3960,
+              "netSales": 3970,
               "profit": 400
             },
             {
               "name": "通信講座事業",
-              "netSales": 2180,
+              "netSales": 2170,
               "profit": 172
             }
           ],
@@ -297,30 +297,30 @@
         {
           "name": "学習塾事業",
           "netSales": {
-            "previous": 3770,
-            "current": 3960,
-            "changeRate": 5
+            "previous": 3790,
+            "current": 3970,
+            "changeRate": 4.7
           },
           "profit": {
             "previous": 363,
             "current": 400,
             "changeRate": 10.2
           },
-          "salesShare": 64.5
+          "salesShare": 64.7
         },
         {
           "name": "通信講座事業",
           "netSales": {
-            "previous": 2040,
-            "current": 2180,
-            "changeRate": 6.9
+            "previous": 2020,
+            "current": 2170,
+            "changeRate": 7.4
           },
           "profit": {
             "previous": 155,
             "current": 172,
             "changeRate": 11
           },
-          "salesShare": 35.5
+          "salesShare": 35.3
         }
       ],
       "adjustment": {

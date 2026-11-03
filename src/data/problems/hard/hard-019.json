@@ -3,7 +3,7 @@
   "difficulty": "hard",
   "companyId": "c02",
   "fiscalYear": 2021,
-  "tier": 2,
+  "tier": 3,
   "tanshin": {
     "header": {
       "companyName": "クレセラ食品株式会社",
@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "家庭用事業",
-              "netSales": 10010,
+              "netSales": 10000,
               "profit": 392
             },
             {
               "name": "業務用事業",
-              "netSales": 7080,
+              "netSales": 7090,
               "profit": 321
             }
           ],
@@ -210,12 +210,12 @@
           "segments": [
             {
               "name": "家庭用事業",
-              "netSales": 10350,
+              "netSales": 10370,
               "profit": 404
             },
             {
               "name": "業務用事業",
-              "netSales": 7710,
+              "netSales": 7690,
               "profit": 330
             }
           ],
@@ -297,30 +297,30 @@
         {
           "name": "家庭用事業",
           "netSales": {
-            "previous": 10010,
-            "current": 10350,
-            "changeRate": 3.4
+            "previous": 10000,
+            "current": 10370,
+            "changeRate": 3.7
           },
           "profit": {
             "previous": 392,
             "current": 404,
             "changeRate": 3.1
           },
-          "salesShare": 57.3
+          "salesShare": 57.4
         },
         {
           "name": "業務用事業",
           "netSales": {
-            "previous": 7080,
-            "current": 7710,
-            "changeRate": 8.9
+            "previous": 7090,
+            "current": 7690,
+            "changeRate": 8.5
           },
           "profit": {
             "previous": 321,
             "current": 330,
             "changeRate": 2.8
           },
-          "salesShare": 42.7
+          "salesShare": 42.6
         }
       ],
       "adjustment": {
@@ -376,7 +376,7 @@
     "statements": [
       {
         "slide": "highlights",
-        "text": "当期は増収増益となりました。家庭用・業務用ともに、おかげさまで引き続き取り組んでまいりました。",
+        "text": "当期は増収増益となりました。家庭用・業務用ともに、引き続き取り組んでまいりました。",
         "claims": [
           {
             "metric": "netSales",

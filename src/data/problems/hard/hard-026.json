@@ -193,7 +193,7 @@
           "segments": [
             {
               "name": "機械・資材事業",
-              "netSales": 77680,
+              "netSales": 79380,
               "profit": 1070
             },
             {
@@ -203,7 +203,7 @@
             },
             {
               "name": "化成品事業",
-              "netSales": 32990,
+              "netSales": 31290,
               "profit": 600
             }
           ],
@@ -215,7 +215,7 @@
           "segments": [
             {
               "name": "機械・資材事業",
-              "netSales": 83460,
+              "netSales": 82040,
               "profit": 1120
             },
             {
@@ -225,7 +225,7 @@
             },
             {
               "name": "化成品事業",
-              "netSales": 32030,
+              "netSales": 33450,
               "profit": 620
             }
           ],
@@ -307,16 +307,16 @@
         {
           "name": "機械・資材事業",
           "netSales": {
-            "previous": 776.8,
-            "current": 834.6,
-            "changeRate": 7.4
+            "previous": 793.8,
+            "current": 820.4,
+            "changeRate": 3.4
           },
           "profit": {
             "previous": 10.7,
             "current": 11.2,
             "changeRate": 4.7
           },
-          "salesShare": 50.4
+          "salesShare": 49.5
         },
         {
           "name": "食品原料事業",
@@ -335,16 +335,16 @@
         {
           "name": "化成品事業",
           "netSales": {
-            "previous": 329.9,
-            "current": 320.3,
-            "changeRate": -2.9
+            "previous": 312.9,
+            "current": 334.5,
+            "changeRate": 6.9
           },
           "profit": {
             "previous": 6,
             "current": 6.2,
             "changeRate": 3.3
           },
-          "salesShare": 19.3
+          "salesShare": 20.2
         }
       ],
       "adjustment": {
@@ -400,7 +400,7 @@
     "statements": [
       {
         "slide": "highlights",
-        "text": "当期は増収増益。取扱高は各セグメントの動向を反映した。",
+        "text": "当期は増収、営業利益は増益、特別損失の計上により親会社株主に帰属する当期純利益は減益。取扱高は各セグメントの動向を反映した。",
         "claims": [
           {
             "metric": "netSales",
@@ -409,6 +409,14 @@
           {
             "metric": "operatingIncome",
             "direction": "up"
+          },
+          {
+            "metric": "ordinaryIncome",
+            "direction": "up"
+          },
+          {
+            "metric": "netIncomeParent",
+            "direction": "down"
           }
         ]
       },

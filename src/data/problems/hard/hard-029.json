@@ -3,7 +3,7 @@
   "difficulty": "hard",
   "companyId": "c06",
   "fiscalYear": 2022,
-  "tier": 3,
+  "tier": 2,
   "tanshin": {
     "header": {
       "companyName": "トラウネ建設株式会社",
@@ -193,7 +193,7 @@
           "segments": [
             {
               "name": "建築事業",
-              "netSales": 40220,
+              "netSales": 40740,
               "profit": 1800
             },
             {
@@ -203,7 +203,7 @@
             },
             {
               "name": "開発事業",
-              "netSales": 10170,
+              "netSales": 9650,
               "profit": 720
             }
           ],
@@ -215,7 +215,7 @@
           "segments": [
             {
               "name": "建築事業",
-              "netSales": 43960,
+              "netSales": 43910,
               "profit": 1940
             },
             {
@@ -225,7 +225,7 @@
             },
             {
               "name": "開発事業",
-              "netSales": 10280,
+              "netSales": 10330,
               "profit": 770
             }
           ],
@@ -307,16 +307,16 @@
         {
           "name": "建築事業",
           "netSales": {
-            "previous": 402.2,
-            "current": 439.6,
-            "changeRate": 9.3
+            "previous": 407.4,
+            "current": 439.1,
+            "changeRate": 7.8
           },
           "profit": {
             "previous": 18,
             "current": 19.4,
             "changeRate": 7.8
           },
-          "salesShare": 55.5
+          "salesShare": 55.4
         },
         {
           "name": "土木事業",
@@ -335,9 +335,9 @@
         {
           "name": "開発事業",
           "netSales": {
-            "previous": 101.7,
-            "current": 102.8,
-            "changeRate": 1.1
+            "previous": 96.5,
+            "current": 103.3,
+            "changeRate": 7
           },
           "profit": {
             "previous": 7.2,
@@ -460,7 +460,7 @@
         "path": "cashFlow.cashEnding"
       }
     ],
-    "explanation": "棚卸資産は 5,072 百万円から 5,523 百万円に増えたので、キャッシュ・フロー計算書の「棚卸資産の増減額」は △451 (資金が減る) のはずですが、451 と書かれています。符号が逆です。",
+    "explanation": "棚卸資産は 5,072 百万円から 5,523 百万円に増えたので、キャッシュ・フロー計算書の「棚卸資産の増減額」は △451 (資金が減る) のはずですが、451 と書かれています。符号が逆です。このため、キャッシュ・フロー計算書の現金及び現金同等物の期末残高 9,877 百万円は、貸借対照表の現金及び預金 8,975 百万円と合いません。",
     "expectedRules": [
       "link-cf-cash-end",
       "link-cf-inventories"

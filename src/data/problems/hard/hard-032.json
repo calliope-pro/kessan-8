@@ -193,7 +193,7 @@
           "segments": [
             {
               "name": "賃貸事業",
-              "netSales": 12240,
+              "netSales": 12090,
               "profit": 2450
             },
             {
@@ -203,7 +203,7 @@
             },
             {
               "name": "管理事業",
-              "netSales": 3130,
+              "netSales": 3280,
               "profit": 410
             }
           ],
@@ -215,7 +215,7 @@
           "segments": [
             {
               "name": "賃貸事業",
-              "netSales": 12480,
+              "netSales": 12590,
               "profit": 3050
             },
             {
@@ -225,7 +225,7 @@
             },
             {
               "name": "管理事業",
-              "netSales": 3540,
+              "netSales": 3430,
               "profit": -240
             }
           ],
@@ -237,7 +237,7 @@
       "averageSharesThousand": 7000,
       "bps": 2367.14,
       "eps": 338.43,
-      "subsequentEvents": "期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 1180 百万円の見込みである。",
+      "subsequentEvents": "期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 1,180 百万円の見込みである。",
       "accountingPolicyNote": "該当事項はありません。"
     }
   },
@@ -307,16 +307,16 @@
         {
           "name": "賃貸事業",
           "netSales": {
-            "previous": 122.4,
-            "current": 124.8,
-            "changeRate": 2
+            "previous": 120.9,
+            "current": 125.9,
+            "changeRate": 4.1
           },
           "profit": {
             "previous": 24.5,
             "current": 30.5,
             "changeRate": 24.5
           },
-          "salesShare": 54.5
+          "salesShare": 55
         },
         {
           "name": "分譲事業",
@@ -335,16 +335,16 @@
         {
           "name": "管理事業",
           "netSales": {
-            "previous": 31.3,
-            "current": 35.4,
-            "changeRate": 13.1
+            "previous": 32.8,
+            "current": 34.3,
+            "changeRate": 4.6
           },
           "profit": {
             "previous": 4.1,
             "current": -2.4,
             "changeRate": -158.5
           },
-          "salesShare": 15.5
+          "salesShare": 15
         }
       ],
       "adjustment": {
@@ -372,7 +372,7 @@
         "capex": 10.2,
         "depreciation": 9.6
       },
-      "subsequentEvent": "期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 1180 百万円の見込みである。"
+      "subsequentEvent": "期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 1,180 百万円の見込みである。"
     },
     "supplement": {
       "capex": {
@@ -400,7 +400,7 @@
     "statements": [
       {
         "slide": "highlights",
-        "text": "当期は増収増益となりました。保有資産の運営を着実に進めてまいりました。",
+        "text": "当期は増収、営業利益は増益、特別損失の計上により親会社株主に帰属する当期純利益は減益となりました。保有資産の運営を着実に進めてまいりました。",
         "claims": [
           {
             "metric": "netSales",
@@ -409,6 +409,14 @@
           {
             "metric": "operatingIncome",
             "direction": "up"
+          },
+          {
+            "metric": "ordinaryIncome",
+            "direction": "up"
+          },
+          {
+            "metric": "netIncomeParent",
+            "direction": "down"
           }
         ]
       },

@@ -215,8 +215,8 @@
           "segments": [
             {
               "name": "装置事業",
-              "netSales": 13200,
-              "profit": 1383
+              "netSales": 13320,
+              "profit": 1382
             },
             {
               "name": "部品事業",
@@ -225,8 +225,8 @@
             },
             {
               "name": "保守サービス事業",
-              "netSales": 4640,
-              "profit": 414
+              "netSales": 4520,
+              "profit": 415
             }
           ],
           "adjustment": -205,
@@ -308,15 +308,15 @@
           "name": "装置事業",
           "netSales": {
             "previous": 12940,
-            "current": 13200,
-            "changeRate": 2
+            "current": 13320,
+            "changeRate": 2.9
           },
           "profit": {
             "previous": 1291,
-            "current": 1383,
-            "changeRate": 7.1
+            "current": 1382,
+            "changeRate": 7
           },
-          "salesShare": 49.6
+          "salesShare": 50
         },
         {
           "name": "部品事業",
@@ -336,15 +336,15 @@
           "name": "保守サービス事業",
           "netSales": {
             "previous": 4380,
-            "current": 4640,
-            "changeRate": 5.9
+            "current": 4520,
+            "changeRate": 3.2
           },
           "profit": {
             "previous": 387,
-            "current": 414,
-            "changeRate": 7
+            "current": 415,
+            "changeRate": 7.2
           },
-          "salesShare": 17.4
+          "salesShare": 17
         }
       ],
       "adjustment": {

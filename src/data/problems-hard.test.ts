@@ -97,6 +97,13 @@ describe('むずかしいの設計表 (problems-hard.md)', () => {
     }
   });
 
+  it('P11: 異変の段は、実際に見える症状で付ける (包括レビュー B4): 貸借の合計が食い違うもの (H-01・H-02・H-09) と CF の期末残高が現金と食い違うもの (H-03・H-05・H-06) は段 1〜2 まで、注記・見通しを読まないと分からないもの (H-16・H-23・H-24) は段 3', () => {
+    const tierOf = (kind: string) => (anomalies.find((r) => r.kind === kind) as Row).tier;
+    expect(['H-22', 'H-28', 'H-19', 'H-01', 'H-13', 'H-17', 'H-21'].map(tierOf)).toEqual([1, 1, 1, 1, 1, 1, 1]);
+    expect(['H-03', 'H-15', 'H-05', 'H-02', 'H-09', 'H-06'].map(tierOf)).toEqual([2, 2, 2, 2, 2, 2]);
+    expect(['H-16', 'H-23', 'H-24'].map(tierOf)).toEqual([3, 3, 3]);
+  });
+
   it('P10: 正常な問題の段は、疑わしく見える要素の数で決まる (0 個 = 段 1、1〜2 個 = 段 2、3 個以上 = 段 3)。常に無配の c04・c07 は D を使わず、N は 1 問だけ (最後の期)', () => {
     normals.forEach((r) => {
       expect(r.tier, r.id).toBe(r.elements.length === 0 ? 1 : r.elements.length <= 2 ? 2 : 3);
@@ -214,6 +221,46 @@ describe('正常な問題の JSON (Sub-task #74)', () => {
     });
   });
 
+  it('J9: I1 の文が「増益」と言うとき、I1 に出る利益 (営業・経常・親会社株主に帰属する当期純利益) の前期比が負でないか、文が最終減益に触れ claims に netIncomeParent の down がある (包括レビュー B2。同じ画面の数字と矛盾して読めない)', () => {
+    rows.forEach((r) => {
+      if (!existsSync(dataUrl(r.id))) return;
+      const p = load(r.id);
+      const h = p.ir.highlights;
+      const first = p.ir.statements[0] as Problem['ir']['statements'][number];
+      if (p.anomaly !== null) return;
+      const rates = [h.operatingIncome.changeRate, h.ordinaryIncome.changeRate, h.netIncomeParent.changeRate];
+      const mixed = rates.some((x) => x < 0) && rates.some((x) => x >= 0);
+      if (!mixed && first.text.includes('増益')) expect(rates.every((x) => x >= 0), `${r.id} ${first.text}`).toBe(true);
+      if (mixed) {
+        expect(first.text, r.id).toContain('親会社株主に帰属する当期純利益');
+        expect(first.claims, r.id).toContainEqual({ metric: 'netIncomeParent', direction: 'down' });
+      }
+    });
+  });
+
+  it('J10: 段 1 の正常な問題 (疑わしい要素 0) では、セグメントの売上高が前期比 ±15% を越えて振れない (包括レビュー N2)', () => {
+    normalRows.filter((r) => r.tier === 1).forEach((r) => {
+      const seg = load(r.id).ir.segments.items;
+      seg.forEach((it) => expect(Math.abs(it.netSales.changeRate), `${r.id} ${it.name}`).toBeLessThanOrEqual(15));
+    });
+  });
+
+  it('J11: 後発事象の文の 1,000 以上の金額は、桁区切りのコンマで書く (包括レビュー N3。ほかの文言と表記をそろえる)', () => {
+    rows.forEach((r) => {
+      if (!existsSync(dataUrl(r.id))) return;
+      const p = load(r.id);
+      const texts = [p.tanshin.notes.subsequentEvents, p.ir.outlook.subsequentEvent ?? '', p.anomaly?.explanation ?? ''];
+      texts.forEach((t) => expect(t, r.id).not.toMatch(/(?<![\d,.])\d{4,}(?![\d,])/));
+    });
+  });
+
+  it('J12: IR の文に、数字と矛盾して読める語 (おかげさまで・加速・拡大・好調・堅調・順調) を使わない (#25 の包括レビュー N1・N2 から)', () => {
+    rows.forEach((r) => {
+      if (!existsSync(dataUrl(r.id))) return;
+      load(r.id).ir.statements.forEach((st) => expect(st.text, r.id).not.toMatch(/おかげさまで|加速|拡大|好調|堅調|順調/));
+    });
+  });
+
   it('J6: 億円の会社の IR は、短信の百万円 ÷ 100 を小数第一位に四捨五入した値 (IR の売上高)', () => {
     normalRows.forEach((r) => {
       const p = load(r.id);
@@ -305,6 +352,34 @@ describe('異変の問題の JSON (Sub-task #75)', () => {
     expect(p.labelOverrides).toBeUndefined();
     expect(p.anomaly?.explanation).toContain('税金等調整前当期純利益');
     expect(p.tanshin.cashFlow.incomeBeforeTax).toBe(p.tanshin.incomeStatement.current.netIncome);
+  });
+
+  it('K9: H-15 では、I3 の前期比を書き換えた金額から計算し直す (anomalies.md H-15。I3 の中だけで検算しても気づけない)', () => {
+    const r = anomalyRows.find((x) => x.kind === 'H-15') as Row;
+    const it = load(r.id).ir.segments.items[1] as Problem['ir']['segments']['items'][number];
+    const cur = Math.round(it.profit.current * 10);
+    const prev = Math.round(it.profit.previous * 10);
+    expect(it.profit.changeRate).toBe(Math.round(((cur - prev) * 1000) / prev) / 10);
+  });
+
+  it('K10: 答え合わせの文言は、遊び手が先に気づく合計のずれにも触れる: CF の種類 (H-03・H-05・H-06) は期末残高と貸借の現金、貸借の種類 (H-02・H-09) は資産合計と負債純資産合計、H-19 は調整額 (包括レビュー N1)', () => {
+    const num = (v: number) => v.toLocaleString('ja-JP');
+    for (const kind of ['H-03', 'H-05', 'H-06']) {
+      const p = load((anomalyRows.find((x) => x.kind === kind) as Row).id);
+      const text = p.anomaly?.explanation ?? '';
+      expect(text, kind).toContain('期末残高');
+      expect(text, kind).toContain(num(p.tanshin.cashFlow.cashEnding));
+      expect(text, kind).toContain(num(p.tanshin.balanceSheet.current.cash));
+    }
+    for (const kind of ['H-02', 'H-09']) {
+      const p = load((anomalyRows.find((x) => x.kind === kind) as Row).id);
+      const b = p.tanshin.balanceSheet.current;
+      const text = p.anomaly?.explanation ?? '';
+      expect(text, kind).toContain(`資産合計 ${num(b.totalAssets)}`);
+      expect(text, kind).toContain(`負債純資産合計 ${num(b.totalLiabilitiesAndNetAssets)}`);
+    }
+    const p19 = load((anomalyRows.find((x) => x.kind === 'H-19') as Row).id);
+    expect(p19.anomaly?.explanation).toContain('調整額');
   });
 
   it('K6: 異変の系統は、会計 + 資料間が 6 割以上 (13/16)。注記は 3 つ。系統と難易度が合う', () => {

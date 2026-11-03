@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "医療用医薬品事業",
-              "netSales": 24390,
+              "netSales": 24550,
               "profit": 3020
             },
             {
               "name": "一般用医薬品事業",
-              "netSales": 9650,
+              "netSales": 9490,
               "profit": 1010
             }
           ],
@@ -210,12 +210,12 @@
           "segments": [
             {
               "name": "医療用医薬品事業",
-              "netSales": 26720,
+              "netSales": 26490,
               "profit": 3330
             },
             {
               "name": "一般用医薬品事業",
-              "netSales": 9930,
+              "netSales": 10160,
               "profit": 1110
             }
           ],
@@ -297,30 +297,30 @@
         {
           "name": "医療用医薬品事業",
           "netSales": {
-            "previous": 243.9,
-            "current": 267.2,
-            "changeRate": 9.6
+            "previous": 245.5,
+            "current": 264.9,
+            "changeRate": 7.9
           },
           "profit": {
             "previous": 30.2,
             "current": 33.3,
             "changeRate": 10.3
           },
-          "salesShare": 72.9
+          "salesShare": 72.3
         },
         {
           "name": "一般用医薬品事業",
           "netSales": {
-            "previous": 96.5,
-            "current": 99.3,
-            "changeRate": 2.9
+            "previous": 94.9,
+            "current": 101.6,
+            "changeRate": 7.1
           },
           "profit": {
             "previous": 10.1,
             "current": 12.2,
-            "changeRate": 9.9
+            "changeRate": 20.8
           },
-          "salesShare": 27.1
+          "salesShare": 27.7
         }
       ],
       "adjustment": {
@@ -438,6 +438,7 @@
     ],
     "explanation": "IR スライド (セグメント別) の一般用医薬品事業の利益は 12.2 億円ですが、決算短信の注記のセグメント情報では 1,110 百万円 (11.1 億円) です。1 割ほど大きい別の数字になっています。",
     "expectedRules": [
+      "ir-seg-change-profit",
       "ir-seg-reconcile",
       "xdoc-seg-profit"
     ]

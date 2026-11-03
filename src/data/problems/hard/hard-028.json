@@ -3,7 +3,7 @@
   "difficulty": "hard",
   "companyId": "c05",
   "fiscalYear": 2022,
-  "tier": 3,
+  "tier": 2,
   "tanshin": {
     "header": {
       "companyName": "ブルネラ製薬株式会社",
@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "医療用医薬品事業",
-              "netSales": 26720,
+              "netSales": 26490,
               "profit": 3330
             },
             {
               "name": "一般用医薬品事業",
-              "netSales": 9930,
+              "netSales": 10160,
               "profit": 1110
             }
           ],
@@ -210,13 +210,13 @@
           "segments": [
             {
               "name": "医療用医薬品事業",
-              "netSales": 28110,
-              "profit": 3590
+              "netSales": 28140,
+              "profit": 3580
             },
             {
               "name": "一般用医薬品事業",
-              "netSales": 11190,
-              "profit": 1190
+              "netSales": 11160,
+              "profit": 1200
             }
           ],
           "adjustment": -350,
@@ -297,30 +297,30 @@
         {
           "name": "医療用医薬品事業",
           "netSales": {
-            "previous": 267.2,
-            "current": 281.1,
-            "changeRate": 5.2
+            "previous": 264.9,
+            "current": 281.4,
+            "changeRate": 6.2
           },
           "profit": {
             "previous": 33.3,
-            "current": 35.9,
-            "changeRate": 7.8
+            "current": 35.8,
+            "changeRate": 7.5
           },
-          "salesShare": 71.5
+          "salesShare": 71.6
         },
         {
           "name": "一般用医薬品事業",
           "netSales": {
-            "previous": 99.3,
-            "current": 111.9,
-            "changeRate": 12.7
+            "previous": 101.6,
+            "current": 111.6,
+            "changeRate": 9.8
           },
           "profit": {
             "previous": 11.1,
-            "current": 11.9,
-            "changeRate": 7.2
+            "current": 12,
+            "changeRate": 8.1
           },
-          "salesShare": 28.5
+          "salesShare": 28.4
         }
       ],
       "adjustment": {
@@ -436,7 +436,7 @@
         "path": "balanceSheet.current.totalAssets"
       }
     ],
-    "explanation": "有形固定資産は 前期末 14,483 + 設備投資 1,266 − 減価償却費 1,303 = 14,446 百万円になるはずですが、14,616 百万円と書かれています (差は 170)。",
+    "explanation": "有形固定資産は 前期末 14,483 + 設備投資 1,266 − 減価償却費 1,303 = 14,446 百万円になるはずですが、14,616 百万円と書かれています (差は 170)。このため、貸借対照表の資産合計 48,072 百万円と負債純資産合計 47,902 百万円が一致しません。",
     "expectedRules": [
       "bs-balance",
       "link-tangible-assets"

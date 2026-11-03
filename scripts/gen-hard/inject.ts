@@ -9,6 +9,8 @@ const n = (v) => Number(v).toLocaleString('ja-JP');
 const fmt1 = (v) => Number(v).toLocaleString('ja-JP', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 /** IR の単位に合わせて表示: 億円は小数第一位、百万円は整数。 */
 const fu = (v, unit) => (unit === '億円' ? fmt1(v) : n(v));
+/** IR の単位で、負の数は △ を付ける。 */
+const fs = (v, unit) => (v < 0 ? `△${fu(-v, unit)}` : fu(v, unit));
 /** 負の数は △ を付ける (資料の標準)。 */
 const sg = (v) => (v < 0 ? `△${n(-v)}` : n(v));
 const touches = (a, b) => a === b || a.startsWith(`${b}.`) || b.startsWith(`${a}.`);
@@ -96,7 +98,7 @@ export const INJECTORS = {
     }
     return {
       focus: [{ doc: 'ir', path: 'segments.items' }, { doc: 'tanshin', path: 'notes.segments.current.segments' }],
-      explanation: `決算短信の注記のセグメントは ${q.tanshin.notes.segments.current.segments.length} つ (${q.tanshin.notes.segments.current.segments.map((s) => s.name).join('・')}) ですが、IR スライドのセグメント別には ${items.length} つしか載っていません。${dropped.name}が欠けています。`,
+      explanation: `決算短信の注記のセグメントは ${q.tanshin.notes.segments.current.segments.length} つ (${q.tanshin.notes.segments.current.segments.map((s) => s.name).join('・')}) ですが、IR スライドのセグメント別には ${items.length} つしか載っていません。${dropped.name}が欠けています。このため、IR の調整額も ${fs(q.ir.segments.adjustment.current, unit)} ${unit}と、決算短信の注記の調整額 ${sg(q.tanshin.notes.segments.current.adjustment)} 百万円${unit === '億円' ? ` (${fs(toIrUnit(q.tanshin.notes.segments.current.adjustment, unit), unit)} ${unit})` : ''}とは違う値になっています。`,
     };
   },
   'H-01': (q) => {
@@ -154,7 +156,7 @@ export const INJECTORS = {
     resumCf(cf);
     return {
       focus: [{ doc: 'tanshin', path: 'cashFlow.incomeBeforeTax' }],
-      explanation: `キャッシュ・フロー計算書の最初の行 (税金等調整前当期純利益) が ${n(cf.incomeBeforeTax)} 百万円で、損益計算書の当期純利益と同じ値です。日本の基準 (間接法) では、営業活動は損益計算書の税金等調整前当期純利益 ${n(pre)} 百万円から始めます。`,
+      explanation: `キャッシュ・フロー計算書の最初の行 (税金等調整前当期純利益) が ${n(cf.incomeBeforeTax)} 百万円で、損益計算書の当期純利益と同じ値です。日本の基準 (間接法) では、営業活動は損益計算書の税金等調整前当期純利益 ${n(pre)} 百万円から始めます。このため、キャッシュ・フロー計算書の現金及び現金同等物の期末残高 ${n(cf.cashEnding)} 百万円は、貸借対照表の現金及び預金 ${n(t.balanceSheet.current.cash)} 百万円と合いません。`,
     };
   },
   'H-05': (q) => {
@@ -166,7 +168,7 @@ export const INJECTORS = {
     const b1 = q.tanshin.balanceSheet.current.receivables;
     return {
       focus: [{ doc: 'tanshin', path: 'cashFlow.receivablesChange' }],
-      explanation: `売掛金は ${n(b0)} 百万円から ${n(b1)} 百万円に${b1 > b0 ? '増えた' : '減った'}ので、キャッシュ・フロー計算書の「売上債権の増減額」は ${sg(was)} (${was < 0 ? '資金が減る' : '資金が増える'}) と書くはずですが、${sg(cf.receivablesChange)} と書かれています。符号が逆です。`,
+      explanation: `売掛金は ${n(b0)} 百万円から ${n(b1)} 百万円に${b1 > b0 ? '増えた' : '減った'}ので、キャッシュ・フロー計算書の「売上債権の増減額」は ${sg(was)} (${was < 0 ? '資金が減る' : '資金が増える'}) と書くはずですが、${sg(cf.receivablesChange)} と書かれています。符号が逆です。このため、キャッシュ・フロー計算書の現金及び現金同等物の期末残高 ${n(cf.cashEnding)} 百万円は、貸借対照表の現金及び預金 ${n(q.tanshin.balanceSheet.current.cash)} 百万円と合いません。`,
     };
   },
   'H-06': (q) => {
@@ -178,7 +180,7 @@ export const INJECTORS = {
     const b1 = q.tanshin.balanceSheet.current.inventories;
     return {
       focus: [{ doc: 'tanshin', path: 'cashFlow.inventoriesChange' }],
-      explanation: `棚卸資産は ${n(b0)} 百万円から ${n(b1)} 百万円に${b1 > b0 ? '増えた' : '減った'}ので、キャッシュ・フロー計算書の「棚卸資産の増減額」は ${sg(was)} (${was < 0 ? '資金が減る' : '資金が増える'}) のはずですが、${sg(cf.inventoriesChange)} と書かれています。符号が逆です。`,
+      explanation: `棚卸資産は ${n(b0)} 百万円から ${n(b1)} 百万円に${b1 > b0 ? '増えた' : '減った'}ので、キャッシュ・フロー計算書の「棚卸資産の増減額」は ${sg(was)} (${was < 0 ? '資金が減る' : '資金が増える'}) のはずですが、${sg(cf.inventoriesChange)} と書かれています。符号が逆です。このため、キャッシュ・フロー計算書の現金及び現金同等物の期末残高 ${n(cf.cashEnding)} 百万円は、貸借対照表の現金及び預金 ${n(q.tanshin.balanceSheet.current.cash)} 百万円と合いません。`,
     };
   },
   'H-15': (q) => {
@@ -186,6 +188,8 @@ export const INJECTORS = {
     const was = it.profit.current;
     const { value: changed, how } = swapDigits(was);
     it.profit.current = changed;
+    // I3 の前期比は、書き換えた金額から計算し直す (I3 の中だけで検算しても気づけないようにする。anomalies.md H-15)
+    it.profit.changeRate = rh((Math.round(changed * 10) - Math.round(it.profit.previous * 10)) * 1000, Math.round(it.profit.previous * 10)) / 10;
     const unit = q.ir.header.unit;
     const t = q.tanshin.notes.segments.current.segments[1];
     return {
@@ -235,7 +239,7 @@ export const INJECTORS = {
         { doc: 'tanshin', path: 'balanceSheet.current.totalAssets' },
         { doc: 'tanshin', path: 'balanceSheet.current.totalLiabilitiesAndNetAssets' },
       ],
-      explanation: `利益剰余金は 前期末 ${n(t.balanceSheet.previous.retainedEarnings)} + 当期純利益 ${n(t.incomeStatement.current.netIncomeParent)} − 配当金の支払額 ${n(-t.cashFlow.dividendsPaid)} = ${n(expected)} 百万円になるはずですが、${n(b.retainedEarnings)} 百万円と書かれています (差は ${n(d)})。`,
+      explanation: `利益剰余金は 前期末 ${n(t.balanceSheet.previous.retainedEarnings)} + 当期純利益 ${n(t.incomeStatement.current.netIncomeParent)} − 配当金の支払額 ${n(-t.cashFlow.dividendsPaid)} = ${n(expected)} 百万円になるはずですが、${n(b.retainedEarnings)} 百万円と書かれています (差は ${n(d)})。このため、貸借対照表の資産合計 ${n(b.totalAssets)} 百万円と負債純資産合計 ${n(b.totalLiabilitiesAndNetAssets)} 百万円が一致しません。`,
     };
   },
   'H-09': (q) => {
@@ -248,7 +252,7 @@ export const INJECTORS = {
     realign(q);
     return {
       focus: [{ doc: 'tanshin', path: 'balanceSheet.current.tangibleAssets' }],
-      explanation: `有形固定資産は 前期末 ${n(t.balanceSheet.previous.tangibleAssets)} + 設備投資 ${n(-t.cashFlow.capex)} − 減価償却費 ${n(t.cashFlow.depreciation)} = ${n(expected)} 百万円になるはずですが、${n(b.tangibleAssets)} 百万円と書かれています (差は ${n(d)})。`,
+      explanation: `有形固定資産は 前期末 ${n(t.balanceSheet.previous.tangibleAssets)} + 設備投資 ${n(-t.cashFlow.capex)} − 減価償却費 ${n(t.cashFlow.depreciation)} = ${n(expected)} 百万円になるはずですが、${n(b.tangibleAssets)} 百万円と書かれています (差は ${n(d)})。このため、貸借対照表の資産合計 ${n(b.totalAssets)} 百万円と負債純資産合計 ${n(b.totalLiabilitiesAndNetAssets)} 百万円が一致しません。`,
     };
   },
 };

@@ -3,7 +3,7 @@
   "difficulty": "hard",
   "companyId": "c10",
   "fiscalYear": 2022,
-  "tier": 3,
+  "tier": 2,
   "tanshin": {
     "header": {
       "companyName": "ヨクトス商事株式会社",
@@ -193,7 +193,7 @@
           "segments": [
             {
               "name": "機械・資材事業",
-              "netSales": 83460,
+              "netSales": 82040,
               "profit": 1120
             },
             {
@@ -203,7 +203,7 @@
             },
             {
               "name": "化成品事業",
-              "netSales": 32030,
+              "netSales": 33450,
               "profit": 620
             }
           ],
@@ -215,8 +215,8 @@
           "segments": [
             {
               "name": "機械・資材事業",
-              "netSales": 83710,
-              "profit": 1180
+              "netSales": 85050,
+              "profit": 1170
             },
             {
               "name": "食品原料事業",
@@ -225,8 +225,8 @@
             },
             {
               "name": "化成品事業",
-              "netSales": 34840,
-              "profit": 650
+              "netSales": 33500,
+              "profit": 660
             }
           ],
           "adjustment": -190,
@@ -307,16 +307,16 @@
         {
           "name": "機械・資材事業",
           "netSales": {
-            "previous": 834.6,
-            "current": 837.1,
-            "changeRate": 0.3
+            "previous": 820.4,
+            "current": 850.5,
+            "changeRate": 3.7
           },
           "profit": {
             "previous": 11.2,
-            "current": 11.8,
-            "changeRate": 5.4
+            "current": 11.7,
+            "changeRate": 4.5
           },
-          "salesShare": 49.3
+          "salesShare": 50.1
         },
         {
           "name": "食品原料事業",
@@ -335,16 +335,16 @@
         {
           "name": "化成品事業",
           "netSales": {
-            "previous": 320.3,
-            "current": 348.4,
-            "changeRate": 8.8
+            "previous": 334.5,
+            "current": 335,
+            "changeRate": 0.1
           },
           "profit": {
             "previous": 6.2,
-            "current": 6.5,
-            "changeRate": 4.8
+            "current": 6.6,
+            "changeRate": 6.5
           },
-          "salesShare": 20.5
+          "salesShare": 19.7
         }
       ],
       "adjustment": {
@@ -464,7 +464,7 @@
         "path": "balanceSheet.current.totalLiabilitiesAndNetAssets"
       }
     ],
-    "explanation": "利益剰余金は 前期末 10,638 + 当期純利益 1,842 − 配当金の支払額 480 = 12,000 百万円になるはずですが、12,180 百万円と書かれています (差は 180)。",
+    "explanation": "利益剰余金は 前期末 10,638 + 当期純利益 1,842 − 配当金の支払額 480 = 12,000 百万円になるはずですが、12,180 百万円と書かれています (差は 180)。このため、貸借対照表の資産合計 57,056 百万円と負債純資産合計 57,236 百万円が一致しません。",
     "expectedRules": [
       "bs-balance",
       "link-retained-earnings"

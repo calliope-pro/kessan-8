@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "クラウド事業",
-              "netSales": 5960,
+              "netSales": 6020,
               "profit": 885
             },
             {
               "name": "受託開発事業",
-              "netSales": 2610,
+              "netSales": 2550,
               "profit": 379
             }
           ],
@@ -210,12 +210,12 @@
           "segments": [
             {
               "name": "クラウド事業",
-              "netSales": 6450,
+              "netSales": 6370,
               "profit": 975
             },
             {
               "name": "受託開発事業",
-              "netSales": 2640,
+              "netSales": 2720,
               "profit": 418
             }
           ],
@@ -297,30 +297,30 @@
         {
           "name": "クラウド事業",
           "netSales": {
-            "previous": 5960,
-            "current": 6450,
-            "changeRate": 8.2
+            "previous": 6020,
+            "current": 6370,
+            "changeRate": 5.8
           },
           "profit": {
             "previous": 885,
             "current": 975,
             "changeRate": 10.2
           },
-          "salesShare": 71
+          "salesShare": 70.1
         },
         {
           "name": "受託開発事業",
           "netSales": {
-            "previous": 2610,
-            "current": 2640,
-            "changeRate": 1.1
+            "previous": 2550,
+            "current": 2720,
+            "changeRate": 6.7
           },
           "profit": {
             "previous": 379,
             "current": 418,
             "changeRate": 10.3
           },
-          "salesShare": 29
+          "salesShare": 29.9
         }
       ],
       "adjustment": {
@@ -426,7 +426,7 @@
         "path": "cashFlow.cashEnding"
       }
     ],
-    "explanation": "売掛金は 1,533 百万円から 1,622 百万円に増えたので、キャッシュ・フロー計算書の「売上債権の増減額」は △89 (資金が減る) と書くはずですが、89 と書かれています。符号が逆です。",
+    "explanation": "売掛金は 1,533 百万円から 1,622 百万円に増えたので、キャッシュ・フロー計算書の「売上債権の増減額」は △89 (資金が減る) と書くはずですが、89 と書かれています。符号が逆です。このため、キャッシュ・フロー計算書の現金及び現金同等物の期末残高 1,889 百万円は、貸借対照表の現金及び預金 1,711 百万円と合いません。",
     "expectedRules": [
       "link-cf-cash-end",
       "link-cf-receivables"

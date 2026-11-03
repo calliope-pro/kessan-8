@@ -193,7 +193,7 @@
           "segments": [
             {
               "name": "建築事業",
-              "netSales": 37490,
+              "netSales": 37090,
               "profit": 1690
             },
             {
@@ -203,7 +203,7 @@
             },
             {
               "name": "開発事業",
-              "netSales": 8320,
+              "netSales": 8720,
               "profit": 680
             }
           ],
@@ -215,7 +215,7 @@
           "segments": [
             {
               "name": "建築事業",
-              "netSales": 39410,
+              "netSales": 39220,
               "profit": 1760
             },
             {
@@ -225,7 +225,7 @@
             },
             {
               "name": "開発事業",
-              "netSales": 9160,
+              "netSales": 9350,
               "profit": 700
             }
           ],
@@ -307,16 +307,16 @@
         {
           "name": "建築事業",
           "netSales": {
-            "previous": 374.9,
-            "current": 394.1,
-            "changeRate": 5.1
+            "previous": 370.9,
+            "current": 392.2,
+            "changeRate": 5.7
           },
           "profit": {
             "previous": 16.9,
             "current": 17.6,
             "changeRate": 4.1
           },
-          "salesShare": 55.5
+          "salesShare": 55.2
         },
         {
           "name": "土木事業",
@@ -450,7 +450,7 @@
         "path": "notes.segments.current.adjustment"
       }
     ],
-    "explanation": "決算短信の注記のセグメントは 3 つ (建築事業・土木事業・開発事業) ですが、IR スライドのセグメント別には 2 つしか載っていません。開発事業が欠けています。",
+    "explanation": "決算短信の注記のセグメントは 3 つ (建築事業・土木事業・開発事業) ですが、IR スライドのセグメント別には 2 つしか載っていません。開発事業が欠けています。このため、IR の調整額も 4.4 億円と、決算短信の注記の調整額 △260 百万円 (△2.6 億円)とは違う値になっています。",
     "expectedRules": [
       "seg-count",
       "segment-names",

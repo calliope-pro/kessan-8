@@ -3,7 +3,7 @@
   "difficulty": "hard",
   "companyId": "c09",
   "fiscalYear": 2021,
-  "tier": 2,
+  "tier": 3,
   "tanshin": {
     "header": {
       "companyName": "キュルネ教育株式会社",
@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "学習塾事業",
-              "netSales": 3960,
+              "netSales": 3970,
               "profit": 400
             },
             {
               "name": "通信講座事業",
-              "netSales": 2180,
+              "netSales": 2170,
               "profit": 172
             }
           ],
@@ -297,9 +297,9 @@
         {
           "name": "学習塾事業",
           "netSales": {
-            "previous": 3960,
+            "previous": 3970,
             "current": 4190,
-            "changeRate": 5.8
+            "changeRate": 5.5
           },
           "profit": {
             "previous": 400,
@@ -311,9 +311,9 @@
         {
           "name": "通信講座事業",
           "netSales": {
-            "previous": 2180,
+            "previous": 2170,
             "current": 2230,
-            "changeRate": 2.3
+            "changeRate": 2.8
           },
           "profit": {
             "previous": 172,

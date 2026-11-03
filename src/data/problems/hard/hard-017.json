@@ -3,7 +3,7 @@
   "difficulty": "hard",
   "companyId": "c07",
   "fiscalYear": 2021,
-  "tier": 2,
+  "tier": 3,
   "tanshin": {
     "header": {
       "companyName": "ザルツァ運輸株式会社",
@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "貨物輸送事業",
-              "netSales": 35360,
+              "netSales": 34940,
               "profit": 622
             },
             {
               "name": "倉庫・センター運営事業",
-              "netSales": 7180,
+              "netSales": 7600,
               "profit": 415
             }
           ],
@@ -210,12 +210,12 @@
           "segments": [
             {
               "name": "貨物輸送事業",
-              "netSales": 35980,
+              "netSales": 35830,
               "profit": 641
             },
             {
               "name": "倉庫・センター運営事業",
-              "netSales": 7840,
+              "netSales": 7990,
               "profit": 428
             }
           ],
@@ -297,30 +297,30 @@
         {
           "name": "貨物輸送事業",
           "netSales": {
-            "previous": 35360,
-            "current": 35980,
-            "changeRate": 1.8
+            "previous": 34940,
+            "current": 35830,
+            "changeRate": 2.5
           },
           "profit": {
             "previous": 622,
             "current": 641,
             "changeRate": 3.1
           },
-          "salesShare": 82.1
+          "salesShare": 81.8
         },
         {
           "name": "倉庫・センター運営事業",
           "netSales": {
-            "previous": 7180,
-            "current": 7840,
-            "changeRate": 9.2
+            "previous": 7600,
+            "current": 7990,
+            "changeRate": 5.1
           },
           "profit": {
             "previous": 415,
             "current": 428,
             "changeRate": 3.1
           },
-          "salesShare": 17.9
+          "salesShare": 18.2
         }
       ],
       "adjustment": {

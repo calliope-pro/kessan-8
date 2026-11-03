@@ -193,8 +193,8 @@
           "segments": [
             {
               "name": "装置事業",
-              "netSales": 13200,
-              "profit": 1383
+              "netSales": 13320,
+              "profit": 1382
             },
             {
               "name": "部品事業",
@@ -203,8 +203,8 @@
             },
             {
               "name": "保守サービス事業",
-              "netSales": 4640,
-              "profit": 414
+              "netSales": 4520,
+              "profit": 415
             }
           ],
           "adjustment": -205,
@@ -215,7 +215,7 @@
           "segments": [
             {
               "name": "装置事業",
-              "netSales": 14050,
+              "netSales": 14130,
               "profit": 1518
             },
             {
@@ -225,7 +225,7 @@
             },
             {
               "name": "保守サービス事業",
-              "netSales": 4950,
+              "netSales": 4870,
               "profit": 455
             }
           ],
@@ -307,16 +307,16 @@
         {
           "name": "装置事業",
           "netSales": {
-            "previous": 13200,
-            "current": 14050,
-            "changeRate": 6.4
+            "previous": 13320,
+            "current": 14130,
+            "changeRate": 6.1
           },
           "profit": {
-            "previous": 1383,
+            "previous": 1382,
             "current": 1518,
             "changeRate": 9.8
           },
-          "salesShare": 49.5
+          "salesShare": 49.8
         },
         {
           "name": "部品事業",
@@ -335,16 +335,16 @@
         {
           "name": "保守サービス事業",
           "netSales": {
-            "previous": 4640,
-            "current": 4950,
-            "changeRate": 6.7
+            "previous": 4520,
+            "current": 4870,
+            "changeRate": 7.7
           },
           "profit": {
-            "previous": 414,
+            "previous": 415,
             "current": 455,
-            "changeRate": 9.9
+            "changeRate": 9.6
           },
-          "salesShare": 17.4
+          "salesShare": 17.1
         }
       ],
       "adjustment": {
@@ -460,7 +460,7 @@
         "path": "cashFlow.cashEnding"
       }
     ],
-    "explanation": "キャッシュ・フロー計算書の最初の行 (税金等調整前当期純利益) が 1,894 百万円で、損益計算書の当期純利益と同じ値です。日本の基準 (間接法) では、営業活動は損益計算書の税金等調整前当期純利益 2,745 百万円から始めます。",
+    "explanation": "キャッシュ・フロー計算書の最初の行 (税金等調整前当期純利益) が 1,894 百万円で、損益計算書の当期純利益と同じ値です。日本の基準 (間接法) では、営業活動は損益計算書の税金等調整前当期純利益 2,745 百万円から始めます。このため、キャッシュ・フロー計算書の現金及び現金同等物の期末残高 3,627 百万円は、貸借対照表の現金及び預金 4,478 百万円と合いません。",
     "expectedRules": [
       "link-cf-cash-end",
       "link-cf-start"

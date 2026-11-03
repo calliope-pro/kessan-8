@@ -208,11 +208,13 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
   const segInfo = (S: number, OI: number, jitter: number): any => {
     const n = P.seg.length;
     const sales = P.seg.map((f) => q(S * f * (1 + (R() - 0.5) * jitter), 10)); // 10 百万円の倍数 (億円の会社の IR の比率が丸めでずれない)
-    sales[n - 1] = S - sales.slice(0, n - 1).reduce((x, y) => x + y, 0);
+    // 残差は一番大きいセグメントに寄せる (小さなセグメントが残差で大きく振れて、正常な問題で疑わしく見えないように)
+    const big = P.seg.indexOf(Math.max(...P.seg));
+    sales[big] = S - sales.reduce((x, y, i) => (i === big ? x : x + y), 0);
     const adj = -q(OI * 0.08, unit10 === 10 ? 10 : 1) - 0;
     const pool = OI - adj;
     const profit = P.segp.map((f) => q(pool * f, unit10 === 10 ? 10 : 1));
-    profit[n - 1] = pool - profit.slice(0, n - 1).reduce((x, y) => x + y, 0);
+    profit[big] = pool - profit.reduce((x, y, i) => (i === big ? x : x + y), 0);
     return { sales, profit, adj };
   };
   const sg0 = prev ? prev.sg1 : segInfo(S0, OI0, 0.02);
@@ -272,7 +274,7 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
   const u = (v: number) => toIrUnit(v, unit);
   const hdr = (un: string) => ({ companyName: co.name, securitiesCode: co.securitiesCode, periodLabel, unit: un });
 
-  const subsText = event ? `期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 ${Math.max(10, q(NI1 * 0.5, 10))} 百万円の見込みである。` : '該当事項はありません。';
+  const subsText = event ? `期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 ${Math.max(10, q(NI1 * 0.5, 10)).toLocaleString('ja-JP')} 百万円の見込みである。` : '該当事項はありません。';
   const policyNote = accountingPolicy ? '当期から、収益認識に関する会計基準の適用指針の改正を適用している。この変更による当期の損益への影響は軽微である。' : '該当事項はありません。';
 
   const tanshin = {
@@ -356,9 +358,18 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
     statements: [] as any[],
   };
   const up = (a: number, b: number) => (a > b ? 'up' : 'down');
+  // I1 の文は、同じ画面に出る利益 (営業・経常・親会社株主に帰属する当期純利益) の動きと矛盾させない。揃わない期は、揃わないことを文に書き、claims にも持つ。
+  const nsUp = S1 > S0;
+  const profitsUp = [OI1 > OI0, ord1 > ord0, NI1 > NI0];
+  const mixed = !(profitsUp.every(Boolean) || profitsUp.every((x) => !x));
+  const base = nsUp ? '増収' : '減収';
+  const phrase = mixed
+    ? `${base}、営業利益は${profitsUp[0] ? '増益' : '減益'}、${!profitsUp[2] && profitsUp[0] ? '特別損失の計上により' : ''}親会社株主に帰属する当期純利益は${profitsUp[2] ? '増益' : '減益'}`
+    : `${base}${profitsUp[0] ? '増益' : '減益'}`;
   ir.statements = [
-    { slide: 'highlights', text: TEXT.highlights(spec.company, summary.netSales.current > summary.netSales.previous, summary.operatingIncome.current > summary.operatingIncome.previous), claims: [
-      { metric: 'netSales', direction: up(S1, S0) }, { metric: 'operatingIncome', direction: up(OI1, OI0) }] },
+    { slide: 'highlights', text: TEXT.highlights(spec.company, phrase), claims: [
+      { metric: 'netSales', direction: up(S1, S0) }, { metric: 'operatingIncome', direction: up(OI1, OI0) },
+      ...(mixed ? [{ metric: 'ordinaryIncome', direction: up(ord1, ord0) }, { metric: 'netIncomeParent', direction: up(NI1, NI0) }] : [])] },
     { slide: 'outlook', text: TEXT.outlook(spec.company, fNS > aNS, fOI > aOI), claims: [
       { metric: 'forecastNetSales', direction: up(x10(fNS), x10(aNS)) }, { metric: 'forecastOperatingIncome', direction: up(x10(fOI), x10(aOI)) }] },
     { slide: 'supplement', text: TEXT.ocf(spec.company), claims: [{ metric: 'operatingCashFlow', direction: cf.operatingCashFlow > 0 ? 'up' : 'down' }] },
@@ -390,10 +401,9 @@ export function genAll(specs: ProblemSpec[]): any[] {
 
 // 会社の口調 (companies.md §5.3) に合わせた IR の文。主張は claims に持つ。程度の語は使わない。
 const TEXT = {
-  highlights: (c: string, ns: boolean, oi: boolean) => {
-    const w = ns && oi ? ['増収増益', '増収減益'][0] : ns ? '増収減益' : oi ? '減収増益' : '減収減益';
+  highlights: (c: string, w: string) => {
     const t: Record<string, string> = {
-      c01: `当期は${w}となった。装置・部品・保守の 3 事業で受注を積み上げた。`, c02: `当期は${w}となりました。家庭用・業務用ともに、おかげさまで引き続き取り組んでまいりました。`, c03: `当期: ${w}。既存店と新店の両方で売場を見直した。`,
+      c01: `当期は${w}となった。装置・部品・保守の 3 事業で受注を積み上げた。`, c02: `当期は${w}となりました。家庭用・業務用ともに、引き続き取り組んでまいりました。`, c03: `当期: ${w}。既存店と新店の両方で売場を見直した。`,
       c04: `当期は${w}。サービスの提供を継続し、基盤を活かして進めた。`, c05: `当期は${w}であった。開発の進捗は引き続き慎重に見ている。`, c06: `当期は${w}。安全と品質を最優先とした施工を継続。`,
       c07: `当期は${w}となった。便数と稼働を維持し、運行を続けた。`, c08: `当期は${w}となりました。保有資産の運営を着実に進めてまいりました。`, c09: `当期は${w}となりました。生徒一人ひとりに向き合い、運営を続けてまいりました。`, c10: `当期は${w}。取扱高は各セグメントの動向を反映した。`,
     };

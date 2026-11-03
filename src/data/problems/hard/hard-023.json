@@ -193,7 +193,7 @@
           "segments": [
             {
               "name": "建築事業",
-              "netSales": 39410,
+              "netSales": 39220,
               "profit": 1760
             },
             {
@@ -203,7 +203,7 @@
             },
             {
               "name": "開発事業",
-              "netSales": 9160,
+              "netSales": 9350,
               "profit": 700
             }
           ],
@@ -215,7 +215,7 @@
           "segments": [
             {
               "name": "建築事業",
-              "netSales": 40220,
+              "netSales": 40740,
               "profit": 1800
             },
             {
@@ -225,7 +225,7 @@
             },
             {
               "name": "開発事業",
-              "netSales": 10170,
+              "netSales": 9650,
               "profit": 720
             }
           ],
@@ -307,16 +307,16 @@
         {
           "name": "建築事業",
           "netSales": {
-            "previous": 394.1,
-            "current": 402.2,
-            "changeRate": 2.1
+            "previous": 392.2,
+            "current": 407.4,
+            "changeRate": 3.9
           },
           "profit": {
             "previous": 17.6,
             "current": 18,
             "changeRate": 2.3
           },
-          "salesShare": 54.6
+          "salesShare": 55.3
         },
         {
           "name": "土木事業",
@@ -335,16 +335,16 @@
         {
           "name": "開発事業",
           "netSales": {
-            "previous": 91.6,
-            "current": 101.7,
-            "changeRate": 11
+            "previous": 93.5,
+            "current": 96.5,
+            "changeRate": 3.2
           },
           "profit": {
             "previous": 7,
             "current": 7.2,
             "changeRate": 2.9
           },
-          "salesShare": 13.8
+          "salesShare": 13.1
         }
       ],
       "adjustment": {

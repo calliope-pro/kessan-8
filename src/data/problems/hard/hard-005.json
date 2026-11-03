@@ -193,7 +193,7 @@
           "segments": [
             {
               "name": "機械・資材事業",
-              "netSales": 73630,
+              "netSales": 73080,
               "profit": 1030
             },
             {
@@ -203,7 +203,7 @@
             },
             {
               "name": "化成品事業",
-              "netSales": 28820,
+              "netSales": 29370,
               "profit": 570
             }
           ],
@@ -215,7 +215,7 @@
           "segments": [
             {
               "name": "機械・資材事業",
-              "netSales": 77680,
+              "netSales": 79380,
               "profit": 1070
             },
             {
@@ -225,7 +225,7 @@
             },
             {
               "name": "化成品事業",
-              "netSales": 32990,
+              "netSales": 31290,
               "profit": 600
             }
           ],
@@ -307,16 +307,16 @@
         {
           "name": "機械・資材事業",
           "netSales": {
-            "previous": 736.3,
-            "current": 776.8,
-            "changeRate": 5.5
+            "previous": 730.8,
+            "current": 793.8,
+            "changeRate": 8.6
           },
           "profit": {
             "previous": 10.3,
             "current": 10.7,
             "changeRate": 3.9
           },
-          "salesShare": 49.3
+          "salesShare": 50.4
         },
         {
           "name": "食品原料事業",
@@ -335,16 +335,16 @@
         {
           "name": "化成品事業",
           "netSales": {
-            "previous": 288.2,
-            "current": 329.9,
-            "changeRate": 14.5
+            "previous": 293.7,
+            "current": 312.9,
+            "changeRate": 6.5
           },
           "profit": {
             "previous": 5.7,
             "current": 6,
             "changeRate": 5.3
           },
-          "salesShare": 21
+          "salesShare": 19.9
         }
       ],
       "adjustment": {

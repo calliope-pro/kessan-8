@@ -383,7 +383,8 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | L4 | 参考の規則だけ (D12 の問題) | 既定は終了コード 0 (出力に soft-payout-cross-path)。`--fail-on-soft` を付けると 1 |
 | L5 | JSON として壊れたファイル | 終了コード 1。出力にファイルのパス (他のファイルの検証は続ける) |
 | L6 | `--dir` を明示して、そのディレクトリが無い | 終了コード 1。「読めません」 |
-| L7 | `--dir` を付けない (既定の `src/data`)。そこに `companies.json`・`anomaly-kinds.json`・`problems/` が無い (いまの状態) | 終了コード 0。0 件として扱い、「数が足りない」の警告が出る。**CI はこの状態で通る** |
+| L7 | `--dir` を付けない (既定の `src/data`)。問題が揃った今のデータ (やさしい・むずかしい 25 問以上。Task #25・#26 の後) | 終了コード 0。`--require-complete` を付けても 0 で、「数が足りない」の警告 (`pool-size`) も出ない。**CI は `--require-complete` で通る** (#26 の追加の受け入れ条件) |
+| L7b | 会社・種類・問題が何も無い空のディレクトリを `--dir` で渡す | 終了コード 0 (0 件として扱う)。「数が足りない」の警告が出る。`--require-complete` を付けると 1 (問題データが無い間の挙動。#26 で L7 を問題が揃った状態に直し、無い場合はここで確かめる) |
 | L8 | `--dir` はあるが `anomaly-kinds.json` だけ無く、異変の問題がある | 終了コード 1 (`unknown-kind`)。無いファイルは 0 件として扱うだけ |
 | L9 | CLI の実行に使う TypeScript に、型を消すだけでは動かない書き方 (enum・引数のプロパティ) を持ち込まない | `tsconfig.json` の `erasableSyntaxOnly: true` で型検査が捕まえる。`verbatimModuleSyntax: true` で型だけの import が `import type` になる (相対 import は `.ts` の拡張子つき) |
 

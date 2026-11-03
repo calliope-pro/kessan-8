@@ -58,6 +58,12 @@ describe('.github/workflows/ci.yml', () => {
     expect([...at].sort((a, b) => a - b)).toEqual(at);
   });
 
+  it('C3b: verify:data は --require-complete (全難易度) で回す。数の不足 (問題数・両面の会社・異変の比・系統の偏り) を警告で見逃さない (#26 の追加の受け入れ条件)', () => {
+    const line = (jobs()['check'] ?? '').split('\n').find((l) => l.includes('npm run verify:data')) ?? '';
+    expect(line).toMatch(/npm run verify:data -- .*--require-complete(\s|$)/);
+    expect(line).not.toMatch(/--require-complete=/); // easy だけ・hard だけにしない (両方)
+  });
+
   it('C4: Node 22 と npm のキャッシュ (engines と整合)', () => {
     expect(yml).toContain('actions/setup-node@');
     expect(yml).toMatch(/node-version: 22\b/);
