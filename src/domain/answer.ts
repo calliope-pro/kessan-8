@@ -1,7 +1,7 @@
 // 判定と答え合わせ (docs/design.md §4.4)。`problem.anomaly` だけを見る。文言は持たない (固定の文言は ui/messages.ts)。
 import { IR_SLIDES, TANSHIN_SCREENS } from './types';
 import type { AnomalyKind, AnomalyPlace, DocKind, Problem } from './types';
-import type { ScreenRef } from '../ui/viewer-port';
+import type { ScreenRef } from './screen';
 
 export type Answer = 'anomaly' | 'normal';
 

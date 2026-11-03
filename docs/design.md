@@ -70,6 +70,9 @@
 │  │  ├─ game.ts            #   状態遷移 (reducer、§5)
 │  │  ├─ draw.ts            #   出題 (プールから 8 社を引く、乱数は差し替え可)
 │  │  ├─ answer.ts          #   判定と答え合わせの材料 (問題データから作る。文言は持たない)
+│  │  ├─ screen.ts          #   ScreenRef (資料束の 1 画面。保存する状態の型。ui/viewer-port.ts は再エクスポート)
+│  │  ├─ pool.ts            #   問題の一覧 → 難易度ごとのプールと ID の引き出し (src/data/index.ts の純粋な部分)
+│  │  ├─ sample.ts          #   見本の型 (§4.3)
 │  │  ├─ item-key.ts        #   項目キー itemKey(doc, path) (§4.1。labels.ts ができたらそちらへ寄せる)
 │  │  ├─ marks.ts           #   印と異変の場所の照合 (R3)
 │  │  ├─ storage.ts         #   保存先の最小の形と、例外を出さない読み書き
@@ -624,7 +627,7 @@ export interface Problem {
 
 - 画面を担う `ui/` が、状態が変わるたびに (1) 走行を保存し、(2) `recordTransition(records, 前の状態, 次の状態)` で記録を更新する。更新するのは `reading` → `revealed` の遷移 1 回だけ (判定の書き込みと同時に 1 回)。読み出し (再読み込み) では更新しない。ブラウザの履歴 API (`pushState`) で phase を表さない (戻るボタンで判定前に戻れる穴を作らない)
 - タブを複製すると、複製した側には判定の前の状態が残る (測った: `window.open`。docs/plans/spike/ux-toolbar/)。許容する (§5.3 の `?seed=N` が同じ出題の再現を既に許している)
-- 「タイトルへ」(`TO_TITLE`) で走行を捨てる (`clearState`)。記録は消さない
+- 「タイトルへ」(`TO_TITLE`) のあとは、**title の状態 (`draws` を持つ) を保存する**。走行の中身 (問題・印・答え) は title の状態に無いので、これで捨てたことになり、`draws` は残る (再読み込みのあとも `?seed=N` の続きになる)。`clearState` は、読み出しに失敗した値の掃除にだけ使う。記録は消さない
 
 ## 6. ゲームの設定値
 
@@ -634,7 +637,7 @@ export interface Problem {
 | --- | --- | --- |
 | `ROUNDS_TO_CLEAR` | 8 | 要件「8 社連続」 |
 | `MIN_POOL_PER_DIFFICULTY` | 25 | 要件「25 問以上」 |
-| `anomalyRatio` | 0.5 | **仮の既定** (要件に比率の指定は無い。ビジネス側が Task #28 で確定する。値を変えても他は変わらない) |
+| `anomalyRatio` | 0.5 | 決定 (experience.md M6・open-decisions D-G4。要件に比率の指定は無く、ビジネスが 50% に決めた。値を変えても他は変わらない) |
 | `TIER_BY_ROUND` | `[1, 1, 2, 2, 2, 3, 3, 3]` | 枠 (何社目か) ごとの狙いの段 (UX の P1。experience.md §3.3) |
 
 ## 7. テストの置き場

@@ -4,7 +4,7 @@ import type { Answer } from './answer';
 import { ROUNDS_TO_CLEAR } from './config';
 import { IR_SLIDES, TANSHIN_SCREENS } from './types';
 import type { Difficulty, Problem } from './types';
-import type { ScreenRef } from '../ui/viewer-port';
+import type { ScreenRef } from './screen';
 
 /** 保存する・描くのに足りる共通の項目。`draws` は出題の回数 (`PICK`・`RESTART` のたびに 1 増える。`?seed=N` の続き)。 */
 export interface Base {

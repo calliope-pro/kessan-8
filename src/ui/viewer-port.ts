@@ -1,9 +1,10 @@
 // 資料束の表示 (Task #57) との接ぎ目。#28 (遊びの流れ) がこの口を呼び、#57 が `src/ui/viewer/index.ts` で `createViewer` を実装する。
 // #57 が届くまでは `src/ui/viewer-stub.ts` の仮の表示を使い、使う側の import は 1 行 (src/ui/viewer-impl.ts) だけを替える。
-import type { AnomalyPlace, DocKind, IrSlideId, Problem, TanshinScreenId } from '../domain/types';
+import type { ScreenRef } from '../domain/screen';
+import type { AnomalyPlace, DocKind, Problem } from '../domain/types';
 
-/** 資料束の 1 画面 (決算短信の 5 画面か、IR スライドの 5 画面)。 */
-export type ScreenRef = { doc: 'tanshin'; screen: TanshinScreenId } | { doc: 'ir'; screen: IrSlideId };
+/** 資料束の 1 画面。保存する状態の型なので、持ち主は domain (src/domain/screen.ts)。ここは再エクスポート。 */
+export type { ScreenRef };
 
 export interface ViewerProps {
   /** 1 社の資料束。 */

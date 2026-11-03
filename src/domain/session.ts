@@ -4,7 +4,7 @@ import { isScreen, type GameState, type Run } from './game';
 import { type KeyValueStore, safeGet, safeRemove, safeSet } from './storage';
 import type { Difficulty, Problem } from './types';
 import { IR_SLIDES, TANSHIN_SCREENS } from './types';
-import type { ScreenRef } from '../ui/viewer-port';
+import type { ScreenRef } from './screen';
 
 export type { KeyValueStore } from './storage';
 export const SESSION_VERSION = 1;
