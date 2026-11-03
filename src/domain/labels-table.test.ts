@@ -174,13 +174,23 @@ describe('L3: 値の約束', () => {
 
   it('L3-2: SECTION_OF_ITEM は貸借対照表の項目だけを、3 つの部のどれかに分ける', () => {
     expect(Object.keys(SECTION_OF_ITEM).sort()).toEqual([...bsKeys].sort());
-    for (const v of Object.values(SECTION_OF_ITEM)) expect(['asset', 'liability', 'equity']).toContain(v);
+    for (const v of Object.values(SECTION_OF_ITEM)) expect(['asset', 'liability', 'equity', 'total']).toContain(v);
     expect(SECTION_OF_ITEM['tanshin.balanceSheet.cash']).toBe('asset');
     expect(SECTION_OF_ITEM['tanshin.balanceSheet.totalAssets']).toBe('asset');
     expect(SECTION_OF_ITEM['tanshin.balanceSheet.payables']).toBe('liability');
     expect(SECTION_OF_ITEM['tanshin.balanceSheet.totalLiabilities']).toBe('liability');
     expect(SECTION_OF_ITEM['tanshin.balanceSheet.capitalStock']).toBe('equity');
-    expect(SECTION_OF_ITEM['tanshin.balanceSheet.totalLiabilitiesAndNetAssets']).toBe('equity');
+    // 負債純資産合計は負債にも純資産にも属さない: 'total' (検証器の account-section が、この行への差し替えを部の取り違えとしない)
+    expect(SECTION_OF_ITEM['tanshin.balanceSheet.totalLiabilitiesAndNetAssets']).toBe('total');
+  });
+
+  it('L3-5: 売掛金の標準の表示名は `売掛金` (資産)、買掛金は `買掛金` (負債)。V52 (売掛金の行を `買掛金` に差し替え) が「別の部の標準の表示名」になる', () => {
+    expect(LABELS['tanshin.balanceSheet.receivables']).toBe('売掛金');
+    expect(LABELS['tanshin.balanceSheet.payables']).toBe('買掛金');
+    expect(SECTION_OF_ITEM['tanshin.balanceSheet.receivables']).toBe('asset');
+    const keysOf = (name: string) => Object.keys(LABELS).filter((k) => LABELS[k] === name);
+    expect(keysOf('買掛金')).toEqual(['tanshin.balanceSheet.payables']);
+    expect(SECTION_OF_ITEM[keysOf('買掛金')[0]!]).toBe('liability');
   });
 
   it('L3-3: サマリーと損益計算書の同じ名前の行は、別の項目キーで同じ表示名でよい', () => {

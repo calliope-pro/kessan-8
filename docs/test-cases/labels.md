@@ -1,6 +1,6 @@
 # ケース表: 項目キーと項目名の標準 (`src/domain/labels.ts`)
 
-Task #57 の前提 (責任者の決定: 案 A。labels.ts は #23 の約束 ([validator.md](https://github.com/calliope-pro/kessan-8/blob/calliope/validator/docs/test-cases/validator.md) §0・§2.1 の I1〜I3) を、画面の #57 が先に作る)。文法は [design.md](../design.md) §4.1「項目キー」。**I1〜I3 は #47 で固定済み**。ここは I1〜I3 を満たすうえで足りないものだけを足す (L 系)。
+Task #57 の前提 (責任者の決定: 案 A。labels.ts は #23 の約束 ([validator.md](https://github.com/calliope-pro/kessan-8/blob/calliope/validator/docs/test-cases/validator.md) §0・§2.1 の I1〜I3) を、画面の #57 が先に作る)。文法は [design.md](../design.md) §4.1「項目キー」。**I1〜I3 は #47 で固定済み**。#48 の実装 (calliope/validator の `src/domain/labels.ts`) が既にあるので、**その版のキーと値をそのまま保つ上位集合**にする (足すのは数値でない行・日付の項目、とグラフの 4 項目の画面に出す文字)。ここは I1〜I3 を満たすうえで足りないものだけを足す (L 系)。
 
 ## 公開する入口
 
@@ -45,6 +45,7 @@ Task #57 の前提 (責任者の決定: 案 A。labels.ts は #23 の約束 ([va
 | --- | --- | --- |
 | I3 | `LABELS` の値 | 空でなく (前後の空白を除く)、同じ部の中で重複しない |
 | L3-1 | 貸借対照表の項目の値 | 部をまたいでも重複しない (`account-section` が「別の部の標準の表示名」で判定するので、2 つの部に同じ名前があると判定できない) |
-| L3-2 | `SECTION_OF_ITEM` | キーは `LABELS` にある `tanshin.balanceSheet.` で始まる項目キーと一致し、値は 3 つのどれか。`asset` は資産の部、`liability` は負債の部、`equity` は純資産の部 (例: `cash` = asset、`payables` = liability、`capitalStock` = equity、`totalLiabilitiesAndNetAssets` = equity) |
+| L3-2 | `SECTION_OF_ITEM` | キーは `LABELS` にある `tanshin.balanceSheet.` で始まる項目キーと一致し、値は `asset`・`liability`・`equity`・`total` のどれか。`asset` は資産の部、`liability` は負債の部、`equity` は純資産の部、`total` は負債純資産合計だけ (負債にも純資産にも属さない。検証器 #48 の `Section` と同じ) (例: `cash` = asset、`payables` = liability、`capitalStock` = equity、`totalLiabilitiesAndNetAssets` = total) |
+| L3-5 | `receivables`・`payables` の標準の表示名 | `売掛金` (asset)・`買掛金` (liability)。`買掛金` はこの 1 項目だけ (検証器 #47 の V52「売掛金の行を `買掛金` に差し替える → `account-section` だけが破れる」を成り立たせる) |
 | L3-3 | 損益計算書とサマリーの同じ名前の行 (営業利益・経常利益) | 項目キーが別で、標準の表示名が同じでもよい (別の項目の名前への差し替えは、検証器の `label-spelling` が許す側) |
 | L3-4 | `LABELS` のキー | すべて `tanshin.` か `ir.` で始まる |
