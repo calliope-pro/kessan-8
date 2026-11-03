@@ -13,7 +13,12 @@ export interface MarkMatch {
 }
 
 function markHitsPlace(mark: string, place: AnomalyPlace): boolean {
-  if ('path' in place) return mark === `${place.doc}.${place.path}`;
+  if ('path' in place) {
+    // 同じキー・祖先・子孫 (. 区切りの前方一致) で当たり。行の名前の印は当たりにしない (#57 の強調 data-highlight と同じ規則)
+    const key = `${place.doc}.${place.path}`;
+    if (mark.startsWith(`${place.doc}.item:`)) return false;
+    return mark === key || mark.startsWith(`${key}.`) || key.startsWith(`${mark}.`);
+  }
   // itemKey の場所: 行の名前の印か、同じ行の数字の印で当たり (experience.md R3)
   if (mark === `${place.doc}.item:${place.itemKey}`) return true;
   const prefix = `${place.doc}.`;

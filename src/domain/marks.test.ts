@@ -18,6 +18,17 @@ describe('印の照合 matchMarks', () => {
     expect(matchMarks(['tanshin.balanceSheet.current.cash'], [cash, irCash]).missed).toEqual([irCash]);
   });
 
+  it('UA9c: path の場所は、同じキー・祖先・子孫の印で当たり。行の名前の印は当たりにしない', () => {
+    const seg: AnomalyPlace = { doc: 'ir', path: 'segments.items.0.netSales.current' };
+    expect(counts(matchMarks(['ir.segments.items.0.netSales.current'], [seg]))).toEqual([1, 0, 0]);
+    expect(counts(matchMarks(['ir.segments.items.0.netSales'], [seg]))).toEqual([1, 0, 0]);
+    const text: AnomalyPlace = { doc: 'ir', path: 'statements.0.text' };
+    expect(counts(matchMarks(['ir.statements.0'], [text]))).toEqual([1, 0, 0]);
+    expect(counts(matchMarks(['ir.statements.0.text.deeper'], [text]))).toEqual([1, 0, 0]);
+    expect(counts(matchMarks(['ir.item:ir.segments.items.0.netSales'], [seg]))).toEqual([0, 1, 1]);
+    expect(counts(matchMarks(['ir.segments.items.1.netSales.current'], [seg]))).toEqual([0, 1, 1]);
+  });
+
   it('UA10: itemKey の場所は、同じ行の数字の印・行名の印で当たり。別の行の印は外れ', () => {
     const row: AnomalyPlace = { doc: 'tanshin', itemKey: 'tanshin.incomeStatement.ordinaryIncome' };
     for (const mark of [

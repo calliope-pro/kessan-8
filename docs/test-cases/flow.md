@@ -64,6 +64,7 @@
 | UA7 | 場所 `{doc: tanshin, itemKey: tanshin.balanceSheet.cash}` | (短信, 貸借対照表) | 同値 |
 | UA8 | 場所が 3 つ (短信の 2 画面と IR の 1 画面、同じ画面が重複する並び) | 画面の一覧は、場所の並びの順で重複なしの 2〜3 画面 (答え合わせの画面送りに使う) | 組み合わせ (資料間の異変) |
 | UA9 | 印と場所の照合 (R3): 印が場所の 1 つにだけ当たる / 場所に当たらない印がある / 印が無い | 当たり・外れ・見逃しの数が、それぞれ (1, 0, 場所の数 − 1)・(0, 印の数, 場所の数)・(0, 0, 場所の数) | 同値・境界値 |
+| UA9c | 場所が `path` のとき、印のキーが同じ / 場所の path の祖先 (`ir.segments.items.0.netSales` に対する場所 `ir.segments.items.0.netSales.current`) / 子孫 (場所 `ir.statements.0.text` に対する印 `ir.statements.0`) / 行の名前の印 (`<doc>.item:…`) | 前 3 つは当たり。行の名前の印は当たりにしない (外れ) | 同値 (#57 の強調 `data-highlight` と同じ規則。固定後に足したケース: 理由 #57 の進める役との合意 2026-11-04) |
 | UA10 | 場所 `{itemKey: tanshin.incomeStatement.ordinaryIncome}` に、同じ行の数字の印 (`tanshin.incomeStatement.current.ordinaryIncome`・`tanshin.incomeStatement.previous.ordinaryIncome`)、行名の印 (`tanshin.item:tanshin.incomeStatement.ordinaryIncome`)、別の行の印 (`tanshin.incomeStatement.current.operatingIncome`) | 前 3 つは当たり。別の行の印は外れ | 同値 (行の名前の異変は、同じ行の印で当たり) |
 | UA11 | 行のキーの作り方: `incomeStatement.current.ordinaryIncome`・`summary.ordinaryIncome.changeRate`・`ir.outlook.forecast.netSales`・`ir.outlook.actual.netSales` | 期・予実の段と末尾の `changeRate`/`amount` を除き、資料の種類を頭に付けたキー (design §4.1 の項目キーと同じ。後の 2 つは同じキー) | 同値 |
 
