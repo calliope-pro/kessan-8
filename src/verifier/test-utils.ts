@@ -161,3 +161,14 @@ export function onlyRule(id: string, problem: Problem, company: Company) {
   if (!r) throw new Error(`規則が無い: ${id}`);
   return r.check({ p: problem, c: company });
 }
+
+/** 基準問題 B を、短信の百万円から計算した比率は合うが IR の表示金額からは食い違う形にした正常な問題 (id easy-001)。 */
+export function roundedSalesNormal(): Problem {
+  let p: Problem = { ...clone(normalB()), id: 'easy-001', difficulty: 'easy', companyId: 'fixture-c01' };
+  p = set(p, 'tanshin.incomeStatement.current.netSales', 12449);
+  p = set(p, 'tanshin.incomeStatement.previous.netSales', 11751);
+  p = set(p, 'ir.highlights.netSales.amount', 124.5);
+  p = set(p, 'ir.results.netSales.current', 124.5);
+  p = set(p, 'ir.results.netSales.previous', 117.5);
+  return set(p, 'ir.highlights.netSales.changeRate', 5.9);
+}

@@ -3,7 +3,7 @@ import { ANOMALY_RATIO, ANOMALY_RATIO_TOLERANCE, FAMILY_SHARE_MIN, MIN_POOL_PER_
 import { FAMILY_DIFFICULTY } from '../domain/types.ts';
 import type { AnomalyKind, Company, Difficulty, Problem } from '../domain/types.ts';
 import { anomalyIssues } from './anomaly.ts';
-import { verifyProblem } from './index.ts';
+import { verifyIrDisplay, verifyProblem } from './index.ts';
 import type { VerifyResult } from './index.ts';
 import { HARD_RULE_IDS, SOFT_RULE_IDS } from './rules/index.ts';
 import { companyShapeErrors, kindShapeErrors, shapeErrors } from './shape.ts';
@@ -11,6 +11,8 @@ import { companyShapeErrors, kindShapeErrors, shapeErrors } from './shape.ts';
 export interface Entry {
   code: string;
   problem?: string;
+  /** 数の不足 (shortfalls) のとき、どの難易度の不足か。 */
+  difficulty?: Difficulty;
   message: string;
 }
 
@@ -93,6 +95,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     const result = verify(p, company);
     if (p.anomaly === null) {
       for (const v of result.hard) add('hard-violation', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
+      for (const v of verifyIrDisplay(p, company)) add('ir-display-mismatch', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
     }
     for (const issue of anomalyIssues(p, kinds, result)) add(issue.code, issue.message);
     for (const v of result.soft) soft.push({ code: v.rule, problem: p.id, message: `${file}: ${v.message}` });
@@ -103,13 +106,13 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
   for (const d of DIFFICULTIES) {
     const pool = valid.filter((p) => p.difficulty === d);
     const anomalies = pool.filter((p) => p.anomaly !== null);
-    if (pool.length < MIN_POOL_PER_DIFFICULTY) shortfalls.push({ code: 'pool-size', message: `${d}: 問題数 ${pool.length} が ${MIN_POOL_PER_DIFFICULTY} 未満` });
+    if (pool.length < MIN_POOL_PER_DIFFICULTY) shortfalls.push({ code: 'pool-size', difficulty: d, message: `${d}: 問題数 ${pool.length} が ${MIN_POOL_PER_DIFFICULTY} 未満` });
     const bothCount = [...new Set(pool.map((p) => p.companyId))].filter(
       (c) => pool.some((p) => p.companyId === c && p.anomaly !== null) && pool.some((p) => p.companyId === c && p.anomaly === null),
     ).length;
-    if (bothCount < ROUNDS_TO_CLEAR) shortfalls.push({ code: 'both-sided-companies', message: `${d}: 異変あり・なしの両方を持つ会社が ${bothCount} 社で、${ROUNDS_TO_CLEAR} 社未満` });
+    if (bothCount < ROUNDS_TO_CLEAR) shortfalls.push({ code: 'both-sided-companies', difficulty: d, message: `${d}: 異変あり・なしの両方を持つ会社が ${bothCount} 社で、${ROUNDS_TO_CLEAR} 社未満` });
     if (pool.length >= MIN_POOL_PER_DIFFICULTY && Math.abs(anomalies.length - ANOMALY_RATIO * pool.length) > ANOMALY_RATIO_TOLERANCE) {
-      shortfalls.push({ code: 'anomaly-ratio', message: `${d}: 異変の問題 ${anomalies.length} 件が ${ANOMALY_RATIO} × ${pool.length} の ±${ANOMALY_RATIO_TOLERANCE} の外` });
+      shortfalls.push({ code: 'anomaly-ratio', difficulty: d, message: `${d}: 異変の問題 ${anomalies.length} 件が ${ANOMALY_RATIO} × ${pool.length} の ±${ANOMALY_RATIO_TOLERANCE} の外` });
     }
     if (anomalies.length > 0) {
       const primary = anomalies.filter((p) => {
@@ -117,7 +120,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
         return kind !== undefined && FAMILY_DIFFICULTY[kind.family] === d && PRIMARY_FAMILIES[d].includes(kind.family);
       }).length;
       if (primary / anomalies.length < FAMILY_SHARE_MIN[d]) {
-        shortfalls.push({ code: 'family-balance', message: `${d}: ${PRIMARY_FAMILIES[d].join('+')} の異変が ${primary}/${anomalies.length} で、${FAMILY_SHARE_MIN[d] * 100}% 未満` });
+        shortfalls.push({ code: 'family-balance', difficulty: d, message: `${d}: ${PRIMARY_FAMILIES[d].join('+')} の異変が ${primary}/${anomalies.length} で、${FAMILY_SHARE_MIN[d] * 100}% 未満` });
       }
     }
   }

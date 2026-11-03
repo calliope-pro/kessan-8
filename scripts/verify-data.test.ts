@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { AnomalyKind, Company, Problem } from '../src/domain/types.ts';
-import { add, anomalyVariant, companyA, DATA_KINDS, normalVariant, softOnly } from '../src/verifier/test-utils.ts';
+import { add, anomalyVariant, companyA, completePool, DATA_KINDS, normalVariant, softOnly } from '../src/verifier/test-utils.ts';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dirs: string[] = [];
@@ -95,5 +95,26 @@ describe('npm run verify:data', () => {
     expect(ts).toMatch(/"erasableSyntaxOnly":\s*true/);
     expect(ts).toMatch(/"verbatimModuleSyntax":\s*true/);
     expect(ts).toMatch(/"allowImportingTsExtensions":\s*true/);
+  });
+
+  it('L10: --require-complete=easy は easy の不足だけを致命にする (hard の不足は警告のまま)', () => {
+    const d = dataDir();
+    expect(run('--dir', d, '--require-complete=easy').code).toBe(1); // easy は 1 問で足りない
+    // easy が揃い、hard だけ足りないデータ
+    const full = completePool();
+    const easy = full.problems.map((p) => p.value as Problem).filter((p) => p.difficulty === 'easy');
+    const d2 = dataDir({ companies: full.companies as Company[], kinds: DATA_KINDS, problems: easy });
+    expect(run('--dir', d2).code).toBe(0);
+    expect(run('--dir', d2, '--require-complete=easy').code).toBe(0);
+    expect(run('--dir', d2, '--require-complete=hard').code).toBe(1);
+    expect(run('--dir', d2, '--require-complete').code).toBe(1);
+  });
+
+  it('L11: --require-complete の値が easy・hard 以外 (打ち間違い) → 使いかたを出して終了コード 2', () => {
+    for (const bad of ['--require-complete=hrad', '--require-complete=medium', '--require-complete=']) {
+      const r = run('--dir', dataDir(), bad);
+      expect(r.code, bad).toBe(2);
+      expect(r.out).toContain('使いかた');
+    }
   });
 });
