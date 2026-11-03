@@ -3,6 +3,7 @@ import type { DocKind, IrSlideId, Problem, TanshinScreenId } from '../../domain/
 import { IR_SLIDES, TANSHIN_SCREENS } from '../../domain/types';
 import type { ScreenRef } from '../../domain/screen';
 import { Ctx } from './context';
+import { buildIr } from './ir-screens';
 import { buildTanshin } from './tanshin-screens';
 import type { ViewScreen } from './types';
 
@@ -45,5 +46,5 @@ export function buildScreen(problem: Problem, doc: DocKind, screen: string): Vie
   const ctx = new Ctx(problem, doc, screen);
   const title = screenTitle({ doc, screen } as ScreenRef);
   if (doc === 'tanshin') return buildTanshin(ctx, screen as TanshinScreenId, title);
-  throw new Error(`IR の画面は Sub-task #64: ${screen}`);
+  return buildIr(ctx, screen as IrSlideId, title);
 }

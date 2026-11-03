@@ -97,11 +97,12 @@ export class Ctx {
 
 export const col = (label: string, cell: ViewCell | null = null): ViewColumn => ({ label, cell });
 
+/** 節。行のセルは列の数まで null で埋める。 */
 export const plain = (columns: ViewColumn[], rows: ViewRow[], title: string | null = null, titleCell: ViewCell | null = null): ViewSection => ({
   title,
   titleCell,
   columns,
-  rows,
+  rows: rows.map((r) => ({ ...r, cells: Array.from({ length: columns.length }, (_, i) => r.cells[i] ?? null) })),
 });
 
 /** 見出しのない 1 列の節 (文字・日付の行など)。 */

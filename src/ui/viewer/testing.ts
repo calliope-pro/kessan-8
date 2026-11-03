@@ -30,10 +30,14 @@ export function okuProblem(): Problem {
   const p = fullProblem();
   p.ir.header.unit = '億円';
   const scale = (v: number) => Math.round(v / 10) / 10; // 百万円 → 億円 (小数第一位)
+  // 比率・1 株当たり・軸の下端は変えず、金額だけ 億円 (小数第一位) にする。previous・current の段は、親の名前で決める
+  const keep = /(changeRate|Rate|Margin|Ratio|salesShare|payoutRatio|annualDividend)$/i;
   const walk = (node: unknown, key: string): unknown => {
-    if (typeof node === 'number') return /(changeRate|Rate|Margin|Ratio|salesShare|payoutRatio|annualDividend)$/i.test(key) || key === 'axisMin' ? node : scale(node);
+    if (typeof node === 'number') return keep.test(key) || key === 'axisMin' ? node : scale(node);
     if (Array.isArray(node)) return node.map((n) => walk(n, key));
-    if (node && typeof node === 'object') return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v, k)]));
+    if (node && typeof node === 'object') {
+      return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v, /^(previous|current|forecast|actual|amount)$/.test(k) ? key : k)]));
+    }
     return node;
   };
   const { header, statements, ...rest } = p.ir;

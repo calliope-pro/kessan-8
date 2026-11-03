@@ -202,3 +202,52 @@ td.cell-flag {
   background: var(--emph);
   border-radius: 4px;
 }
+
+/* グラフ (棒は SVG。高さの割合は属性で決める) */
+.chart {
+  margin: 14px 0 0;
+  padding: 0;
+}
+.chart-title {
+  padding-left: 6px;
+  border-left: 4px solid var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+.bars {
+  display: flex;
+  gap: 16px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.bar {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+}
+.bar-svg {
+  display: block;
+  width: 100%;
+  height: 120px;
+  border-bottom: 2px solid var(--ink);
+  background: var(--emph);
+}
+.bar-rect {
+  fill: var(--accent);
+}
+.bar-value {
+  display: block;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.bar-label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.axis {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
