@@ -54,16 +54,20 @@ function realign(p) {
   p.ir.supplement.equityRatio = s.equityRatio;
 }
 
-/** 数字の並びの入れ替え: 10 倍した整数の文字列で、隣り合う違う 2 桁を入れ替える (桁が多ければ 2 桁目から)。 */
+/**
+ * 数字の並びの入れ替え: 10 倍した整数の文字列で、隣り合う違う 2 桁を入れ替える (桁が多ければ 2 桁目から)。
+ * 同じ数字ばかりで入れ替えられないときは、別の値 (約 1 割大きい値) にし、how = 'bigger' で知らせる (文言を事実に合わせるため)。
+ */
 function swapDigits(v) {
   const arr = [...String(Math.round(v * 10))];
   let i = arr.length >= 4 ? 1 : 0;
   while (i < arr.length - 1 && arr[i] === arr[i + 1]) i++;
   if (i >= arr.length - 1) i = arr.findIndex((c, k) => k < arr.length - 1 && c !== arr[k + 1]);
-  if (i < 0) return Math.round(v * 11) / 10; // 全部同じ数字なら、1 割多い別の数字にする
+  if (i < 0) return { value: Math.round(v * 11) / 10, how: 'bigger' };
   [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
-  return Number(arr.join('')) / 10;
+  return { value: Number(arr.join('')) / 10, how: 'swap' };
 }
+const HOW = { swap: '数字の並びが入れ替わっています。', bigger: '1 割ほど大きい別の数字になっています。' };
 
 // 変更の定義。各関数は土台の複製 q を変更し、{ focus: 場所 (変えたセルなど), explanation } を返す。
 export const INJECTORS = {
@@ -114,12 +118,12 @@ export const INJECTORS = {
   },
   'H-13': (q) => {
     const a = q.ir.highlights.netSales.amount;
-    const swapped = swapDigits(a);
+    const { value: swapped, how } = swapDigits(a);
     q.ir.highlights.netSales.amount = swapped;
     const unit = q.ir.header.unit;
     return {
       focus: [{ doc: 'ir', path: 'highlights.netSales.amount' }, { doc: 'tanshin', path: 'incomeStatement.current.netSales' }],
-      explanation: `IR スライド (ハイライト) の売上高は ${fu(swapped, unit)} ${unit}ですが、決算短信の損益計算書の売上高は ${n(q.tanshin.incomeStatement.current.netSales)} 百万円 (${fu(a, unit)} ${unit}) です。数字の並びが入れ替わっています。`,
+      explanation: `IR スライド (ハイライト) の売上高は ${fu(swapped, unit)} ${unit}ですが、決算短信の損益計算書の売上高は ${n(q.tanshin.incomeStatement.current.netSales)} 百万円 (${fu(a, unit)} ${unit}) です。${HOW[how]}`,
     };
   },
   'H-17': (q) => {
@@ -150,7 +154,7 @@ export const INJECTORS = {
     resumCf(cf);
     return {
       focus: [{ doc: 'tanshin', path: 'cashFlow.incomeBeforeTax' }],
-      explanation: `キャッシュ・フロー計算書の営業活動が「当期純利益」(${n(cf.incomeBeforeTax)} 百万円) から始まっています。日本の基準 (間接法) では税金等調整前当期純利益から始めます (損益計算書では ${n(pre)} 百万円)。`,
+      explanation: `キャッシュ・フロー計算書の最初の行 (税金等調整前当期純利益) が ${n(cf.incomeBeforeTax)} 百万円で、損益計算書の当期純利益と同じ値です。日本の基準 (間接法) では、営業活動は損益計算書の税金等調整前当期純利益 ${n(pre)} 百万円から始めます。`,
     };
   },
   'H-05': (q) => {
@@ -180,12 +184,13 @@ export const INJECTORS = {
   'H-15': (q) => {
     const it = q.ir.segments.items[1];
     const was = it.profit.current;
-    it.profit.current = swapDigits(was);
+    const { value: changed, how } = swapDigits(was);
+    it.profit.current = changed;
     const unit = q.ir.header.unit;
     const t = q.tanshin.notes.segments.current.segments[1];
     return {
       focus: [{ doc: 'ir', path: 'segments.items.1.profit.current' }, { doc: 'tanshin', path: 'notes.segments.current.segments.1.profit' }],
-      explanation: `IR スライド (セグメント別) の${it.name}の利益は ${fu(it.profit.current, unit)} ${unit}ですが、決算短信の注記のセグメント情報では ${n(t.profit)} 百万円 (${fu(was, unit)} ${unit}) です。数字の並びが入れ替わっています。`,
+      explanation: `IR スライド (セグメント別) の${it.name}の利益は ${fu(it.profit.current, unit)} ${unit}ですが、決算短信の注記のセグメント情報では ${n(t.profit)} 百万円 (${fu(was, unit)} ${unit}) です。${HOW[how]}`,
     };
   },
   'H-16': (q) => {
@@ -225,7 +230,11 @@ export const INJECTORS = {
     resumBs(b);
     realign(q);
     return {
-      focus: [{ doc: 'tanshin', path: 'balanceSheet.current.retainedEarnings' }],
+      focus: [
+        { doc: 'tanshin', path: 'balanceSheet.current.retainedEarnings' },
+        { doc: 'tanshin', path: 'balanceSheet.current.totalAssets' },
+        { doc: 'tanshin', path: 'balanceSheet.current.totalLiabilitiesAndNetAssets' },
+      ],
       explanation: `利益剰余金は 前期末 ${n(t.balanceSheet.previous.retainedEarnings)} + 当期純利益 ${n(t.incomeStatement.current.netIncomeParent)} − 配当金の支払額 ${n(-t.cashFlow.dividendsPaid)} = ${n(expected)} 百万円になるはずですが、${n(b.retainedEarnings)} 百万円と書かれています (差は ${n(d)})。`,
     };
   },

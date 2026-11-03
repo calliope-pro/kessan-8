@@ -458,6 +458,10 @@
       {
         "doc": "tanshin",
         "path": "balanceSheet.current.totalAssets"
+      },
+      {
+        "doc": "tanshin",
+        "path": "balanceSheet.current.totalLiabilitiesAndNetAssets"
       }
     ],
     "explanation": "利益剰余金は 前期末 10,638 + 当期純利益 1,842 − 配当金の支払額 480 = 12,000 百万円になるはずですが、12,180 百万円と書かれています (差は 180)。",

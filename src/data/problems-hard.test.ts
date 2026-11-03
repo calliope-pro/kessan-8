@@ -278,6 +278,35 @@ describe('異変の問題の JSON (Sub-task #75)', () => {
     added.claims.forEach((c) => expect(['dividend', 'operatingCashFlow', 'interestBearingDebt']).toContain(c.metric));
   });
 
+  it('K7: 文言が「数字の並びが入れ替わっています」と言うとき、IR の値と短信の値の数字は並べ替えの関係にある。「1 割ほど大きい」と言うとき、比は 1.05〜1.15 (文言が事実と合う)', () => {
+    const digits = (v: number) => [...String(Math.round(v * 10))].sort().join('');
+    const pairs: Record<string, (p: Problem, unit: string) => [number, number]> = {
+      'H-13': (p, unit) => [p.ir.highlights.netSales.amount, unit === '億円' ? Math.round(p.tanshin.incomeStatement.current.netSales / 10) / 10 : p.tanshin.incomeStatement.current.netSales],
+      'H-15': (p, unit) => {
+        const t = p.tanshin.notes.segments.current.segments[1]?.profit as number;
+        return [p.ir.segments.items[1]?.profit.current as number, unit === '億円' ? Math.round(t / 10) / 10 : t];
+      },
+    };
+    for (const kind of Object.keys(pairs)) {
+      const r = anomalyRows.find((x) => x.kind === kind) as Row;
+      const p = load(r.id);
+      const [ir, tanshin] = (pairs[kind] as (p: Problem, u: string) => [number, number])(p, companyOf(r.company).irUnit);
+      const text = (p.anomaly as NonNullable<Problem['anomaly']>).explanation;
+      expect(ir, r.id).not.toBe(tanshin);
+      if (text.includes('入れ替わ')) expect(digits(ir), r.id).toBe(digits(tanshin));
+      if (text.includes('1 割ほど大きい')) expect(ir / tanshin, r.id).toBeGreaterThan(1.05);
+      expect(text.includes('入れ替わ') || text.includes('1 割ほど大きい'), r.id).toBe(true);
+    }
+  });
+
+  it('K8: H-03 の文言は、画面にある行名 (税金等調整前当期純利益) で述べる (行名の差し替えは無い)', () => {
+    const r = anomalyRows.find((x) => x.kind === 'H-03') as Row;
+    const p = load(r.id);
+    expect(p.labelOverrides).toBeUndefined();
+    expect(p.anomaly?.explanation).toContain('税金等調整前当期純利益');
+    expect(p.tanshin.cashFlow.incomeBeforeTax).toBe(p.tanshin.incomeStatement.current.netIncome);
+  });
+
   it('K6: 異変の系統は、会計 + 資料間が 6 割以上 (13/16)。注記は 3 つ。系統と難易度が合う', () => {
     const fam = anomalyRows.map((r) => kindList.find((k) => k.id === r.kind)?.family);
     expect(fam.filter((f) => f === 'accounting' || f === 'cross-document').length / fam.length).toBeGreaterThanOrEqual(0.6);
