@@ -31,3 +31,7 @@ curl -sS -o sakusei.pdf -w '%{http_code} %{size_download}\n' \
 ```
 
 テキストの取り出しは pypdf (標準ライブラリ外。ここでは p.22〜28 の読み取りだけに使った)。pdftotext・pdftoppm は入っていなかった。
+
+## Task の ID の対応 (#13)
+
+plan-comparison.md と estimate.py は、決定の ID (D-P2 など) とぶつからないように、案 C の生成の Task を G1〜G11 から S1〜S11 に、結合テストと包括レビューを Q1・Q2 から F1・F2 に変えた。`tech-assessment.md` と各測定の md は、変える前の ID (G5〜G10・G3・G4 など) で書いてある。対応は G → S (たとえば G10 = S10 = 生成の規則と異変の規則の一次資料での確認)。`reversal.py` は新しい ID に直した (出力は変わらない)。
