@@ -19,4 +19,4 @@ Node 22.12 以上。
 | `npm test` | 単体テスト (Vitest。E2E は回さない) |
 | `npm run build` | 型検査 + ビルド (出力は `dist/`) |
 | `npm run check:size` | ビルド後の `dist/` が転送量の予算 (gzip の合計 1 MB 未満) に収まるか |
-| `npm run test:e2e` | E2E (Playwright)。ビルドして `vite preview` に対して回す。初回は `npx playwright install chromium` |
+| `npm run test:e2e` | E2E (Playwright)。ビルドして `vite preview` に対して回す。初回は `npx playwright install chromium`。ポートが使用中なら `E2E_PORT=4180 npm run test:e2e` |
