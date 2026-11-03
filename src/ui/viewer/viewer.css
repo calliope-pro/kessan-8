@@ -251,3 +251,109 @@ td.cell-flag {
   color: var(--muted);
   font-size: 12px;
 }
+
+/* 道具バー (画面の下に固定。padding 8 + 的 44 + padding 8 + 上の線 1 = 61px) */
+.toolbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+}
+.toolbar[hidden] {
+  display: none;
+}
+.toolbar-in {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 960px;
+  min-height: 60px;
+  margin: 0 auto;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+}
+.mark-switch {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--ink);
+  border-radius: 22px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.mark-switch[aria-pressed='true'] {
+  background: var(--mark);
+  border-color: var(--mark);
+  color: #fff;
+}
+.calc {
+  flex: 1 1 0;
+  min-width: 0;
+  max-height: 44px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+.calc-line {
+  white-space: nowrap;
+}
+.toolbar-end {
+  flex: 0 0 auto;
+}
+.viewer[data-mode='read'] .viewer-body {
+  padding-bottom: 84px;
+}
+
+/* 印と強調。印 = 内側の枠 (橙)、強調 = 外側の枠 (赤)。重なっても両方見える */
+.viewer {
+  --mark: #b45309;
+  --hl: #c0182b;
+}
+[data-marked='true'] {
+  box-shadow: inset 0 0 0 3px var(--mark);
+  background-color: #fff3df;
+}
+[data-highlight='true'] {
+  outline: 4px solid var(--hl);
+  outline-offset: 1px;
+}
+/* 印スイッチが入っている間: 押せる要素は 44px 以上 (指で押せる) */
+.viewer[data-marking='true'] [role='button'] {
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.viewer[data-marking='true'] td,
+.viewer[data-marking='true'] th.row-label {
+  height: 44px;
+}
+.viewer[data-marking='true'] span[role='button'],
+.viewer[data-marking='true'] figcaption[role='button'] {
+  display: inline-block;
+  min-height: 44px;
+  line-height: 44px;
+}
+.viewer[data-marking='true'] p[role='button'] {
+  min-height: 44px;
+}
+
+/* E2E 用の「判定する」ボタンの見た目 (#28 の本物のボタンは #28 が作る) */
+.judge-demo {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  white-space: nowrap;
+}

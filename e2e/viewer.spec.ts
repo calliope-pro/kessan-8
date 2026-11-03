@@ -271,3 +271,304 @@ test.describe('C1〜C7: IR スライドの内容', () => {
     await expect(page.locator('.sec-name[data-path^="ir.segments.items."]')).toHaveCount(3);
   });
 });
+
+// ── 道具 (Sub-task #65): 印・検算・強調・道具バー (F6〜F12・F15・F16・E10・E11) ──
+const marked = (page: Page) => page.locator('[data-marked="true"]');
+const key = (page: Page, path: string) => page.locator(`[data-path="${path}"]`);
+const keys = (page: Page) => page.evaluate(() => window.__viewerDemo.state.marks);
+const turnOn = (page: Page) => page.getByRole('button', { name: '印', exact: true }).click();
+const calcLines = (page: Page) => page.locator('.calc-line').allTextContents();
+
+test.describe('F6・F7: 印', () => {
+  test('F6: スイッチが切れている間は押しても印が付かず onToggleMark も呼ばれない', async ({ page }) => {
+    await open(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await expect(marked(page)).toHaveCount(0);
+    expect((await events(page)).filter((e) => e.type === 'mark')).toEqual([]);
+    await expect(key(page, 'tanshin.summary.netSales.current')).not.toHaveAttribute('role', 'button');
+  });
+
+  test('F6: スイッチを入れると押せる要素 (role=button・tabindex・aria-pressed)。押すと付き、もう一度で外れる', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    const cell = key(page, 'tanshin.summary.netSales.current');
+    await expect(cell).toHaveAttribute('role', 'button');
+    await expect(cell).toHaveAttribute('tabindex', '0');
+    await expect(cell).toHaveAttribute('aria-pressed', 'false');
+    await cell.click();
+    await expect(cell).toHaveAttribute('data-marked', 'true');
+    await expect(cell).toHaveAttribute('aria-pressed', 'true');
+    expect(await keys(page)).toEqual(['tanshin.summary.netSales.current']);
+    await cell.click();
+    await expect(cell).not.toHaveAttribute('data-marked', 'true');
+    expect(await keys(page)).toEqual([]);
+  });
+
+  test('F6: 行の名前・見出し・単位・文章・グラフの棒にも印を付けられる。行の名前のキーは <doc>.item:<項目キー>', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    await page.locator('[data-item-key="tanshin.summary.netSales"]').click();
+    await key(page, 'tanshin.header.companyName').click();
+    await key(page, 'tanshin.header.unit').click();
+    expect(await keys(page)).toEqual(['tanshin.item:tanshin.summary.netSales', 'tanshin.header.companyName', 'tanshin.header.unit']);
+    await page.getByRole('button', { name: '次へ' }).click();
+    await show(page, IR[0]);
+    await key(page, 'ir.statements.0').click();
+    await show(page, IR[1]);
+    await key(page, 'ir.results.chart.netSales.current').click();
+    await page.locator('[data-item-key="ir.results.chart.netSales.axisMin"]').click();
+    expect((await keys(page)).slice(3)).toEqual(['ir.statements.0', 'ir.results.chart.netSales.current', 'ir.item:ir.results.chart.netSales.axisMin']);
+  });
+
+  test('F6: Enter・Space でも付け外しできる', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    const cell = key(page, 'tanshin.summary.netSales.current');
+    await cell.focus();
+    await page.keyboard.press('Enter');
+    expect(await keys(page)).toEqual(['tanshin.summary.netSales.current']);
+    await page.keyboard.press('Space');
+    expect(await keys(page)).toEqual([]);
+  });
+
+  test('F7: スイッチを切ると印は残るが押せなくなる (role・tabindex・aria-pressed は外れる)。スイッチは aria-pressed', async ({ page }) => {
+    await open(page);
+    const sw = page.getByRole('button', { name: '印', exact: true });
+    await expect(sw).toHaveAttribute('aria-pressed', 'false');
+    await sw.click();
+    await expect(sw).toHaveAttribute('aria-pressed', 'true');
+    const cell = key(page, 'tanshin.summary.netSales.current');
+    await cell.click();
+    await sw.click();
+    await expect(sw).toHaveAttribute('aria-pressed', 'false');
+    await expect(cell).toHaveAttribute('data-marked', 'true');
+    await expect(cell).not.toHaveAttribute('role', 'button');
+    await cell.click();
+    expect(await keys(page)).toEqual(['tanshin.summary.netSales.current']);
+  });
+
+  test('印は画面を移っても残る (marks は props の持ち主が持つ)', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await show(page, TANSHIN[1]);
+    await expect(marked(page)).toHaveCount(0);
+    await show(page, TANSHIN[0]);
+    await expect(key(page, 'tanshin.summary.netSales.current')).toHaveAttribute('data-marked', 'true');
+  });
+});
+
+test.describe('F8・E10・E11: 検算', () => {
+  test('E10・E11: 印が 0・1 個のとき、スイッチが入っていれば案内、切れていれば何も出ない', async ({ page }) => {
+    await open(page);
+    expect(await calcLines(page)).toEqual([]);
+    await turnOn(page);
+    expect(await calcLines(page)).toEqual(['2 つ選ぶと検算できます']);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    expect(await calcLines(page)).toEqual(['2 つ選ぶと検算できます']);
+  });
+
+  test('F8: 印を 2 つ付けると 差・比 の 2 行 (問題の値から計算した値)', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await key(page, 'tanshin.summary.netSales.previous').click();
+    expect(await calcLines(page)).toEqual(['差 600', '比 1.05']);
+  });
+
+  test('F8: 3 つ目を付けると直近の 2 つが対象 (別の画面の印も使える)', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await key(page, 'tanshin.summary.netSales.previous').click();
+    await show(page, TANSHIN[2]);
+    await key(page, 'tanshin.incomeStatement.current.netSales').click();
+    expect(await calcLines(page)).toEqual(['差 600', '比 1.05']); // previous (11,800) と current (12,400)
+    await key(page, 'tanshin.incomeStatement.current.operatingIncome').click();
+    expect(await calcLines(page)).toEqual(['差 11,160', '比 10.00']); // 売上高 12,400 と 営業利益 1,240 (表示の順で売上高が A)
+  });
+
+  test('F8: 単位の違う組・数字でない組は 1 行', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await key(page, 'tanshin.summary.netSales.changeRate').click();
+    expect(await calcLines(page)).toEqual(['比べられない (単位が違う)']);
+    await page.locator('[data-item-key="tanshin.summary.netSales"]').click();
+    expect(await calcLines(page)).toEqual(['比べられない (数字ではない)']);
+  });
+
+  test('F8: 億円と百万円は比べられない (表示の単位で決める)', async ({ page }) => {
+    await open(page, '?problem=oku');
+    await turnOn(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await show(page, IR[0]);
+    await key(page, 'ir.highlights.netSales.amount').click();
+    expect(await calcLines(page)).toEqual(['比べられない (単位が違う)']);
+  });
+});
+
+test.describe('F9・F10: 道具バー', () => {
+  for (const width of [320, 360, 375, 414]) {
+    test(`F9: 幅 ${width}px で道具バーは折り返さず 61px 以下。10 桁の検算でも高さが変わらず、文字が欠けない`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 700 });
+      await open(page, '?problem=full&judge=1');
+      const bar = page.locator('.toolbar');
+      expect((await bar.boundingBox())!.height).toBeLessThanOrEqual(61);
+      await turnOn(page);
+      const h0 = (await bar.boundingBox())!.height;
+      await page.evaluate(() => {
+        const p = structuredClone(window.__viewerDemo.state.problem);
+        p.tanshin.balanceSheet.current.cash = 1234567890;
+        p.tanshin.balanceSheet.previous.cash = -1;
+        window.__viewerDemo.set({ problem: p, view: { doc: 'tanshin', screen: 'balanceSheet' } });
+      });
+      await key(page, 'tanshin.balanceSheet.current.cash').click();
+      await key(page, 'tanshin.balanceSheet.previous.cash').click();
+      expect(await calcLines(page)).toEqual(['差 1,234,567,891', '比 △1,234,567,890.00']);
+      const box = (await bar.boundingBox())!;
+      expect(box.height).toBe(h0);
+      expect(box.height).toBeLessThanOrEqual(61);
+      for (const el of await page.locator('.calc-line').all()) expect(await el.evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
+      const sw = (await page.getByRole('button', { name: '印', exact: true }).boundingBox())!;
+      expect(sw.width).toBeGreaterThanOrEqual(44);
+      expect(sw.height).toBeGreaterThanOrEqual(44);
+      const judge = (await page.getByRole('button', { name: '判定する' }).boundingBox())!;
+      expect(judge.height).toBeGreaterThanOrEqual(44);
+      expect(judge.x + judge.width).toBeLessThanOrEqual(width);
+      expect(box.y + box.height).toBeCloseTo(700, 0); // 画面の下に固定
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    });
+  }
+
+  test('F10: 右端のボタンを押しても、ビューアは何も起こさない (渡した側のハンドラだけが動く)', async ({ page }) => {
+    await open(page, '?judge=1');
+    await page.getByRole('button', { name: '判定する' }).click();
+    expect((await events(page)).map((e) => e.type)).toEqual(['judge']);
+    expect(await screenId(page)).toBe('summary');
+  });
+
+  test('F10: toolbarEnd を渡さなければ右端は空', async ({ page }) => {
+    await open(page);
+    await expect(page.locator('.toolbar-end *')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '判定する' })).toHaveCount(0);
+  });
+});
+
+test.describe('F11: 行の高さ', () => {
+  test('F11: スイッチが切れている間は詰めた行、入れると押せる要素は 44px 以上', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 700 });
+    await open(page);
+    await show(page, TANSHIN[1]);
+    const rowHeight = () => page.locator('tr.row').first().evaluate((e) => e.getBoundingClientRect().height);
+    expect(await rowHeight()).toBeLessThan(40);
+    await turnOn(page);
+    for (const h of await page.locator('[role="button"][data-path], [role="button"][data-item-key]').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) {
+      expect(h).toBeGreaterThanOrEqual(43.9);
+    }
+    expect(await rowHeight()).toBeGreaterThanOrEqual(44);
+  });
+
+  test('F11: 切り替えても、見ていた行の画面上の位置が ±2px の中で保たれる', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 700 });
+    await open(page);
+    await show(page, TANSHIN[1]);
+    for (const pos of [400, 700]) {
+      await page.evaluate((y) => window.scrollTo(0, y), pos);
+      const edge = await page.locator('.viewer-top').evaluate((e) => e.getBoundingClientRect().bottom);
+      const rows = await page.locator('tr.row').evaluateAll((els, e) => els.map((el) => [el.querySelector('[data-item-key]')?.getAttribute('data-item-key'), el.getBoundingClientRect().top, el.getBoundingClientRect().bottom] as const).filter(([, , b]) => (b as number) > (e as number) + 1)[0], edge);
+      const topOf = (k: string) => page.locator(`[data-item-key="${k}"]`).evaluate((e) => e.closest('tr')!.getBoundingClientRect().top);
+      const before = await topOf(rows![0] as string);
+      await turnOn(page);
+      expect(Math.abs((await topOf(rows![0] as string)) - before)).toBeLessThanOrEqual(2);
+      await turnOn(page);
+      expect(Math.abs((await topOf(rows![0] as string)) - before)).toBeLessThanOrEqual(2);
+    }
+  });
+});
+
+test.describe('F12: 強調', () => {
+  test('F12: highlights の場所の要素に data-highlight。別の画面に切り替えても、その画面の該当要素に付く。渡さなければ付かない', async ({ page }) => {
+    await open(page);
+    await expect(page.locator('[data-highlight="true"]')).toHaveCount(0);
+    await page.evaluate(() => window.__viewerDemo.set({ highlights: [{ doc: 'tanshin', path: 'summary.netSales.current' }, { doc: 'tanshin', path: 'incomeStatement.current.ordinaryIncome' }] }));
+    await expect(page.locator('[data-highlight="true"]')).toHaveCount(1);
+    await expect(key(page, 'tanshin.summary.netSales.current')).toHaveAttribute('data-highlight', 'true');
+    await show(page, TANSHIN[2]);
+    await expect(page.locator('[data-highlight="true"]')).toHaveCount(1);
+    await expect(key(page, 'tanshin.incomeStatement.current.ordinaryIncome')).toHaveAttribute('data-highlight', 'true');
+    await page.evaluate(() => window.__viewerDemo.set({ highlights: [] }));
+    await expect(page.locator('[data-highlight="true"]')).toHaveCount(0);
+  });
+
+  test('F12: itemKey の場所は行の名前の要素だけ、path の途中の場所は子孫のセル全部', async ({ page }) => {
+    await open(page);
+    await show(page, TANSHIN[1]);
+    await page.evaluate(() => window.__viewerDemo.set({ highlights: [{ doc: 'tanshin', itemKey: 'tanshin.balanceSheet.cash' }] }));
+    await expect(page.locator('[data-highlight="true"]')).toHaveCount(1);
+    await expect(page.locator('[data-item-key="tanshin.balanceSheet.cash"]')).toHaveAttribute('data-highlight', 'true');
+    await show(page, IR[2]);
+    await page.evaluate(() => window.__viewerDemo.set({ highlights: [{ doc: 'ir', path: 'segments.items.0.netSales' }] }));
+    await expect(page.locator('[data-highlight="true"]')).toHaveCount(3);
+    await show(page, IR[0]);
+    await page.evaluate(() => window.__viewerDemo.set({ highlights: [{ doc: 'ir', path: 'statements.0.text' }, { doc: 'tanshin', path: 'header.companyName' }] }));
+    await expect(key(page, 'ir.statements.0')).toHaveAttribute('data-highlight', 'true');
+    await expect(page.locator('[data-highlight="true"]')).toHaveCount(1); // IR の画面に短信の見出しは無い
+  });
+
+  test('F12: 枠で見える (色だけでなく太い枠線)。印と強調は重なっても両方見える', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await page.evaluate(() => window.__viewerDemo.set({ highlights: [{ doc: 'tanshin', path: 'summary.netSales.current' }] }));
+    const style = await key(page, 'tanshin.summary.netSales.current').evaluate((e) => {
+      const c = getComputedStyle(e);
+      return { outline: c.outlineWidth, outlineStyle: c.outlineStyle, shadow: c.boxShadow };
+    });
+    expect(style.outlineStyle).toBe('solid');
+    expect(parseFloat(style.outline)).toBeGreaterThanOrEqual(3);
+    expect(style.shadow).not.toBe('none');
+  });
+});
+
+test.describe('F15・F16: check モードと使い回し', () => {
+  test('F15: mode=check は道具バーも検算も出ない。印は表示だけで、押しても onToggleMark は呼ばれない。タブは動く', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await key(page, 'tanshin.summary.netSales.previous').click();
+    await page.evaluate(() => window.__viewerDemo.set({ mode: 'check' }));
+    await expect(page.locator('.toolbar')).toBeHidden();
+    await expect(key(page, 'tanshin.summary.netSales.current')).toHaveAttribute('data-marked', 'true');
+    await expect(key(page, 'tanshin.summary.netSales.current')).not.toHaveAttribute('role', 'button');
+    const before = (await events(page)).filter((e) => e.type === 'mark').length;
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await key(page, 'tanshin.summary.netSales.changeRate').click();
+    expect((await events(page)).filter((e) => e.type === 'mark').length).toBe(before);
+    await page.getByRole('tab', { name: '貸借', exact: true }).click();
+    expect(await screenId(page)).toBe('balanceSheet');
+    await page.evaluate(() => window.__viewerDemo.set({ mode: 'read' }));
+    await expect(page.locator('.toolbar')).toBeVisible();
+    expect(await calcLines(page)).toEqual(['差 600', '比 1.05']);
+  });
+
+  test('F15: ?mode=check で始めると道具バーは最初から出ない', async ({ page }) => {
+    await open(page, '?mode=check&judge=1');
+    await expect(page.locator('.toolbar')).toBeHidden();
+    await expect(page.getByRole('button', { name: '判定する' })).toBeHidden();
+  });
+
+  test('F16: 同じ problem・view の update は画面の要素を作り直さない (スイッチ・読み済・スクロールが残る)。problem が変わると戻る', async ({ page }) => {
+    await open(page);
+    await show(page, TANSHIN[1]);
+    await turnOn(page);
+    const article = await page.locator('article.screen').elementHandle();
+    await page.evaluate(() => window.__viewerDemo.set({ marks: ['tanshin.balanceSheet.current.cash'], highlights: [{ doc: 'tanshin', path: 'balanceSheet.current.cash' }] }));
+    expect(await article!.evaluate((e) => e.isConnected)).toBe(true);
+    await expect(page.getByRole('button', { name: '印', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('tab', { name: '貸借', exact: true })).toHaveAttribute('data-visited', 'true');
+    await page.evaluate(() => window.__viewerDemo.set({ problem: structuredClone(window.__viewerDemo.state.problem) }));
+    expect(await article!.evaluate((e) => e.isConnected)).toBe(false);
+    await expect(page.getByRole('tab', { name: 'サマリー', exact: true })).not.toHaveAttribute('data-visited', 'true');
+  });
+});

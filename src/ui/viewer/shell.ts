@@ -3,8 +3,11 @@
 import type { ScreenRef } from '../../domain/screen';
 import type { Viewer, ViewerEvents, ViewerProps } from '../viewer-port';
 import { h } from './dom';
+import { placeHitsElement } from './highlight';
+import { itemMarkKey } from './keys';
 import { buildScreen, SCREEN_ORDER, screenTitle, tabLabel } from './model';
 import { renderScreen } from './render';
+import { createToolbar } from './toolbar';
 import './viewer.css';
 
 const DOCS = [
@@ -23,7 +26,9 @@ export function createViewer(host: HTMLElement, events: ViewerEvents): Viewer {
   const prev = h('button', { type: 'button', class: 'pager-btn', 'data-dir': 'prev' }, '前へ');
   const next = h('button', { type: 'button', class: 'pager-btn', 'data-dir': 'next' }, '次へ');
   const body = h('div', { class: 'viewer-body' });
-  root.append(h('header', { class: 'viewer-top' }, docTabs, screenTabs), h('div', { class: 'page-bar' }, prev, title, next), body);
+  const toolbar = createToolbar();
+  const top = h('header', { class: 'viewer-top' }, docTabs, screenTabs);
+  root.append(top, h('div', { class: 'page-bar' }, prev, title, next), body, toolbar.el);
   host.append(root);
 
   let props: ViewerProps | null = null;
@@ -81,13 +86,74 @@ export function createViewer(host: HTMLElement, events: ViewerEvents): Viewer {
     next.disabled = i >= SCREEN_ORDER.length - 1;
   }
 
+  /** 印を付けられる要素 (場所になりうる要素すべて): 数字・文・見出し・単位・グラフの棒 = data-path、行の名前 = data-item-key。 */
+  const targets = () => [...body.querySelectorAll<HTMLElement>('[data-path],[data-item-key]')];
+  const markKeyOf = (el: HTMLElement): string => {
+    if (el.dataset.path) return el.dataset.path;
+    const key = el.dataset.itemKey ?? '';
+    return itemMarkKey(key.startsWith('ir.') ? 'ir' : 'tanshin', key);
+  };
+  /** 印スイッチが入っていて、押せる (read) か。 */
+  const active = () => toolbar.marking && props?.mode === 'read';
+
+  /** 印・強調・押せる要素の属性を、props のとおりにそろえる。画面の要素は作り直さない。 */
+  function paint() {
+    if (!props) return;
+    const marks = new Set(props.marks);
+    const canPress = active();
+    root.dataset.marking = String(canPress);
+    for (const el of targets()) {
+      const marked = marks.has(markKeyOf(el));
+      if (marked) el.dataset.marked = 'true';
+      else delete el.dataset.marked;
+      if (canPress) {
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('aria-pressed', String(marked));
+      } else {
+        el.removeAttribute('role');
+        el.removeAttribute('tabindex');
+        el.removeAttribute('aria-pressed');
+      }
+      const ref = el.dataset.path ? { path: el.dataset.path } : { itemKey: el.dataset.itemKey };
+      if (props.highlights.some((pl) => placeHitsElement(pl, ref))) el.dataset.highlight = 'true';
+      else delete el.dataset.highlight;
+    }
+    toolbar.el.hidden = props.mode !== 'read';
+    toolbar.update(props.problem, props.marks, props.mode === 'read' ? props.toolbarEnd : undefined);
+  }
+
+  const press = (el: HTMLElement | null) => {
+    if (el && active()) events.onToggleMark(markKeyOf(el));
+  };
+  body.addEventListener('click', (e) => press((e.target as HTMLElement).closest<HTMLElement>('[data-path],[data-item-key]')));
+  body.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-path],[data-item-key]');
+    if (el && el === e.target) {
+      e.preventDefault();
+      press(el);
+    }
+  });
+  // 印スイッチの切り替えで行の高さが変わるとき、見ていた行の画面上の位置を保つ (SC4-4)
+  toolbar.onSwitch(() => {
+    const edge = top.getBoundingClientRect().bottom;
+    const anchor = [...body.querySelectorAll<HTMLElement>('tr.row')].find((r) => r.getBoundingClientRect().bottom > edge + 1);
+    const before = anchor?.getBoundingClientRect().top;
+    paint();
+    if (anchor && before !== undefined) window.scrollBy(0, anchor.getBoundingClientRect().top - before);
+  });
+
   return {
     update(next_: ViewerProps) {
       props = next_;
       root.dataset.mode = next_.mode;
       const problemChanged = shownProblem !== next_.problem;
       const viewChanged = problemChanged || !shownView || !same(shownView, next_.view);
-      if (!viewChanged) return;
+      if (!viewChanged) {
+        paint();
+        return;
+      }
       if (problemChanged) {
         visited.clear();
         for (const k of Object.keys(lastOf)) delete lastOf[k];
@@ -100,6 +166,7 @@ export function createViewer(host: HTMLElement, events: ViewerEvents): Viewer {
       paintTabs(next_.view);
       title.textContent = screenTitle(next_.view);
       body.replaceChildren(renderScreen(buildScreen(next_.problem, next_.view.doc, next_.view.screen)));
+      paint();
       if (!firstPaint) window.scrollTo(0, 0);
     },
     destroy() {

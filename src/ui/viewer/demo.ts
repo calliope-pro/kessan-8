@@ -20,7 +20,16 @@ const state: ViewerProps = {
 
 // ?manual=1: onView で update しない (見る画面の持ち主が #28 の状態で、ビューアはひとりでに画面を替えない確認用)
 const manual = q.get('manual') === '1';
-const events: { type: 'view' | 'mark'; value: unknown }[] = [];
+const events: { type: 'view' | 'mark' | 'judge'; value: unknown }[] = [];
+// ?judge=1: 道具バーの右端に置く「判定する」ボタン (#28 の SC4-9 の代わり。押すと events に judge が積まれるだけ)
+if (q.get('judge') === '1') {
+  const judge = document.createElement('button');
+  judge.type = 'button';
+  judge.className = 'judge-demo';
+  judge.textContent = '判定する';
+  judge.addEventListener('click', () => events.push({ type: 'judge', value: null }));
+  state.toolbarEnd = judge;
+}
 const host = document.getElementById('root')!;
 const viewer = createViewer(host, {
   onView(ref) {
