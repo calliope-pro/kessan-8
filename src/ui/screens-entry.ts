@@ -69,5 +69,7 @@ export function sampleScreen(ctx: Ctx): HTMLElement {
     h('div', { class: 'row' },
       pre && button(M.button.begin, () => ctx.begin(ctx.local.pending!), { class: 'btn btn--primary', 'data-autofocus': true }),
       pre && button(M.button.skip, () => ctx.begin(ctx.local.pending!), { class: 'btn' }),
-      !pre && button(M.button.close, () => ctx.closeSample(), { class: 'btn btn--primary', 'data-autofocus': true })));
+      pre && button(M.button.back, () => ctx.patch({ screen: 'main', pending: undefined }), { class: 'btn' }),
+      !pre && button(M.button.close, () => ctx.closeSample(), { class: 'btn btn--primary', 'data-autofocus': true })),
+    pre && ctx.titleLink());
 }

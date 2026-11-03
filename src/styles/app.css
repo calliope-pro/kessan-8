@@ -1,6 +1,7 @@
 /* 画面の見た目。style 属性は使わない (CSP)。状態は data- 属性 + このセレクタで表す。 */
 body { padding: 0; }
-.app { min-height: 100vh; background: var(--stage-bg, #efe3c6); color: var(--stage-fg, #231c0c); }
+/* V4 机の面の質感: 段の背景色の上に、ごく薄い明暗のグラデーションを重ねる (画像は使わない)。重ねても文字とのコントラスト比 4.5 以上が保たれる幅 (src/ui/css.test.ts は重ねる前の色で確かめ、重ねたあとは E2E の計算済みスタイルで確かめる) */
+.app { min-height: 100vh; color: var(--stage-fg, #231c0c); background-color: var(--stage-bg, #efe3c6); background-image: linear-gradient(rgb(255 255 255 / 0.06), rgb(0 0 0 / 0.06)); }
 .screen { max-width: 960px; margin: 0 auto; padding: 16px; padding-bottom: 96px; }
 .screen h1 { font-size: 2rem; line-height: 1.2; margin: 24px 0 4px; }
 .screen h2 { font-size: 1.25rem; margin: 20px 0 8px; }
@@ -21,17 +22,18 @@ body { padding: 0; }
 .card p { margin: 4px 0 8px; }
 
 /* 資料の紙面 (.paper): 段によらず、常に明るい同じ配色 (資料の本体を変えない。experience.md §2.1) */
-.paper { background: #fffdf7; color: #1b1b1b; border: 1px solid #b9b3a3; border-radius: 4px; padding: 8px; }
+.paper { background: #fffdf7; color: #1b1b1b; border: 1px solid #b9b3a3; border-radius: 4px; padding: 8px; box-shadow: 0 2px 8px rgb(0 0 0 / 0.25); }
 
 /* 閲覧票の帯・進行・時刻・社章 */
-.band { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 32px; padding: 4px 0; font-size: 0.95rem; }
+/* V3 閲覧票の帯: 会社の淡い色の地に、社色の縁。段の文字色に依らず読める色を自分で持つ (社色・淡い色は CSSOM で --company-main・--company-light に入る) */
+.band { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 32px; padding: 4px 12px; font-size: 0.95rem; color: #1b1b1b; background: var(--company-light, #fffdf7); border-left: 6px solid var(--company-main, #5d5a55); border-radius: 4px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); }
 .band strong { font-weight: 700; }
 .pips { display: inline-flex; gap: 4px; }
 .pip { width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; }
 .pip[data-state="done"] { background: currentColor; }
 .pip[data-state="now"] { background: #c0392b; border-color: #c0392b; }
-.emblem { display: inline-block; min-width: 1.6em; text-align: center; padding: 0 4px; border-radius: 4px; background: #fffdf7; font-weight: 700; }
-.slip-card { display: grid; gap: 4px; padding: 12px 16px; background: #fffdf7; color: #1b1b1b; border: 2px dashed #5d5a55; border-radius: 8px; }
+.emblem { display: inline-block; min-width: 1.6em; text-align: center; padding: 0 4px; border-radius: 4px; color: var(--company-main, #1b1b1b); background: #fffdf7; border: 1px solid var(--company-main, #5d5a55); font-weight: 700; }
+.slip-card { display: grid; gap: 4px; padding: 12px 16px; background: var(--company-light, #fffdf7); color: #1b1b1b; border: 2px dashed var(--company-main, #5d5a55); border-radius: 8px; box-shadow: 0 2px 6px rgb(0 0 0 / 0.3); }
 
 /* 判定のパネル (下から開くシート) */
 .sheet-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); z-index: 20; }

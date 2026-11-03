@@ -62,3 +62,14 @@ export async function noHorizontalOverflow(page: Page, width: number): Promise<v
   const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(scrollWidth, '横にはみ出さない').toBeLessThanOrEqual(width);
 }
+
+/** 'rgb(r, g, b)' / 'rgba(r, g, b, a)' → 相対輝度 (WCAG)。 */
+function luminance(css: string): number {
+  const [r, g, b] = (css.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number).map((v) => v / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+export function contrastRatio(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+}

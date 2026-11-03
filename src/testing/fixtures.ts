@@ -13,6 +13,12 @@ export function companyIdOf(index: number): string {
   return `c${String(index).padStart(2, '0')}`;
 }
 
+const PALETTE = [
+  { main: '#1F4E79', light: '#E6EEF5' },
+  { main: '#7A3E00', light: '#F7EBDD' },
+  { main: '#1B5E3B', light: '#E3F1E8' },
+];
+
 /** 試験用の会社 (架空)。index は 1 から。 */
 export function makeCompanies(count: number): Company[] {
   const marks = ['◆', '●', '■', '▲', '▼', '★'];
@@ -25,7 +31,7 @@ export function makeCompanies(count: number): Company[] {
     fiscalYearEndMonth: 3,
     irUnit: '百万円' as const,
     emblem: marks[i % marks.length] ?? '◆',
-    colors: { main: '#1F4E79', light: '#E6EEF5' },
+    colors: PALETTE[i % PALETTE.length]!,
     business: '電機部品を作る会社です。',
   }));
 }

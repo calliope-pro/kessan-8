@@ -17,7 +17,8 @@ export function restartScreen(ctx: Ctx): HTMLElement {
       h('p', {}, `${M.restart.rewind} (${timeLabel(0)})`)),
     h('div', { class: 'row' },
       button(M.button.again, () => ctx.restart(), { class: 'btn btn--primary', 'data-autofocus': true }),
-      button(M.button.reselect, () => ctx.dispatch({ type: 'TO_DIFFICULTY' }), { class: 'btn' })));
+      button(M.button.reselect, () => ctx.dispatch({ type: 'TO_DIFFICULTY' }), { class: 'btn' })),
+    ctx.titleLink());
 }
 
 export function clearedScreen(ctx: Ctx): HTMLElement {

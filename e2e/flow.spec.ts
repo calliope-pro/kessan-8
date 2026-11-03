@@ -1,6 +1,6 @@
 // E1〜E28 (docs/test-cases/flow.md §2): 遊びの流れ。ビルドした成果物 (npm run build:e2e の試験用の問題) に対して回す。
 import { expect, test } from '@playwright/test';
-import { answer, answerLabel, app, judgeWith, nextCompany, noHorizontalOverflow, planOf, problemId, problemOf, seedWhere, startGame } from './support';
+import { answer, answerLabel, app, contrastRatio, judgeWith, nextCompany, noHorizontalOverflow, planOf, problemId, problemOf, seedWhere, startGame } from './support';
 
 const SEED = 1;
 const isAnomaly = (kind?: string) => (p: { anomaly: { kind: string } | null }) => (kind ? p.anomaly?.kind === kind : p.anomaly !== null);
@@ -409,4 +409,73 @@ test('E28: 答え合わせの結果は aria-live で通知される', async ({ p
   await answer(page, true);
   await expect(page.getByTestId('result')).toHaveAttribute('aria-live', 'polite');
   expect(answerLabel(planOf(SEED)[0]!, true)).toMatch(/異変/);
+});
+
+test('E29: 遊ぶ前の見本・会社の導入・最初へ戻る にも「タイトルへ」がある。遊ぶ前の見本から戻れる', async ({ page }) => {
+  await page.goto(`/?seed=${SEED}`);
+  await page.getByRole('button', { name: 'はじめる' }).click();
+  await page.getByRole('button', { name: 'やさしい' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'sample');
+  await expect(page.getByTestId('to-title')).toBeVisible();
+  await page.getByRole('button', { name: '戻る' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'difficulty');
+  await page.getByRole('button', { name: 'やさしい' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'sample'); // 見たことになっていない
+  await page.getByTestId('to-title').click(); // 難易度の選択なので確認なし
+  await expect(app(page)).toHaveAttribute('data-screen', 'title');
+  await startGame(page, SEED);
+  await answer(page, true);
+  await page.getByRole('button', { name: '次の会社へ' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'intro');
+  await page.getByTestId('to-title').click();
+  await expect(page.getByTestId('confirm')).toBeVisible();
+  await page.getByRole('button', { name: '続ける' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'restart');
+  await page.getByTestId('to-title').click();
+  await expect(page.getByTestId('confirm')).toBeVisible();
+});
+
+test('E30: 帯の社色・淡い色で、8 段すべてで読める。社が変わると社色が変わる。CSP のエラーが無い', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await startGame(page, SEED);
+  const mains = new Set<string>();
+  for (let i = 0; i < 8; i++) {
+    const band = page.getByTestId('band');
+    const css = await band.evaluate((el) => {
+      const emblem = el.querySelector('.emblem')!;
+      return {
+        emblemColor: getComputedStyle(emblem).color, emblemBg: getComputedStyle(emblem).backgroundColor,
+        bandColor: getComputedStyle(el).color, bandBg: getComputedStyle(el).backgroundColor,
+        main: getComputedStyle(el).getPropertyValue('--company-main').trim(),
+      };
+    });
+    expect(contrastRatio(css.emblemColor, css.emblemBg), `社章 ${i + 1} 社目`).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(css.bandColor, css.bandBg), `帯 ${i + 1} 社目`).toBeGreaterThanOrEqual(4.5);
+    expect(css.main).not.toBe('');
+    mains.add(css.main);
+    await answer(page, true);
+    if (i < 7) await nextCompany(page);
+  }
+  expect(mains.size).toBeGreaterThanOrEqual(2);
+  expect(errors).toEqual([]);
+});
+
+test('E31: 資料の紙面は社が変わっても同じ。机の面に質感 (グラデーション)・紙面に影', async ({ page }) => {
+  await startGame(page, SEED);
+  const read = () => page.locator('.paper').evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, fg: getComputedStyle(el).color, shadow: getComputedStyle(el).boxShadow }));
+  const first = await read();
+  expect(first.shadow).not.toBe('none');
+  expect(await page.locator('.app').evaluate((el) => getComputedStyle(el).backgroundImage)).toContain('linear-gradient');
+  for (let i = 0; i < 7; i++) {
+    await answer(page, true);
+    await nextCompany(page);
+  }
+  const last = await read();
+  expect(last.bg).toBe(first.bg);
+  expect(last.fg).toBe(first.fg);
 });

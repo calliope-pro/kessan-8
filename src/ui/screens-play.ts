@@ -6,6 +6,7 @@ import { matchMarks } from '../domain/marks';
 import type { Ctx } from './context';
 import { button, h } from './dom';
 import { MESSAGES as M } from './messages';
+import { applyCompanyColors } from './company-style';
 import { timeLabel } from './stage';
 
 const pips = (round: number) =>
@@ -15,11 +16,11 @@ const pips = (round: number) =>
 function band(ctx: Ctx, run: Reading | Revealed): HTMLElement {
   const problem = run.problems[run.round]!;
   const company = ctx.companyOf(problem);
-  return h('div', { class: 'band', 'data-testid': 'band' },
+  return applyCompanyColors(h('div', { class: 'band', 'data-testid': 'band' },
     h('strong', {}, M.reading.band(run.round + 1, ROUNDS_TO_CLEAR)), pips(run.round),
     h('span', { 'data-testid': 'time' }, timeLabel(run.round)),
     h('span', { class: 'emblem', 'aria-hidden': 'true' }, company?.emblem ?? ''),
-    h('span', {}, company?.name ?? problem.tanshin.header.companyName));
+    h('span', {}, company?.name ?? problem.tanshin.header.companyName)), company);
 }
 
 export function introScreen(ctx: Ctx): HTMLElement {
@@ -27,13 +28,15 @@ export function introScreen(ctx: Ctx): HTMLElement {
   const problem = run.problems[run.round]!;
   const company = ctx.companyOf(problem);
   return h('section', { class: 'screen stack', 'data-screen': 'intro' },
-    h('div', { class: 'slip-card' },
+    applyCompanyColors(h('div', { class: 'slip-card', 'data-testid': 'intro-slip' },
       h('strong', {}, M.intro.roundOf(run.round + 1, ROUNDS_TO_CLEAR)), pips(run.round),
       h('span', {}, `${M.intro.time} ${timeLabel(run.round)}`),
       h('h1', {}, h('span', { class: 'emblem', 'aria-hidden': 'true' }, company?.emblem ?? ''), ' ', company?.name ?? problem.tanshin.header.companyName),
       company?.industry && h('p', {}, company.industry),
-      company?.business && h('p', {}, company.business)),
-    button(M.button.openDocs, () => ctx.patch({ screen: 'main' }), { class: 'btn btn--primary', 'data-autofocus': true }));
+      company?.business && h('p', {}, company.business)), company),
+    h('div', { class: 'row' },
+      button(M.button.openDocs, () => ctx.patch({ screen: 'main' }), { class: 'btn btn--primary', 'data-autofocus': true })),
+    ctx.titleLink());
 }
 
 /** 判定のパネル (SC4-10)。開いてから短い間は入力を受けない (「判定する」の素早い 2 回押しで確定しないため)。 */
