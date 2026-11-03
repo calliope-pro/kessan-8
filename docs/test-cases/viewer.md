@@ -14,7 +14,9 @@ Task #57 (画面: 資料束の表示と道具)。受け入れ条件 2・9 (要�
 | `buildScreen(problem, doc, screenId)` (`src/ui/viewer/model.ts`) | 問題 (`Problem`)・資料 (`tanshin`/`ir`)・画面の ID → 画面の中身 (見出し・単位・列・節・行・セル・文・グラフ)。**DOM を使わない純粋な関数**。セルは `path` (`<doc>.<path>`)・項目キー・表示の文字列・数値・種別・段を持つ | Vitest |
 | `SCREEN_ORDER`・`screenTitle`・`tabLabel` | 10 画面の通し順 (短信 5 → IR 5)・ページ名 (SC4-3)・タブの短い名前 | Vitest |
 | `cellMarkKey(doc, path)`・`itemMarkKey(doc, itemKey)` (`src/ui/viewer/keys.ts`) | 印のキー: 数字・文のセルは `<doc>.<path>`、行の名前は `<doc>.item:<項目キー>` | Vitest |
-| `compareCells(a, b)` (`src/domain/calc.ts`) | 印を付けた 2 つのセルの記述 → 検算の結果 (比べられるか・差・比・表示の 2 行) | Vitest |
+| `compareCells(a, b)` (`src/domain/calc.ts`) | 印を付けた 2 つのセルの記述 → 検算の**数値** (比べられるか・理由・差・桁・比)。文字は作らない | Vitest |
+| `calcLines(result)` (`src/ui/viewer/calc-lines.ts`) | 検算の数値 → 表示の 2 行 (差・比) か 1 行。書式 (△・桁区切り・ポイント) は `ui/format.ts` の 1 か所 (包括レビュー N3)。D3〜D15 の表示の文字はこの入口で確かめる | Vitest |
+| `screenOfPlace(problem, place)` (`src/ui/viewer/screen-of.ts`) | 異変の場所 → 場所の要素がある通し順で最初の画面 (`ScreenRef`)。buildScreen の中身から引く (包括レビュー B1) | Vitest |
 | `placeHitsElement(place, el)` | 異変の場所と、画面の要素の記述 (`doc`・`path` か `itemKey`) → 強調するか | Vitest |
 | `createViewer(host, events)` (`src/ui/viewer/index.ts`。型は #28 と合意した `src/ui/viewer-port.ts`) | `viewer.update(props)`: `props = { problem, view, marks, highlights, mode, toolbarEnd? }` から DOM を作る。同じ要素を使い回し、`problem`・`view` が変わったときだけ画面を作り直し、`marks`・`highlights`・`mode` は属性の更新だけ。操作は `events.onView(ref)`・`events.onToggleMark(key)` で返す。印の持ち主は #28 の `reading.marks`。印スイッチの入切は内部の状態。`mode` = `read` (道具バーあり) / `check` (答え合わせ。道具バーなし・印は表示だけ)。要素に `data-doc`・`data-screen`・`data-path`・`data-item-key`・`data-marked`・`data-highlight` を持つ。`viewer.destroy()` | Playwright |
 
@@ -118,6 +120,25 @@ Task #57 (画面: 資料束の表示と道具)。受け入れ条件 2・9 (要�
 | E4 | place `{ doc:'tanshin', path:'header.companyName' }` | 要素 `tanshin.header.companyName` はする (見出しの要素) |
 | E5 | place `{ doc:'tanshin', itemKey:'tanshin.balanceSheet.cash' }`、要素 `{ itemKey:'tanshin.balanceSheet.cash' }` (行の名前の要素) | する。同じ項目キーを持たない行の名前の要素 / 数字のセルの要素 (`itemKey` を持たない) はしない |
 | E6 | place が `ir.outlook.subsequentEvent` (null の文のセル `該当なし`) | する |
+
+### 5.4 異変の場所がある画面 (`screenOfPlace`。包括レビュー B1)
+
+path の先頭は画面の ID とは限らない (`columnDates`・`dates`・`statements`)。どの場所がどの画面に出るかは buildScreen だけが知るので、その中身から引く。
+
+| ID | 入力 | 期待 |
+| --- | --- | --- |
+| S1 | 先頭が画面の ID の path (`incomeStatement.current.ordinaryIncome`・`notes.segments.previous.segments.0.name`・`segments.items.0.netSales.current`・`results.chart.netSales.axisMin`) | その画面 |
+| S2 | 列見出しの日付 `columnDates.balanceSheet.current`・`columnDates.incomeStatement.previous`・`columnDates.cashFlow.previous`・`.current` | 貸借・損益・CF (サマリーではない) |
+| S3 | `dates.disclosure` (path)・`tanshin.dates.periodEnd` (項目キー) | サマリー |
+| S4 | `statements.0.text`・`statements.1`・`statements.2.claims.0.direction`。`statements[0].slide` を `results` に変えた問題の `statements.0.text` | ハイライト・見通し・補足。変えた問題では業績 (文が出るスライド) |
+| S5 | `header.*` (短信・IR) | その資料の 1 画面目 |
+| S6 | `unitOverrides` のある画面の `<画面>.unit` | その画面 |
+| S7 | 項目キーの場所 (`tanshin.balanceSheet.cash`・`ir.outlook.netSalesChangeRate`・`ir.results.chart.netSales.axisMin`・`tanshin.summary.auditNote`) | その行の名前の画面 |
+| S8 | path の途中の場所 (`segments.items`・`balanceSheet.current`) | 子孫のセルがある画面 |
+| S9 | どの画面にも当たらない場所 | その資料の 1 画面目 (落ちない) |
+| S10 | 短信の場所 | 短信の画面 (IR を返さない) |
+| S11〜S13 | 全部入り・基準問題のすべての葉の path と、`LABELS` のすべての項目キー | 選んだ画面に、`placeHitsElement` が当たる要素が 1 つ以上ある |
+| S14 | 本物の問題 (`src/data/problems/easy`・`hard`) の異変の全部の場所 (問題があるとき) | 同じ |
 
 ## 6. 画面の操作・見え方 (E2E。Playwright。出題は `?seed` でなく、E2E 用の入口 (`viewer-demo.html`) が、基準問題と、`createViewer` に渡す状態 (`view`・`marks`・`highlights`・`mode`) を、ページ内の小さな状態で持つ)
 

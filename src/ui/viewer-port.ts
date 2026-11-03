@@ -41,3 +41,9 @@ export interface Viewer {
 export type CreateViewer = (host: HTMLElement, events: ViewerEvents) => Viewer;
 
 export type { DocKind };
+
+/**
+ * 異変の場所がある画面 (答え合わせの最初の画面・「場所 n」のボタン)。どの場所がどの画面に出るかは、ビューアの画面の中身だけが知る
+ * (path の先頭は画面の ID とは限らない: columnDates・dates・statements)。実体は `src/ui/viewer/screen-of.ts`。
+ */
+export type ScreenOfPlace = (problem: Problem, place: AnomalyPlace) => ScreenRef;

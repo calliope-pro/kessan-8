@@ -45,6 +45,11 @@ export function formatPerShare(value: number, opts: FormatOptions = {}): string 
   return signed(value, 2, '円', opts);
 }
 
+/** 比率の差 (ポイント)。桁は digits。 */
+export function formatPoints(value: number, digits = 1, opts: FormatOptions = {}): string {
+  return signed(value, digits, 'ポイント', opts);
+}
+
 /** 株数 (千株) などの整数。 */
 export function formatCount(value: number, opts: FormatOptions = {}): string {
   return signed(value, 0, '', opts);

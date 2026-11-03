@@ -1,6 +1,7 @@
 // 道具バー (SC4-6): 印スイッチ・検算の結果 (最大 2 行)・右端の要素 (#28 の「判定する」)。画面の下に固定。docs/test-cases/viewer.md F6〜F10。
 import { compareCells } from '../../domain/calc';
 import type { Problem } from '../../domain/types';
+import { calcLines } from './calc-lines';
 import { h } from './dom';
 import { cellLookup } from './lookup';
 
@@ -41,7 +42,7 @@ export function createToolbar(): Toolbar {
         if (marks.length >= 2) {
           const lookup = cellLookup(problem);
           const [a, b] = marks.slice(-2).map((k) => lookup.get(k) ?? { path: k, value: null, kind: 'text' as const, unit: null, stage: null, order: 0 });
-          return compareCells(a!, b!).lines;
+          return calcLines(compareCells(a!, b!));
         }
         return marking ? [HINT] : [];
       })();

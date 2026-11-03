@@ -94,8 +94,8 @@
 
 - **画面に出る数字は、すべて問題データの数値**。比率・増減率・合計も、表示用に計算せず、データに値として持つ。理由: 異変は「計算が合わない」ことそのものなので、表示のたびに計算し直すと異変が消える。正常な問題で値が合っていることは、検証器 (Task #23) が全件に当てて確かめる (方針の失敗 1)
 - **異変のある問題は、正常な資料の数字を 1 か所以上差し替えた資料**。何を差し替えたか (場所) と、なぜ異変か (文言) を `anomaly` に書く。`anomaly` が `null` なら正常
-- **場所は `path` で指す**。`path` は資料の中の位置で、先頭が画面の ID、あとはデータの入れ子のキーを `.` でつないだもの (例: `incomeStatement.current.ordinaryIncome`、配列の要素は添字: `segments.items.0.netSales.current`)。画面は `<doc>.<path>` (例: `tanshin.incomeStatement.current.ordinaryIncome`) を、該当のセルの `data-path` に、項目名を出す要素には項目キーを `data-item-key` に持たせる。答え合わせで強調する場所と、データの異変の場所が、同じ文字列で結ばれる (方針の失敗 2)
-- **見出しの場所**: 社名・期・単位は、どの画面の下にも無い資料の見出し (`header`) で、`header.companyName`・`header.periodLabel`・`header.unit` と書く。見出しはその資料のすべての画面の上部に出る。答え合わせで「その場所の画面へ移る」ときは、`header` で始まる場所は、その資料の 1 画面目へ移って、そこの見出しを強調する (`domain/answer.ts` の `screenOf(place)`)
+- **場所は `path` で指す**。`path` は資料の中の位置で、データの入れ子のキーを `.` でつないだもの (多くは先頭が画面の ID。ただし先頭が画面の ID でない場所がある: `header` (見出し)・`columnDates.<画面>` (列見出しの日付。その画面に出る)・`dates` (日程。サマリーに出る)・`statements.<i>` (IR の文章。`statements[i].slide` の画面に出る)。**場所がどの画面に出るかは、path の先頭から導かず、ビューアの `screenOfPlace(problem, place)` (`ui/viewer/screen-of.ts`) が画面の中身から引く**) (例: `incomeStatement.current.ordinaryIncome`、配列の要素は添字: `segments.items.0.netSales.current`)。画面は `<doc>.<path>` (例: `tanshin.incomeStatement.current.ordinaryIncome`) を、該当のセルの `data-path` に、項目名を出す要素には項目キーを `data-item-key` に持たせる。答え合わせで強調する場所と、データの異変の場所が、同じ文字列で結ばれる (方針の失敗 2)
+- **見出しの場所**: 社名・期・単位は、どの画面の下にも無い資料の見出し (`header`) で、`header.companyName`・`header.periodLabel`・`header.unit` と書く。見出しはその資料のすべての画面の上部に出る。答え合わせで「その場所の画面へ移る」ときは、`header` で始まる場所は、その資料の 1 画面目へ移って、そこの見出しを強調する (`screenOfPlace(problem, place)`。どの場所も、選んだ画面に強調される要素が 1 つ以上あることを、本物の問題の全部の場所で単体テスト (`ui/viewer/screen-of.test.ts`) が確かめる)
 - **項目キー (itemKey)**: 項目名は「行」に付き、`path` は「値」を指すので、行の名前を指すキーを 1 つの文法で決める。`path` から、`previous`・`current`・`forecast`・`actual` の段 (期・予実の列) を取り除き、末尾が `changeRate`・`amount` ならそれも取り除いた残りを、資料の種類を頭に付けて項目キーとする。例: `tanshin.incomeStatement.current.ordinaryIncome` → `tanshin.incomeStatement.ordinaryIncome`、`tanshin.summary.ordinaryIncome.changeRate` → `tanshin.summary.ordinaryIncome`、`ir.segments.items.0.netSales.current` → `ir.segments.items.0.netSales`、`ir.outlook.forecast.netSales` と `ir.outlook.actual.netSales` → どちらも `ir.outlook.netSales` (予想と実績は同じ行の別の列)。短信のサマリーと損益計算書の経常利益は別の項目キーで、別の表示名を持てる。この変換は `domain/labels.ts` の関数 `itemKey(doc, path)` だけが行い、`labels.ts` の表示名の表と `labelOverrides` のキーは、どちらも項目キー
 - **単位**: 金額は百万円 (百万円未満切捨ての整数)、比率は % (小数第一位)、1 株当たりは円。符号は数値の符号で持ち、表示 (△) は 1 つの整形関数 (`ui/format.ts`) だけが決める
 - **見た目の異変**は、資料の見出し (`header`) の文字列と、項目名の差し替え (`labelOverrides`、キーは項目キー) で表す。項目名の標準は `domain/labels.ts` にあり、正常な問題には `labelOverrides` が無い
@@ -581,7 +581,7 @@ export interface Problem {
 | `START` | `title` | `difficulty` |
 | `PICK(難易度, 出題)` | `difficulty`・`cleared` | `reading` (1 社目)。`cleared` からは「もう一度」: 難易度は `cleared` の持つものと同じで、出題を新しくする |
 | `VIEW(doc, screen)` | `reading`・`revealed` | 同じ phase (見る画面だけ変わる)。`revealed` でも受け付けるのは、答え合わせで異変の場所の画面 (資料間の異変は短信と IR の両方) を見比べるため。判定は変えない |
-| `ANSWER(あり/なし)` | `reading` | `revealed`。異変のある問題では、見る画面を `screenOf(places[0])` (§4.1) にする (異変の場所の画面を最初に示す) |
+| `ANSWER(あり/なし)` | `reading` | `revealed`。異変のある問題では、見る画面を `screenOfPlace(problem, places[0])` (§4.1。`ui/viewer/screen-of.ts`) にする (異変の場所の画面を最初に示す) |
 | `NEXT` | `revealed` (正解のときだけ) | `reading` (次の会社)、8 社目なら `cleared` |
 | `RESTART(出題)` | `revealed` (不正解のときだけ) | `reading` (1 社目) |
 | `TO_DIFFICULTY` | `revealed` (不正解のときだけ)・`cleared` | `difficulty` |
