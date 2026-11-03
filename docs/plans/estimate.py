@@ -220,31 +220,63 @@ def pool_extension_hours(plan, extra_questions, measured=False):
 
 
 # ---- AI の利用枠 (測った値)。~/.claude/projects/ の組のセッションの記録から、assistant の usage を
-# メッセージ ID ごとに 1 回だけ合計した (2026-11-03)。Task #3 の作業 (Sub-task #4・#5・#6 と、
-# Sub-task のレビュー) の区間 12:34:32〜13:17:10 UTC (13:18:00 UTC までのメッセージ)。包括レビューは別。
-# 再現: python3 docs/plans/usage.py <記録のディレクトリ> 2026-11-03T13:18:00Z ----
+# メッセージ ID ごとに 1 回だけ合計した (2026-11-03。再現は docs/plans/usage.py)。Task #3 全体の作業区間
+# (#4〜#6・#12・#13。Sub-task のレビューを含む) と、Task の包括レビュー 2 回。区間は UTC。 ----
+_S = 'sonnet'
+_O = 'opus'
 MEASURED = {
-    'window_hours': (42 * 60 + 38) / 3600,  # 12:34:32〜13:17:10 UTC は 42 分 38 秒
-    'executor_sonnet': {'input': 216, 'output': 188_199, 'cache_read': 20_794_908, 'cache_creation': 449_853},
-    'inspector_opus': {'input': 124, 'output': 66_609, 'cache_read': 9_487_046, 'cache_creation': 232_441},
-    'comprehensive_review_opus': {'input': 38, 'output': 33_579, 'cache_read': 1_888_005, 'cache_creation': 115_893},
-    'comprehensive_review_minutes': 6.2,  # 13:23:01〜13:29:12 UTC
+    # 区間: (名前, 開始, 終了, 実働の分, {モデル: {input, output, cache_read, cache_creation}})
+    'windows': [
+        ('#4〜#6', '12:34:32', '13:17:10', 42.6,
+         {_S: dict(input=216, output=188_199, cache_read=20_794_908, cache_creation=449_853),
+          _O: dict(input=124, output=66_609, cache_read=9_487_046, cache_creation=232_441)}),
+        ('#12', '13:30:18', '13:45:34', 15.3,
+         {_S: dict(input=96, output=86_257, cache_read=21_335_994, cache_creation=156_474),
+          _O: dict(input=38, output=14_747, cache_read=5_246_298, cache_creation=52_818)}),
+        ('#13', '14:06:13', '14:25:49', 19.6,
+         {_S: dict(input=80, output=85_396, cache_read=24_331_628, cache_creation=155_948),
+          _O: dict(input=48, output=18_291, cache_read=8_553_155, cache_creation=73_140)}),
+    ],
+    # Task の包括レビュー 2 回 (別の監視役、opus)
+    'comprehensive': [
+        ('1 回目', '13:23:01', '13:29:12', 6.2, dict(input=38, output=33_579, cache_read=1_888_005, cache_creation=115_893)),
+        ('2 回目', '14:26:39', '14:33:54', 7.3, dict(input=68, output=32_748, cache_read=4_727_366, cache_creation=177_754)),
+    ],
     'task3_estimate_hours': 3.0,  # Task #3 の見積もり (仮定)
+    # コードを書いた Sub-task の経過あたりの出力の最大 (Task #8 の #10。tech-assessment §2 #7)。上限の率に使う
+    'code_rate_max': 411_000,
+    # 今日これまで (12:34〜14:34 UTC) に、biz-plan と tech-spike の組が使った出力。責任者の会話は記録に usage が無く含まない
+    'today_until': '14:34',
+    'today_output': 899_422,
+    'today_cache_read': 159_000_497,
 }
 
 
-def ai_rates():
-    """Task #3 の実測から、見積もり 1 時間あたりと、経過 1 時間あたり (1 組) の消費。
-    下限 = 見積もり 3 h あたり (見積もりが実際より大きかった分を割り引く)、
-    上限 = 経過時間あたり (1 見積もり時間 = 1 経過時間と置く)。"""
+def task3_totals():
+    """Task #3 全体の合計 (作業 + Sub-task のレビュー、包括レビュー)。"""
     m = MEASURED
-    out = m['executor_sonnet']['output'] + m['inspector_opus']['output']
-    cache = m['executor_sonnet']['cache_read'] + m['inspector_opus']['cache_read']
+    work = {k: sum(w[4][mo][k] for w in m['windows'] for mo in (_S, _O)) for k in ('output', 'cache_read', 'cache_creation')}
+    comp = {k: sum(c[4][k] for c in m['comprehensive']) for k in ('output', 'cache_read', 'cache_creation')}
+    work_min = sum(w[3] for w in m['windows'])
+    comp_min = sum(c[3] for c in m['comprehensive'])
+    return dict(work=work, comp=comp, work_min=work_min, comp_min=comp_min,
+                all_out=work['output'] + comp['output'], all_cache=work['cache_read'] + comp['cache_read'],
+                all_min=work_min + comp_min)
+
+
+def ai_rates():
+    """Task #3 全体の実測から、率を出す (出力トークン / h)。
+    下限 = Task #3 全体 (包括レビューを含む) の出力 ÷ Task #3 の見積もり 3 h (計画の尺度の 1 h あたり)。
+    上限 = コードを書いた Sub-task の経過 1 時間あたりの最大 (41.1 万)。測った時間 (経過) の分に掛ける。
+    キャッシュ読みの上限は、Task #3 全体の経過あたり。"""
+    m = MEASURED
+    x = task3_totals()
     return {
-        'out_per_est_h': out / m['task3_estimate_hours'],
-        'out_per_elapsed_h': out / m['window_hours'],
-        'cache_per_est_h': cache / m['task3_estimate_hours'],
-        'cache_per_elapsed_h': cache / m['window_hours'],
+        'out_per_est_h': x['all_out'] / m['task3_estimate_hours'],
+        'out_per_elapsed_h': float(m['code_rate_max']),
+        'cache_per_est_h': x['all_cache'] / m['task3_estimate_hours'],
+        'cache_per_elapsed_h': x['all_cache'] / (x['all_min'] / 60),
+        'task3_elapsed_out_h': x['all_out'] / (x['all_min'] / 60),
     }
 
 
@@ -341,3 +373,10 @@ if __name__ == '__main__':
     lo, _ = ai_range('C', T_MEASURED_MID)
     _, hi = ai_range('C', 1.0)
     print(f"  AI の利用枠 (出力トークン) 案 C: {lo/1e6:.1f}〜{hi/1e6:.1f} 百万 (下限は t = {T_MEASURED_MID}、上限は t = 1)")
+    x = task3_totals()
+    rt = ai_rates()
+    print('---- Task #3 全体の AI の利用枠 (測った。docs/plans/usage.py で再現) ----')
+    print(f"  作業 + Sub-task のレビュー {x['work_min']:.1f} 分・出力 {x['work']['output']:,}、包括レビュー {x['comp_min']:.1f} 分・出力 {x['comp']['output']:,}、全体 {x['all_min']:.1f} 分・出力 {x['all_out']:,}")
+    print(f"  見積もり 3 h に対する実働の比: 作業 {x['work_min']/180:.2f}・包括レビューを含めて {x['all_min']/180:.2f}")
+    print(f"  率 (出力トークン/h): 下限 {rt['out_per_est_h']:,.0f} (全体 ÷ 3 h)・上限 {rt['out_per_elapsed_h']:,.0f} (コードを書いた Sub-task の最大)・Task #3 全体の経過あたり {rt['task3_elapsed_out_h']:,.0f}")
+    print(f"  今日これまで ({MEASURED['today_until']} UTC まで) の出力: {MEASURED['today_output']:,}")
