@@ -30,3 +30,11 @@ CI は実際に GitHub 上で回して確かめるのが本物の確認なので
 
 - Vercel への公開 (#30。人間の作業を含む)
 - 対応ブラウザ (WebKit・Firefox) の E2E (#30 の通し)
+
+## 確かめた記録 (Sub-task #38)
+
+- 単体 C1〜C9: 緑 (全体で 4 ファイル 29 件)。変異で赤になることを確認: 権限を `write` に・`id-token: write` の追加・job への `contents: write`・`permissions: write-all`・手順の入れ替え・`uses` を `@main`・`cancel-in-progress: false`・ブラウザのインストールを消す・`pull_request_target`。
+- きれいな clone で CI と同じ手順 (`npm ci` → typecheck → test → build → check:size → `CI=1 npx playwright test`) がすべて通る。
+- **G1**: PR #45 で job「型検査・単体テスト・ビルド」(15 秒)・「E2E (Playwright)」(33 秒) がどちらも成功 (`gh pr checks 45`)。
+- **G2**: 成功した run のログに、`tsc --noEmit`・`Test Files 4 passed / Tests 29 passed`・`✓ built`・`dist: 3 ファイル、gzip 後の合計 927 B (予算 1000000 B 未満)`・E2E `12 passed` が出る。
+- **G3**: 捨てるブランチ (calliope/ci-probe、PR #46) で `vercel.json` の出力先を確かめるテストの期待を `out` に変えて push → job「型検査・単体テスト・ビルド」が失敗 (E2E は成功)。確認後に PR を閉じ、ブランチを消した。壊した commit は main にも foundation にも入っていない。
