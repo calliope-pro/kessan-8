@@ -8,6 +8,9 @@ import type { Entry } from '../src/verifier/index.ts';
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(name);
+// --require-complete (全難易度) / --require-complete=easy / --require-complete=hard (その難易度の不足だけ致命)
+const requireArg = args.find((a) => a === '--require-complete' || a.startsWith('--require-complete='));
+const requireScope = requireArg?.split('=')[1];
 const dirAt = args.indexOf('--dir');
 const explicitDir = dirAt >= 0;
 const dir = explicitDir ? (args[dirAt + 1] ?? '') : 'src/data';
@@ -55,8 +58,9 @@ const { easy, hard } = result.stats;
 console.log(`${dir}: ${easy.total + hard.total} 問を検証 (easy ${easy.total}: 異変 ${easy.anomaly}・正常 ${easy.normal} / hard ${hard.total}: 異変 ${hard.anomaly}・正常 ${hard.normal})`);
 if (!explicitDir && !existsSync(dir)) console.log('  データのディレクトリがまだ無い (0 件として扱う)');
 if (errors.length > 0) console.error(`致命 ${errors.length} 件:\n${errors.map(line).join('\n')}`);
-if (result.shortfalls.length > 0) console.log(`数が足りない ${result.shortfalls.length} 件${flag('--require-complete') ? ' (致命)' : ' (警告)'}:\n${result.shortfalls.map(line).join('\n')}`);
+const fatalShortfalls = requireArg === undefined ? [] : result.shortfalls.filter((e) => requireScope === undefined || e.difficulty === requireScope);
+if (result.shortfalls.length > 0) console.log(`数が足りない ${result.shortfalls.length} 件${fatalShortfalls.length > 0 ? ` (うち致命 ${fatalShortfalls.length})` : ' (警告)'}:\n${result.shortfalls.map(line).join('\n')}`);
 if (result.soft.length > 0) console.log(`参考の規則 ${result.soft.length} 件${flag('--fail-on-soft') ? ' (致命)' : ' (警告)'}:\n${result.soft.map(line).join('\n')}`);
 
-const failed = errors.length > 0 || (flag('--require-complete') && result.shortfalls.length > 0) || (flag('--fail-on-soft') && result.soft.length > 0);
+const failed = errors.length > 0 || fatalShortfalls.length > 0 || (flag('--fail-on-soft') && result.soft.length > 0);
 process.exit(failed ? 1 : 0);

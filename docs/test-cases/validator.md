@@ -1,6 +1,6 @@
 # ケース表: 会計の整合の検証器 (Sub-task #47)
 
-Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.5。異変の一覧 [anomalies.md](https://github.com/calliope-pro/kessan-8/blob/calliope/catalog/docs/plans/anomalies.md) の 45 種類を表せる)。目的 (charter の失敗 1): 異変の無い問題が会計の整合をすべて満たし、異変の問題は**指定した所だけ**が破れていることを、全問に機械で確かめる。設計: [docs/design.md](../design.md) §4 (型)・§4.3 (プールの条件)・§7 (テストの置き場)。試作: `docs/plans/spike/verify.py` (必須 67・参考 12)・`check_ir.py` (36)。
+Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.5。異変の一覧 [anomalies.md](../plans/anomalies.md) の 45 種類を表せる。うち H-25〜H-27 は使わないので、`anomaly-kinds.json` は 42 種類)。目的 (charter の失敗 1): 異変の無い問題が会計の整合をすべて満たし、異変の問題は**指定した所だけ**が破れていることを、全問に機械で確かめる。設計: [docs/design.md](../design.md) §4 (型)・§4.3 (プールの条件)・§7 (テストの置き場)。試作: `docs/plans/spike/verify.py` (必須 67・参考 12)・`check_ir.py` (36)。
 
 ## 0. 公開する入口 (テストが外から呼ぶもの)
 
@@ -394,6 +394,25 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | X1 | 基準問題 B で短信の売上高 12,449・売上総利益 3,725 (百万円)、IR の売上高 124.5・売上総利益 37.3 (億円)、`ir.results.grossMargin.current` = 29.9 | `ir-results-gross-margin` は破れない (短信から 3,725 ÷ 12,449 = 29.9%)。30.0 にすると破れる (IR の 37.3 ÷ 124.5 = 30.0% から計算していないこと) |
 | X2 | 基準問題 B で短信の売上高 当期 12,449・前期 11,751、IR の amount = 124.5 | `ir-hl-change-net-sales` は changeRate 5.9 で破れず、6.0 で破れる (短信から 5.9%。IR の 124.5 と 117.5 からは 6.0%) |
 | X3 | 基準問題 A で前期の売上高を当期と同じ 12,400 にする。claims の netSales が `up` / `down` | どちらも `claims-direction` が破れる (差が 0 のとき増減は主張できない) |
+
+### 2.12 IR の表示金額からの検算 (Y・D26〜D27・X4・L10。#81 の包括レビュー B1・N1・N2)
+
+正常な問題だけに当てる検査 (`verifyIrDisplay`、規則 ID は `ir-display-*`、`verifyDataset` では code `ir-display-mismatch` で致命)。短信の百万円から計算した IR の比率 (§1.5) が、IR の表示金額 (億円は 0.1 億円に丸め) から検算した値にも一致することを確かめる。異変の問題には当てない (答えは あり/なし だけで、異変の問題では誤答にならない)。対象: ハイライトの売上高・営業利益の前期比 (前期は `results` の金額)、`results` の売上総利益率・営業利益率、セグメントの売上高・利益の前期比と売上構成比。経常利益・純利益の前期比は IR に前期の金額が無いので対象外。
+
+| ID | 入力 | 期待 |
+| --- | --- | --- |
+| Y1 | 基準問題 B (金額が 10 百万円の倍数) と A | 空 |
+| Y2 | B で短信の売上高 当期 12,449・前期 11,751、IR の 124.5・117.5、`highlights.netSales.changeRate` = 5.9 (X2 と同じ形) | `ir-hl-change-net-sales` (短信から) は通るが、`ir-display-hl-change-net-sales` が破れる (IR の金額からは 6.0%) |
+| Y3 | B でセグメント 0 の利益を 4.1 → 4.7 (億円)、changeRate 13.1 (導いた例: 短信 413 → 467 百万円。IR の金額からは 14.6%) | `ir-display-seg-change-profit` だけ |
+| Y4 | B で `grossMargin.current` = 31 / セグメント 0 の `salesShare` = 60.0 | それぞれ `ir-display-results-gross-margin`・`ir-display-seg-share` だけ |
+| Y5 | B で `results.operatingIncome.previous` を変える / `operatingMargin.previous` = 9.0 | `ir-display-hl-change-operating-income` を含む / `ir-display-results-operating-margin` だけ |
+| Y6 | B で `highlights.ordinaryIncome.changeRate` = 99 | 空 (IR に前期の金額が無く、検算の対象にしない) |
+| D26 | 正常な問題で Y2 の形 | `verifyDataset` の errors に `ir-display-mismatch` |
+| D27 | 異変の問題に同じ食い違い | `ir-display-mismatch` は出ない |
+| X4 | 株数 100,526 千株・EPS 8.56 (正しく丸めた値。8.56 × 100,526 ÷ 1,000 = 861 で純利益 860 と合わない) | `check-eps-product`・`check-bps-product` は当たらない (株数が 100,000 千株以上の会社には当てない。1 億株未満では当てる: V26・V27) |
+| L10 | `--require-complete=easy` / `=hard` / 指定なし | easy だけ揃ったデータで、`=easy` は 0、`=hard` と指定なしは 1 (難易度ごとに致命にできる) |
+
+N2 の運用: 問題データが揃ったら、CI の `npm run verify:data` を `--require-complete` にする (難易度ごとに `=easy`・`=hard` を先に足してもよい)。この作業は、最後に閉じる問題作りのチケット (#25 / #26) の受け入れ条件に書く。受け入れ条件 5・6 を受け持つのは `npm run verify:data` (design §7)。
 
 ## 3. 受け入れ条件との対応
 

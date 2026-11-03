@@ -3,6 +3,9 @@ import { dividendAmount, hundredths, roundHalfAway, tenths } from '../math.ts';
 import { eq, rule } from './dsl.ts';
 import type { Reader, Rule } from './dsl.ts';
 
+/** 株数 (千株) がこれ以上の会社は、EPS・BPS に株数を掛ける検算が丸めの誤差で合わないので、その規則を当てない (ケース表 §1.3)。 */
+const MAX_SHARES_FOR_PRODUCT_CHECK = 100_000;
+
 export const METRICS = [
   ['netSales', 'net-sales'],
   ['operatingIncome', 'operating-income'],
@@ -67,10 +70,10 @@ export const SUMMARY_RULES: Rule[] = [
     each((r) => eq('自己資本当期純利益率 (10 倍)', tenths(r.t('summary.roe')), roundHalfAway(r.t(is('current', 'netIncomeParent')) * 2000, equityOf(r, 'previous') + equityOf(r, 'current')))),
   ),
   rule('check-eps-product', (each) =>
-    each((r) => eq('EPS × 株数 = 純利益', roundHalfAway(hundredths(r.t('summary.eps')) * r.t('notes.averageSharesThousand'), 100000), r.t(is('current', 'netIncomeParent')))),
+    each((r) => r.t('notes.averageSharesThousand') >= MAX_SHARES_FOR_PRODUCT_CHECK ? null : eq('EPS × 株数 = 純利益', roundHalfAway(hundredths(r.t('summary.eps')) * r.t('notes.averageSharesThousand'), 100000), r.t(is('current', 'netIncomeParent')))),
   ),
   rule('check-bps-product', (each) =>
-    each((r) => eq('BPS × 株数 = 自己資本', roundHalfAway(hundredths(r.t('summary.bps')) * r.t('notes.averageSharesThousand'), 100000), r.t('summary.equity'))),
+    each((r) => r.t('notes.averageSharesThousand') >= MAX_SHARES_FOR_PRODUCT_CHECK ? null : eq('BPS × 株数 = 自己資本', roundHalfAway(hundredths(r.t('summary.bps')) * r.t('notes.averageSharesThousand'), 100000), r.t('summary.equity'))),
   ),
   rule('notes-per-share', (each) => {
     each((r) => eq('注記の EPS', r.t('notes.eps'), r.t('summary.eps')));

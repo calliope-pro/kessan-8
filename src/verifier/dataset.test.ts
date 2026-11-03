@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Company } from '../domain/types.ts';
 import { verifyDataset } from './index.ts';
-import { add, anomalyVariant, companyA, completePool, DATA_KINDS, fileOf, kindOf, normalVariant, set, softOnly, type DatasetInput } from './test-utils.ts';
+import { roundedSalesNormal, add, anomalyVariant, companyA, companyB, completePool, DATA_KINDS, fileOf, kindOf, normalVariant, set, softOnly, type DatasetInput } from './test-utils.ts';
 
 const base = (): DatasetInput => {
   const p = normalVariant('easy-001', 'easy', 'fixture-c01');
@@ -185,5 +185,20 @@ describe('verifyDataset', () => {
   it('D25: 正常な問題に labelOverrides (値が標準と同じでも) → override-on-normal', () => {
     const p = set(normalVariant('easy-001', 'easy', 'fixture-c01'), 'labelOverrides', { 'tanshin.balanceSheet.cash': '現金及び預金' });
     expect(codes(verifyDataset(withProblem(base(), p)))).toContain('override-on-normal');
+  });
+
+  it('D26: 正常な問題で、IR の比率が IR の表示金額からの検算と食い違う → ir-display-mismatch (致命)', () => {
+    const company = { ...companyB(), id: 'fixture-c01' };
+    const p = roundedSalesNormal();
+    const r = verifyDataset({ companies: [company], kinds: DATA_KINDS, problems: [{ file: `problems/easy/${p.id}.json`, value: p }] });
+    expect(r.errors.some((e) => e.code === 'ir-display-mismatch' && e.message.includes('ir-display-hl-change-net-sales'))).toBe(true);
+  });
+
+  it('D27: 異変の問題には当てない (同じ食い違いがあっても ir-display-mismatch は出ない)', () => {
+    const company = { ...companyB(), id: 'fixture-c01' };
+    const p = roundedSalesNormal();
+    const anomaly = { kind: 'k-rate', places: [{ doc: 'tanshin', path: 'summary.ordinaryIncome.changeRate' }], explanation: '説明', expectedRules: [] };
+    const r = verifyDataset({ companies: [company], kinds: DATA_KINDS, problems: [{ file: `problems/easy/${p.id}.json`, value: { ...p, anomaly } }] });
+    expect(r.errors.some((e) => e.code === 'ir-display-mismatch')).toBe(false);
   });
 });

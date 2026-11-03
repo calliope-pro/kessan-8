@@ -34,7 +34,7 @@ describe('正常な問題 (N)', () => {
     expect(paths.some((p) => p.startsWith('ir.segments.items'))).toBe(true);
   });
 
-  it('N5: fiscalYearEndMonth を 9 にすると header-period-label が 2 件と dates-period-end が 1 件だけ', () => {
+  it('N5: fiscalYearEndMonth を 9 にすると header-period-label が 2 件と dates-period-end が 2 件だけ', () => {
     const r = verifyProblem(normalA(), { ...companyA(), fiscalYearEndMonth: 9 });
     expect(r.hard.map((v) => v.rule).sort()).toEqual(['dates-period-end', 'dates-period-end', 'header-period-label', 'header-period-label']);
   });
@@ -298,5 +298,15 @@ describe('規則の計算元 (変異で見つかった抜けを埋める。ほ�
     expect(onlyRule('claims-direction', same, companyA())).toHaveLength(1); // netSales の up が破れる
     const down = mutate(same, 'ir.statements.0.claims', () => [{ metric: 'netSales', direction: 'down' }]);
     expect(onlyRule('claims-direction', down, companyA())).toHaveLength(1);
+  });
+
+  it('X4: 株数が 1 億株 (100,000 千株) 以上の会社では、EPS・BPS の掛け算の検算 (check-eps-product・check-bps-product) は当てない', () => {
+    // 860 百万円 ÷ 100,526 千株 = 8.5555 → EPS 8.56 は正しく丸めても、8.56 × 100,526 ÷ 1,000 = 860.5 → 861 で純利益 860 と合わない
+    let p = set(normalA(), 'tanshin.notes.averageSharesThousand', 100526);
+    p = set(p, 'tanshin.summary.eps', 8.56);
+    expect(onlyRule('check-eps-product', p, companyA())).toEqual([]);
+    expect(onlyRule('check-bps-product', set(p, 'tanshin.summary.bps', 1), companyA())).toEqual([]);
+    // 1 億株未満では当てる (V26・V27)
+    expect(onlyRule('check-eps-product', set(normalA(), 'tanshin.summary.eps', 110), companyA())).toHaveLength(1);
   });
 });
