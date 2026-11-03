@@ -1,6 +1,6 @@
 """試作 (#11): 手書き 1 問 (hand-q01-full.json) を、スマホ幅 (375px) と PC 幅で表示する 1 枚の HTML を作り、はみ出しなどを測る。
 標準ライブラリのみ。使いかた (docs/plans/spike/ で): python3 mobile-mock.py  → mobile-mock.html を書く。製品のコードではない。
-測りかた: headless Chrome で --window-size を変えて --dump-dom し、ページ内の script が書いた計測値を読む (measure.sh)。
+測りかた: 手順 (Chrome の実行コマンド) は README.md の「スマホ幅の測定」。headless Chrome の窓幅は 500 px 未満にできないので、iframe (srcdoc) の幅で測る。
 """
 import json
 
