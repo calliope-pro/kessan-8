@@ -10,10 +10,10 @@ const base = (): DatasetInput => {
 };
 const codes = (r: { errors: { code: string }[] }) => r.errors.map((e) => e.code);
 const shortCodes = (r: { shortfalls: { code: string }[] }) => r.shortfalls.map((e) => e.code);
-const withProblem = (input: DatasetInput, p: unknown, file?: string): DatasetInput => ({
-  ...input,
-  problems: [{ file: file ?? (p as { difficulty: string; id: string }).difficulty && `problems/${(p as { difficulty: string }).difficulty}/${(p as { id: string }).id}.json`, value: p }],
-});
+const withProblem = (input: DatasetInput, p: unknown, file?: string): DatasetInput => {
+  const q = p as { difficulty: string; id: string };
+  return { ...input, problems: [{ file: file ?? `problems/${q.difficulty}/${q.id}.json`, value: p }] };
+};
 
 describe('verifyDataset', () => {
   it('D1: 基準問題 1 件・会社 1 社 → errors 空。stats に難易度ごとの数と異変の数', () => {

@@ -21,7 +21,7 @@ const KINDS: AnomalyKind[] = [
 ];
 
 const v7 = () => add(normalA(), 'tanshin.summary.ordinaryIncome.changeRate', 2);
-const v1 = () => add(normalA(), 'tanshin.balanceSheet.current.totalAssets', 100);
+const v1 = () => set(add(normalA(), 'tanshin.balanceSheet.current.totalAssets', 100), 'difficulty', 'hard'); // accounting はむずかしいの系統
 const V1_RULES = ['bs-balance', 'bs-total-assets', 'ratio-equity-ratio', 'sum-total-assets'];
 
 const place = (path: string, doc: 'tanshin' | 'ir' = 'tanshin'): AnomalyPlace => ({ doc, path });
