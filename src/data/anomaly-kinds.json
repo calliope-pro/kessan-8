@@ -566,7 +566,10 @@
     ],
     "allowedRules": [
       "chart-bars",
+      "ir-seg-change-profit",
+      "ir-seg-change-sales",
       "ir-seg-reconcile",
+      "ir-seg-share",
       "xdoc-results-gross-profit",
       "xdoc-results-net-sales",
       "xdoc-results-operating-income",
@@ -583,7 +586,10 @@
       "xdoc-seg-profit"
     ],
     "allowedRules": [
+      "ir-seg-change-profit",
+      "ir-seg-change-sales",
       "ir-seg-reconcile",
+      "ir-seg-share",
       "xdoc-seg-profit",
       "xdoc-seg-sales"
     ]
@@ -660,9 +666,16 @@
       "seg-count"
     ],
     "allowedRules": [
+      "ir-seg-change-profit",
+      "ir-seg-change-sales",
       "ir-seg-reconcile",
+      "ir-seg-share",
       "seg-count",
-      "segment-names"
+      "segment-names",
+      "xdoc-seg-adjustment",
+      "xdoc-seg-consolidated",
+      "xdoc-seg-profit",
+      "xdoc-seg-sales"
     ]
   },
   {
