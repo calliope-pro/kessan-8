@@ -9,6 +9,7 @@ Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.
 | 入口 | 入力 → 出力 |
 | --- | --- |
 | `roundHalfAway(num, den)` (`src/verifier/math.ts`) | 整数 2 つ → 割った商を、0.5 を絶対値の大きい側へ丸めた整数 (作成要領の端数処理) |
+| `toIrUnit(百万円, irUnit)`・`scaled10(x)`・`dividendAmount(円, 千株)` (`math.ts`) | 百万円の整数 → IR の単位の値 (億円は ÷100 を小数第一位まで四捨五入、百万円はそのまま) / 億円の値 → 10 倍した整数 `Math.round(x × 10)` (比較に使う。浮動小数の誤差を避ける) / 1 株当たり配当 (円) × 株数 (千株) ÷ 1,000 を**百万円未満切捨て**した整数 |
 | `getPath(problem, doc, path)` (`path.ts`) | `doc` = `tanshin`/`ir`、`path` = 設計 §4.1 の `path` → その場所の値、無ければ `undefined` |
 | `numericCells(problem)` (`path.ts`) | 問題 → 数値のセルの `<doc>.<path>` の一覧 (短信・IR の全数値。`null` と文字列は除く) |
 | `verifyProblem(problem, company)` (`index.ts`) | 問題と会社 → `{ hard: Violation[]; soft: Violation[] }`。`Violation = { rule: string; paths: string[]; message: string }`。`paths` は `<doc>.<path>` で、規則が読んだセルのうち**食い違った式に関わるもの**。同じ規則が前期・当期の両方で破れたら 2 件 |
@@ -19,7 +20,7 @@ Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.
 | `verifyDataset(input)` | `{ companies, kinds, problems: [{ file, value }] }` → `{ errors, shortfalls, soft, stats }` (各要素は `{ code, problem?, message }`)。`companies`・`kinds` の中身の形も検証する |
 | CLI `npm run verify:data [-- --dir <データのディレクトリ>] [--require-complete] [--fail-on-soft]` | データ全件を検証。`errors` があれば終了コード 1。`companies.json`・`anomaly-kinds.json`・`problems/` が**無ければ 0 件として扱う** (ディレクトリそのものが無いのは、`--dir` を明示したときだけ誤り) |
 
-基準にする正常な問題 (**基準問題**): `src/verifier/fixtures/normal.problem.json` と `company.json`。試作の手書き 1 問 (`hand-q01-full.json`・`hand-q01-ir.json`、AI が手で書き、貸借・損益・CF の連動を 1 つずつ確かめたもの) を、設計の型の英語キーに写した。型に合うことは `shapeErrors` (実行時) と、型検査 (`tsc`。JSON の文字列はリテラル型にならないので `satisfies` は使わず、テストで `as Problem` に通す前に `shapeErrors` が空であることを確かめる) で確かめる。**基準問題 B**: 億円・3 セグメントの会社の基準問題 (`normal-b.problem.json`・`company-b.json`)。基準問題から、IR の金額を億円 (÷100、小数第一位) にし、セグメントを 3 つにして作る。値は IR の表示値どうしが完全に一致するものを選ぶ (#48 で実装と一緒に作り、N6 で固定する)。
+基準にする正常な問題 (**基準問題**): `src/verifier/fixtures/normal.problem.json` と `company.json`。試作の手書き 1 問 (`hand-q01-full.json`・`hand-q01-ir.json`、AI が手で書き、貸借・損益・CF の連動を 1 つずつ確かめたもの) を、設計の型の英語キーに写した。型に合うことは `shapeErrors` (実行時) と、型検査 (`tsc`。JSON の文字列はリテラル型にならないので `satisfies` は使わず、テストで `as Problem` に通す前に `shapeErrors` が空であることを確かめる) で確かめる。**基準問題 B**: 億円・3 セグメントの会社の基準問題 (`normal-b.problem.json`・`company-b.json`)。基準問題から、IR の金額を億円 (÷100、小数第一位) にし、セグメントを 3 つにして作る。値は IR の表示値どうしが完全に一致するものを選ぶ。**浮動小数の罠を入れる**: 当期の有利子負債 124.6 億円・現金 30.2 億円・純有利子負債 94.4 億円 (`124.6 − 30.2` は JavaScript で 94.39999999999999 になる)。短信側は、有利子負債 12,460 百万円・現金 3,020 百万円に合わせる。**B は億円の規則の実装より先に commit し、N6 が赤になることを確かめてから実装する** (通る値だけを選ばないため)。
 
 ## 1. 規則の一覧 (契約)
 
@@ -70,7 +71,7 @@ Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.
 | link-cf-other-investing | CF.otherInvestingChange = −(BS.investments の増加) |
 | link-cf-short-debt | CF.shortTermDebtChange = BS.shortTermDebt の増加 |
 | link-cf-long-debt | CF.longTermBorrowings + CF.longTermRepayments = BS.longTermDebt の増加 (総額表示。anomalies.md G4) |
-| link-cf-dividends-paid | −CF.dividendsPaid = ((summary.annualDividendPrevious − interimDividendPrevious) + summary.interimDividend) × notes.averageSharesThousand ÷ 1,000 (前期の期末配当 + 当期の中間配当。anomalies.md G5。百万円、四捨五入) |
+| link-cf-dividends-paid | −CF.dividendsPaid = ((summary.annualDividendPrevious − interimDividendPrevious) + summary.interimDividend) × notes.averageSharesThousand ÷ 1,000 (前期の期末配当 + 当期の中間配当。anomalies.md G5。百万円未満**切捨て**) |
 | link-retained-earnings | 当期 BS.retainedEarnings = 前期 + 当期 PL.netIncomeParent + CF.dividendsPaid |
 | link-nci | 当期 BS.nonControllingInterests = 前期 + 当期 PL.netIncomeNonControlling |
 | link-capital-unchanged | BS.capitalStock と capitalSurplus が前期と当期で等しい |
@@ -89,7 +90,7 @@ Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.
 | ratio-equity-ratio | summary.equityRatio = (当期 BS.totalNetAssets − nonControllingInterests) ÷ 当期 BS.totalAssets (% 小数第一位) |
 | ratio-bps | summary.bps = (当期 BS.totalNetAssets − nonControllingInterests) ÷ notes.averageSharesThousand (円、小数第二位) |
 | ratio-payout | summary.payoutRatio = summary.annualDividend ÷ summary.eps (JPX 作成要領 p.27。% 小数第一位。eps が 0 以下のときは規則に当たらない) |
-| ratio-dividend-total | summary.dividendTotal = summary.annualDividend × notes.averageSharesThousand ÷ 1,000 (百万円、四捨五入) |
+| ratio-dividend-total | summary.dividendTotal = summary.annualDividend × notes.averageSharesThousand ÷ 1,000 (百万円未満**切捨て**。作成要領の端数処理・anomalies.md G2) |
 | sum-equity | summary.equity = 当期 BS.totalNetAssets − nonControllingInterests |
 | ratio-operating-margin | summary.operatingMargin = 当期 PL.operatingIncome ÷ netSales (% 小数第一位) |
 | ratio-roe | summary.roe = 当期 PL.netIncomeParent ÷ ((前期 equity + 当期 equity) ÷ 2) (% 小数第一位。equity = BS.totalNetAssets − nonControllingInterests) |
@@ -114,19 +115,19 @@ Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.
 
 ### 1.5 IR スライドの中の式と、短信との一致 (xdoc = 資料間)
 
-**単位**: IR の金額は company.irUnit の単位。`億円` の会社は、短信の百万円 ÷ 100 を小数第一位まで四捨五入 (0.5 は遠い側へ。12,456 → 124.6) した値と比べる (`toIrUnit(百万円, irUnit)`)。**比率** (増減率・利益率・構成比) は、両方の項が短信にある場合は短信の百万円の値から計算した値と比べ (単位に依らない)、IR にだけある項 (次期の予想) を含む場合は IR の表示値から計算する。IR の中の足し算・引き算 (ir-seg-reconcile・ir-supp-net-debt) は表示値どうしで完全に一致させる。
+**単位**: IR の金額は company.irUnit の単位。`億円` の会社は、短信の百万円 ÷ 100 を小数第一位まで四捨五入 (0.5 は遠い側へ。12,456 → 124.6) した値と比べる (`toIrUnit(百万円, irUnit)`)。**比率** (増減率・利益率・構成比) は、**両方の項が短信にある場合は短信の百万円の値から計算した値**と比べる (億円の丸めに左右されない。ir-hl-change-*・ir-results-*-margin・ir-seg-change-*・ir-seg-share)。IR にだけある項 (次期の予想) を含む比率 (ir-outlook-change-*) は、IR の表示値から計算する。したがって IR の金額だけを変える異変 (H-13 など) では、IR の比率の規則は破れない。IR の中の足し算・引き算 (ir-seg-reconcile・ir-supp-net-debt) は、**10 倍した整数 (`scaled10`) にして**表示値どうしで完全に一致させる。
 
 | ID | 式 |
 | --- | --- |
 | xdoc-hl-net-sales / -operating-income / -ordinary-income / -net-income-parent | ir.highlights.<項目>.amount = 短信の当期 PL の同じ項目 |
-| ir-hl-change-net-sales / -operating-income / -ordinary-income / -net-income-parent | ir.highlights.<項目>.changeRate = (amount − 短信の前期 PL の同じ項目) の増減率 |
+| ir-hl-change-net-sales / -operating-income / -ordinary-income / -net-income-parent | ir.highlights.<項目>.changeRate = 短信の当期 PL と前期 PL の同じ項目からの増減率 |
 | xdoc-hl-dividend / xdoc-hl-payout | ir.highlights.annualDividend / payoutRatio = summary の同じ項目 |
 | xdoc-results-net-sales / -gross-profit / -operating-income | ir.results.<項目>.previous/current = 短信の前期・当期 PL |
-| ir-results-gross-margin / -operating-margin | ir.results.grossMargin / operatingMargin = 同じ期の grossProfit / operatingIncome ÷ netSales (IR の中の値、% 小数第一位) |
+| ir-results-gross-margin / -operating-margin | ir.results.grossMargin / operatingMargin = 同じ期の**短信の** PL.grossProfit / operatingIncome ÷ netSales (% 小数第一位) |
 | xdoc-seg-sales / xdoc-seg-profit | ir.segments.items[i].netSales / profit の前期・当期 = 短信 notes の同じセグメント |
-| ir-seg-change-sales / ir-seg-change-profit | items[i].netSales / profit.changeRate = 表示した current と previous からの増減率 |
-| ir-seg-share | items[i].salesShare = items[i].netSales.current ÷ ir.results.netSales.current (% 小数第一位) |
-| ir-seg-reconcile | items の profit の合計 + adjustment = consolidatedOperatingIncome (両期) |
+| ir-seg-change-sales / ir-seg-change-profit | items[i].netSales / profit.changeRate = **短信の** notes の同じセグメントの当期・前期からの増減率 |
+| ir-seg-share | items[i].salesShare = **短信の** notes の同じセグメントの当期売上高 ÷ 当期 PL.netSales (% 小数第一位) |
+| ir-seg-reconcile | items の profit の合計 + adjustment = consolidatedOperatingIncome (両期、IR の中の値。`scaled10` で比べる) |
 | xdoc-seg-adjustment / xdoc-seg-consolidated | ir.segments.adjustment = 短信 notes の adjustment、consolidatedOperatingIncome = 短信の PL.operatingIncome (両期) |
 | xdoc-outlook-actual-results | ir.outlook.actual.netSales / operatingIncome = 短信の当期 PL |
 | xdoc-outlook-actual-capex-depreciation | actual.capex = −CF.capex、actual.depreciation = CF.depreciation |
@@ -134,7 +135,7 @@ Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.
 | xdoc-supp-capex-depreciation | supplement.capex.current = −CF.capex、depreciation.current = CF.depreciation |
 | xdoc-supp-debt | supplement.interestBearingDebt = BS.shortTermDebt + longTermDebt (両期) |
 | xdoc-supp-cash | supplement.cash = BS.cash (両期) |
-| ir-supp-net-debt | supplement.netDebt = interestBearingDebt − cash (両期、IR の中の値) |
+| ir-supp-net-debt | supplement.netDebt = interestBearingDebt − cash (両期、IR の中の値。`scaled10` で比べる) |
 | xdoc-supp-equity-ratio | supplement.equityRatio = summary.equityRatio |
 
 ### 1.6 数値の等式でない規則 (種類の主な規則として要る。anomalies.md の E-03〜E-08・E-17・H-21〜H-24・H-28。design §4.5)
@@ -150,7 +151,7 @@ Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.
 | dates-period-end | `dates.periodEnd` が company の決算期末 (`fiscalYear` 年 `fiscalYearEndMonth` 月の末日) で、`previousPeriodEnd` が 1 年前の同じ末日 | `tanshin.dates.*` |
 | dates-order | `periodEnd` < `disclosure` < `shareholdersMeeting` (ISO の文字列の大小) | `tanshin.dates.*` |
 | dates-column-headings | `columnDates` のすべての列が `dates.previousPeriodEnd`・`periodEnd` と等しい | `tanshin.columnDates.*` |
-| claims-direction | `ir.statements[].claims[]` の方向が数字の動きと合う。`netSales`・`operatingIncome`・`ordinaryIncome`・`netIncomeParent` = 短信の当期 − 前期の符号 (up = 増、down = 減)、`forecastNetSales`・`forecastOperatingIncome` = 次期の予想 − 当期の実績の符号、`dividend` = summary.annualDividend − annualDividendPrevious の符号、`operatingCashFlow` = 営業 CF の符号 (up = プラス、down = マイナス)、`interestBearingDebt` = 当期 − 前期の符号 (zero = 当期が 0) | `ir.statements.<添字>` |
+| claims-direction | `ir.statements[].claims[]` の方向が数字の動きと合う。`netSales`・`operatingIncome`・`ordinaryIncome`・`netIncomeParent` = 短信の当期 − 前期の符号 (up = 増、down = 減)、`forecastNetSales`・`forecastOperatingIncome` = 次期の予想 − 当期の実績の符号、`dividend` = summary.annualDividend − annualDividendPrevious の符号、`operatingCashFlow` = 営業 CF の符号 (up = プラス、down = マイナス)、`interestBearingDebt` = 当期 − 前期の符号 (zero = 当期が 0)。**差が 0 のとき (前期と同じ) は、up も down も破れる** (変化が無いのに増減を主張できない) | `ir.statements.<添字>` |
 | audit-note | `summary.auditNote` = 「決算短信は公認会計士又は監査法人の監査の対象外です」 | `tanshin.summary.auditNote` |
 | accounting-policy-match | `summary.accountingPolicyChange` = (`notes.accountingPolicyNote` が「該当事項はありません。」でない) | `tanshin.summary.accountingPolicyChange`・`tanshin.notes.accountingPolicyNote` |
 | subsequent-event-match | (`notes.subsequentEvents` が「該当事項はありません。」) = (`ir.outlook.subsequentEvent` が `null`) | `tanshin.notes.subsequentEvents`・`ir.outlook.subsequentEvent` |
@@ -171,6 +172,8 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | R4 | `roundHalfAway(1, 0)` | 例外 (0 で割らない)。規則の側は、増減率の分母が 0 以下のときこの関数を呼ばない (§1.3。S11) |
 | R5 | `toIrUnit(12456, '億円')`・`toIrUnit(12450, '億円')`・`toIrUnit(-12450, '億円')`・`toIrUnit(12456, '百万円')` | 124.6・124.5・−124.5・12456 (12,450 ÷ 100 = 124.50 は小数第一位でちょうど 124.5) |
 | R6 | `toIrUnit(12449, '億円')`・`toIrUnit(12455, '億円')` | 124.5・124.6 (小数第二位の 5 は切り上げ) |
+| R7 | `scaled10(124.6) − scaled10(30.2)`・`scaled10(94.4)`・`scaled10(0.1 + 0.2)` | 944・944・3 (浮動小数の誤差に左右されない) |
+| R8 | `dividendAmount(25, 8630)`・`dividendAmount(30, 8600)`・`dividendAmount(0, 8600)` | 215 (215.75 の切捨て)・258・0 |
 | P1 | 基準問題で `getPath(…, 'tanshin', 'balanceSheet.current.cash')` | 2300 |
 | P2 | 配列の添字 `getPath(…, 'ir', 'segments.items.0.netSales.current')` | 7900 |
 | P3 | `getPath(…, 'tanshin', 'header.companyName')` | `第七試作電機株式会社` |
@@ -192,7 +195,8 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | N5 | 会社の `fiscalYearEndMonth` を 3 → 9 | `header-period-label` の 2 件と `dates-period-end` の 1 件だけ |
 | N6 | **基準問題 B** (億円・3 セグメント。§0) と会社 B | `hard` が空。`soft` も空 (`億円` の換算・3 セグメントの規則が働く) |
 | N7 | 基準問題 B の IR の `header.unit` を `百万円` に | `header-unit` だけ |
-| N8 | 基準問題 B の IR の売上高 (億円) を、短信の換算と 0.1 億円ずらす | `xdoc-hl-net-sales` と、売上高を読む IR の式 (ir-results などが読む場合は該当の規則) のみ。ずれが 0.1 未満なら (表示の丸めの内) 破れない |
+| N8 | 基準問題 B の `ir.highlights.netSales.amount` に +0.1 (億円) | `xdoc-hl-net-sales` だけ (IR の比率は短信から計算するので、IR の金額を変えても破れない) |
+| N9 | 決算期 2 月・2028 年の問題 (見出し `2028年2月期`、`dates.periodEnd` = `2028-02-29`、`previousPeriodEnd` = `2027-02-28`、列見出しも同じ。会社の `fiscalYearEndMonth` = 2、発表日・総会の日はその後) | `hard` が空 (うるう年の末日を関数で求める) |
 
 ### 2.3 1 つのセルを変えたとき、破れる規則が**ちょうど**これ (V。基準問題から、指定のセルに加算する)
 
@@ -205,7 +209,7 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | V3 | tanshin.balanceSheet.current.totalCurrentAssets +100 | bs-current-assets, bs-total-assets |
 | V4 | tanshin.balanceSheet.current.retainedEarnings +100 | bs-shareholders-equity, link-retained-earnings |
 | V5 | tanshin.balanceSheet.current.totalNetAssets +100 | bs-net-assets, bs-liabilities-and-net-assets, sum-net-assets, sum-equity, ratio-equity-ratio, ratio-roe, ratio-bps |
-| V6 | tanshin.incomeStatement.current.ordinaryIncome +100 | pl-ordinary-income, pl-income-before-tax, sum-ordinary-income, xdoc-hl-ordinary-income |
+| V6 | tanshin.incomeStatement.current.ordinaryIncome +100 | pl-ordinary-income, pl-income-before-tax, sum-ordinary-income, xdoc-hl-ordinary-income, ir-hl-change-ordinary-income |
 | V7 | tanshin.summary.ordinaryIncome.changeRate +2.0 | sum-change-ordinary-income |
 | V8 | tanshin.summary.netSales.current +100 | sum-net-sales, sum-change-net-sales |
 | V9 | tanshin.cashFlow.cashEnding +100 | cf-ending, link-cf-cash-end |
@@ -213,10 +217,10 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | V11 | tanshin.cashFlow.depreciation +100 | cf-subtotal, link-tangible-assets, xdoc-outlook-actual-capex-depreciation, xdoc-supp-capex-depreciation |
 | V12 | tanshin.cashFlow.capex −100 | cf-investing, link-tangible-assets, xdoc-outlook-actual-capex-depreciation, xdoc-supp-capex-depreciation |
 | V13 | tanshin.incomeStatement.current.incomeTaxes +100 | pl-net-income, link-cf-income-taxes |
-| V14 | tanshin.notes.segments.current.segments.0.netSales +100 | seg-sales-sum, xdoc-seg-sales |
+| V14 | tanshin.notes.segments.current.segments.0.netSales +100 | seg-sales-sum, xdoc-seg-sales, ir-seg-change-sales, ir-seg-share (IR の比率は短信から計算するので、短信側を変えると破れる) |
 | V15 | tanshin.notes.segments.current.adjustment +10 | seg-profit-sum, xdoc-seg-adjustment |
-| V16 | ir.highlights.netSales.amount +100 | xdoc-hl-net-sales, ir-hl-change-net-sales |
-| V17 | ir.segments.items.0.netSales.current +100 | xdoc-seg-sales, ir-seg-change-sales, ir-seg-share |
+| V16 | ir.highlights.netSales.amount +100 | xdoc-hl-net-sales (IR の比率は短信から計算するので、IR の金額だけを変えても ir-hl-change-net-sales は破れない) |
+| V17 | ir.segments.items.0.netSales.current +100 | xdoc-seg-sales |
 | V18 | ir.supplement.capex.current +100 | xdoc-supp-capex-depreciation |
 | V19 | ir.supplement.netDebt.current +100 | ir-supp-net-debt |
 | V20 | ir.results.operatingMargin.current +1.0 | ir-results-operating-margin |
@@ -252,7 +256,8 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | V50 | signOverrides = `{ 'tanshin.cashFlow.capex': '-' }` を足す | sign-consistency (paths は tanshin.cashFlow.capex) |
 | V51 | labelOverrides = `{ 'tanshin.incomeStatement.operatingIncome': '営業利金' }` を足す | label-spelling (paths は tanshin.incomeStatement.operatingIncome) |
 | V52 | labelOverrides = `{ 'tanshin.balanceSheet.receivables': '買掛金' }` を足す | account-section だけ (買掛金は別の部の標準の名前なので、誤字ではない) |
-| V53 | ir.segments.items の 2 つ目を除く (要素 1 つ) | seg-count, segment-names, ir-seg-reconcile (無い要素を読む式は評価しない) |
+| V53 | **基準問題 B** の ir.segments.items から 3 つ目を除く (3 → 2。H-19 の本番の形) | seg-count, segment-names, ir-seg-reconcile (無い要素を読む式は評価しない) |
+| V55 | `ir.statements.0.claims` に `{ metric: 'dividend', direction: 'up' }` を足す (年間配当は前期と同じ 30) / `direction: 'down'` を足す | どちらも claims-direction (差が 0 なら増減は主張できない) |
 | V54 | tanshin.notes.segments.current.segments を 3 つ目の `{ name: 'x', netSales: 0, profit: 0 }` つきにする | seg-count, segment-names (0 の足しは合計に影響しない) |
 
 加えて、`paths` の確認: V1 の `bs-total-assets` の `paths` に `tanshin.balanceSheet.current.totalAssets` が含まれ、`balanceSheet.previous` のセルは含まれない。V31 の `paths` は `previous` のセルだけ。
