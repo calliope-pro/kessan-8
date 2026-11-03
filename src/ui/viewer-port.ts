@@ -1,5 +1,5 @@
 // 資料束の表示 (Task #57) との接ぎ目。#28 (遊びの流れ) がこの口を呼び、#57 が `src/ui/viewer/index.ts` で `createViewer` を実装する。
-// #57 が届くまでは `src/ui/viewer-stub.ts` の仮の表示を使い、使う側の import は 1 行 (src/ui/viewer-impl.ts) だけを替える。
+// 実体は #57 の `src/ui/viewer/index.ts`。使う側の import は 1 行 (src/ui/viewer-impl.ts) だけ。
 import type { ScreenRef } from '../domain/screen';
 import type { AnomalyPlace, DocKind, Problem } from '../domain/types';
 

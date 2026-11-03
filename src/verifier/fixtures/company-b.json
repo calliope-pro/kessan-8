@@ -1,0 +1,18 @@
+{
+  "id": "fixture-c02",
+  "name": "第八試作計測株式会社",
+  "industry": "電機部品",
+  "segmentNames": [
+    "電機部品事業",
+    "計測機器事業",
+    "産業機器事業"
+  ],
+  "fiscalYearEndMonth": 3,
+  "securitiesCode": "0898",
+  "irUnit": "億円",
+  "emblem": "●",
+  "colors": {
+    "main": "#0B6E4F",
+    "light": "#E4F1EC"
+  }
+}

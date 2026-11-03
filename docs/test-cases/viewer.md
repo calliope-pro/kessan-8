@@ -138,7 +138,7 @@ path の先頭は画面の ID とは限らない (`columnDates`・`dates`・`sta
 | S9 | どの画面にも当たらない場所 | その資料の 1 画面目 (落ちない) |
 | S10 | 短信の場所 | 短信の画面 (IR を返さない) |
 | S11〜S13 | 全部入り・基準問題のすべての葉の path と、`LABELS` のすべての項目キー | 選んだ画面に、`placeHitsElement` が当たる要素が 1 つ以上ある |
-| S14 | 本物の問題 (`src/data/problems/easy`・`hard`) の異変の全部の場所 (問題があるとき) | 同じ |
+| S14 | 本物の問題 (`src/data/problems/easy`・`hard`) の異変の全部の場所。置き場が無い・場所が 0 か所なら失敗 (つなぎ目が見えなくならないように) | 同じ |
 
 ## 6. 画面の操作・見え方 (E2E。Playwright。出題は `?seed` でなく、E2E 用の入口 (`viewer-demo.html`) が、基準問題と、`createViewer` に渡す状態 (`view`・`marks`・`highlights`・`mode`) を、ページ内の小さな状態で持つ)
 

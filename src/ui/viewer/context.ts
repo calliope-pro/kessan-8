@@ -11,11 +11,15 @@ export class Ctx {
   /** 次のセルの表示の順。 */
   private order = 0;
 
-  constructor(
-    readonly p: Problem,
-    readonly doc: DocKind,
-    readonly screen: string,
-  ) {}
+  readonly p: Problem;
+  readonly doc: DocKind;
+  readonly screen: string;
+
+  constructor(p: Problem, doc: DocKind, screen: string) {
+    this.p = p;
+    this.doc = doc;
+    this.screen = screen;
+  }
 
   get root(): Problem['tanshin'] | Problem['ir'] {
     return this.doc === 'tanshin' ? this.p.tanshin : this.p.ir;

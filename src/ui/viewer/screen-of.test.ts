@@ -114,7 +114,7 @@ describe('screenOfPlace: 全部の場所で、選んだ画面に強調される�
   const dir = 'src/data/problems';
   const files = existsSync(dir) ? ['easy', 'hard'].flatMap((d) => (existsSync(join(dir, d)) ? readdirSync(join(dir, d)).map((f) => join(dir, d, f)) : [])).filter((f) => f.endsWith('.json')) : [];
 
-  it('S14: 本物の問題 (src/data/problems) の異変の全部の場所 (問題があるときだけ)', () => {
+  it('S14: 本物の問題 (src/data/problems) の異変の全部の場所。問題が無い・場所が 0 か所なら失敗', () => {
     const bad: string[] = [];
     let places = 0;
     for (const f of files) {
@@ -125,7 +125,8 @@ describe('screenOfPlace: 全部の場所で、選んだ画面に強調される�
       }
     }
     expect(bad).toEqual([]);
-    // 問題の置き場があるのに 0 か所で通り続けない (置き場の名前が変わったとき、つなぎ目が見えなくなるため)
-    if (existsSync(dir)) expect(places).toBeGreaterThan(0);
+    // 問題の置き場が無い・0 か所のまま通り続けない (置き場の名前が変わったとき、つなぎ目が見えなくなるため。N12)
+    expect(existsSync(dir)).toBe(true);
+    expect(places).toBeGreaterThan(0);
   });
 });

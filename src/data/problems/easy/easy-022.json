@@ -1,0 +1,430 @@
+{
+ "id": "easy-022",
+ "difficulty": "easy",
+ "companyId": "c09",
+ "fiscalYear": 2025,
+ "tier": 1,
+ "tanshin": {
+  "header": {
+   "companyName": "キュルネ教育株式会社",
+   "securitiesCode": "0809",
+   "periodLabel": "2025年3月期",
+   "unit": "百万円"
+  },
+  "summary": {
+   "netSales": {
+    "current": 8495,
+    "previous": 8406,
+    "changeRate": 1.1
+   },
+   "operatingIncome": {
+    "current": 684,
+    "previous": 417,
+    "changeRate": 64.0
+   },
+   "ordinaryIncome": {
+    "current": 687,
+    "previous": 419,
+    "changeRate": 64.0
+   },
+   "netIncomeParent": {
+    "current": 474,
+    "previous": 289,
+    "changeRate": 64.0
+   },
+   "operatingMargin": 8.1,
+   "roe": 17.1,
+   "eps": 118.5,
+   "totalAssets": 4785,
+   "netAssets": 2956,
+   "equity": 2956,
+   "equityRatio": 61.8,
+   "bps": 739.0,
+   "annualDividend": 29,
+   "interimDividend": 0,
+   "annualDividendPrevious": 23,
+   "interimDividendPrevious": 0,
+   "dividendTotal": 116,
+   "payoutRatio": 24.5,
+   "accountingPolicyChange": false,
+   "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+  },
+  "dates": {
+   "periodEnd": "2025-03-31",
+   "previousPeriodEnd": "2024-03-31",
+   "disclosure": "2025-05-15",
+   "shareholdersMeeting": "2025-06-27"
+  },
+  "columnDates": {
+   "balanceSheet": {
+    "previous": "2024-03-31",
+    "current": "2024-03-31"
+   },
+   "incomeStatement": {
+    "previous": "2024-03-31",
+    "current": "2025-03-31"
+   },
+   "cashFlow": {
+    "previous": "2024-03-31",
+    "current": "2025-03-31"
+   }
+  },
+  "balanceSheet": {
+   "previous": {
+    "cash": 1872,
+    "receivables": 184,
+    "inventories": 0,
+    "otherCurrentAssets": 126,
+    "totalCurrentAssets": 2182,
+    "tangibleAssets": 1850,
+    "investments": 396,
+    "totalFixedAssets": 2246,
+    "totalAssets": 4428,
+    "payables": 206,
+    "shortTermDebt": 120,
+    "incomeTaxesPayable": 65,
+    "otherCurrentLiabilities": 420,
+    "totalCurrentLiabilities": 811,
+    "longTermDebt": 1043,
+    "totalLiabilities": 1854,
+    "capitalStock": 333,
+    "capitalSurplus": 250,
+    "retainedEarnings": 1991,
+    "totalShareholdersEquity": 2574,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 2574,
+    "totalLiabilitiesAndNetAssets": 4428
+   },
+   "current": {
+    "cash": 2205,
+    "receivables": 186,
+    "inventories": 0,
+    "otherCurrentAssets": 127,
+    "totalCurrentAssets": 2518,
+    "tangibleAssets": 1863,
+    "investments": 404,
+    "totalFixedAssets": 2267,
+    "totalAssets": 4785,
+    "payables": 208,
+    "shortTermDebt": 120,
+    "incomeTaxesPayable": 106,
+    "otherCurrentLiabilities": 425,
+    "totalCurrentLiabilities": 859,
+    "longTermDebt": 970,
+    "totalLiabilities": 1829,
+    "capitalStock": 333,
+    "capitalSurplus": 250,
+    "retainedEarnings": 2373,
+    "totalShareholdersEquity": 2956,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 2956,
+    "totalLiabilitiesAndNetAssets": 4785
+   }
+  },
+  "incomeStatement": {
+   "previous": {
+    "netSales": 8406,
+    "costOfSales": 5017,
+    "grossProfit": 3389,
+    "sga": 2972,
+    "operatingIncome": 417,
+    "nonOperatingIncome": 17,
+    "nonOperatingExpenses": 15,
+    "ordinaryIncome": 419,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 419,
+    "incomeTaxes": 130,
+    "netIncome": 289,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 289
+   },
+   "current": {
+    "netSales": 8495,
+    "costOfSales": 5066,
+    "grossProfit": 3429,
+    "sga": 2745,
+    "operatingIncome": 684,
+    "nonOperatingIncome": 17,
+    "nonOperatingExpenses": 14,
+    "ordinaryIncome": 687,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 687,
+    "incomeTaxes": 213,
+    "netIncome": 474,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 474
+   }
+  },
+  "cashFlow": {
+   "incomeBeforeTax": 687,
+   "depreciation": 166,
+   "interestDividendIncome": -17,
+   "interestExpense": 14,
+   "receivablesChange": -2,
+   "inventoriesChange": 0,
+   "payablesChange": 2,
+   "otherAssetsChange": -1,
+   "otherLiabilitiesChange": 5,
+   "subtotal": 854,
+   "interestDividendReceived": 17,
+   "interestPaid": -14,
+   "incomeTaxesPaid": -172,
+   "operatingCashFlow": 685,
+   "capex": -179,
+   "otherInvestingChange": -8,
+   "investingCashFlow": -187,
+   "shortTermDebtChange": 0,
+   "longTermBorrowings": 0,
+   "longTermRepayments": -73,
+   "dividendsPaid": -92,
+   "financingCashFlow": -165,
+   "fxEffect": 0,
+   "netChangeInCash": 333,
+   "cashBeginning": 1872,
+   "cashEnding": 2205
+  },
+  "notes": {
+   "goingConcern": "該当事項はありません。",
+   "cashScope": "現金及び預金",
+   "segments": {
+    "previous": {
+     "segments": [
+      {
+       "name": "学習塾事業",
+       "netSales": 6151,
+       "profit": 315
+      },
+      {
+       "name": "通信講座事業",
+       "netSales": 2255,
+       "profit": 115
+      }
+     ],
+     "adjustment": -13,
+     "consolidatedNetSales": 8406,
+     "consolidatedOperatingIncome": 417
+    },
+    "current": {
+     "segments": [
+      {
+       "name": "学習塾事業",
+       "netSales": 6002,
+       "profit": 498
+      },
+      {
+       "name": "通信講座事業",
+       "netSales": 2493,
+       "profit": 207
+      }
+     ],
+     "adjustment": -21,
+     "consolidatedNetSales": 8495,
+     "consolidatedOperatingIncome": 684
+    }
+   },
+   "averageSharesThousand": 4000,
+   "bps": 739.0,
+   "eps": 118.5,
+   "subsequentEvents": "該当事項はありません。",
+   "accountingPolicyNote": "該当事項はありません。"
+  }
+ },
+ "ir": {
+  "header": {
+   "companyName": "キュルネ教育株式会社",
+   "securitiesCode": "0809",
+   "periodLabel": "2025年3月期",
+   "unit": "百万円"
+  },
+  "highlights": {
+   "netSales": {
+    "amount": 8495,
+    "changeRate": 1.1
+   },
+   "operatingIncome": {
+    "amount": 684,
+    "changeRate": 64.0
+   },
+   "ordinaryIncome": {
+    "amount": 687,
+    "changeRate": 64.0
+   },
+   "netIncomeParent": {
+    "amount": 474,
+    "changeRate": 64.0
+   },
+   "annualDividend": 29,
+   "payoutRatio": 24.5
+  },
+  "results": {
+   "netSales": {
+    "previous": 8406,
+    "current": 8495
+   },
+   "grossProfit": {
+    "previous": 3389,
+    "current": 3429
+   },
+   "grossMargin": {
+    "previous": 40.3,
+    "current": 40.4
+   },
+   "operatingIncome": {
+    "previous": 417,
+    "current": 684
+   },
+   "operatingMargin": {
+    "previous": 5.0,
+    "current": 8.1
+   },
+   "chart": {
+    "netSales": {
+     "axisMin": 0,
+     "previous": 8406,
+     "current": 8495
+    },
+    "operatingIncome": {
+     "axisMin": 0,
+     "previous": 417,
+     "current": 684
+    }
+   }
+  },
+  "segments": {
+   "items": [
+    {
+     "name": "学習塾事業",
+     "netSales": {
+      "previous": 6151,
+      "current": 6002,
+      "changeRate": -2.4
+     },
+     "profit": {
+      "previous": 315,
+      "current": 498,
+      "changeRate": 58.1
+     },
+     "salesShare": 70.7
+    },
+    {
+     "name": "通信講座事業",
+     "netSales": {
+      "previous": 2255,
+      "current": 2493,
+      "changeRate": 10.6
+     },
+     "profit": {
+      "previous": 115,
+      "current": 207,
+      "changeRate": 80.0
+     },
+     "salesShare": 29.3
+    }
+   ],
+   "adjustment": {
+    "previous": -13,
+    "current": -21
+   },
+   "consolidatedOperatingIncome": {
+    "previous": 417,
+    "current": 684
+   }
+  },
+  "outlook": {
+   "forecast": {
+    "netSales": 8771,
+    "netSalesChangeRate": 3.2,
+    "operatingIncome": 724,
+    "operatingIncomeChangeRate": 5.8,
+    "capex": 188,
+    "depreciation": 173,
+    "annualDividend": 29
+   },
+   "actual": {
+    "netSales": 8495,
+    "operatingIncome": 684,
+    "capex": 179,
+    "depreciation": 166
+   },
+   "subsequentEvent": null
+  },
+  "supplement": {
+   "capex": {
+    "previous": null,
+    "current": 179
+   },
+   "depreciation": {
+    "previous": null,
+    "current": 166
+   },
+   "interestBearingDebt": {
+    "previous": 1163,
+    "current": 1090
+   },
+   "cash": {
+    "previous": 1872,
+    "current": 2205
+   },
+   "netDebt": {
+    "previous": -709.0,
+    "current": -1115.0
+   },
+   "equityRatio": 61.8
+  },
+  "statements": [
+   {
+    "slide": "highlights",
+    "text": "売上高は前期を上回りました。営業利益は前期を上回りました。",
+    "claims": [
+     {
+      "metric": "netSales",
+      "direction": "up"
+     },
+     {
+      "metric": "operatingIncome",
+      "direction": "up"
+     }
+    ]
+   },
+   {
+    "slide": "outlook",
+    "text": "次期は増収増益を見込んでおります。引き続き、教室の運営体制の強化に取り組んでまいります。",
+    "claims": [
+     {
+      "metric": "forecastNetSales",
+      "direction": "up"
+     },
+     {
+      "metric": "forecastOperatingIncome",
+      "direction": "up"
+     }
+    ]
+   },
+   {
+    "slide": "supplement",
+    "text": "営業キャッシュ・フローは黒字を維持しました。",
+    "claims": [
+     {
+      "metric": "operatingCashFlow",
+      "direction": "up"
+     }
+    ]
+   }
+  ]
+ },
+ "anomaly": {
+  "kind": "E-04",
+  "places": [
+   {
+    "doc": "tanshin",
+    "path": "columnDates.balanceSheet.current"
+   }
+  ],
+  "explanation": "表題の期は 2025年3月期 (期末日 2025年3月31日) ですが、貸借対照表の当期末の見出しは 2024年3月31日です。",
+  "expectedRules": [
+   "dates-column-headings"
+  ]
+ }
+}

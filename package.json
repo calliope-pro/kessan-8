@@ -9,9 +9,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:e2e": "tsc --noEmit && E2E_POOL=1 vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "verify:data": "node --experimental-strip-types --no-warnings scripts/verify-data.ts",
     "test:e2e": "playwright test",
     "check:size": "node scripts/check-dist-size.mjs dist"
   },
