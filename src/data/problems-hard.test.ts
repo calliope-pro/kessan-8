@@ -14,15 +14,19 @@ interface Row {
   fiscalYear: number;
   tier: number;
   kind: string | null;
+  /** 正常の行の要素 (G・X・D・N・C・P・E)。異変の行は空。 */
+  elements: string[];
 }
 
 /** 設計表の行を読む。「| hard-001 | c04 名前 | 2026 | 1 | H-22 名前 | notes | ... |」 */
 function designRows(): Row[] {
   const md = readFileSync(new URL('../../docs/plans/problems-hard.md', import.meta.url), 'utf-8');
   const rows: Row[] = [];
-  for (const m of md.matchAll(/^\| (hard-\d{3}) \| (c\d\d) [^|]*\| (\d{4}) \| ([123]) \| ([^|]+?) \|/gm)) {
+  for (const m of md.matchAll(/^\| (hard-\d{3}) \| (c\d\d) [^|]*\| (\d{4}) \| ([123]) \| ([^|]+?) \| [^|]+ \| ([^|]+?) \|$/gm)) {
     const kind = /^[EH]-\d\d/.exec(m[5] as string)?.[0] ?? null;
-    rows.push({ id: m[1] as string, company: m[2] as string, fiscalYear: Number(m[3]), tier: Number(m[4]), kind });
+    const last = (m[6] as string).trim();
+    const elements = kind === null && last !== '0 個' ? last.split('・') : [];
+    rows.push({ id: m[1] as string, company: m[2] as string, fiscalYear: Number(m[3]), tier: Number(m[4]), kind, elements });
   }
   return rows;
 }
@@ -80,9 +84,25 @@ describe('むずかしいの設計表 (problems-hard.md)', () => {
     expect(both.length).toBeGreaterThanOrEqual(8);
   });
 
-  it('P8: 同じ会社・同じ期の問題は無い', () => {
+  it('P8: 同じ会社・同じ期の問題は無い。期はすべて 2019〜2022 年で、会社ごとに連続し、最後の期は 2022 年 (発表日が公開より前。やさしいの 2023〜2025 年と重ならない)', () => {
     const keys = rows.map((r) => `${r.company}:${r.fiscalYear}`);
     expect(new Set(keys).size).toBe(keys.length);
+    for (const c of companies) {
+      const years = rows.filter((r) => r.company === c.id).map((r) => r.fiscalYear).sort();
+      expect(years.at(-1), c.id).toBe(2022);
+      years.forEach((y, i) => expect(y, c.id).toBe(2022 - (years.length - 1 - i)));
+      expect(years[0], c.id).toBeGreaterThanOrEqual(2019);
+    }
+  });
+
+  it('P10: 正常な問題の段は、疑わしく見える要素の数で決まる (0 個 = 段 1、1〜2 個 = 段 2、3 個以上 = 段 3)。常に無配の c04・c07 は D を使わず、N は 1 問だけ (最後の期)', () => {
+    normals.forEach((r) => {
+      expect(r.tier, r.id).toBe(r.elements.length === 0 ? 1 : r.elements.length <= 2 ? 2 : 3);
+      r.elements.forEach((e) => expect('GXDNCPE'.includes(e), `${r.id} ${e}`).toBe(true));
+      if (r.company === 'c04' || r.company === 'c07') expect(r.elements, r.id).not.toContain('D');
+    });
+    const withN = normals.filter((r) => r.elements.includes('N'));
+    withN.forEach((r) => expect(r.fiscalYear).toBe(2022));
   });
 
   it('P9: 種類と会社の適合 (anomalies.md §5 の「適する会社」): H-17 は億円の会社、H-19 は 3 セグメントの会社、H-21 は配当のある会社、H-05 は売上債権が目立つ会社、H-06 は棚卸資産のある会社', () => {
