@@ -172,3 +172,9 @@ test('LV8 (記録・再読み込み): 3 社目で不正解のあと、再読み�
   await page.getByRole('button', { name: '戻る' }).click();
   await expect(page.getByTestId('record')).toContainText('最高到達 3 社目');
 });
+
+test('LV9 (AC11): 静的な HTML の <title> (JavaScript が走る前・検索結果・共有) が題名「８期連続」', async ({ page }) => {
+  const html = await (await page.request.get('/')).text();
+  const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '';
+  expect(title).toContain('８期連続');
+});

@@ -13,6 +13,7 @@
 | UD5 | 同上 | **公開前の期待**: 「公開 URL」の項があり、公開前は未記入と分かる書き方 (「公開したら書く」)。`vercel.app` を含む実在しない URL を書いていない。**#96 で公開したあとは、この期待を替える**: 公開 URL の項に実際の URL が 1 つだけあり (`vercel.app` の URL は公開した 1 つだけ)、それが 200 を返す。替えるときは、この行に日付と理由を残す | 異常系 (公開前に偽の URL を載せない) |
 | UD5 (2026-11-04 の更新) | 同上 | **いまの期待 (公開 URL は一時的)**: 「公開 URL」の項は「引き取りのあとに入れる」と書く。一時的な URL (`tmp.now`) も `vercel.app` の URL も書かない。引き取りのあとに実際の URL を入れるときは、この行を「公開 URL の項に実際の URL が 1 つだけあり、200 を返す」に替え、日付と理由を残す | 異常系。理由: 責任者の公開 (https://nimble-antimony-g4qast2.tmp.now) は Vercel の一時的な公開で期限がある (#96) |
 | UB1 | `package.json`・`playwright.config.ts`・`.gitignore` | `build:e2e` は `--outDir dist-e2e` に出し、E2E の preview も `dist-e2e` を見る。`dist-e2e/` は無視。`build` は `E2E_POOL` を含まない | 異常系 (試験用の問題の版が本番の `dist` に出て、preview・check:size・`--prebuilt` で公開されない。#30 の包括レビュー N4) |
+| UD8 | `index.html` の `<title>` | 題名「８期連続」を含む (「kessan-8」のままにしない。「８番出口」の語なし)。画面の JavaScript が走る前・検索結果・共有でも題名が出る | 正常 (受け入れ条件 11・Task #30 の「題名が入っている」。公開した版は静的な `<title>` が kessan-8 のままで、JavaScript が走ったあとだけ題名になっていた) |
 | UD6 | 同上 | 「８番出口」の語を含まない (題名は紛らわしくない。受け入れ条件 11) | 異常系 |
 | UD7 | 同上 | 開発の手順 (`npm ci`・`npm test`・`npm run build`・`npm run test:e2e`) が残っている | 回帰 |
 | E39 | タイトル画面 (幅 320・375・1280 px) | 「架空」の断りと「投資判断の助言ではありません」が見える (文字は 16 px 以上 = 本文と同じ。**祖先の opacity を掛け合わせても 1** = 縮小・薄い色にしない。切れない) | 正常 (D-R5・SC0-6) |
@@ -64,11 +65,12 @@ experience.md §6.3 の 3b (上の固定領域: 帯 32 px + 資料の切替と�
 | LV6 | 遊びかた・見本・見本 (遊ぶ前)・導入・判定のパネル・最初へ戻る | どの画面も横にはみ出さない | 9 |
 | LV7 | 一通りの流れ | 同じ生成元以外へのリクエスト 0 件・コンソールのエラー 0 件 | (外部通信なし。方針) |
 | LV8 | 3 社目で不正解 → 再読み込み | 答え合わせのまま (判定をやり直せない)。最高到達 3 社目が記録に残る | 3 |
+| LV9 | 公開 URL の HTML を JavaScript なしで取得 | `<title>` が「８期連続」を含む (本番ビルドでは EP10) | 11・Task #30 (題名が入っている) |
 
 ### 4.1 確かめた記録 (2026-11-04)
 
 - **公開 URL**: https://nimble-antimony-g4qast2.tmp.now (責任者の一時的な公開。Vercel。09:23 JST に期限切れ)。公開した版は main の `de86bee` (PR #99 のマージ) と同じ: 配信中の `assets/index-J2ONKVM4.js`・`index-cMFB70Fb.css` が、`de86bee` を手元でビルドしたもの (`npm run build`) の出力と同じファイル名 (Vite はファイルの内容でハッシュを付ける)。配信ヘッダに `content-security-policy` (`default-src 'self'` ほか)・`x-content-type-options: nosniff`・`referrer-policy: no-referrer`。
-- **08:28 JST**、`E2E_LIVE_URL=https://nimble-antimony-g4qast2.tmp.now npx playwright test e2e/live.spec.ts`: **40 件すべて通過** (10 ケース × 幅 1280・414・375・320 px)。
+- **08:28 JST**、`E2E_LIVE_URL=https://nimble-antimony-g4qast2.tmp.now npx playwright test e2e/live.spec.ts`: **LV1〜LV8 は 40 件すべて通過** (10 ケース × 幅 1280・414・375・320 px。LV3・LV5 は easy・hard の 2 つずつ)。**LV9 (静的な `<title>`) は 4 幅とも不通過**: 公開した版の HTML の `<title>` は「kessan-8」のままで (JavaScript が走ったあとだけタブの題名が「８期連続」になる)、LV1 の `page.title()` は通るが、JavaScript なしの取得・検索結果・共有では題名が出ない (責任者の指摘。同じ日に直した: `index.html`・UD8・EP10)。
 - 受け入れ条件ごと:
 
 | 受け入れ条件 | 確かめ | 結果 |
@@ -83,7 +85,7 @@ experience.md §6.3 の 3b (上の固定領域: 帯 32 px + 資料の切替と�
 | 8 実在の企業名・ロゴ・人物が出てこない | LV3: 画面の社名はすべて `companies.json` の架空の会社 (名前検査 docs/plans/catalog/name-check-result.md: JPX・国税庁と照合して 10 社とも合格) | 通過 |
 | 9 PC (1280) もスマホ (320〜414 px) も横にはみ出さない | LV1・LV2・LV3・LV4・LV6 の各画面 (4 幅) | 通過 |
 | 10 MIT の LICENSE。秘密がコミットに無い | LICENSE は MIT (リポジトリ)・画面に「MIT ライセンス」。`git ls-files` に `.env` 系 0 件・コミットの作者は noreply の 1 つ。公開した版にも秘密は無い (静的サイトで環境変数を使わない) | 通過 |
-| 11 題名は「８番出口」と同じ・紛らわしい名前ではない | LV1 (タブの題名「８期連続」・画面に「８番出口」の語なし)。商標の再検索 (title.md §2.6: 0 件) | 通過 |
+| 11 題名は「８番出口」と同じ・紛らわしい名前ではない。題名が入っている (Task #30) | LV1 (JavaScript 後のタブの題名「８期連続」・画面に「８番出口」の語なし)・LV9 (静的な `<title>`)。商標の再検索 (title.md §2.6: 0 件) | 紛らわしくない: 通過。**題名が入っている: 公開した版は静的な `<title>` が kessan-8 で不通過 (LV9)。引き取りのあとの公開で満たす (本 PR で直した。EP10 が本番ビルドで通る)** |
 
-- **見つかって直したもの (同じ日)**: 公開した版に、クリアの画面の「翌朝 翌朝 6:00」と完了票の「1. 1 / 8 社目」の二重表記 (X1。包括レビューで指摘) と、断り書きが親の opacity 0.9 で薄い (N1) があった。どちらも `calliope/release-check` で直した (E39・E7 で確かめる)。公開した版には入っていない (一時的な公開は更新しない)。引き取りのあとの公開は、直したものを含む。
+- **見つかって直したもの (同じ日)**: 公開した版の静的な `<title>` が「kessan-8」のまま (LV9・UD8・EP10)。ほかに、公開した版に、クリアの画面の「翌朝 翌朝 6:00」と完了票の「1. 1 / 8 社目」の二重表記 (X1。包括レビューで指摘) と、断り書きが親の opacity 0.9 で薄い (N1) があった。どちらも `calliope/release-check` で直した (E39・E7 で確かめる)。公開した版には入っていない (一時的な公開は更新しない)。引き取りのあとの公開は、直したものを含む。
 - **未確認**: 実機 (iOS Safari・Android) の見え方・指の押しやすさ (experience.md §6.3 の 10。人の目)。法務の専門家の判断・図形商標・外国商標 (title.md §2.5)。公開 URL は一時的なので、README への記載は引き取りのあと (UD5)。

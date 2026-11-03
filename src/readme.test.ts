@@ -5,6 +5,16 @@ import { MESSAGES } from './ui/messages';
 
 const readme = readFileSync('README.md', 'utf-8');
 
+describe('index.html の <title>', () => {
+  it('UD8: 静的な HTML の <title> が題名「８期連続」 (JavaScript が走る前・検索結果・共有でも題名が出る)。「kessan-8」のままにしない', () => {
+    const html = readFileSync('index.html', 'utf-8');
+    const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '';
+    expect(title).toContain(MESSAGES.title);
+    expect(title).not.toBe('kessan-8');
+    expect(title).not.toMatch(/[8８]番出口/);
+  });
+});
+
 describe('README', () => {
   it('UD1: 題名・リポジトリ名・副題がある', () => {
     expect(readme).toContain(MESSAGES.title);
