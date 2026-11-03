@@ -26,7 +26,7 @@
 | --- | --- | --- | --- |
 | 言語 | TypeScript (strict) | 型で境界を示す (原則「AI エージェントとの親和性」)。問題データの形 (§4) を型にして、画面・検証器・答え合わせが同じ型を読む (失敗 2 を防ぐ)。試作の検証器 (docs/plans/spike/verify.py) の規則が、そのまま型つきの関数に移せる | JavaScript のみ (データの形を型で縛れない) |
 | ビルド・開発サーバ | Vite | 静的出力 (`dist`) が既定で、Vercel の静的サイトにそのまま載る。JSON の取り込みとコード分割が標準 (§4.3)。Vitest と設定を共有する | webpack (設定が重い)、フレームワーク一体型 (Next.js など。静的サイトにサーバ側の機能は要らない) |
-| 画面の作り | フレームワークなし (素の TypeScript + DOM)。状態は純粋な関数 (§5) で持ち、画面は状態から DOM を作る関数 | 画面は十数種で、状態は小さい。初回 1 MB 未満に余裕を持たせ (ライブラリを足さない)、依存を最小にする (原則「セキュリティ」「保守性」)。状態遷移を DOM から切り離すので、単体テストで確かめられる (原則「テスト容易性」) | React・Preact・Svelte など (画面の複雑さに対して過剰。UI/UX の案 (#19) が固まる前に、見た目の作りかたを縛らない。#19 の案が素の DOM で足りないと分かったら、Preact (約 3 KB) への切り替えを提案する) |
+| 画面の作り | フレームワークなし (素の TypeScript + DOM)。状態は純粋な関数 (§5) で持ち、画面は状態から DOM を作る関数 | 画面は十数種で、状態は小さい。初回 1 MB 未満に余裕を持たせ (ライブラリを足さない)、依存を最小にする (原則「セキュリティ」「保守性」)。状態遷移を DOM から切り離すので、単体テストで確かめられる (原則「テスト容易性」) | React・Preact・Svelte など (画面の複雑さに対して過剰。UI/UX の案 (#19) が固まる前に、見た目の作りかたを縛らない。#19 の案が素の DOM で足りないと分かったら、Preact など小さな代替への切り替えを提案する) |
 | 単体テスト | Vitest | Vite と設定を共有でき、TypeScript をそのまま実行する。純粋な関数 (状態遷移・検証器・出題) と、問題データ全件の検証 (§7) を同じ道具で回す | Jest (TypeScript と ES モジュールの設定が増える) |
 | E2E | Playwright (`@playwright/test`) | 方針で指定 (受け入れ条件 1〜4・9 を 1 本ずつ、スマホ幅 375 px で 1 本)。ブラウザごとの projects を持ち、GitHub Actions に標準の手順がある | Cypress (方針の指定外。複数ブラウザの扱いが弱い) |
 | データの形式 | JSON (1 問 1 ファイル) | データを足すだけで問題を増やせる (原則「保守性」)。AI が書いても diff が小さく、検証器が全件を読める。Vite がそのまま取り込む | TypeScript のオブジェクト (データの修正のたびに型検査とビルドが走る)、1 つの大きな JSON (diff が大きく、並列に作れない) |
@@ -36,7 +36,7 @@
 
 ### 2.1 npm の依存 (理由つき)
 
-実行時の依存 (`dependencies`) は **0 件**。画面に載るコードは、自分たちのコードだけにする。開発用 (`devDependencies`) は次の 4 件だけで、増やすときはチケットで理由を書く。
+実行時の依存 (`dependencies`) は **0 件**。画面に載るコードは、自分たちのコードだけにする。開発用 (`devDependencies`) は次の 5 件だけで、増やすときはチケットで理由を書く。
 
 | パッケージ | 理由 | 使う場所 |
 | --- | --- | --- |
@@ -44,6 +44,7 @@
 | `vite` | ビルド・開発サーバ・プレビュー | `npm run build`・`dev`・`preview` |
 | `vitest` | 単体テスト・問題データ全件の検証 | `npm test` |
 | `@playwright/test` | E2E (ブラウザ操作) | `npm run test:e2e` |
+| `@types/node` | 設定ファイル・テスト・`scripts/` が使う Node の API (`node:fs` など) の型。型検査を通すのに要る (実行時のコードには入らない) | `tsc --noEmit` |
 
 バージョンは `package-lock.json` で固定し、CI は `npm ci` だけを使う (再現できる、勝手に更新されない)。
 
@@ -55,6 +56,7 @@
 ├─ package.json / package-lock.json / tsconfig.json / vite.config.ts
 ├─ vercel.json              # 静的・出力 dist・セキュリティヘッダ
 ├─ playwright.config.ts     # E2E の設定 (ブラウザ・幅は §7)
+├─ scripts/check-dist-size.mjs  # ビルド後の dist の転送量の予算を確かめる (§8)
 ├─ LICENSE                  # MIT
 ├─ .github/workflows/ci.yml # 型検査・単体テスト・ビルド・E2E
 ├─ docs/                    # requirements・charter・design・adr/・plans/
@@ -62,7 +64,8 @@
 │  ├─ main.ts               # 入口: 画面を DOM に取り付ける
 │  ├─ domain/               # DOM を使わない純粋な TypeScript (単体テストの主な対象)
 │  │  ├─ types.ts           #   問題データの型 (§4。型の正本)
-│  │  ├─ labels.ts          #   項目名の日本語表示 (キー → 表示名)
+│  │  ├─ labels.ts          #   項目名の日本語表示 (項目キー → 表示名) と、path → 項目キーの関数 (§4.1)
+│  │  ├─ rng.ts             #   種つきの乱数 (mulberry32。§5.3)
 │  │  ├─ config.ts          #   ゲームの設定値 (§6)
 │  │  ├─ game.ts            #   状態遷移 (reducer、§5)
 │  │  ├─ draw.ts            #   出題 (プールから 8 社を引く、乱数は差し替え可)
@@ -73,7 +76,7 @@
 │  │  ├─ anomaly-kinds.json #   異変の種類の一覧 (Task #24)
 │  │  ├─ problems/easy/*.json, problems/hard/*.json  # 問題 (Task #25・#26)。1 問 1 ファイル
 │  │  └─ index.ts           #   読み込み (全件を取り込み、難易度ごとのプールにする)
-│  ├─ ui/                   # DOM を作る画面 (Task #27・#28)。状態 → DOM の関数
+│  ├─ ui/                   # DOM を作る画面 (Task #27・#28)。状態 → DOM の関数。問題に依らない固定の文言は ui/messages.ts
 │  └─ styles/               # CSS
 ├─ e2e/                     # Playwright (E2E)
 └─ public/                  # 静的ファイル (必要になったら。外部の素材は置かない)
@@ -91,9 +94,12 @@
 
 - **画面に出る数字は、すべて問題データの数値**。比率・増減率・合計も、表示用に計算せず、データに値として持つ。理由: 異変は「計算が合わない」ことそのものなので、表示のたびに計算し直すと異変が消える。正常な問題で値が合っていることは、検証器 (Task #23) が全件に当てて確かめる (方針の失敗 1)
 - **異変のある問題は、正常な資料の数字を 1 か所以上差し替えた資料**。何を差し替えたか (場所) と、なぜ異変か (文言) を `anomaly` に書く。`anomaly` が `null` なら正常
-- **場所は `path` で指す**。`path` は資料の中の位置で、先頭が画面の ID、あとはデータの入れ子のキーを `.` でつないだもの (例: `incomeStatement.current.ordinaryIncome`)。画面は同じ文字列を、該当のセルの `data-path` に持たせる。答え合わせで強調する場所と、データの異変の場所が、同じ文字列で結ばれる (方針の失敗 2)
+- **場所は `path` で指す**。`path` は資料の中の位置で、先頭が画面の ID、あとはデータの入れ子のキーを `.` でつないだもの (例: `incomeStatement.current.ordinaryIncome`、配列の要素は添字: `segments.items.0.netSales.current`)。画面は `<doc>.<path>` (例: `tanshin.incomeStatement.current.ordinaryIncome`) を、該当のセルの `data-path` に持たせる。答え合わせで強調する場所と、データの異変の場所が、同じ文字列で結ばれる (方針の失敗 2)
+- **見出しの場所**: 社名・期・単位は、どの画面の下にも無い資料の見出し (`header`) で、`header.companyName`・`header.periodLabel`・`header.unit` と書く。見出しはその資料のすべての画面の上部に出る。答え合わせで「その場所の画面へ移る」ときは、`header` で始まる場所は、その資料の 1 画面目へ移って、そこの見出しを強調する (`domain/answer.ts` の `screenOf(place)`)
+- **項目キー (itemKey)**: 項目名は「行」に付き、`path` は「値」を指すので、行の名前を指すキーを 1 つの文法で決める。`path` から、`previous`・`current` の段を取り除き、末尾が `changeRate`・`amount` ならそれも取り除いた残りを、資料の種類を頭に付けて項目キーとする。例: `tanshin.incomeStatement.current.ordinaryIncome` → `tanshin.incomeStatement.ordinaryIncome`、`tanshin.summary.ordinaryIncome.changeRate` → `tanshin.summary.ordinaryIncome`、`ir.segments.items.0.netSales.current` → `ir.segments.items.0.netSales`。短信のサマリーと損益計算書の経常利益は別の項目キーで、別の表示名を持てる。この変換は `domain/labels.ts` の関数 `itemKey(doc, path)` だけが行い、`labels.ts` の表示名の表と `labelOverrides` のキーは、どちらも項目キー
 - **単位**: 金額は百万円 (百万円未満切捨ての整数)、比率は % (小数第一位)、1 株当たりは円。符号は数値の符号で持ち、表示 (△) は 1 つの整形関数 (`ui/format.ts`) だけが決める
-- **見た目の異変**は、資料の見出し (`header`) の文字列と、項目名の差し替え (`labelOverrides`) で表す。項目名の標準は `domain/labels.ts` にあり、正常な問題には `labelOverrides` が無い
+- **見た目の異変**は、資料の見出し (`header`) の文字列と、項目名の差し替え (`labelOverrides`、キーは項目キー) で表す。項目名の標準は `domain/labels.ts` にあり、正常な問題には `labelOverrides` が無い
+- **同じ事実を 2 か所に書かないもの**: 異変の段は `AnomalyKind.stage` だけが持つ (`Anomaly` には書かない。段は `kind` から引く)。複製が避けられないもの (見出しの社名 = `Company.name`、セグメント名 = `Company.segmentNames`、期の表記 = `fiscalYear` と決算期末の月から作る表記) は、異変のために別の値を入れられる形にしてあるので、**正常な問題では一致することを検証器が確かめる**
 - キーは英語 (型・検証器・`path` で扱いやすい)。日本語の表示名は `labels.ts` が 1 か所で持つ
 
 ### 4.2 型
@@ -339,7 +345,7 @@ export interface IrDeck {
   };
 }
 
-/** 異変の場所。path は資料の中の位置で、先頭が画面の ID (例: incomeStatement.current.ordinaryIncome)。 */
+/** 異変の場所。path は資料の中の位置で、先頭が画面の ID か header (例: incomeStatement.current.ordinaryIncome、header.companyName)。 */
 export interface AnomalyPlace {
   doc: DocKind;
   path: string;
@@ -347,9 +353,8 @@ export interface AnomalyPlace {
 
 /** 異変の指定と答え合わせの文言。問題データのここが唯一の出所で、画面はこれを表示するだけ。 */
 export interface Anomaly {
-  /** AnomalyKind.id。 */
+  /** AnomalyKind.id。段 (stage) は AnomalyKind が唯一の出所なので、ここには持たない。 */
   kind: string;
-  stage: AnomalyStage;
   /** 1 件以上。資料間の矛盾は食い違う両側の場所を並べる。 */
   places: AnomalyPlace[];
   /** 答え合わせの文言 (何がどう食い違っているか。数字を含める)。 */
@@ -367,7 +372,7 @@ export interface Problem {
   fiscalYear: number;
   tanshin: Tanshin;
   ir: IrDeck;
-  /** 項目名の差し替え (見た目の異変用)。キーは `<doc>.<path>`。正常な問題には無い。 */
+  /** 項目名の差し替え (見た目の異変用)。キーは項目キー (docs/design.md §4.1)。正常な問題には無い。 */
   labelOverrides?: Record<string, string>;
   /** null = 正常。 */
   anomaly: Anomaly | null;
@@ -380,6 +385,7 @@ export interface Problem {
 - `src/data/problems/<easy|hard>/<id>.json`: 1 問 1 ファイル、中身は `Problem` そのもの。ファイル名 = `id`、置き場 = `difficulty`。この対応は検証器が確かめる
 - `src/data/index.ts` が `import.meta.glob(..., { eager: true })` で全件を取り込み、難易度ごとのプールにする。60 問程度では、試作の測定 (資料束 1 問が gzip で約 2.6 KiB。docs/plans/tech-assessment.md §2) から約 160 KiB で、初回 1 MB の予算に収まる。超えそうなら、難易度ごとの遅延読み込みに切り替える (データの形は変わらない)
 - 問題を足すときは JSON を足すだけ。画面・状態遷移・出題のコードは触らない (原則「保守性」)
+- **プールが満たす条件** (出題 §5.3 が必ず引けるための、データの側の約束。検証器が全件に当てる): 難易度ごとに、**異変のある問題と異変の無い問題の両方を持つ会社が `ROUNDS_TO_CLEAR` (8) 社以上**ある。問題数 25 以上 (要件) に加えてこの条件を、問題の制作 (Task #25・#26) の受け入れ条件にする
 - 会社 (`companies.json`) と異変の種類 (`anomaly-kinds.json`) は別ファイルで、問題から ID で参照する。名前の衝突確認 (実在の企業名と同じでないこと) は会社の設定 (Task #24) の責務
 
 ### 4.4 答え合わせの作り方
@@ -389,11 +395,11 @@ export interface Problem {
 | 遊び手の答え | `anomaly` | 結果 |
 | --- | --- | --- |
 | 異変あり | あり | 正解。`places` の場所を強調し、`explanation` と、種類の名前 (`anomaly-kinds.json` の `name`) を示す |
-| 異変あり | `null` | 不正解。「この資料に異変は無かった」と示す |
+| 異変あり | `null` | 不正解。異変が無かったことを示す (固定の文言は `ui/messages.ts`) |
 | 異変なし | `null` | 正解 |
 | 異変なし | あり | 不正解。`places` を強調し、`explanation` を示す |
 
-受け入れ条件 4 (異変のあった問題は場所と内容を示す) は、正解でも不正解でも同じ表示になる。文言を作る場所は `explanation` だけで、`answer.ts` が文言を足さない。
+受け入れ条件 4 (異変のあった問題は場所と内容を示す) は、正解でも不正解でも同じ表示になる。問題に依る文言を作る場所は `explanation` だけで、`answer.ts` は文言を持たず、判定の結果 (正解か・強調する場所・`explanation`・種類の名前) を返すだけ。問題に依らない固定の文言 (「異変は無かった」など) は `ui/messages.ts` の 1 か所に置く。
 
 ## 5. 画面の遷移の骨組み
 
@@ -433,9 +439,9 @@ export interface Problem {
 ### 5.3 出題 (`domain/draw.ts`)
 
 - 1 回のプレイで 8 問。**会社は重複させない**。同じ問題も出さない
-- 各枠で、異変あり・なしを独立に確率 `anomalyRatio` で決め、その中から引く。ちょうど 4 問ずつにはしない (数えれば当てられるのを避ける)
-- 乱数は引数 `rng: () => number` で受ける (テストで固定できる)。本番は `Math.random`
-- プールが足りないとき (難易度のプールに会社が 8 社に満たないなど) はエラーにする。黙って重複させない
+- 手順: ① 難易度のプールから、**異変のある問題と無い問題の両方を持つ会社** (§4.3 の条件) を 8 社、重複なしで無作為に選ぶ ② 各社 (各枠) で、異変ありにするかを独立に確率 `anomalyRatio` で決める ③ その会社の、決めた側の問題から 1 問を引く。先に会社を選んでから あり/なし を決めるので、最後の枠で候補が尽きることがない。ちょうど 4 問ずつにはしない (数えれば当てられるのを避ける)
+- プールが条件を満たさない (両面の会社が 8 社に満たない) ときはエラーにする。黙って重複させない。この条件は検証器が全件で確かめるので、公開した版でこのエラーが起きない (§7)
+- **乱数と再現**: 乱数は引数 `rng: () => number` で受ける。本番は URL の `?seed=N` があれば `domain/rng.ts` の種つきの乱数 (mulberry32、種 N)、無ければ `Math.random`。種を使うときは、1 回目の出題が種 N、`RESTART` のたびに N+1、N+2、…。E2E は同じ関数 (`draw`) と同じ種で出題を再現して正解を知り、画面の問題はルート要素の `data-problem-id` で突き合わせる。`?seed=` は公開版にも残る (遊び手が同じ出題を再現できるだけで、害は無い)
 
 ## 6. ゲームの設定値
 
@@ -445,6 +451,7 @@ export interface Problem {
 | --- | --- | --- |
 | `ROUNDS_TO_CLEAR` | 8 | 要件「8 社連続」 |
 | `MIN_POOL_PER_DIFFICULTY` | 25 | 要件「25 問以上」 |
+| `DIST_BUDGET_BYTES` | 1,000,000 | 方針「初回 1 MB 未満」(gzip の合計で数える) |
 | `anomalyRatio` | 0.5 | **仮の既定** (要件に比率の指定は無い。ビジネス側が Task #28 で確定する。値を変えても他は変わらない) |
 
 ## 7. テストの置き場
@@ -454,21 +461,23 @@ export interface Problem {
 | 種類 | 置き場 | 道具 | 何を確かめるか |
 | --- | --- | --- | --- |
 | 単体 | 対象の隣の `src/**/*.test.ts` | Vitest | 純粋な関数: 状態遷移・出題・判定・整形・型と設計書の一致 |
-| 足場 | `src/scaffold.test.ts` | Vitest | `vercel.json`・`LICENSE`・依存・`.gitignore` の約束 (Sub-task #37) |
-| 問題データ | `src/data/problems.test.ts` | Vitest + 検証器 (`src/verifier/`) | 全問: 型の形・正常な問題は会計の整合をすべて満たす・異変の問題は指定した規則だけが破れる・ファイル名と `id`・置き場と `difficulty`・会社と異変の種類への参照・難易度ごとの問題数 |
+| 足場 | `src/scaffold.test.ts` | Vitest | `vercel.json`・`LICENSE`・依存・`.gitignore`・予算確認スクリプトの約束 (Sub-task #37) |
+| 問題データ | `src/data/problems.test.ts` | Vitest + 検証器 (`src/verifier/`) | 全問: 型の形・正常な問題は会計の整合をすべて満たす・異変の問題は指定した規則だけが破れる・ファイル名と `id`・置き場と `difficulty`・会社と異変の種類への参照・難易度ごとの問題数と「両面の会社が 8 社以上」(§4.3)・`labelOverrides` のキーがすべて `labels.ts` の項目キーにあり、値が標準と違う・`anomaly.places` の `path` が実在する値を指す・**正常な問題の見出しの社名・期・単位、セグメント名が `companies.json` と `fiscalYear` と一致する**・正常な問題に `labelOverrides` が無い |
 | E2E | `e2e/*.spec.ts` | Playwright | 受け入れ条件 1〜4・9 を 1 本ずつ + スマホ幅 375 px で 1 本。ビルドした成果物 (`vite preview`) に対して回す |
 
 - E2E の projects は、デスクトップ (1280×800) とスマホ (375 px 幅)。Chrome を既定にし、Safari (WebKit)・Firefox は公開の Task (#30) の通しで確かめる (対応ブラウザは方針)
 - 受け入れ条件 5・6・8 (問題の数・異変の段・実在の名前が無いこと) は、問題データのテストが受け持つ。E2E には載せない
 - E2E は **外部への通信が無い**ことも確かめる (ページの全リクエストが同じ生成元)。方針の「外部への通信をしない静的サイト」
-- CI (`.github/workflows/ci.yml`) は、`npm ci` → 型検査 → 単体テスト → ビルド、と、別の job で E2E を回す。どちらも PR と main への push で動く
+- E2E は、`vercel.json` のセキュリティヘッダ (CSP) を、`vite.config.ts` が同じファイルから読んで `preview.headers` に当てた状態で回す。ヘッダの出所は `vercel.json` の 1 か所で、公開した版と同じ CSP の下で画面が動くことを CI が確かめる (`setAttribute('style', …)` や style 属性つきの HTML 文字列で描くと、ここで落ちる)
+- E2E の出題は、`?seed=N` で固定して再現する (§5.3)
+- CI (`.github/workflows/ci.yml`) は、job 1: `npm ci` → 型検査 → 単体テスト → ビルド → `npm run check:size` (dist の予算、§8)、job 2: E2E。どちらも PR と main への push で動く
 
 ## 8. 品質の予算と守り
 
 | 項目 | 値・守りかた | 出所 |
 | --- | --- | --- |
-| 初回の読み込み | 1 MB 未満 (ビルド後の `dist` の転送量で確かめる。足場の単体テストに入れる) | 方針 |
-| 外部への通信 | 無し。`vercel.json` の `Content-Security-Policy` を `default-src 'self'` にして、ブラウザにも守らせる | 方針の「セキュリティ」・失敗 3 |
+| 初回の読み込み | 1 MB 未満。ビルド後の `dist` の全ファイルを gzip した長さの合計が `DIST_BUDGET_BYTES` (1,000,000 B) 未満であることを、`npm run check:size` (`scripts/check-dist-size.mjs`) が確かめる。ビルドのあとに回す (CI の job 1 のビルドの次)。スクリプトの振る舞いは、足場の単体テストが一時ディレクトリで確かめる (予算内で成功・超過で失敗) | 方針 |
+| 外部への通信 | 無し。`vercel.json` の `Content-Security-Policy` を `default-src 'self'` にして、ブラウザにも守らせる。E2E も同じヘッダの下で回す (§7) | 方針の「セキュリティ」・失敗 3 |
 | 秘密 | 環境変数・鍵を使わない。`.gitignore` に `.env*`。CI は `contents: read` の権限だけ | 方針・要件 |
 | 実在の名前 | 会社の設定のテストで、実在の企業名 (一覧は持たない。確認の Sub-task の記録に従う) との衝突を確かめる。画面に出る社名・人名は `companies.json` だけが出所 | 要件・失敗 3 |
 
