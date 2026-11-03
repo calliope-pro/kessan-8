@@ -38,3 +38,4 @@ CI は実際に GitHub 上で回して確かめるのが本物の確認なので
 - **G1**: PR #45 で job「型検査・単体テスト・ビルド」(15 秒)・「E2E (Playwright)」(33 秒) がどちらも成功 (`gh pr checks 45`)。
 - **G2**: 成功した run のログに、`tsc --noEmit`・`Test Files 4 passed / Tests 29 passed`・`✓ built`・`dist: 3 ファイル、gzip 後の合計 927 B (予算 1000000 B 未満)`・E2E `12 passed` が出る。
 - **G3**: 捨てるブランチ (calliope/ci-probe、PR #46) で `vercel.json` の出力先を確かめるテストの期待を `out` に変えて push → job「型検査・単体テスト・ビルド」が失敗 (E2E は成功)。確認後に PR を閉じ、ブランチを消した。壊した commit は main にも foundation にも入っていない。
+- **#49**: C3 を `npm test` の次に `npm run verify:data` が来る順に直した (レッド: ci.yml が旧順で C3 が赤 → `ci.yml` に足して緑)。PR #79 で job「型検査・単体テスト・ビルド」(19 秒)・「E2E (Playwright)」(51 秒) がどちらも成功し、ログに `npm run verify:data` の実行が出る (`src/data: 0 問を検証`、数が足りない警告 4 件、終了コード 0)。
