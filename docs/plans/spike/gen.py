@@ -176,7 +176,8 @@ def generate(seed, plausible_drivers=True, attempt=0):
         "自己資本当期純利益率": pct(parent * 2, eq0 + eq1),
         "1株当たり純資産": rh(eq1 * 100000, sh) / 100,
         "年間配当金": dps,
-        "配当性向": pct(div, parent) if parent > 0 else None,
+        # JPX 作成要領 (2026 年 7 月版) p.27: 配当性向(連結) = 1 株当たり個別配当金(合計) ÷ 1 株当たり連結当期純利益 × 100。分母が負なら「-」
+        "配当性向": (rh(dps * 100000, rh(parent * 100000, sh)) / 10) if rh(parent * 100000, sh) > 0 else None,
     }
     return {
         "会社": f"架空商事{seed:05d}株式会社", "単位": "百万円", "期中平均株式数(千株)": sh,

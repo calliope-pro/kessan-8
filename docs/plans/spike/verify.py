@@ -91,7 +91,7 @@ def hard_rules(d):
     eps = sm["1株当たり当期純利益"]
     add("別経路-EPS×株数=純利益", rh(hund(eps) * sh, 100000) == parent)
     add("別経路-BPS×株数=自己資本", rh(hund(sm["1株当たり純資産"]) * sh, 100000) == sm["自己資本"])
-    add("別経路-配当性向=1株配当/EPS", sm["配当性向"] is None or eps <= 0
+    add("比率-配当性向(作成要領 p.27: 1株配当÷EPS)", sm["配当性向"] is None or eps <= 0
         or tenths(sm["配当性向"]) == rh(sm["年間配当金"] * 100 * 1000, hund(eps)))
     add("比率-売上高増減率", tenths(sm["売上高増減率"]) == rh((p1["売上高"] - p0["売上高"]) * 1000, p0["売上高"]))
     add("比率-営業利益増減率", tenths(sm["営業利益増減率"]) == growth(p1["営業利益"], p0["営業利益"]))
@@ -101,7 +101,6 @@ def hard_rules(d):
     add("比率-自己資本比率", tenths(sm["自己資本比率"]) == rh(eq1 * 1000, b1["資産合計"]))
     add("比率-ROE", tenths(sm["自己資本当期純利益率"]) == rh(parent * 2000, eq0 + eq1))
     add("比率-BPS", hund(sm["1株当たり純資産"]) == rh(eq1 * 100000, sh))
-    add("比率-配当性向", tenths(sm["配当性向"]) == (rh(div * 1000, parent) if parent > 0 else None))
     add("比率-配当金総額", div == rh(sm["年間配当金"] * sh, 1000))
     return R
 
@@ -122,6 +121,10 @@ def soft_rules(d):
     add("S-実効税率 25〜40%", p1["税金等調整前当期純利益"] <= 0 or 25 <= p1["法人税等"] / p1["税金等調整前当期純利益"] * 100 <= 40)
     add("S-営業CF/営業利益 0.3〜3", p1["営業利益"] > 0 and 0.3 <= cf["営業活動によるキャッシュ・フロー"] / p1["営業利益"] <= 3)
     add("S-現金が売上の 3〜40%", 0.03 <= b1["現金及び預金"] / p1["売上高"] <= 0.40)
+    div_total = -cf["配当金の支払額"]
+    parent = p1["親会社株主に帰属する当期純利益"]
+    add("S-配当性向 別経路(配当金総額÷純利益)が表示と一致", sm["配当性向"] is None or parent <= 0
+        or tenths(sm["配当性向"]) == rh(div_total * 1000, parent))
     add("S-配当性向 100% 以下", sm["配当性向"] is None or sm["配当性向"] <= 100)
     add("S-増減率が全部表示できる", all(sm[k] is not None for k in
         ("売上高増減率", "営業利益増減率", "経常利益増減率", "親会社株主に帰属する当期純利益増減率")))
