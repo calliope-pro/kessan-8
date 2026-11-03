@@ -94,9 +94,9 @@
 
 - **画面に出る数字は、すべて問題データの数値**。比率・増減率・合計も、表示用に計算せず、データに値として持つ。理由: 異変は「計算が合わない」ことそのものなので、表示のたびに計算し直すと異変が消える。正常な問題で値が合っていることは、検証器 (Task #23) が全件に当てて確かめる (方針の失敗 1)
 - **異変のある問題は、正常な資料の数字を 1 か所以上差し替えた資料**。何を差し替えたか (場所) と、なぜ異変か (文言) を `anomaly` に書く。`anomaly` が `null` なら正常
-- **場所は `path` で指す**。`path` は資料の中の位置で、先頭が画面の ID、あとはデータの入れ子のキーを `.` でつないだもの (例: `incomeStatement.current.ordinaryIncome`、配列の要素は添字: `segments.items.0.netSales.current`)。画面は `<doc>.<path>` (例: `tanshin.incomeStatement.current.ordinaryIncome`) を、該当のセルの `data-path` に持たせる。答え合わせで強調する場所と、データの異変の場所が、同じ文字列で結ばれる (方針の失敗 2)
+- **場所は `path` で指す**。`path` は資料の中の位置で、先頭が画面の ID、あとはデータの入れ子のキーを `.` でつないだもの (例: `incomeStatement.current.ordinaryIncome`、配列の要素は添字: `segments.items.0.netSales.current`)。画面は `<doc>.<path>` (例: `tanshin.incomeStatement.current.ordinaryIncome`) を、該当のセルの `data-path` に、項目名を出す要素には項目キーを `data-item-key` に持たせる。答え合わせで強調する場所と、データの異変の場所が、同じ文字列で結ばれる (方針の失敗 2)
 - **見出しの場所**: 社名・期・単位は、どの画面の下にも無い資料の見出し (`header`) で、`header.companyName`・`header.periodLabel`・`header.unit` と書く。見出しはその資料のすべての画面の上部に出る。答え合わせで「その場所の画面へ移る」ときは、`header` で始まる場所は、その資料の 1 画面目へ移って、そこの見出しを強調する (`domain/answer.ts` の `screenOf(place)`)
-- **項目キー (itemKey)**: 項目名は「行」に付き、`path` は「値」を指すので、行の名前を指すキーを 1 つの文法で決める。`path` から、`previous`・`current` の段を取り除き、末尾が `changeRate`・`amount` ならそれも取り除いた残りを、資料の種類を頭に付けて項目キーとする。例: `tanshin.incomeStatement.current.ordinaryIncome` → `tanshin.incomeStatement.ordinaryIncome`、`tanshin.summary.ordinaryIncome.changeRate` → `tanshin.summary.ordinaryIncome`、`ir.segments.items.0.netSales.current` → `ir.segments.items.0.netSales`。短信のサマリーと損益計算書の経常利益は別の項目キーで、別の表示名を持てる。この変換は `domain/labels.ts` の関数 `itemKey(doc, path)` だけが行い、`labels.ts` の表示名の表と `labelOverrides` のキーは、どちらも項目キー
+- **項目キー (itemKey)**: 項目名は「行」に付き、`path` は「値」を指すので、行の名前を指すキーを 1 つの文法で決める。`path` から、`previous`・`current`・`forecast`・`actual` の段 (期・予実の列) を取り除き、末尾が `changeRate`・`amount` ならそれも取り除いた残りを、資料の種類を頭に付けて項目キーとする。例: `tanshin.incomeStatement.current.ordinaryIncome` → `tanshin.incomeStatement.ordinaryIncome`、`tanshin.summary.ordinaryIncome.changeRate` → `tanshin.summary.ordinaryIncome`、`ir.segments.items.0.netSales.current` → `ir.segments.items.0.netSales`、`ir.outlook.forecast.netSales` と `ir.outlook.actual.netSales` → どちらも `ir.outlook.netSales` (予想と実績は同じ行の別の列)。短信のサマリーと損益計算書の経常利益は別の項目キーで、別の表示名を持てる。この変換は `domain/labels.ts` の関数 `itemKey(doc, path)` だけが行い、`labels.ts` の表示名の表と `labelOverrides` のキーは、どちらも項目キー
 - **単位**: 金額は百万円 (百万円未満切捨ての整数)、比率は % (小数第一位)、1 株当たりは円。符号は数値の符号で持ち、表示 (△) は 1 つの整形関数 (`ui/format.ts`) だけが決める
 - **見た目の異変**は、資料の見出し (`header`) の文字列と、項目名の差し替え (`labelOverrides`、キーは項目キー) で表す。項目名の標準は `domain/labels.ts` にあり、正常な問題には `labelOverrides` が無い
 - **同じ事実を 2 か所に書かないもの**: 異変の段は `AnomalyKind.stage` だけが持つ (`Anomaly` には書かない。段は `kind` から引く)。複製が避けられないもの (見出しの社名 = `Company.name`、セグメント名 = `Company.segmentNames`、期の表記 = `fiscalYear` と決算期末の月から作る表記) は、異変のために別の値を入れられる形にしてあるので、**正常な問題では一致することを検証器が確かめる**
@@ -441,7 +441,7 @@ export interface Problem {
 - 1 回のプレイで 8 問。**会社は重複させない**。同じ問題も出さない
 - 手順: ① 難易度のプールから、**異変のある問題と無い問題の両方を持つ会社** (§4.3 の条件) を 8 社、重複なしで無作為に選ぶ ② 各社 (各枠) で、異変ありにするかを独立に確率 `anomalyRatio` で決める ③ その会社の、決めた側の問題から 1 問を引く。先に会社を選んでから あり/なし を決めるので、最後の枠で候補が尽きることがない。ちょうど 4 問ずつにはしない (数えれば当てられるのを避ける)
 - プールが条件を満たさない (両面の会社が 8 社に満たない) ときはエラーにする。黙って重複させない。この条件は検証器が全件で確かめるので、公開した版でこのエラーが起きない (§7)
-- **乱数と再現**: 乱数は引数 `rng: () => number` で受ける。本番は URL の `?seed=N` があれば `domain/rng.ts` の種つきの乱数 (mulberry32、種 N)、無ければ `Math.random`。種を使うときは、1 回目の出題が種 N、`RESTART` のたびに N+1、N+2、…。E2E は同じ関数 (`draw`) と同じ種で出題を再現して正解を知り、画面の問題はルート要素の `data-problem-id` で突き合わせる。`?seed=` は公開版にも残る (遊び手が同じ出題を再現できるだけで、害は無い)
+- **乱数と再現**: 乱数は引数 `rng: () => number` で受ける。本番は URL の `?seed=N` があれば `domain/rng.ts` の種つきの乱数 (mulberry32、種 N)、無ければ `Math.random`。種を使うときは、1 回目の出題が種 N、`RESTART` のたびに N+1、N+2、…。種は出題を固定するためだけに使う。E2E は出題を再現せず、画面のルート要素の `data-problem-id` から問題の JSON を読んで正解を知る (§7)。`?seed=` は公開版にも残る (遊び手が同じ出題を再現できるだけで、害は無い)
 
 ## 6. ゲームの設定値
 
@@ -451,7 +451,6 @@ export interface Problem {
 | --- | --- | --- |
 | `ROUNDS_TO_CLEAR` | 8 | 要件「8 社連続」 |
 | `MIN_POOL_PER_DIFFICULTY` | 25 | 要件「25 問以上」 |
-| `DIST_BUDGET_BYTES` | 1,000,000 | 方針「初回 1 MB 未満」(gzip の合計で数える) |
 | `anomalyRatio` | 0.5 | **仮の既定** (要件に比率の指定は無い。ビジネス側が Task #28 で確定する。値を変えても他は変わらない) |
 
 ## 7. テストの置き場
@@ -469,14 +468,15 @@ export interface Problem {
 - 受け入れ条件 5・6・8 (問題の数・異変の段・実在の名前が無いこと) は、問題データのテストが受け持つ。E2E には載せない
 - E2E は **外部への通信が無い**ことも確かめる (ページの全リクエストが同じ生成元)。方針の「外部への通信をしない静的サイト」
 - E2E は、`vercel.json` のセキュリティヘッダ (CSP) を、`vite.config.ts` が同じファイルから読んで `preview.headers` に当てた状態で回す。ヘッダの出所は `vercel.json` の 1 か所で、公開した版と同じ CSP の下で画面が動くことを CI が確かめる (`setAttribute('style', …)` や style 属性つきの HTML 文字列で描くと、ここで落ちる)
-- E2E の出題は、`?seed=N` で固定して再現する (§5.3)
+- E2E の出題は `?seed=N` で固定する。正解は、表示中の問題の `data-problem-id` から `src/data/problems/<難易度>/<id>.json` を `fs` で読んで知る (Playwright のテストは Vite を通らないので、`import.meta.glob` のプールを使わず、プールの並び順にも頼らない。§5.3)
+- 項目名の差し替えが画面に出ることは、`labels.ts` の項目キーのすべてが、どこかの画面の `data-item-key` に出ることを E2E (または `ui/` の単体テスト) で確かめる。キーの表にあっても画面に出ないキーがあると、差し替えが無効になる (Task #27・#28 の受け入れ条件)
 - CI (`.github/workflows/ci.yml`) は、job 1: `npm ci` → 型検査 → 単体テスト → ビルド → `npm run check:size` (dist の予算、§8)、job 2: E2E。どちらも PR と main への push で動く
 
 ## 8. 品質の予算と守り
 
 | 項目 | 値・守りかた | 出所 |
 | --- | --- | --- |
-| 初回の読み込み | 1 MB 未満。ビルド後の `dist` の全ファイルを gzip した長さの合計が `DIST_BUDGET_BYTES` (1,000,000 B) 未満であることを、`npm run check:size` (`scripts/check-dist-size.mjs`) が確かめる。ビルドのあとに回す (CI の job 1 のビルドの次)。スクリプトの振る舞いは、足場の単体テストが一時ディレクトリで確かめる (予算内で成功・超過で失敗) | 方針 |
+| 初回の読み込み | 1 MB 未満。ビルド後の `dist` の全ファイルを gzip した長さの合計が 1,000,000 B 未満であることを、`npm run check:size` (`scripts/check-dist-size.mjs`) が確かめる。予算の値はこのスクリプトの 1 か所だけが持つ (素の Node で動かすため、TypeScript の `config.ts` からは読まない)。Node の版は `package.json` の `engines` (`>=22.12`) と CI (`node-version: 22`) で決める。ビルドのあとに回す (CI の job 1 のビルドの次)。スクリプトの振る舞いは、足場の単体テストが一時ディレクトリで確かめる (予算内で成功・超過で失敗) | 方針 |
 | 外部への通信 | 無し。`vercel.json` の `Content-Security-Policy` を `default-src 'self'` にして、ブラウザにも守らせる。E2E も同じヘッダの下で回す (§7) | 方針の「セキュリティ」・失敗 3 |
 | 秘密 | 環境変数・鍵を使わない。`.gitignore` に `.env*`。CI は `contents: read` の権限だけ | 方針・要件 |
 | 実在の名前 | 会社の設定のテストで、実在の企業名 (一覧は持たない。確認の Sub-task の記録に従う) との衝突を確かめる。画面に出る社名・人名は `companies.json` だけが出所 | 要件・失敗 3 |
