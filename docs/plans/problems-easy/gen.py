@@ -14,7 +14,7 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from profiles import BASE_YEAR, COMPANIES, PROFILES  # noqa: E402
+from profiles import BASE_YEAR, PROFILES  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 NONE_TEXT = '該当事項はありません。'
@@ -464,10 +464,11 @@ def simulate(co, years, knobs_by_year):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=None)
+    ap.add_argument('--companies', default='src/data/companies.json', help='会社の設定 (docs/plans/companies.md の 10 社)')
     ap.add_argument('--base-out', default=None, help='異変の問題の土台 (要素なしの正常) を書く場所。コミットしない')
     args = ap.parse_args()
     spec = json.load(open(os.path.join(HERE, 'spec.json'), encoding='utf-8'))
-    companies = COMPANIES
+    companies = {c['id']: c for c in json.load(open(args.companies, encoding='utf-8'))}
     states, built = {}, {}
     for cid in sorted({p['company'] for p in spec['problems']} | {spec['sample']['company']}):
         co = Co(cid, companies)

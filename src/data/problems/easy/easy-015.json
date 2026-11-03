@@ -192,12 +192,12 @@
     "previous": {
      "segments": [
       {
-       "name": "医療用医薬品",
+       "name": "医療用医薬品事業",
        "netSales": 27720,
        "profit": 3460
       },
       {
-       "name": "一般用医薬品",
+       "name": "一般用医薬品事業",
        "netSales": 14280,
        "profit": 1300
       }
@@ -209,12 +209,12 @@
     "current": {
      "segments": [
       {
-       "name": "医療用医薬品",
+       "name": "医療用医薬品事業",
        "netSales": 29360,
        "profit": 3780
       },
       {
-       "name": "一般用医薬品",
+       "name": "一般用医薬品事業",
        "netSales": 15120,
        "profit": 1410
       }
@@ -295,7 +295,7 @@
   "segments": {
    "items": [
     {
-     "name": "医療用医薬品",
+     "name": "医療用医薬品事業",
      "netSales": {
       "previous": 277.2,
       "current": 293.6,
@@ -309,7 +309,7 @@
      "salesShare": 66.0
     },
     {
-     "name": "一般用医薬品",
+     "name": "一般用医薬品事業",
      "netSales": {
       "previous": 142.8,
       "current": 151.2,

@@ -192,17 +192,17 @@
     "previous": {
      "segments": [
       {
-       "name": "建築",
+       "name": "建築事業",
        "netSales": 42660,
        "profit": 1930
       },
       {
-       "name": "土木",
+       "name": "土木事業",
        "netSales": 36020,
        "profit": 1470
       },
       {
-       "name": "開発",
+       "name": "開発事業",
        "netSales": 16110,
        "profit": 1240
       }
@@ -214,17 +214,17 @@
     "current": {
      "segments": [
       {
-       "name": "建築",
+       "name": "建築事業",
        "netSales": 42970,
        "profit": 2020
       },
       {
-       "name": "土木",
+       "name": "土木事業",
        "netSales": 36290,
        "profit": 1540
       },
       {
-       "name": "開発",
+       "name": "開発事業",
        "netSales": 16230,
        "profit": 1300
       }
@@ -305,7 +305,7 @@
   "segments": {
    "items": [
     {
-     "name": "建築",
+     "name": "建築事業",
      "netSales": {
       "previous": 426.6,
       "current": 429.7,
@@ -319,7 +319,7 @@
      "salesShare": 45.0
     },
     {
-     "name": "土木",
+     "name": "土木事業",
      "netSales": {
       "previous": 360.2,
       "current": 362.9,
@@ -333,7 +333,7 @@
      "salesShare": 38.0
     },
     {
-     "name": "開発",
+     "name": "開発事業",
      "netSales": {
       "previous": 161.1,
       "current": 162.3,

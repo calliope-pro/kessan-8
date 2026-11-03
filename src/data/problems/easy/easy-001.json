@@ -192,17 +192,17 @@
     "previous": {
      "segments": [
       {
-       "name": "装置",
+       "name": "装置事業",
        "netSales": 20378,
        "profit": 2073
       },
       {
-       "name": "部品",
+       "name": "部品事業",
        "netSales": 11115,
        "profit": 925
       },
       {
-       "name": "保守サービス",
+       "name": "保守サービス事業",
        "netSales": 5558,
        "profit": 411
       }
@@ -214,17 +214,17 @@
     "current": {
      "segments": [
       {
-       "name": "装置",
+       "name": "装置事業",
        "netSales": 20824,
        "profit": 2266
       },
       {
-       "name": "部品",
+       "name": "部品事業",
        "netSales": 11359,
        "profit": 1011
       },
       {
-       "name": "保守サービス",
+       "name": "保守サービス事業",
        "netSales": 5679,
        "profit": 449
       }
@@ -305,7 +305,7 @@
   "segments": {
    "items": [
     {
-     "name": "装置",
+     "name": "装置事業",
      "netSales": {
       "previous": 20378,
       "current": 20824,
@@ -319,7 +319,7 @@
      "salesShare": 55.0
     },
     {
-     "name": "部品",
+     "name": "部品事業",
      "netSales": {
       "previous": 11115,
       "current": 11359,
@@ -333,7 +333,7 @@
      "salesShare": 30.0
     },
     {
-     "name": "保守サービス",
+     "name": "保守サービス事業",
      "netSales": {
       "previous": 5558,
       "current": 5679,

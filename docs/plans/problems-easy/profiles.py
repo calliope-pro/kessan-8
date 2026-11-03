@@ -1,20 +1,6 @@
 # -*- coding: utf-8 -*-
 """会社ごとの数字の方針 (docs/plans/problems-easy.md §3)。companies.md の §5.1・§5.2 の目安を、整合の規則 (検証器) を満たす範囲の係数にしたもの。
-数字は架空で、実在の会社・同業の平均ではない。"""
-
-# 会社の設定 (docs/plans/companies.md §4・§5)。src/data/companies.json (別の PR) が入ったら、gen.py はそちらを読む。
-COMPANIES = {
-    'c01': dict(name='ミオトリ精機株式会社', securitiesCode='0801', industry='精密機器', segmentNames=['装置', '部品', '保守サービス'], fiscalYearEndMonth=3, irUnit='百万円', emblem='◆', main='#1F4E79', light='#E6EEF5', business='工場向けの位置決め装置と部品を作り、保守サービスも手がける会社'),
-    'c02': dict(name='クレセラ食品株式会社', securitiesCode='0802', industry='食料品', segmentNames=['家庭用', '業務用'], fiscalYearEndMonth=3, irUnit='百万円', emblem='●', main='#A8431A', light='#F8EBE5', business='冷凍の惣菜や乳製品を、家庭用と業務用に作って売る会社'),
-    'c03': dict(name='ソルベリマート株式会社', securitiesCode='0803', industry='小売業', segmentNames=['食品小売', '衣料・生活雑貨', 'テナント・金融'], fiscalYearEndMonth=2, irUnit='億円', emblem='■', main='#0B6E4F', light='#E4F1EC', business='食品や衣料、生活雑貨の店を運営し、テナントへの貸出も行う会社'),
-    'c04': dict(name='ゼノメアシステムズ株式会社', securitiesCode='0804', industry='情報・通信業', segmentNames=['クラウド', '受託開発'], fiscalYearEndMonth=9, irUnit='百万円', emblem='▲', main='#5B3FA8', light='#EEEAF7', business='企業向けの業務ソフトをクラウドで提供し、受託開発も行う会社'),
-    'c05': dict(name='ブルネラ製薬株式会社', securitiesCode='0805', industry='医薬品', segmentNames=['医療用医薬品', '一般用医薬品'], fiscalYearEndMonth=12, irUnit='億円', emblem='✚', main='#A3243B', light='#F7E7EA', business='病院で使う医療用医薬品と、薬局で買える一般用医薬品を作る会社'),
-    'c06': dict(name='トラウネ建設株式会社', securitiesCode='0806', industry='建設業', segmentNames=['建築', '土木', '開発'], fiscalYearEndMonth=3, irUnit='億円', emblem='⬢', main='#7A4B00', light='#F3EBDD', business='建築と土木の工事を請け負い、開発事業も行う会社'),
-    'c07': dict(name='ザルツァ運輸株式会社', securitiesCode='0807', industry='陸運業', segmentNames=['貨物輸送', '倉庫・センター運営'], fiscalYearEndMonth=6, irUnit='百万円', emblem='◐', main='#12687A', light='#E3F0F2', business='トラックで荷物を運ぶ貨物輸送と、倉庫・物流センターの運営を行う会社'),
-    'c08': dict(name='セレニア不動産株式会社', securitiesCode='0808', industry='不動産業', segmentNames=['賃貸', '分譲', '管理'], fiscalYearEndMonth=12, irUnit='億円', emblem='◇', main='#3D4A5C', light='#E7EAEE', business='オフィスビルや住宅の賃貸と分譲を行い、管理も請け負う会社'),
-    'c09': dict(name='キュルネ教育株式会社', securitiesCode='0809', industry='サービス業', segmentNames=['学習塾', '通信講座'], fiscalYearEndMonth=3, irUnit='百万円', emblem='★', main='#A12B7C', light='#F6E6F0', business='学習塾を運営し、自宅で学べる通信講座も提供する会社'),
-    'c10': dict(name='ヨクトス商事株式会社', securitiesCode='0810', industry='卸売業', segmentNames=['機械・資材', '食品原料', '化成品'], fiscalYearEndMonth=3, irUnit='億円', emblem='▼', main='#5C6B1E', light='#EDF0E2', business='機械・資材、食品原料、化成品を国内外で仕入れて販売する会社'),
-}
+数字は架空で、実在の会社・同業の平均ではない。会社の設定 (社名・セグメント名など) は src/data/companies.json が正本で、ここには持たない。"""
 
 # 数字の係数。sales0 = 基準年の売上高 (百万円)、gm = 売上総利益率、om = 営業利益率、eq = 自己資本比率、
 # rec/inv/pay = 売上債権・棚卸資産・仕入債務の回転日数 (売上債権は売上高、棚卸資産と仕入債務は売上原価に対して)、

@@ -192,17 +192,17 @@
     "previous": {
      "segments": [
       {
-       "name": "賃貸",
+       "name": "賃貸事業",
        "netSales": 14120,
        "profit": 2840
       },
       {
-       "name": "分譲",
+       "name": "分譲事業",
        "netSales": 8470,
        "profit": 1480
       },
       {
-       "name": "管理",
+       "name": "管理事業",
        "netSales": 5640,
        "profit": 690
       }
@@ -214,17 +214,17 @@
     "current": {
      "segments": [
       {
-       "name": "賃貸",
+       "name": "賃貸事業",
        "netSales": 14840,
        "profit": 3030
       },
       {
-       "name": "分譲",
+       "name": "分譲事業",
        "netSales": 8900,
        "profit": 1580
       },
       {
-       "name": "管理",
+       "name": "管理事業",
        "netSales": 5930,
        "profit": 730
       }
@@ -305,7 +305,7 @@
   "segments": {
    "items": [
     {
-     "name": "賃貸",
+     "name": "賃貸事業",
      "netSales": {
       "previous": 141.2,
       "current": 148.4,
@@ -319,7 +319,7 @@
      "salesShare": 50.0
     },
     {
-     "name": "分譲",
+     "name": "分譲事業",
      "netSales": {
       "previous": 84.7,
       "current": 89.0,
@@ -333,7 +333,7 @@
      "salesShare": 30.0
     },
     {
-     "name": "管理",
+     "name": "管理事業",
      "netSales": {
       "previous": 56.4,
       "current": 59.3,

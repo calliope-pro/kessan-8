@@ -192,12 +192,12 @@
     "previous": {
      "segments": [
       {
-       "name": "家庭用",
+       "name": "家庭用事業",
        "netSales": 13640,
        "profit": 590
       },
       {
-       "name": "業務用",
+       "name": "業務用事業",
        "netSales": 8360,
        "profit": 362
       }
@@ -209,12 +209,12 @@
     "current": {
      "segments": [
       {
-       "name": "家庭用",
+       "name": "家庭用事業",
        "netSales": 13417,
        "profit": 609
       },
       {
-       "name": "業務用",
+       "name": "業務用事業",
        "netSales": 8223,
        "profit": 373
       }
@@ -295,7 +295,7 @@
   "segments": {
    "items": [
     {
-     "name": "家庭用",
+     "name": "家庭用事業",
      "netSales": {
       "previous": 13640,
       "current": 13417,
@@ -309,7 +309,7 @@
      "salesShare": 62.0
     },
     {
-     "name": "業務用",
+     "name": "業務用事業",
      "netSales": {
       "previous": 8360,
       "current": 8223,

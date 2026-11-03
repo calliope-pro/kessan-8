@@ -192,17 +192,17 @@
     "previous": {
      "segments": [
       {
-       "name": "機械・資材",
+       "name": "機械・資材事業",
        "netSales": 97780,
        "profit": 1960
       },
       {
-       "name": "食品原料",
+       "name": "食品原料事業",
        "netSales": 61110,
        "profit": 1630
       },
       {
-       "name": "化成品",
+       "name": "化成品事業",
        "netSales": 44810,
        "profit": 990
       }
@@ -214,17 +214,17 @@
     "current": {
      "segments": [
       {
-       "name": "機械・資材",
+       "name": "機械・資材事業",
        "netSales": 100460,
        "profit": 1840
       },
       {
-       "name": "食品原料",
+       "name": "食品原料事業",
        "netSales": 62790,
        "profit": 1540
       },
       {
-       "name": "化成品",
+       "name": "化成品事業",
        "netSales": 46040,
        "profit": 940
       }
@@ -305,7 +305,7 @@
   "segments": {
    "items": [
     {
-     "name": "機械・資材",
+     "name": "機械・資材事業",
      "netSales": {
       "previous": 977.8,
       "current": 1004.6,
@@ -319,7 +319,7 @@
      "salesShare": 48.0
     },
     {
-     "name": "食品原料",
+     "name": "食品原料事業",
      "netSales": {
       "previous": 611.1,
       "current": 627.9,
@@ -333,7 +333,7 @@
      "salesShare": 30.0
     },
     {
-     "name": "化成品",
+     "name": "化成品事業",
      "netSales": {
       "previous": 448.1,
       "current": 460.4,

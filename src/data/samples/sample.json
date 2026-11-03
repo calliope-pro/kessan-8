@@ -192,12 +192,12 @@
      "previous": {
       "segments": [
        {
-        "name": "学習塾",
+        "name": "学習塾事業",
         "netSales": 5472,
         "profit": 451
        },
        {
-        "name": "通信講座",
+        "name": "通信講座事業",
         "netSales": 2128,
         "profit": 175
        }
@@ -209,12 +209,12 @@
      "current": {
       "segments": [
        {
-        "name": "学習塾",
+        "name": "学習塾事業",
         "netSales": 5665,
         "profit": 485
        },
        {
-        "name": "通信講座",
+        "name": "通信講座事業",
         "netSales": 2203,
         "profit": 189
        }
@@ -295,7 +295,7 @@
    "segments": {
     "items": [
      {
-      "name": "学習塾",
+      "name": "学習塾事業",
       "netSales": {
        "previous": 5472,
        "current": 5665,
@@ -309,7 +309,7 @@
       "salesShare": 72.0
      },
      {
-      "name": "通信講座",
+      "name": "通信講座事業",
       "netSales": {
        "previous": 2128,
        "current": 2203,
