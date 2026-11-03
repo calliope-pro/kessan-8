@@ -81,10 +81,11 @@ for (const width of [320, 375, 414]) {
     await page.getByRole('button', { name: '飛ばす' }).click();
     await page.getByRole('button', { name: '資料を開く' }).click();
     await noHorizontalOverflow(page, width); // 閲覧
-    for (const name of [/サマリー/, /貸借/, /損益/, /CF|キャッシュ/, /注記/]) {
-      const tab = page.getByRole('tab', { name }).first();
-      if (await tab.count()) {
-        await tab.click();
+    // 本物のビューアの 10 画面 (決算短信 5・IR スライド 5) を、資料の切替とタブで全部開く
+    for (const doc of ['決算短信', 'IR スライド']) {
+      await page.getByRole('tab', { name: doc, exact: true }).click();
+      for (const name of doc === '決算短信' ? ['サマリー', '貸借', '損益', 'CF', '注記'] : ['要点', '業績', '事業別', '見通し', '補足']) {
+        await page.getByRole('tab', { name, exact: true }).click();
         await noHorizontalOverflow(page, width);
       }
     }
