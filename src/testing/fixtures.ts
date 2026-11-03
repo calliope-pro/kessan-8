@@ -1,6 +1,6 @@
 // 試験用の問題・会社・異変の種類 (遊びの流れの確かめ用。会計の整合は保証しない)。本番のバンドルには入れない。
 import type { AnomalyKind, Company, Difficulty, Problem } from '../domain/types';
-import base from './base-problem.json';
+import base from '../domain/fixtures/normal.problem.json';
 
 export type Tier = 1 | 2 | 3;
 

@@ -1,6 +1,6 @@
 // 印と異変の場所の照合 (R3。experience.md §3.4・SC5-7)。
 // 印のキー: 数字・文のセル = `<doc>.<path>` (data-path と同じ)、行の名前 = `<doc>.item:<itemKey>` (src/ui/viewer-port.ts)。
-import { itemKey } from './item-key';
+import { itemKey } from './labels';
 import type { AnomalyPlace } from './types';
 
 export interface MarkMatch {

@@ -1,6 +1,6 @@
 // UA11 (docs/test-cases/flow.md §1.3): 行のキー (項目キー。docs/design.md §4.1)
 import { describe, expect, it } from 'vitest';
-import { itemKey } from './item-key';
+import { itemKey } from './labels';
 
 describe('項目キー itemKey', () => {
   it('UA11: 期・予実の段と、末尾の changeRate・amount を除き、資料の種類を頭に付ける', () => {

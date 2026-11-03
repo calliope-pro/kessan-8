@@ -73,7 +73,6 @@
 │  │  ├─ screen.ts          #   ScreenRef (資料束の 1 画面。保存する状態の型。ui/viewer-port.ts は再エクスポート)
 │  │  ├─ pool.ts            #   問題の一覧 → 難易度ごとのプールと ID の引き出し (src/data/index.ts の純粋な部分)
 │  │  ├─ sample.ts          #   見本の型 (§4.3)
-│  │  ├─ item-key.ts        #   項目キー itemKey(doc, path) (§4.1。labels.ts ができたらそちらへ寄せる)
 │  │  ├─ marks.ts           #   印と異変の場所の照合 (R3)
 │  │  ├─ storage.ts         #   保存先の最小の形と、例外を出さない読み書き
 │  │  ├─ session.ts         #   走行 (状態の全体) の保存・読み出し (§5.4)
