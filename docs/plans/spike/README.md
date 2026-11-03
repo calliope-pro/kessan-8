@@ -10,6 +10,7 @@
 | IR スライドが短信と整合するか (#14) | `python3 check_ir.py` | hand-q01-measure.md |
 | 問題データの転送量 (#11・#14) | `python3 transfer.py` | ../tech-assessment.md §2 #4 |
 | スマホ幅の表示 (#11) | 下 | ../tech-assessment.md §2 #3 |
+| 組のセッションの usage (#15) | `python3 usage.py ...` (下) | ../tech-assessment.md §2 #7 |
 
 ## スマホ幅の測定
 
@@ -32,6 +33,17 @@ curl -sS -o sakusei.pdf -w '%{http_code} %{size_download}\n' \
 
 テキストの取り出しは pypdf (標準ライブラリ外。ここでは p.22〜28 の読み取りだけに使った)。pdftotext・pdftoppm は入っていなかった。
 
-## Task の ID の対応 (#13)
+## 前提にした plan-comparison / estimate.py の版と、Task の ID の対応 (#13・#15)
 
-plan-comparison.md と estimate.py は、決定の ID (D-P2 など) とぶつからないように、案 C の生成の Task を G1〜G11 から S1〜S11 に、結合テストと包括レビューを Q1・Q2 から F1・F2 に変えた。`tech-assessment.md` と各測定の md は、変える前の ID (G5〜G10・G3・G4 など) で書いてある。対応は G → S (たとえば G10 = S10 = 生成の規則と異変の規則の一次資料での確認)。`reversal.py` は新しい ID に直した (出力は変わらない)。
+`reversal.py` は `docs/plans/estimate.py` の Task の ID を引く。案 C の生成の Task の ID は、ブランチ calliope/biz-plan の今の版 (feda44e 以降) では S1〜S11 (結合テスト・包括レビューは F1・F2)、#8 を切った時点の版 (f91b62a) では G1〜G11 (Q1・Q2)。**`reversal.py` は #15 で、どちらの版の estimate.py でも動くようにした** (`P = 'S' if 'S5' in E.PLANS['C'] else 'G'` で前置を選ぶ)。確かめた: (1) tech-spike の estimate.py (G*) と (2) `git archive origin/calliope/biz-plan docs` の estimate.py (S*。9e3f792 で確認) のどちらでも終了コード 0 で、出力は ID の表記を除いて同一。(2) では biz-plan 自身の reversal.py の出力と 1 字も違わない。本文 (`../tech-assessment.md` §3.2) の数字 (案 B 119.2 h・境目 t < 0.126 など) が出る。
+
+plan-comparison.md と estimate.py は、決定の ID (D-P2 など) とぶつからないように、案 C の生成の Task を G1〜G11 から S1〜S11 に、結合テストと包括レビューを Q1・Q2 から F1・F2 に、open-decisions の Q1 (確認の水準) を D-Q1 に変えた。対応は G → S (たとえば G10 = S10 = 生成の規則と異変の規則の一次資料での確認)。`tech-assessment.md` と `gen-measure.md` は #15 で今の ID (S*・F*・D-Q1) に直した。
+
+## 組のセッションの記録から usage を測る (#15)
+
+```sh
+python3 usage.py ~/.claude/projects/<このワークツリーの名前>/ <進める役のファイルの先頭 8 文字> <監視役のファイルの先頭 8 文字> \
+  "名前,2026-11-03T13:22:22Z,2026-11-03T14:09:10Z" ...   # 区間は UTC
+```
+
+assistant の usage を message.id ごとに 1 回だけ合計する (plan-comparison §3.5 と同じ方法)。会話の本文は読まない。区間ごとに合計できる点が、biz-plan の `docs/plans/usage.py` (セッション全体の合計) と違う。結果は `../tech-assessment.md` §2 #7。

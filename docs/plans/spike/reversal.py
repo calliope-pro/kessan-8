@@ -12,8 +12,11 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import estimate as E  # noqa: E402
 
+# 案 C の生成の Task の ID の前置: biz-plan の今の版は S* (S5〜S11)、f91b62a までの版は G*。どちらの estimate.py でも動かす (#15)
+P = 'S' if 'S5' in E.PLANS['C'] else 'G'
+
 MAKE = {'A': ['A4', 'A5', 'A6', 'A7'], 'B': ['B5', 'B6', 'B7', 'B8'], 'C': []}   # 問題制作 (手書き)
-GEN = {'A': [], 'B': [], 'C': ['S5', 'S6', 'S7', 'S8', 'S9']}                      # 生成まわり
+GEN = {'A': [], 'B': [], 'C': [P + str(i) for i in (5, 6, 7, 8, 9)]}                      # 生成まわり
 
 
 def total(plan, s=1.0, t=1.0, override=None):
@@ -78,10 +81,10 @@ if __name__ == '__main__':
     print(f'  C − B = {c0 - b0:+.1f} h  (案 C {c0:.1f} − 案 B {b0:.1f})')
     k = E.K
     T = E.PLANS
-    parts = [('S3 − B3 (会社の設定と衝突の確認)', T['C']['S3'][2] * k - T['B']['B3'][2] * k),
-             ('S4 − B4 (問題テンプレートの設計)', T['C']['S4'][2] * k - T['B']['B4'][2] * k),
-             ('S10 − B9 (一次資料での確認)', T['C']['S10'][2] * k - T['B']['B9'][2] * k),
-             ('S11 − B10 (スマホでの資料間の表示)', T['C']['S11'][2] * k - T['B']['B10'][2] * k),
+    parts = [('S3 − B3 (会社の設定と衝突の確認)', T['C'][P + '3'][2] * k - T['B']['B3'][2] * k),
+             ('S4 − B4 (問題テンプレートの設計)', T['C'][P + '4'][2] * k - T['B']['B4'][2] * k),
+             ('S10 − B9 (一次資料での確認)', T['C'][P + '10'][2] * k - T['B']['B9'][2] * k),
+             ('S11 − B10 (スマホでの資料間の表示)', T['C'][P + '11'][2] * k - T['B']['B10'][2] * k),
              ('Task の包括レビュー (C は B より 1 件多い)', E.REVIEW_PER_TASK * (len(T['C']) - 2 - (len(T['B']) - 2)))]
     for n, v in parts:
         print(f'    {n:<34} {v:+6.1f}')
@@ -89,6 +92,6 @@ if __name__ == '__main__':
     print('\n    s=0.10・t=0.015 のまま S10 の実装時間だけを動かす (B9 = 30 問 × 0.4 h = 12 h):')
     b = total('B', s=0.10)[0]
     for g10 in (8, 12, 16):
-        c = total('C', t=0.015, override={'S10': g10})[0]
+        c = total('C', t=0.015, override={P + '10': g10})[0]
         print(f'    S10 = {g10:>2} h  案C {c:6.1f}  案B {b:6.1f}  C − B {c - b:+5.1f}')
     print('\n    資料束 1 問の単価が何 h を超えると B が C を超えるか (t=1): s > 1.41 → 1.41 h/問。資料束の測った上限 0.103 h (6 分 9 秒) との比 =', round(1.41 / (369 / 3600), 1), '倍')
