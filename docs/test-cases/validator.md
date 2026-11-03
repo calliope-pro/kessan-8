@@ -428,6 +428,8 @@ N2 の運用: 問題データが揃ったら、CI の `npm run verify:data` を 
 | D32 | 見本がプールの問題と同じ会社 × 期 | `sample-overlaps-pool` (見本が出題に混ざって「見本だから正常」と当たるのを防ぐ) |
 | D33 | `problem` が無い / `notes` が文字列の record でない / 問題の形の誤り | `sample-shape` |
 | D34 | 見本の会社が一覧に無い / 見本の id がプールの id と同じ | `unknown-company` / `duplicate-id` |
+| D35 | 見本に `labelOverrides` (同じ部の別の科目名)・`unitOverrides` (header と同じ値)・`signOverrides` (△) | `override-on-normal` (正常な問題と同じ。#86 レビュー 1 回目 B1) |
+| D36 | 見本の `notes` のキーが画面の ID でない (打ち間違い) / 画面の ID | 前者は `sample-shape`、後者は通る (#86 N1。全画面の注釈は求めない) |
 | L12 | `samples/sample.json` が正常 / hard を破る | 前者は終了コード 0 で出力に「見本 1 件」、後者は 1 で見本のファイルのパスと規則 ID |
 | L13 | `samples/` が無い | 0 件として扱う (出力に「見本 0 件」) |
 

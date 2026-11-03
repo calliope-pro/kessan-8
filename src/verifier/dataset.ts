@@ -1,6 +1,6 @@
 // データ全件の検証 (ケース表 §2.8)。errors = 致命、shortfalls = 数が足りない (完成の段階で効く)、soft = 参考の規則。
 import { ANOMALY_RATIO, ANOMALY_RATIO_TOLERANCE, FAMILY_SHARE_MIN, MIN_POOL_PER_DIFFICULTY, ROUNDS_TO_CLEAR } from '../domain/config.ts';
-import { FAMILY_DIFFICULTY } from '../domain/types.ts';
+import { FAMILY_DIFFICULTY, IR_SLIDES, TANSHIN_SCREENS } from '../domain/types.ts';
 import type { AnomalyKind, Company, Difficulty, Problem } from '../domain/types.ts';
 import { anomalyIssues } from './anomaly.ts';
 import { verifyIrDisplay, verifyProblem } from './index.ts';
@@ -116,6 +116,10 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     else {
       const notes = record.notes;
       if (typeof notes !== 'object' || notes === null || Array.isArray(notes) || Object.values(notes).some((v) => typeof v !== 'string')) sampleErrors.push('notes: 文字列の record でない');
+      else {
+        const screens: readonly string[] = [...TANSHIN_SCREENS, ...IR_SLIDES];
+        for (const key of Object.keys(notes)) if (!screens.includes(key)) sampleErrors.push(`notes: ${key} は画面の ID でない`);
+      }
       sampleErrors.push(...shapeErrors(record.problem).map((m) => `problem ${m}`));
     }
     if (sampleErrors.length > 0) {
@@ -132,8 +136,10 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
       add('unknown-company', `会社 ${p.companyId} が一覧に無い`);
       continue;
     }
-    for (const v of verify(p, company).hard) add('hard-violation', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
+    const result = verify(p, company);
+    for (const v of result.hard) add('hard-violation', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
     for (const v of verifyIrDisplay(p, company)) add('ir-display-mismatch', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
+    for (const issue of anomalyIssues(p, kinds, result)) add(issue.code, issue.message);
     sampleCount++;
   }
 

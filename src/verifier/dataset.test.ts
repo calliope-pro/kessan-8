@@ -258,6 +258,23 @@ describe('verifyDataset', () => {
       expect(codes(verifyDataset(withSample({ problem: broken, notes: {} })))).toContain('sample-shape');
     });
 
+    it('D35: 見本に見た目の差し替え (同じ部の別の科目名・単位が header と同じ・記号が △) がある → override-on-normal (正常な問題と同じ)', () => {
+      const g = goodSample();
+      for (const [key, over] of [
+        ['labelOverrides', { 'tanshin.balanceSheet.receivables': '棚卸資産' }],
+        ['unitOverrides', { 'tanshin.balanceSheet': '百万円' }],
+        ['signOverrides', { 'tanshin.cashFlow.capex': '△' }],
+      ] as const) {
+        expect(codes(verifyDataset(withSample({ ...g, problem: { ...g.problem, [key]: over } }))), key).toContain('override-on-normal');
+      }
+    });
+
+    it('D36: 見本の notes のキーが画面の ID でない (打ち間違い) → sample-shape。画面の ID なら通る', () => {
+      const g = goodSample();
+      expect(codes(verifyDataset(withSample({ ...g, notes: { incomeStatment: '注釈' } })))).toContain('sample-shape');
+      expect(verifyDataset(withSample({ ...g, notes: { incomeStatement: '注釈', highlights: '注釈' } })).errors).toEqual([]);
+    });
+
     it('D34: 見本の会社が一覧に無い → unknown-company。見本の id がプールの id と同じ → duplicate-id', () => {
       const p = normalVariant('sample', 'easy', 'nobody');
       expect(codes(verifyDataset(withSample({ problem: p, notes: {} })))).toContain('unknown-company');
