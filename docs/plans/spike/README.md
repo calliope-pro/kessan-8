@@ -46,4 +46,6 @@ python3 usage.py ~/.claude/projects/<このワークツリーの名前>/ <進め
   "名前,2026-11-03T13:22:22Z,2026-11-03T14:09:10Z" ...   # 区間は UTC
 ```
 
+tech-assessment.md §2 #7 の区間 (UTC): Task #8 全体 13:22:22Z〜14:09:10Z、#10 13:25:58Z〜13:39:45Z、#11 13:39:45Z〜13:47:23Z、#14 13:56:41Z〜14:08:35Z。進める役のファイルは dbf3d823、監視役は 85525aca (先頭 8 文字)。
+
 assistant の usage を message.id ごとに 1 回だけ合計する (plan-comparison §3.5 と同じ方法)。会話の本文は読まない。区間ごとに合計できる点が、biz-plan の `docs/plans/usage.py` (セッション全体の合計) と違う。結果は `../tech-assessment.md` §2 #7。
