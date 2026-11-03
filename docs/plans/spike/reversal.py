@@ -16,8 +16,11 @@ MAKE = {'A': ['A4', 'A5', 'A6', 'A7'], 'B': ['B5', 'B6', 'B7', 'B8'], 'C': []}  
 GEN = {'A': [], 'B': [], 'C': ['G5', 'G6', 'G7', 'G8', 'G9']}                      # 生成まわり
 
 
-def total(plan, s=1.0, t=1.0):
+def total(plan, s=1.0, t=1.0, override=None):
     tasks = copy.deepcopy(E.PLANS[plan])
+    for i, h in (override or {}).items():  # 実装時間 h を直接置き換える (感度用)
+        lab, st, _, deps, kind = tasks[i]
+        tasks[i] = (lab, st, h, deps, kind)
     for i in MAKE[plan]:
         lab, st, h, deps, kind = tasks[i]
         tasks[i] = (lab, st, h * s, deps, kind)
@@ -68,3 +71,24 @@ if __name__ == '__main__':
             a, b, c = total('A', s=s), total('B', s=s), total('C', t=t)
             print(f'  K={K:<3} {lab:<14} 案A {a[0]:6.1f}/{a[1]:5.1f}  案B {b[0]:6.1f}/{b[1]:5.1f}  案C {c[0]:6.1f}/{c[1]:5.1f}  C-B {c[0] - b[0]:+6.1f}')
     E.K = 1.5
+
+    # ---- (5) C − B の分解と、一次資料の確認 (G10 / B9) の感度 (#11 のレビュー 1 回目の指摘 B1 を受けて) ----
+    print('\n(5) s=t=0 に近づけたときの C − B (測っていない項目の仮定の差だけが残る)。K=1.5')
+    c0, b0 = total('C', t=0.0)[0], total('B', s=0.0)[0]
+    print(f'  C − B = {c0 - b0:+.1f} h  (案 C {c0:.1f} − 案 B {b0:.1f})')
+    k = E.K
+    T = E.PLANS
+    parts = [('G3 − B3 (会社の設定と衝突の確認)', T['C']['G3'][2] * k - T['B']['B3'][2] * k),
+             ('G4 − B4 (問題テンプレートの設計)', T['C']['G4'][2] * k - T['B']['B4'][2] * k),
+             ('G10 − B9 (一次資料での確認)', T['C']['G10'][2] * k - T['B']['B9'][2] * k),
+             ('G11 − B10 (スマホでの資料間の表示)', T['C']['G11'][2] * k - T['B']['B10'][2] * k),
+             ('Task の包括レビュー (C は B より 1 件多い)', E.REVIEW_PER_TASK * (len(T['C']) - 2 - (len(T['B']) - 2)))]
+    for n, v in parts:
+        print(f'    {n:<34} {v:+6.1f}')
+    print(f'    合計 {sum(v for _, v in parts):+.1f}  (G1/G2/B1/B2 と共通の基盤は同じなので 0)')
+    print('\n    s=0.09・t=0.015 のまま G10 の実装時間だけを動かす (B9 = 30 問 × 0.4 h = 12 h):')
+    b = total('B', s=0.09)[0]
+    for g10 in (8, 12, 16):
+        c = total('C', t=0.015, override={'G10': g10})[0]
+        print(f'    G10 = {g10:>2} h  案C {c:6.1f}  案B {b:6.1f}  C − B {c - b:+5.1f}')
+    print('\n    資料束 1 問の単価が何 h を超えると B が C を超えるか (t=1): s > 1.41 → 1.41 h/問。短信側の上限 0.043 h を引いた IR 側の余裕 =', round(1.41 - 154 / 3600, 2), 'h')
