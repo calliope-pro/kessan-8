@@ -19,6 +19,24 @@ function jobs(): Record<string, string> {
   return result;
 }
 
+/** ファイル全体の `permissions:` の下の権限の行を、job の中のものも含めてすべて集める。 */
+function permissionLines(text: string): string[] {
+  const lines = text.split('\n');
+  const found: string[] = [];
+  lines.forEach((line, i) => {
+    const m = /^(\s*)permissions:\s*(.*)$/.exec(line);
+    if (!m) return;
+    if (m[2]) found.push(`inline:${m[2]}`); // `permissions: write-all` のような 1 行の書き方は、そのまま権限として数える
+    const indent = (m[1] ?? '').length;
+    for (const next of lines.slice(i + 1)) {
+      if (next.trim() === '') continue;
+      if (next.length - next.trimStart().length <= indent) break;
+      found.push(next.trim());
+    }
+  });
+  return found;
+}
+
 const indexOfAll = (text: string, needles: string[]) => needles.map((n) => text.indexOf(n));
 
 describe('.github/workflows/ci.yml', () => {
@@ -28,8 +46,9 @@ describe('.github/workflows/ci.yml', () => {
     expect(yml).not.toContain('pull_request_target');
   });
 
-  it('C2: 権限は contents: read だけ。secrets を参照しない', () => {
-    expect(yml).toMatch(/^permissions:\s*\n\s+contents: read\s*$/m);
+  it('C2: 権限は contents: read だけ (job の中の permissions も含め、ファイル全体で)。secrets を参照しない', () => {
+    expect(yml).toMatch(/^permissions:/m); // 最上位で明示する
+    expect(permissionLines(yml)).toEqual(['contents: read']);
     expect(yml).not.toContain('secrets.');
   });
 
@@ -61,7 +80,7 @@ describe('.github/workflows/ci.yml', () => {
     expect(e2e).toContain('playwright-report');
   });
 
-  it('C7: uses はすべて版を固定している', () => {
+  it('C7: uses はすべて版の参照を持つ (@main・@master・版なしは使わない。メジャー版の中の更新は受け入れる: 権限が読み取りだけで秘密が無いため)', () => {
     const uses = [...yml.matchAll(/^\s*-?\s*uses:\s*(\S+)/gm)].map((m) => m[1] ?? '');
     expect(uses.length).toBeGreaterThan(0);
     for (const u of uses) expect(u, u).toMatch(/@(v\d+(\.\d+){0,2}|[0-9a-f]{40})$/);

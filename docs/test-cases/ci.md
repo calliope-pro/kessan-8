@@ -9,12 +9,12 @@ CI は実際に GitHub 上で回して確かめるのが本物の確認なので
 | ID | 入力・操作 | 期待する観測結果 | 観点 |
 | --- | --- | --- | --- |
 | C1 | `ci.yml` の `on:` | `pull_request` と、`push` の `branches: [main]` がある。`pull_request_target` は無い | 正常 + セキュリティ (フォークの PR に秘密を渡さない) |
-| C2 | 権限 | 最上位に `permissions:` があり `contents: read` だけ。`secrets.` の参照が無い | セキュリティ (設計 §8) |
+| C2 | 権限 | 最上位に `permissions:` がある。ファイル全体 (job の中の `permissions:` も含む) の権限の行が `contents: read` の 1 つだけ (`id-token: write` の追加・job への `contents: write`・`permissions: write-all` で赤)。`secrets.` の参照が無い | セキュリティ (設計 §8) |
 | C3 | job `check` の手順の並び | `npm ci` → `npm run typecheck` → `npm test` → `npm run build` → `npm run check:size` の順に出る | 状態遷移 (順序。設計 §7) |
 | C4 | Node の設定 | `actions/setup-node` を使い、`node-version: 22` と `cache: npm` がある (`package.json` の `engines` と整合) | 正常 |
 | C5 | job `e2e` の手順 | `npx playwright install --with-deps chromium` が `npm run test:e2e` より前にある。`check` とは別の job | 状態遷移 |
 | C6 | job `e2e` の失敗時 | `if: failure()` (または `if: ${{ !cancelled() }}`) の手順で、`playwright-report` を `actions/upload-artifact` に上げる | 異常系 (失敗の原因を後から見られる) |
-| C7 | `uses:` の全行 | 版の参照が付いている (`@main`・`@master`・版なしは無い) | セキュリティ (動く版が勝手に変わらない) |
+| C7 | `uses:` の全行 | 版の参照が付いている (`@main`・`@master`・版なしは無い)。メジャーのタグ (`@v7`) はメジャー版の中で付け替わる。それは受け入れる: 権限が読み取りだけで秘密が無いので、乗っ取られた action ができるのは CI を落とす・騙すことまで | セキュリティ (版の参照を必須にする。完全な固定ではない) |
 | C8 | 各 job | `timeout-minutes` がある。ワークフローに `concurrency` があり、`cancel-in-progress: true` | 異常系 (固まった job が枠を食わない) |
 | C9 | `ci.yml` が参照する npm スクリプト | `package.json` の `scripts` にすべて存在する (`typecheck`・`test`・`build`・`check:size`・`test:e2e`) | 同値 (設定と実体のずれ) |
 
