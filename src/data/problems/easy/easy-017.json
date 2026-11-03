@@ -1,0 +1,442 @@
+{
+ "id": "easy-017",
+ "difficulty": "easy",
+ "companyId": "c06",
+ "fiscalYear": 2024,
+ "tier": 1,
+ "tanshin": {
+  "header": {
+   "companyName": "トラウネ建設株式会社",
+   "securitiesCode": "0806",
+   "periodLabel": "2024年3月期",
+   "unit": "百万円"
+  },
+  "summary": {
+   "netSales": {
+    "current": 95490,
+    "previous": 94790,
+    "changeRate": 0.7
+   },
+   "operatingIncome": {
+    "current": 4720,
+    "previous": 4500,
+    "changeRate": 4.9
+   },
+   "ordinaryIncome": {
+    "current": 4700,
+    "previous": 4470,
+    "changeRate": 5.1
+   },
+   "netIncomeParent": {
+    "current": 3240,
+    "previous": 3080,
+    "changeRate": 5.2
+   },
+   "operatingMargin": 4.9,
+   "roe": 14.9,
+   "eps": 81.0,
+   "totalAssets": 57680,
+   "netAssets": 22840,
+   "equity": 22840,
+   "equityRatio": 39.6,
+   "bps": 571.0,
+   "annualDividend": 24,
+   "interimDividend": 0,
+   "annualDividendPrevious": 23,
+   "interimDividendPrevious": 0,
+   "dividendTotal": 960,
+   "payoutRatio": 29.6,
+   "accountingPolicyChange": false,
+   "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+  },
+  "dates": {
+   "periodEnd": "2024-03-31",
+   "previousPeriodEnd": "2023-03-31",
+   "disclosure": "2024-05-15",
+   "shareholdersMeeting": "2024-06-27"
+  },
+  "columnDates": {
+   "balanceSheet": {
+    "previous": "2023-03-31",
+    "current": "2024-03-31"
+   },
+   "incomeStatement": {
+    "previous": "2023-03-31",
+    "current": "2024-03-31"
+   },
+   "cashFlow": {
+    "previous": "2023-03-31",
+    "current": "2024-03-31"
+   }
+  },
+  "balanceSheet": {
+   "previous": {
+    "cash": 8530,
+    "receivables": 28570,
+    "inventories": 3170,
+    "otherCurrentAssets": 1420,
+    "totalCurrentAssets": 41690,
+    "tangibleAssets": 9970,
+    "investments": 4590,
+    "totalFixedAssets": 14560,
+    "totalAssets": 56250,
+    "payables": 15840,
+    "shortTermDebt": 1620,
+    "incomeTaxesPayable": 700,
+    "otherCurrentLiabilities": 1900,
+    "totalCurrentLiabilities": 20060,
+    "longTermDebt": 15670,
+    "totalLiabilities": 35730,
+    "capitalStock": 2940,
+    "capitalSurplus": 2200,
+    "retainedEarnings": 15380,
+    "totalShareholdersEquity": 20520,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 20520,
+    "totalLiabilitiesAndNetAssets": 56250
+   },
+   "current": {
+    "cash": 9550,
+    "receivables": 28780,
+    "inventories": 3200,
+    "otherCurrentAssets": 1430,
+    "totalCurrentAssets": 42960,
+    "tangibleAssets": 10040,
+    "investments": 4680,
+    "totalFixedAssets": 14720,
+    "totalAssets": 57680,
+    "payables": 16010,
+    "shortTermDebt": 1620,
+    "incomeTaxesPayable": 730,
+    "otherCurrentLiabilities": 1910,
+    "totalCurrentLiabilities": 20270,
+    "longTermDebt": 14570,
+    "totalLiabilities": 34840,
+    "capitalStock": 2940,
+    "capitalSurplus": 2200,
+    "retainedEarnings": 17700,
+    "totalShareholdersEquity": 22840,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 22840,
+    "totalLiabilitiesAndNetAssets": 57680
+   }
+  },
+  "incomeStatement": {
+   "previous": {
+    "netSales": 94790,
+    "costOfSales": 82590,
+    "grossProfit": 12200,
+    "sga": 7700,
+    "operatingIncome": 4500,
+    "nonOperatingIncome": 190,
+    "nonOperatingExpenses": 220,
+    "ordinaryIncome": 4470,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 4470,
+    "incomeTaxes": 1390,
+    "netIncome": 3080,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 3080
+   },
+   "current": {
+    "netSales": 95490,
+    "costOfSales": 83480,
+    "grossProfit": 12010,
+    "sga": 7290,
+    "operatingIncome": 4720,
+    "nonOperatingIncome": 190,
+    "nonOperatingExpenses": 210,
+    "ordinaryIncome": 4700,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 4700,
+    "incomeTaxes": 1460,
+    "netIncome": 3240,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 3240
+   }
+  },
+  "cashFlow": {
+   "incomeBeforeTax": 4700,
+   "depreciation": 900,
+   "interestDividendIncome": -190,
+   "interestExpense": 210,
+   "receivablesChange": -210,
+   "inventoriesChange": -30,
+   "payablesChange": 170,
+   "otherAssetsChange": -10,
+   "otherLiabilitiesChange": 10,
+   "subtotal": 5550,
+   "interestDividendReceived": 190,
+   "interestPaid": -210,
+   "incomeTaxesPaid": -1430,
+   "operatingCashFlow": 4100,
+   "capex": -970,
+   "otherInvestingChange": -90,
+   "investingCashFlow": -1060,
+   "shortTermDebtChange": 0,
+   "longTermBorrowings": 0,
+   "longTermRepayments": -1100,
+   "dividendsPaid": -920,
+   "financingCashFlow": -2020,
+   "fxEffect": 0,
+   "netChangeInCash": 1020,
+   "cashBeginning": 8530,
+   "cashEnding": 9550
+  },
+  "notes": {
+   "goingConcern": "該当事項はありません。",
+   "cashScope": "現金及び預金",
+   "segments": {
+    "previous": {
+     "segments": [
+      {
+       "name": "建築",
+       "netSales": 42660,
+       "profit": 1930
+      },
+      {
+       "name": "土木",
+       "netSales": 36020,
+       "profit": 1470
+      },
+      {
+       "name": "開発",
+       "netSales": 16110,
+       "profit": 1240
+      }
+     ],
+     "adjustment": -140,
+     "consolidatedNetSales": 94790,
+     "consolidatedOperatingIncome": 4500
+    },
+    "current": {
+     "segments": [
+      {
+       "name": "建築",
+       "netSales": 42970,
+       "profit": 2020
+      },
+      {
+       "name": "土木",
+       "netSales": 36290,
+       "profit": 1540
+      },
+      {
+       "name": "開発",
+       "netSales": 16230,
+       "profit": 1300
+      }
+     ],
+     "adjustment": -140,
+     "consolidatedNetSales": 95490,
+     "consolidatedOperatingIncome": 4720
+    }
+   },
+   "averageSharesThousand": 40000,
+   "bps": 571.0,
+   "eps": 81.0,
+   "subsequentEvents": "該当事項はありません。",
+   "accountingPolicyNote": "該当事項はありません。"
+  }
+ },
+ "ir": {
+  "header": {
+   "companyName": "トラウネ建設株式会社",
+   "securitiesCode": "0806",
+   "periodLabel": "2024年3月期",
+   "unit": "億円"
+  },
+  "highlights": {
+   "netSales": {
+    "amount": 954.9,
+    "changeRate": 0.7
+   },
+   "operatingIncome": {
+    "amount": 47.2,
+    "changeRate": 4.9
+   },
+   "ordinaryIncome": {
+    "amount": 47.0,
+    "changeRate": 5.1
+   },
+   "netIncomeParent": {
+    "amount": 32.4,
+    "changeRate": 5.2
+   },
+   "annualDividend": 24,
+   "payoutRatio": 29.6
+  },
+  "results": {
+   "netSales": {
+    "previous": 947.9,
+    "current": 954.9
+   },
+   "grossProfit": {
+    "previous": 122.0,
+    "current": 120.1
+   },
+   "grossMargin": {
+    "previous": 12.9,
+    "current": 12.6
+   },
+   "operatingIncome": {
+    "previous": 45.0,
+    "current": 47.2
+   },
+   "operatingMargin": {
+    "previous": 4.7,
+    "current": 4.9
+   },
+   "chart": {
+    "netSales": {
+     "axisMin": 0,
+     "previous": 947.9,
+     "current": 954.9
+    },
+    "operatingIncome": {
+     "axisMin": 0,
+     "previous": 45.0,
+     "current": 47.2
+    }
+   }
+  },
+  "segments": {
+   "items": [
+    {
+     "name": "建築",
+     "netSales": {
+      "previous": 426.6,
+      "current": 429.7,
+      "changeRate": 0.7
+     },
+     "profit": {
+      "previous": 19.3,
+      "current": 20.2,
+      "changeRate": 4.7
+     },
+     "salesShare": 45.0
+    },
+    {
+     "name": "土木",
+     "netSales": {
+      "previous": 360.2,
+      "current": 362.9,
+      "changeRate": 0.7
+     },
+     "profit": {
+      "previous": 14.7,
+      "current": 15.4,
+      "changeRate": 4.8
+     },
+     "salesShare": 38.0
+    },
+    {
+     "name": "開発",
+     "netSales": {
+      "previous": 161.1,
+      "current": 162.3,
+      "changeRate": 0.7
+     },
+     "profit": {
+      "previous": 12.4,
+      "current": 13.0,
+      "changeRate": 4.8
+     },
+     "salesShare": 17.0
+    }
+   ],
+   "adjustment": {
+    "previous": -1.4,
+    "current": -1.4
+   },
+   "consolidatedOperatingIncome": {
+    "previous": 45.0,
+    "current": 47.2
+   }
+  },
+  "outlook": {
+   "forecast": {
+    "netSales": 982.7,
+    "netSalesChangeRate": 2.9,
+    "operatingIncome": 45.5,
+    "operatingIncomeChangeRate": -3.6,
+    "capex": 10.2,
+    "depreciation": 9.4,
+    "annualDividend": 24
+   },
+   "actual": {
+    "netSales": 954.9,
+    "operatingIncome": 47.2,
+    "capex": 9.7,
+    "depreciation": 9.0
+   },
+   "subsequentEvent": null
+  },
+  "supplement": {
+   "capex": {
+    "previous": null,
+    "current": 9.7
+   },
+   "depreciation": {
+    "previous": null,
+    "current": 9.0
+   },
+   "interestBearingDebt": {
+    "previous": 172.9,
+    "current": 161.9
+   },
+   "cash": {
+    "previous": 85.3,
+    "current": 95.5
+   },
+   "netDebt": {
+    "previous": 87.6,
+    "current": 66.4
+   },
+   "equityRatio": 39.6
+  },
+  "statements": [
+   {
+    "slide": "highlights",
+    "text": "売上高は前期比増加。営業利益は前期比増加。",
+    "claims": [
+     {
+      "metric": "netSales",
+      "direction": "up"
+     },
+     {
+      "metric": "operatingIncome",
+      "direction": "up"
+     }
+    ]
+   },
+   {
+    "slide": "outlook",
+    "text": "次期見通し: 増収減益。",
+    "claims": [
+     {
+      "metric": "forecastNetSales",
+      "direction": "up"
+     },
+     {
+      "metric": "forecastOperatingIncome",
+      "direction": "down"
+     }
+    ]
+   },
+   {
+    "slide": "supplement",
+    "text": "営業キャッシュ・フローは黒字。",
+    "claims": [
+     {
+      "metric": "operatingCashFlow",
+      "direction": "up"
+     }
+    ]
+   }
+  ]
+ },
+ "anomaly": null
+}

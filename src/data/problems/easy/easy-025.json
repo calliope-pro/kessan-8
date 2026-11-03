@@ -1,0 +1,442 @@
+{
+ "id": "easy-025",
+ "difficulty": "easy",
+ "companyId": "c10",
+ "fiscalYear": 2024,
+ "tier": 1,
+ "tanshin": {
+  "header": {
+   "companyName": "ヨクトス商事株式会社",
+   "securitiesCode": "0810",
+   "periodLabel": "2024年3月期",
+   "unit": "百万円"
+  },
+  "summary": {
+   "netSales": {
+    "current": 209290,
+    "previous": 203700,
+    "changeRate": 2.7
+   },
+   "operatingIncome": {
+    "current": 4190,
+    "previous": 4450,
+    "changeRate": -5.8
+   },
+   "ordinaryIncome": {
+    "current": 4040,
+    "previous": 4290,
+    "changeRate": -5.8
+   },
+   "netIncomeParent": {
+    "current": 2790,
+    "previous": 2960,
+    "changeRate": -5.7
+   },
+   "operatingMargin": 2.0,
+   "roe": 9.0,
+   "eps": 46.5,
+   "totalAssets": 102250,
+   "netAssets": 31880,
+   "equity": 31880,
+   "equityRatio": 31.2,
+   "bps": 531.33,
+   "annualDividend": 13,
+   "interimDividend": 0,
+   "annualDividendPrevious": 12,
+   "interimDividendPrevious": 0,
+   "dividendTotal": 780,
+   "payoutRatio": 28.0,
+   "accountingPolicyChange": false,
+   "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+  },
+  "dates": {
+   "periodEnd": "2024-03-31",
+   "previousPeriodEnd": "2023-03-31",
+   "disclosure": "2024-05-15",
+   "shareholdersMeeting": "2024-06-27"
+  },
+  "columnDates": {
+   "balanceSheet": {
+    "previous": "2023-03-31",
+    "current": "2024-03-31"
+   },
+   "incomeStatement": {
+    "previous": "2023-03-31",
+    "current": "2024-03-31"
+   },
+   "cashFlow": {
+    "previous": "2023-03-31",
+    "current": "2024-03-31"
+   }
+  },
+  "balanceSheet": {
+   "previous": {
+    "cash": 10180,
+    "receivables": 41860,
+    "inventories": 20550,
+    "otherCurrentAssets": 3060,
+    "totalCurrentAssets": 75650,
+    "tangibleAssets": 14100,
+    "investments": 10200,
+    "totalFixedAssets": 24300,
+    "totalAssets": 99950,
+    "payables": 28250,
+    "shortTermDebt": 2950,
+    "incomeTaxesPayable": 660,
+    "otherCurrentLiabilities": 3060,
+    "totalCurrentLiabilities": 34920,
+    "longTermDebt": 35220,
+    "totalLiabilities": 70140,
+    "capitalStock": 4400,
+    "capitalSurplus": 3300,
+    "retainedEarnings": 22110,
+    "totalShareholdersEquity": 29810,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 29810,
+    "totalLiabilitiesAndNetAssets": 99950
+   },
+   "current": {
+    "cash": 10460,
+    "receivables": 43000,
+    "inventories": 21050,
+    "otherCurrentAssets": 3140,
+    "totalCurrentAssets": 77650,
+    "tangibleAssets": 14200,
+    "investments": 10400,
+    "totalFixedAssets": 24600,
+    "totalAssets": 102250,
+    "payables": 28940,
+    "shortTermDebt": 2950,
+    "incomeTaxesPayable": 620,
+    "otherCurrentLiabilities": 3140,
+    "totalCurrentLiabilities": 35650,
+    "longTermDebt": 34720,
+    "totalLiabilities": 70370,
+    "capitalStock": 4400,
+    "capitalSurplus": 3300,
+    "retainedEarnings": 24180,
+    "totalShareholdersEquity": 31880,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 31880,
+    "totalLiabilitiesAndNetAssets": 102250
+   }
+  },
+  "incomeStatement": {
+   "previous": {
+    "netSales": 203700,
+    "costOfSales": 187510,
+    "grossProfit": 16190,
+    "sga": 11740,
+    "operatingIncome": 4450,
+    "nonOperatingIncome": 310,
+    "nonOperatingExpenses": 470,
+    "ordinaryIncome": 4290,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 4290,
+    "incomeTaxes": 1330,
+    "netIncome": 2960,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 2960
+   },
+   "current": {
+    "netSales": 209290,
+    "costOfSales": 192050,
+    "grossProfit": 17240,
+    "sga": 13050,
+    "operatingIncome": 4190,
+    "nonOperatingIncome": 310,
+    "nonOperatingExpenses": 460,
+    "ordinaryIncome": 4040,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 4040,
+    "incomeTaxes": 1250,
+    "netIncome": 2790,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 2790
+   }
+  },
+  "cashFlow": {
+   "incomeBeforeTax": 4040,
+   "depreciation": 1270,
+   "interestDividendIncome": -310,
+   "interestExpense": 460,
+   "receivablesChange": -1140,
+   "inventoriesChange": -500,
+   "payablesChange": 690,
+   "otherAssetsChange": -80,
+   "otherLiabilitiesChange": 80,
+   "subtotal": 4510,
+   "interestDividendReceived": 310,
+   "interestPaid": -460,
+   "incomeTaxesPaid": -1290,
+   "operatingCashFlow": 3070,
+   "capex": -1370,
+   "otherInvestingChange": -200,
+   "investingCashFlow": -1570,
+   "shortTermDebtChange": 0,
+   "longTermBorrowings": 1970,
+   "longTermRepayments": -2470,
+   "dividendsPaid": -720,
+   "financingCashFlow": -1220,
+   "fxEffect": 0,
+   "netChangeInCash": 280,
+   "cashBeginning": 10180,
+   "cashEnding": 10460
+  },
+  "notes": {
+   "goingConcern": "該当事項はありません。",
+   "cashScope": "現金及び預金",
+   "segments": {
+    "previous": {
+     "segments": [
+      {
+       "name": "機械・資材",
+       "netSales": 97780,
+       "profit": 1960
+      },
+      {
+       "name": "食品原料",
+       "netSales": 61110,
+       "profit": 1630
+      },
+      {
+       "name": "化成品",
+       "netSales": 44810,
+       "profit": 990
+      }
+     ],
+     "adjustment": -130,
+     "consolidatedNetSales": 203700,
+     "consolidatedOperatingIncome": 4450
+    },
+    "current": {
+     "segments": [
+      {
+       "name": "機械・資材",
+       "netSales": 100460,
+       "profit": 1840
+      },
+      {
+       "name": "食品原料",
+       "netSales": 62790,
+       "profit": 1540
+      },
+      {
+       "name": "化成品",
+       "netSales": 46040,
+       "profit": 940
+      }
+     ],
+     "adjustment": -130,
+     "consolidatedNetSales": 209290,
+     "consolidatedOperatingIncome": 4190
+    }
+   },
+   "averageSharesThousand": 60000,
+   "bps": 531.33,
+   "eps": 46.5,
+   "subsequentEvents": "該当事項はありません。",
+   "accountingPolicyNote": "該当事項はありません。"
+  }
+ },
+ "ir": {
+  "header": {
+   "companyName": "ヨクトス商事株式会社",
+   "securitiesCode": "0810",
+   "periodLabel": "2024年3月期",
+   "unit": "億円"
+  },
+  "highlights": {
+   "netSales": {
+    "amount": 2092.9,
+    "changeRate": 2.7
+   },
+   "operatingIncome": {
+    "amount": 41.9,
+    "changeRate": -5.8
+   },
+   "ordinaryIncome": {
+    "amount": 40.4,
+    "changeRate": -5.8
+   },
+   "netIncomeParent": {
+    "amount": 27.9,
+    "changeRate": -5.7
+   },
+   "annualDividend": 13,
+   "payoutRatio": 28.0
+  },
+  "results": {
+   "netSales": {
+    "previous": 2037.0,
+    "current": 2092.9
+   },
+   "grossProfit": {
+    "previous": 161.9,
+    "current": 172.4
+   },
+   "grossMargin": {
+    "previous": 7.9,
+    "current": 8.2
+   },
+   "operatingIncome": {
+    "previous": 44.5,
+    "current": 41.9
+   },
+   "operatingMargin": {
+    "previous": 2.2,
+    "current": 2.0
+   },
+   "chart": {
+    "netSales": {
+     "axisMin": 0,
+     "previous": 2037.0,
+     "current": 2092.9
+    },
+    "operatingIncome": {
+     "axisMin": 0,
+     "previous": 44.5,
+     "current": 41.9
+    }
+   }
+  },
+  "segments": {
+   "items": [
+    {
+     "name": "機械・資材",
+     "netSales": {
+      "previous": 977.8,
+      "current": 1004.6,
+      "changeRate": 2.7
+     },
+     "profit": {
+      "previous": 19.6,
+      "current": 18.4,
+      "changeRate": -6.1
+     },
+     "salesShare": 48.0
+    },
+    {
+     "name": "食品原料",
+     "netSales": {
+      "previous": 611.1,
+      "current": 627.9,
+      "changeRate": 2.7
+     },
+     "profit": {
+      "previous": 16.3,
+      "current": 15.4,
+      "changeRate": -5.5
+     },
+     "salesShare": 30.0
+    },
+    {
+     "name": "化成品",
+     "netSales": {
+      "previous": 448.1,
+      "current": 460.4,
+      "changeRate": 2.7
+     },
+     "profit": {
+      "previous": 9.9,
+      "current": 9.4,
+      "changeRate": -5.1
+     },
+     "salesShare": 22.0
+    }
+   ],
+   "adjustment": {
+    "previous": -1.3,
+    "current": -1.3
+   },
+   "consolidatedOperatingIncome": {
+    "previous": 44.5,
+    "current": 41.9
+   }
+  },
+  "outlook": {
+   "forecast": {
+    "netSales": 2181.0,
+    "netSalesChangeRate": 4.2,
+    "operatingIncome": 41.6,
+    "operatingIncomeChangeRate": -0.7,
+    "capex": 14.4,
+    "depreciation": 13.2,
+    "annualDividend": 13
+   },
+   "actual": {
+    "netSales": 2092.9,
+    "operatingIncome": 41.9,
+    "capex": 13.7,
+    "depreciation": 12.7
+   },
+   "subsequentEvent": null
+  },
+  "supplement": {
+   "capex": {
+    "previous": null,
+    "current": 13.7
+   },
+   "depreciation": {
+    "previous": null,
+    "current": 12.7
+   },
+   "interestBearingDebt": {
+    "previous": 381.7,
+    "current": 376.7
+   },
+   "cash": {
+    "previous": 101.8,
+    "current": 104.6
+   },
+   "netDebt": {
+    "previous": 279.9,
+    "current": 272.1
+   },
+   "equityRatio": 31.2
+  },
+  "statements": [
+   {
+    "slide": "highlights",
+    "text": "取扱高は前期比増加。営業利益は前期比減少。",
+    "claims": [
+     {
+      "metric": "netSales",
+      "direction": "up"
+     },
+     {
+      "metric": "operatingIncome",
+      "direction": "down"
+     }
+    ]
+   },
+   {
+    "slide": "outlook",
+    "text": "次期見通し: 増収減益。",
+    "claims": [
+     {
+      "metric": "forecastNetSales",
+      "direction": "up"
+     },
+     {
+      "metric": "forecastOperatingIncome",
+      "direction": "down"
+     }
+    ]
+   },
+   {
+    "slide": "supplement",
+    "text": "営業キャッシュ・フローは黒字。",
+    "claims": [
+     {
+      "metric": "operatingCashFlow",
+      "direction": "up"
+     }
+    ]
+   }
+  ]
+ },
+ "anomaly": null
+}
