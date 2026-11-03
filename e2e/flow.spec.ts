@@ -1,0 +1,412 @@
+// E1〜E28 (docs/test-cases/flow.md §2): 遊びの流れ。ビルドした成果物 (npm run build:e2e の試験用の問題) に対して回す。
+import { expect, test } from '@playwright/test';
+import { answer, answerLabel, app, judgeWith, nextCompany, noHorizontalOverflow, planOf, problemId, problemOf, seedWhere, startGame } from './support';
+
+const SEED = 1;
+const isAnomaly = (kind?: string) => (p: { anomaly: { kind: string } | null }) => (kind ? p.anomaly?.kind === kind : p.anomaly !== null);
+const isNormal = (p: { anomaly: unknown }) => p.anomaly === null;
+
+test('E1: タイトル → 難易度 (やさしい) → 導入 → 資料の閲覧', async ({ page }) => {
+  await page.goto(`/?seed=${SEED}`);
+  await expect(app(page)).toHaveAttribute('data-screen', 'title');
+  await page.getByRole('button', { name: 'はじめる' }).click();
+  await expect(page.getByRole('button', { name: 'やさしい' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'むずかしい' })).toBeVisible();
+  await page.getByRole('button', { name: 'やさしい' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'sample'); // 初回の見本
+  await page.getByRole('button', { name: '飛ばす' }).click();
+  await expect(page.getByText('1 / 8 社目').first()).toBeVisible();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await expect(app(page)).toHaveAttribute('data-phase', 'reading');
+  await expect(app(page)).toHaveAttribute('data-difficulty', 'easy');
+  await expect(app(page)).toHaveAttribute('data-round', '1');
+  expect(await problemId(page)).toMatch(/^easy-/);
+});
+
+test('E2: むずかしいでも同じ流れ', async ({ page }) => {
+  await startGame(page, SEED, 'hard');
+  await expect(app(page)).toHaveAttribute('data-difficulty', 'hard');
+  expect(await problemId(page)).toMatch(/^hard-/);
+});
+
+test('E3: 正解の答え → 正解 → 次の会社 (2 社目の別の問題)', async ({ page }) => {
+  await startGame(page, SEED);
+  const first = await problemId(page);
+  await answer(page, true);
+  await expect(page.getByTestId('result')).toContainText('正解');
+  await nextCompany(page);
+  await expect(app(page)).toHaveAttribute('data-round', '2');
+  expect(await problemId(page)).not.toBe(first);
+});
+
+test('E4: 判定するだけでは確定しない (素早い 2 回押し・読みに戻る)', async ({ page }) => {
+  await startGame(page, SEED);
+  await page.getByTestId('judge').dblclick();
+  await page.waitForTimeout(600);
+  await expect(app(page)).toHaveAttribute('data-phase', 'reading');
+  await page.getByRole('button', { name: '読みに戻る' }).click();
+  // パネルが開いた直後 (短い間) は、答えのボタンを押しても確定しない
+  await page.getByTestId('judge').click();
+  await page.getByRole('button', { name: '異変あり' }).click({ force: true });
+  await page.getByRole('button', { name: '異変なし' }).click({ force: true });
+  await page.waitForTimeout(250);
+  await expect(app(page)).toHaveAttribute('data-phase', 'reading');
+  await page.getByRole('button', { name: '読みに戻る' }).click();
+  await expect(page.getByTestId('sheet')).toHaveCount(0);
+  await expect(app(page)).toHaveAttribute('data-phase', 'reading');
+});
+
+test('E5: 1 社目で不正解 → 最初に戻る → もう一度 (新しい出題の 1 社目)', async ({ page }) => {
+  await startGame(page, SEED);
+  const first = await problemId(page);
+  await answer(page, false);
+  await expect(page.getByTestId('result')).toContainText('不正解');
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'restart');
+  await expect(page.getByText('1 社目まで進みました')).toBeVisible();
+  await page.getByRole('button', { name: 'もう一度' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await expect(app(page)).toHaveAttribute('data-round', '1');
+  expect(await problemId(page)).not.toBe(first);
+});
+
+test('E6: 4 社目で不正解 → 4 社目まで進みました → 難易度を選び直す', async ({ page }) => {
+  await startGame(page, SEED);
+  for (let i = 0; i < 3; i++) {
+    await answer(page, true);
+    await nextCompany(page);
+  }
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await expect(page.getByText('4 社目まで進みました')).toBeVisible();
+  await page.getByRole('button', { name: '難易度を選び直す' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'difficulty');
+});
+
+test('E7・E20: 8 社連続で正解するとクリア (完了票・朝)。もう一度・別の難易度', async ({ page }) => {
+  await startGame(page, SEED);
+  for (let i = 0; i < 8; i++) {
+    await answer(page, true);
+    if (i < 7) await nextCompany(page);
+  }
+  await page.getByRole('button', { name: '結果を見る' }).click();
+  await expect(app(page)).toHaveAttribute('data-phase', 'cleared');
+  await expect(page.getByTestId('completion-slip')).toBeVisible();
+  await expect(page.getByTestId('morning')).toContainText('6:00');
+  await page.getByRole('button', { name: 'もう一度' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await expect(app(page)).toHaveAttribute('data-round', '1');
+});
+
+test('E7b: クリアのあと別の難易度で難易度の画面', async ({ page }) => {
+  await startGame(page, SEED);
+  for (let i = 0; i < 8; i++) {
+    await answer(page, true);
+    if (i < 7) await nextCompany(page);
+  }
+  await page.getByRole('button', { name: '結果を見る' }).click();
+  await page.getByRole('button', { name: '別の難易度' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'difficulty');
+});
+
+test('E8: 異変のある問題の答え合わせ: 場所が強調され、説明と種類が見える', async ({ page }) => {
+  const seed = seedWhere(isAnomaly('k-calc'));
+  await startGame(page, seed);
+  const p = problemOf(await problemId(page));
+  await answer(page, true);
+  await expect(page.locator(`[data-path="tanshin.${p.anomaly!.places[0] && 'path' in p.anomaly!.places[0] ? p.anomaly!.places[0].path : ''}"][data-highlight="true"]`)).toBeVisible();
+  await expect(page.getByTestId('explanation')).toHaveText(p.anomaly!.explanation);
+  await expect(page.getByTestId('kind')).toHaveText('合計の計算違い');
+});
+
+test('E9: 異変のある問題に「異変なし」(不正解) でも、場所・説明・種類が同じ', async ({ page }) => {
+  const seed = seedWhere(isAnomaly('k-calc'));
+  await startGame(page, seed);
+  await answer(page, false);
+  await expect(page.getByTestId('result')).toContainText('不正解');
+  await expect(page.locator('[data-highlight="true"]').first()).toBeVisible();
+  await expect(page.getByTestId('explanation')).toBeVisible();
+  await expect(page.getByTestId('kind')).toBeVisible();
+});
+
+test('E10: 異変のない問題に「異変あり」(不正解) は、強調が無く「異変はありませんでした」', async ({ page }) => {
+  const seed = seedWhere(isNormal);
+  await startGame(page, seed);
+  await answer(page, false);
+  await expect(page.getByTestId('no-anomaly')).toBeVisible();
+  await expect(page.locator('[data-highlight="true"]')).toHaveCount(0);
+});
+
+test('E11: 資料間の異変: 場所 1 / 2・2 / 2 で各画面に移り強調される。判定は変わらない', async ({ page }) => {
+  const seed = seedWhere(isAnomaly('k-cross'));
+  await startGame(page, seed);
+  await answer(page, true);
+  await expect(page.getByRole('button', { name: '場所 1 / 2' })).toBeVisible();
+  await expect(page.locator('[data-path="tanshin.balanceSheet.current.cash"][data-highlight="true"]')).toBeVisible();
+  await page.getByRole('button', { name: '場所 2 / 2' }).click();
+  await expect(page.locator('[data-path="ir.supplement.cash.current"][data-highlight="true"]')).toBeVisible();
+  await expect(page.getByTestId('result')).toContainText('正解');
+  await expect(app(page)).toHaveAttribute('data-phase', 'revealed');
+});
+
+test('E12: 不正解の答え合わせで再読み込みしても、判定をやり直せない', async ({ page }) => {
+  await startGame(page, SEED);
+  const id = await problemId(page);
+  await answer(page, false);
+  await page.reload();
+  await expect(app(page)).toHaveAttribute('data-phase', 'revealed');
+  await expect(page.getByTestId('result')).toContainText('不正解');
+  expect(await problemId(page)).toBe(id);
+  await expect(page.getByTestId('judge')).toHaveCount(0);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await page.getByRole('button', { name: 'もう一度' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await expect(app(page)).toHaveAttribute('data-round', '1');
+});
+
+test('E13: 正解の答え合わせで再読み込み → 同じ答え合わせ。次の会社へ進める', async ({ page }) => {
+  await startGame(page, SEED);
+  const id = await problemId(page);
+  await answer(page, true);
+  await page.reload();
+  await expect(app(page)).toHaveAttribute('data-phase', 'revealed');
+  await expect(page.getByTestId('result')).toContainText('正解');
+  expect(await problemId(page)).toBe(id);
+  await expect(page.getByTestId('judge')).toHaveCount(0);
+  await nextCompany(page);
+  await expect(app(page)).toHaveAttribute('data-round', '2');
+});
+
+test('E14: 読んでいる途中の再読み込みで、同じ問題・社数・印', async ({ page }) => {
+  await startGame(page, SEED);
+  const id = await problemId(page);
+  const cell = page.locator('dd[data-path]').first();
+  const path = (await cell.getAttribute('data-path'))!;
+  await cell.click();
+  await expect(page.locator(`[data-path="${path}"][data-marked="true"]`)).toBeVisible();
+  await page.reload();
+  await expect(app(page)).toHaveAttribute('data-phase', 'reading');
+  expect(await problemId(page)).toBe(id);
+  await expect(page.locator(`[data-path="${path}"][data-marked="true"]`)).toBeVisible();
+});
+
+test('E15: 見本・遊びかたで再読み込みすると、難易度の画面・タイトルに戻る', async ({ page }) => {
+  await page.goto(`/?seed=${SEED}`);
+  await page.getByRole('button', { name: 'はじめる' }).click();
+  await page.getByRole('button', { name: 'やさしい' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'sample');
+  await page.reload();
+  await expect(app(page)).toHaveAttribute('data-screen', 'difficulty');
+  await page.getByRole('button', { name: '戻る' }).click();
+  await page.getByRole('button', { name: '遊びかた' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'help');
+  await page.reload();
+  await expect(app(page)).toHaveAttribute('data-screen', 'title'); // 遊びかたは保存しない。保存された phase (title) の画面に戻る
+});
+
+test('E16: 走行中の「タイトルへ」は確認を挟む。続けると続きから、戻るとタイトル', async ({ page }) => {
+  await startGame(page, SEED);
+  const id = await problemId(page);
+  await page.getByTestId('to-title').click();
+  await expect(page.getByTestId('confirm')).toBeVisible();
+  await page.getByRole('button', { name: '続ける' }).click();
+  await expect(app(page)).toHaveAttribute('data-phase', 'reading');
+  expect(await problemId(page)).toBe(id);
+  await page.getByTestId('to-title').click();
+  await page.getByRole('button', { name: 'タイトルへ戻る' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'title');
+  await page.getByRole('button', { name: 'はじめる' }).click();
+  await page.getByRole('button', { name: 'やさしい' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await expect(app(page)).toHaveAttribute('data-round', '1');
+});
+
+test('E17: 見本は難易度ごとに 1 回。遊びかたから開いた見本は始められず、閉じると遊びかたに戻る', async ({ page }) => {
+  await page.goto(`/?seed=${SEED}`);
+  await page.getByRole('button', { name: '遊びかた' }).click();
+  await page.getByRole('button', { name: '見本を見る' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'sample');
+  await expect(page.getByRole('button', { name: '始める' })).toHaveCount(0);
+  await page.getByRole('button', { name: '閉じる' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'help');
+  await page.getByRole('button', { name: '閉じる' }).click();
+  await page.getByRole('button', { name: 'はじめる' }).click();
+  await page.getByRole('button', { name: 'やさしい' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'sample');
+  await expect(page.getByRole('button', { name: '始める' })).toBeVisible();
+  await page.getByRole('button', { name: '始める' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await page.getByRole('button', { name: '難易度を選び直す' }).click();
+  await page.getByRole('button', { name: 'やさしい' }).click(); // 2 回目: 見本なしで導入
+  await expect(app(page)).toHaveAttribute('data-screen', 'intro');
+});
+
+test('E17b: むずかしいを初めて選ぶと、やさしいで見たあとでも見本が出る', async ({ page }) => {
+  await startGame(page, SEED); // やさしいの見本は飛ばした
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await page.getByRole('button', { name: '難易度を選び直す' }).click();
+  await page.getByRole('button', { name: 'むずかしい' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'sample');
+  await page.getByRole('button', { name: '始める' }).click();
+  await expect(app(page)).toHaveAttribute('data-screen', 'intro');
+  await expect(app(page)).toHaveAttribute('data-difficulty', 'hard');
+});
+
+test('E18: 新しい文脈 2 つで、同じ ?seed・同じ操作なら、1 周目も「もう一度」のあとも同じ 1 社目', async ({ browser }) => {
+  const ids: string[][] = [];
+  for (let i = 0; i < 2; i++) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await startGame(page, 7);
+    const run: string[] = [await problemId(page)];
+    await answer(page, false);
+    await page.getByRole('button', { name: '最初に戻る' }).click();
+    await page.getByRole('button', { name: 'もう一度' }).click();
+    await page.getByRole('button', { name: '資料を開く' }).click();
+    run.push(await problemId(page));
+    ids.push(run);
+    await context.close();
+  }
+  expect(ids[0]).toEqual(ids[1]);
+  expect(ids[0]![0]).not.toBe(ids[0]![1]);
+});
+
+test('E19: 社が進むと時刻と段が進み、不正解で最初に戻ると 18:00', async ({ page }) => {
+  await startGame(page, SEED);
+  const times = ['18:00', '19:00', '20:00'];
+  for (let i = 0; i < 3; i++) {
+    await expect(app(page)).toHaveAttribute('data-stage', String(i));
+    await expect(page.getByTestId('time')).toHaveText(times[i]!);
+    await answer(page, true);
+    if (i < 2) await nextCompany(page);
+  }
+  await nextCompany(page);
+  await expect(app(page)).toHaveAttribute('data-stage', '3');
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await expect(page.getByTestId('rewind')).toContainText('18:00');
+  await expect(app(page)).toHaveAttribute('data-stage', '0');
+});
+
+test('E21: 印の照合: 異変の場所に付けた印は「当たり」', async ({ page }) => {
+  const seed = seedWhere(isAnomaly('k-calc'));
+  await startGame(page, seed);
+  const p = problemOf(await problemId(page));
+  const place = p.anomaly!.places[0]!;
+  await page.getByRole('tab', { name: /損益/ }).click();
+  await page.locator(`dd[data-path="tanshin.${'path' in place ? place.path : ''}"]`).click();
+  await judgeWith(page, '異変あり');
+  await expect(page.getByTestId('marks-match')).toContainText('当たり 1・外れ 0・見逃し 0');
+});
+
+test('E22: 記録: 3 社目で不正解のあと、最高到達 3 社目が残る (再読み込みしても)', async ({ page }) => {
+  await startGame(page, SEED);
+  for (let i = 0; i < 2; i++) {
+    await answer(page, true);
+    await nextCompany(page);
+  }
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await expect(page.getByText('3 社目まで進みました')).toBeVisible();
+  await page.getByRole('button', { name: '難易度を選び直す' }).click();
+  await page.getByRole('button', { name: '戻る' }).click();
+  await expect(page.getByTestId('record')).toContainText('最高到達 3 社目');
+  await page.reload();
+  await expect(page.getByTestId('record')).toContainText('最高到達 3 社目');
+});
+
+test('E23: ← → は判定にならない', async ({ page }) => {
+  await startGame(page, SEED);
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('Enter');
+  await expect(app(page)).toHaveAttribute('data-phase', 'reading');
+});
+
+for (const width of [320, 375, 414]) {
+  test(`E24: 幅 ${width}px で、どの画面も横にはみ出さない`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    const fit = () => noHorizontalOverflow(page, width);
+    await page.goto(`/?seed=${SEED}`);
+    await fit();
+    await page.getByRole('button', { name: '遊びかた' }).click();
+    await fit();
+    await page.getByRole('button', { name: '閉じる' }).click();
+    await page.getByRole('button', { name: 'はじめる' }).click();
+    await fit();
+    await page.getByRole('button', { name: 'やさしい' }).click();
+    await fit(); // 見本
+    await page.getByRole('button', { name: '始める' }).click();
+    await fit(); // 導入
+    await page.getByRole('button', { name: '資料を開く' }).click();
+    await fit(); // 閲覧
+    await page.getByTestId('judge').click();
+    await fit(); // パネル
+    await page.getByRole('button', { name: '読みに戻る' }).click();
+    await answer(page, false);
+    await fit(); // 答え合わせ
+    await page.getByRole('button', { name: '最初に戻る' }).click();
+    await fit(); // 最初へ戻る
+    await page.getByRole('button', { name: 'もう一度' }).click();
+    await page.getByRole('button', { name: '資料を開く' }).click();
+    for (let i = 0; i < 8; i++) {
+      await answer(page, true);
+      if (i < 7) await nextCompany(page);
+    }
+    await page.getByRole('button', { name: '結果を見る' }).click();
+    await fit(); // クリア
+  });
+}
+
+test('E25: 一通りの流れで、外部への通信とコンソールのエラーが無い', async ({ page, baseURL }) => {
+  const origin = new URL(baseURL!).origin;
+  const foreign: string[] = [];
+  const errors: string[] = [];
+  page.on('request', (r) => {
+    if (!r.url().startsWith(origin) && !r.url().startsWith('data:')) foreign.push(r.url());
+  });
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await startGame(page, SEED);
+  await answer(page, false);
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  await page.getByRole('button', { name: 'もう一度' }).click();
+  await page.getByRole('button', { name: '資料を開く' }).click();
+  await page.waitForLoadState('networkidle');
+  expect(foreign).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('E26: 動きを減らす設定では、最初へ戻る・スタンプのアニメーションが止まる', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await startGame(page, SEED);
+  await answer(page, false);
+  expect(await page.locator('.stamp').evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
+  await page.getByRole('button', { name: '最初に戻る' }).click();
+  expect(await page.getByTestId('rewind').evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
+});
+
+test('E27: 保存が使えない環境でも遊べる。再読み込みするとタイトルに戻る', async ({ page }) => {
+  await page.addInitScript(() => {
+    const fail = () => { throw new DOMException('denied', 'SecurityError'); };
+    for (const name of ['getItem', 'setItem', 'removeItem']) {
+      Object.defineProperty(Storage.prototype, name, { value: fail });
+    }
+  });
+  await startGame(page, SEED);
+  await answer(page, true);
+  await nextCompany(page);
+  await expect(app(page)).toHaveAttribute('data-round', '2');
+  await page.reload();
+  await expect(app(page)).toHaveAttribute('data-screen', 'title');
+});
+
+test('E28: 答え合わせの結果は aria-live で通知される', async ({ page }) => {
+  await startGame(page, SEED);
+  await answer(page, true);
+  await expect(page.getByTestId('result')).toHaveAttribute('aria-live', 'polite');
+  expect(answerLabel(planOf(SEED)[0]!, true)).toMatch(/異変/);
+});

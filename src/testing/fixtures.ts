@@ -1,6 +1,6 @@
 // 試験用の問題・会社・異変の種類 (遊びの流れの確かめ用。会計の整合は保証しない)。本番のバンドルには入れない。
 import type { AnomalyKind, Company, Difficulty, Problem } from '../domain/types';
-import base from '../domain/fixtures/normal.problem.json';
+import base from '../domain/fixtures/normal.problem.json' with { type: 'json' };
 
 export type Tier = 1 | 2 | 3;
 
@@ -82,7 +82,8 @@ export function makePool(spec: PoolSpec): Problem[] {
     const sides = spec.sides ? spec.sides(c) : (['normal', 'anomaly'] as const);
     for (const side of sides) {
       for (const tier of tiers) {
-        const kind = side === 'anomaly' ? (out.length % 2 === 0 ? 'k-calc' : 'k-cross') : undefined;
+        // 異変の種類は会社と段で変える (どの段にも両方の種類が出る)
+        const kind = side === 'anomaly' ? ((c + (tier ?? 0)) % 2 === 0 ? 'k-calc' : 'k-cross') : undefined;
         out.push(
           makeProblem({
             id: `${spec.difficulty}-${c}-${side === 'anomaly' ? 'a' : 'n'}-${tier ?? 0}`,

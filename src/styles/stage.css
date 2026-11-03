@@ -1,0 +1,11 @@
+/* 舞台 (V2): 何社目かで変わる資料の外の背景。8 段 + クリアの朝。資料の紙面 (.paper) は段によらない (app.css)。
+   文字と背景のコントラスト比 4.5 以上は src/ui/css.test.ts (UT2) が確かめる。style 属性は使わず、data-stage で表す (CSP)。 */
+[data-stage="0"] { --stage-bg: #efe3c6; --stage-fg: #231c0c; }
+[data-stage="1"] { --stage-bg: #e2d1aa; --stage-fg: #231c0c; }
+[data-stage="2"] { --stage-bg: #cfbf9d; --stage-fg: #1e180a; }
+[data-stage="3"] { --stage-bg: #a89b7e; --stage-fg: #120e04; }
+[data-stage="4"] { --stage-bg: #5d5a55; --stage-fg: #f7f1e3; }
+[data-stage="5"] { --stage-bg: #46474f; --stage-fg: #f7f1e3; }
+[data-stage="6"] { --stage-bg: #30333f; --stage-fg: #f7f1e3; }
+[data-stage="7"] { --stage-bg: #20232e; --stage-fg: #f1ead8; }
+[data-stage="morning"] { --stage-bg: #fbefc9; --stage-fg: #2b2410; }

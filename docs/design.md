@@ -84,7 +84,7 @@
 │  │  ├─ problems/easy/*.json, problems/hard/*.json  # 問題 (Task #25・#26)。1 問 1 ファイル
 │  │  └─ index.ts           #   読み込み (全件を取り込み、難易度ごとのプールにする)
 │  ├─ ui/                   # DOM を作る画面 (Task #27・#28)。状態 → DOM の関数。問題に依らない固定の文言は ui/messages.ts。資料束の表示との接ぎ目は ui/viewer-port.ts
-│  ├─ testing/              # 試験用の問題・会社 (単体テストと E2E の `--mode e2e` だけが使う。本番のバンドルに入れない)
+│  ├─ testing/              # 試験用の問題・会社 (単体テストと E2E の `npm run build:e2e` だけが使う。本番のバンドルに入れない)
 │  └─ styles/               # CSS
 ├─ e2e/                     # Playwright (E2E)
 └─ public/                  # 静的ファイル (必要になったら。外部の素材は置かない)
@@ -648,7 +648,7 @@ export interface Problem {
 | 単体 | 対象の隣の `src/**/*.test.ts` | Vitest | 純粋な関数: 状態遷移・出題・判定・整形・型と設計書の一致 |
 | 足場 | `src/scaffold.test.ts` | Vitest | `vercel.json`・`LICENSE`・依存・`.gitignore`・予算確認スクリプトの約束 (Sub-task #37) |
 | 問題データ | `src/data/problems.test.ts` | Vitest + 検証器 (`src/verifier/`) | 全問: 型の形・正常な問題は会計の整合をすべて満たす・異変の問題は指定した規則だけが破れる・ファイル名と `id`・置き場と `difficulty`・会社と異変の種類への参照・難易度ごとの問題数と「両面の会社が 8 社以上」(§4.3)・`labelOverrides` のキーがすべて `labels.ts` の項目キーにあり、値が標準と違う・`anomaly.places` の `path` が実在する値を指す・**正常な問題の見出しの社名・証券コード・期・単位、セグメント名・数が `companies.json` と `fiscalYear` と一致する**・正常な問題に `labelOverrides`・`unitOverrides`・`signOverrides` が無い・`anomaly.expectedRules` が実際に落ちた集合と一致し、種類の `primaryRules`・`allowedRules` に合う・`itemKey` の場所が `labels.ts` の項目キーにある・異変あり・なしの問題数の比 (§4.3)・系統の偏り (§4.5 の閾値) |
-| E2E | `e2e/*.spec.ts` | Playwright | 受け入れ条件 1〜4・9 を 1 本ずつ + スマホ幅 375 px で 1 本。ビルドした成果物 (`vite preview`) に対して回す。**問題データが main に入るまでは、`vite build --mode e2e` が、試験用の問題 (`src/testing/`) に差し替えて回す** (本番のバンドルには入れない)。データが入ったら、本番のビルドに対して回す project を足す (ケース表 flow.md §4) |
+| E2E | `e2e/*.spec.ts` | Playwright | 受け入れ条件 1〜4・9 を 1 本ずつ + スマホ幅 375 px で 1 本。ビルドした成果物 (`vite preview`) に対して回す。**問題データが main に入るまでは、`npm run build:e2e` が、試験用の問題 (`src/testing/`) に差し替えて回す** (本番のバンドルには入れない)。データが入ったら、本番のビルドに対して回す project を足す (ケース表 flow.md §4) |
 
 - E2E の projects は、デスクトップ (1280×800) とスマホ (375 px 幅)。Chrome を既定にし、Safari (WebKit)・Firefox は公開の Task (#30) の通しで確かめる (対応ブラウザは方針)
 - 受け入れ条件 5・6・8 (問題の数・異変の系統の偏り・実在の名前が無いこと) は、問題データのテストが受け持つ (6 の閾値は §4.5。8 は §8)。E2E には載せない
