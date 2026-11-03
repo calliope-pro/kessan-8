@@ -1,8 +1,8 @@
 """試作 (#41): 難しさの段 (P1) を入れた出題の 2 つの手順で、狙いの段が当たる割合を測る。標準ライブラリのみ。製品のコードではない。
 使いかた (docs/plans/spike/ で): python3 draw-tiers.py [プール数 400] [1 プールあたりの試行 50]
-プールの作りかた: 25 問を段 11:9:5 に割り、会社 (8・12・25 社) に配る。どの会社も、異変あり・なしの両方を 1 問以上持つ (設計 §4.3 の条件)。
+プールの作りかた: 25 問を段 11:9:5 に割り、会社 (8・12 社) に配る。どの会社も、異変あり・なしの両方を 1 問以上持つ (設計 §4.3 の条件)。
 手順 A (設計の初版 §5.3): 会社を 8 社先に選ぶ → 各社で あり/なし を引く → その会社の問題から狙いの段にいちばん近いものを引く。
-手順 B (枠を先に決める): 各枠の (あり/なし, 狙いの段) を先に引く → 重複しない会社を二部マッチング (増加路) で割り当てる → 当てられない枠は段を近い段へ緩めて、割り当て直す → 各会社の問題を引く。
+手順 B (枠を先に決める): 各枠の あり/なし を先に引く → 1 社目の枠から順に、重複しない会社を増加路 (二部マッチング) で割り当てる。当てられない枠だけ、その枠の段を近い段へ緩める (先の枠は緩めない) → 各会社の問題を引く。
 狙いの段: 1〜2 社目 = 1、3〜5 社目 = 2、6〜8 社目 = 3。
 """
 import random
@@ -40,17 +40,20 @@ def procedure_a(rng, probs, companies):
     return out
 
 
-def match(rng, slots, probs, companies):
-    """slots[i] = (side, 狙いの段)。重複しない会社の割り当てを増加路で求める。無ければ None。"""
-    adj = []
-    for i, (side, t) in enumerate(slots):
-        cs = [c for c in companies if any(p['company'] == c and p['anomaly'] == side and (t is None or p['tier'] == t) for p in probs)]
+def procedure_b(rng, probs, companies):
+    """枠を 1 社目から順に増加路で割り当てる。当てられない枠だけ、その枠の段を近い段へ緩める (先の枠は緩めない)。"""
+    sides = [rng.random() < 0.5 for _ in range(8)]
+    allowed = [None] * 8   # 枠ごとに許す会社 (緩めるたびに作り直す)
+    tier_used = [None] * 8
+    owner = {}             # 会社 → 枠
+
+    def cands(i, t):
+        cs = [c for c in companies if any(p['company'] == c and p['anomaly'] == sides[i] and (t is None or p['tier'] == t) for p in probs)]
         rng.shuffle(cs)
-        adj.append(cs)
-    owner = {}
+        return cs
 
     def try_assign(i, seen):
-        for c in adj[i]:
+        for c in allowed[i]:
             if c in seen:
                 continue
             seen.add(c)
@@ -59,32 +62,20 @@ def match(rng, slots, probs, companies):
                 return True
         return False
 
-    for i in range(len(slots)):
-        if not try_assign(i, set()):
-            return None
-    return {i: c for c, i in owner.items()}
-
-
-def procedure_b(rng, probs, companies):
-    sides = [rng.random() < 0.5 for _ in range(8)]
-    want = list(TARGET)  # 枠ごとの狙いの段 (緩める)
-    relax = [0] * 8
-    while True:
-        slots = []
-        for i in range(8):
-            order = near_tiers(TARGET[i])
-            slots.append((sides[i], order[relax[i]] if relax[i] < 3 else None))
-        m = match(rng, slots, probs, companies)
-        if m is not None:
-            break
-        # 当てられない枠を 1 つ緩める: 緩めの小さい枠のうち、狙いの段の問題が最も少ない枠から
-        cand = [i for i in range(8) if relax[i] < 3]
-        i = min(cand, key=lambda i: (relax[i], sum(1 for p in probs if p['anomaly'] == sides[i] and p['tier'] == TARGET[i])))
-        relax[i] += 1
+    for i in range(8):
+        order = near_tiers(TARGET[i]) + [None]
+        for t in order:
+            allowed[i] = cands(i, t)
+            if try_assign(i, set()):
+                tier_used[i] = t
+                break
+        else:
+            raise SystemExit('割り当てられない (両面の会社が足りない)')
+    slot_company = {i: c for c, i in owner.items()}
     out = []
     for i in range(8):
-        t = slots[i][1]
-        cand = [p for p in probs if p['company'] == m[i] and p['anomaly'] == sides[i] and (t is None or p['tier'] == t)]
+        t = tier_used[i]
+        cand = [p for p in probs if p['company'] == slot_company[i] and p['anomaly'] == sides[i] and (t is None or p['tier'] == t)]
         out.append(rng.choice(cand))
     return out
 
