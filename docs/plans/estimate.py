@@ -221,7 +221,8 @@ def pool_extension_hours(plan, extra_questions, measured=False):
 
 # ---- AI の利用枠 (測った値)。~/.claude/projects/ の組のセッションの記録から、assistant の usage を
 # メッセージ ID ごとに 1 回だけ合計した (2026-11-03)。Task #3 の作業 (Sub-task #4・#5・#6 と、
-# Sub-task のレビュー) の区間 12:34:32〜13:17:10 UTC。包括レビューは別。 ----
+# Sub-task のレビュー) の区間 12:34:32〜13:17:10 UTC (13:18:00 UTC までのメッセージ)。包括レビューは別。
+# 再現: python3 docs/plans/usage.py <記録のディレクトリ> 2026-11-03T13:18:00Z ----
 MEASURED = {
     'window_hours': (42 * 60 + 38) / 3600,  # 12:34:32〜13:17:10 UTC は 42 分 38 秒
     'executor_sonnet': {'input': 216, 'output': 188_199, 'cache_read': 20_794_908, 'cache_creation': 449_853},
@@ -279,6 +280,17 @@ def limited_makespan(tasks, k):
     return t
 
 
+def ai_range(plan, t=1.0, s=S_MEASURED):
+    """測定反映の AI の利用枠 (出力トークン) の下限〜上限。測った分 (手書きの制作 m・生成 g) には経過あたりの率を、
+    残り (計画の尺度) には見積もりあたりの率 (下限) と経過あたりの率 (上限) の幅を掛ける。"""
+    r = schedule_measured(PLANS[plan], t=t, s=s)
+    rt = ai_rates()
+    kinds = ('m',) if plan in ('A', 'B') else ('g',)
+    mh = sum(x['h'] for x in r['T'].values() if x['kind'] in kinds)
+    lo = (r['total'] - mh) * rt['out_per_est_h'] + mh * rt['out_per_elapsed_h']
+    return lo, r['total'] * rt['out_per_elapsed_h']
+
+
 if __name__ == '__main__':
     for k, tasks in PLANS.items():
         r = schedule(tasks)
@@ -311,3 +323,18 @@ if __name__ == '__main__':
     print('段階公開 (1 回目 = 案 A の範囲、2 回目 = IR の追加):')
     print(f"  1 回目 総工数 {st['stage1_total']:.1f} h・経路 {st['stage1_cp']:.1f} h / 2 回目 DAG の和 {st['stage2_dag']:.1f} h + Task の包括レビュー {st['stage2_review']:.1f} h = {st['stage2_total']:.1f} h・経路 {st['stage2_cp']:.1f} h")
     print(f"  合計 {st['total']:.1f} h (一括の案 B {b['total']:.1f} h との差 {st['total'] - b['total']:+.1f} h)、完成までの経路 {st['elapsed']:.1f} h (一括 {b['cp']:.1f} h との差 {st['elapsed'] - b['cp']:+.1f} h)、1 回目の公開 {st['stage1_cp']:.1f} h (一括より {b['cp'] - st['stage1_cp']:.1f} h 早い)")
+    print('---- 測定反映 (Task #8 の測った値。手書きの問題制作 m を s 倍、生成 g を t 倍、確認 v は縮めない。混ぜた尺度) ----')
+    print(f'  s = {S_MEASURED} (測った上限の比: 短信 {S_SHORT_MEASURED:.4f}・資料束 {S_BUNDLE_MEASURED:.4f} の上側を丸めた)')
+    for k in 'AB':
+        m = schedule_measured(PLANS[k])
+        print(f"  案 {k}: 総工数 {m['total']:.1f} h・経路 {m['cp']:.1f} h")
+    for tv in (1.0, 0.3, T_MEASURED_MID):
+        m = schedule_measured(C, t=tv)
+        print(f"  案 C (t = {tv}): 総工数 {m['total']:.1f} h・経路 {m['cp']:.1f} h")
+    print(f'  案 C が案 B と並ぶ t の境目: {t_boundary():.3f}')
+    ms = staged_summary(measured=True)
+    print(f"  段階公開: 2 回目 {ms['stage2_total']:.1f} h・合計 {ms['total']:.1f} h・完成までの経路 {ms['elapsed']:.1f} h")
+    print('  プール 25 問/難易度の追加 (+20 問):', ' '.join(f'{k} {pool_extension_hours(k, 20, True):.1f}h' for k in 'AB'))
+    for k, tv in (('A', 1.0), ('B', 1.0), ('C', T_MEASURED_MID)):
+        lo, hi = ai_range(k, tv)
+        print(f"  AI の利用枠 (出力トークン) 案 {k}: {lo/1e6:.1f}〜{hi/1e6:.1f} 百万" + ('' if k != 'C' else ' (上限は t = 1)'))
