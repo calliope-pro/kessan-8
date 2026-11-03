@@ -245,9 +245,11 @@ MEASURED = {
     'task3_estimate_hours': 3.0,  # Task #3 の見積もり (仮定)
     # コードを書いた Sub-task の経過あたりの出力の最大 (Task #8 の #10。tech-assessment §2 #7)。上限の率に使う
     'code_rate_max': 411_000,
-    # 今日これまで (12:34〜14:34 UTC) に、biz-plan と tech-spike の組が使った出力。責任者の会話は記録に usage が無く含まない
+    # 今日これまで (12:34〜14:34 UTC) に、biz-plan と tech-spike の組が使った出力。責任者の会話の記録の場所は確かめていない
     'today_until': '14:34',
     'today_output': 899_422,
+    # 同じ時間帯に動いていた別のワークスペースのセッション 1 つの出力 (責任者の会話かは確かめていない。含めていない)
+    'today_other_session_output': 90_463,
     'today_cache_read': 159_000_497,
 }
 
