@@ -172,7 +172,7 @@ describe('L3: 値の約束', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it('L3-2: SECTION_OF_ITEM は貸借対照表の項目だけを、3 つの部のどれかに分ける', () => {
+  it('L3-2: SECTION_OF_ITEM は貸借対照表の項目だけを、資産・負債・純資産・合計 (負債純資産合計) のどれかに分ける', () => {
     expect(Object.keys(SECTION_OF_ITEM).sort()).toEqual([...bsKeys].sort());
     for (const v of Object.values(SECTION_OF_ITEM)) expect(['asset', 'liability', 'equity', 'total']).toContain(v);
     expect(SECTION_OF_ITEM['tanshin.balanceSheet.cash']).toBe('asset');
