@@ -1,5 +1,5 @@
 /* 資料束の表示。資料の本体は全社・全問・全難易度で同じ書式・同じ配色 (紙面は常に明るい。docs/test-cases/viewer.md F13)。 */
-.viewer {
+.v-viewer {
   --paper: #fff;
   --ink: #1b1f24;
   --muted: #55606b;
@@ -15,27 +15,27 @@
   font: 14px/1.5 system-ui, 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif;
   overflow-wrap: anywhere;
 }
-.viewer *,
-.viewer *::before,
-.viewer *::after {
+.v-viewer *,
+.v-viewer *::before,
+.v-viewer *::after {
   box-sizing: border-box;
 }
 
 /* 上: 資料の切替とタブ (各 1 行・44px・上に固定) */
-.viewer-top {
+.v-viewer-top {
   position: sticky;
   top: 0;
   z-index: 3;
   background: var(--paper);
   border-bottom: 1px solid var(--line);
 }
-.tabs {
+.v-tabs {
   display: flex;
   height: 44px;
   margin: 0;
   padding: 0;
 }
-.tab {
+.v-tab {
   flex: 1 1 0;
   min-width: 0;
   height: 44px;
@@ -50,39 +50,39 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.tabs-doc .tab {
+.v-tabs-doc .v-tab {
   font-size: 14px;
   font-weight: 600;
 }
-.tab[aria-selected='true'] {
+.v-tab[aria-selected='true'] {
   color: var(--accent);
   border-bottom-color: var(--accent);
   font-weight: 700;
 }
-.tab[data-visited='true']:not([aria-selected='true']) {
+.v-tab[data-visited='true']:not([aria-selected='true']) {
   color: var(--ink);
 }
-.tab:focus-visible,
-.pager-btn:focus-visible {
+.v-tab:focus-visible,
+.v-pager-btn:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: -3px;
 }
 
 /* ページ名とページ送り */
-.page-bar {
+.v-page-bar {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 8px 4px;
 }
-.page-title {
+.v-viewer .v-page-title {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   font-size: 16px;
   line-height: 1.3;
 }
-.pager-btn {
+.v-pager-btn {
   flex: 0 0 auto;
   min-width: 44px;
   height: 44px;
@@ -95,36 +95,36 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.pager-btn:disabled {
+.v-pager-btn:disabled {
   color: #9aa3ab;
   cursor: default;
 }
 
 /* 資料の本体 */
-.viewer-body {
+.v-viewer-body {
   padding: 0 8px 24px;
 }
-.screen {
+.v-screen {
   min-width: 0;
 }
-.doc-head {
+.v-doc-head {
   padding: 8px 0;
   border-bottom: 2px solid var(--accent);
 }
-.doc-head p {
+.v-doc-head p {
   margin: 0;
 }
-.doc-company {
+.v-doc-company {
   font-size: 16px;
   font-weight: 700;
 }
-.doc-code,
-.doc-extra {
+.v-doc-code,
+.v-doc-extra {
   color: var(--muted);
   font-weight: 400;
   font-size: 13px;
 }
-.doc-meta {
+.v-doc-meta {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -132,71 +132,71 @@
   color: var(--muted);
   font-size: 13px;
 }
-.sec {
+.v-sec {
   margin-top: 14px;
 }
-.sec-title {
+.v-sec-title {
   margin: 0 0 4px;
   padding-left: 6px;
   border-left: 4px solid var(--accent);
   font-size: 14px;
 }
-.tbl {
+.v-tbl {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
-.tbl th,
-.tbl td {
+.v-tbl th,
+.v-tbl td {
   padding: 3px 4px;
   border-bottom: 1px solid var(--line);
   vertical-align: baseline;
 }
-.row-label {
+.v-row-label {
   width: 38%;
   text-align: left;
   font-weight: 400;
 }
-.col-head {
+.v-col-head {
   text-align: right;
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);
 }
-.col-label {
+.v-col-label {
   display: block;
 }
-.col-cell {
+.v-col-cell {
   font-weight: 400;
 }
-.corner {
+.v-corner {
   border-bottom: 1px solid var(--line);
 }
-.cell {
+.v-cell {
   font-variant-numeric: tabular-nums;
 }
-td.cell {
+td.v-cell {
   text-align: right;
 }
-td.cell-text,
-td.cell-date,
-td.cell-flag {
+td.v-cell-text,
+td.v-cell-date,
+td.v-cell-flag {
   text-align: left;
 }
-.emph .row-label,
-.emph .cell {
+.v-emph .v-row-label,
+.v-emph .v-cell {
   font-weight: 700;
 }
-.emph th,
-.emph td {
+.v-emph th,
+.v-emph td {
   background: var(--emph);
 }
-.statements {
+.v-statements {
   margin: 14px 0 0;
   padding: 0;
   list-style: none;
 }
-.statement {
+.v-statement {
   margin: 0;
   padding: 6px 8px;
   background: var(--emph);
@@ -204,56 +204,56 @@ td.cell-flag {
 }
 
 /* グラフ (棒は SVG。高さの割合は属性で決める) */
-.chart {
+.v-chart {
   margin: 14px 0 0;
   padding: 0;
 }
-.chart-title {
+.v-chart-title {
   padding-left: 6px;
   border-left: 4px solid var(--accent);
   font-size: 14px;
   font-weight: 700;
 }
-.bars {
+.v-bars {
   display: flex;
   gap: 16px;
   margin: 6px 0 0;
   padding: 0;
   list-style: none;
 }
-.bar {
+.v-bar {
   flex: 1 1 0;
   min-width: 0;
   text-align: center;
 }
-.bar-svg {
+.v-bar-svg {
   display: block;
   width: 100%;
   height: 120px;
   border-bottom: 2px solid var(--ink);
   background: var(--emph);
 }
-.bar-rect {
+.v-bar-rect {
   fill: var(--accent);
 }
-.bar-value {
+.v-bar-value {
   display: block;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.bar-label {
+.v-bar-label {
   display: block;
   color: var(--muted);
   font-size: 12px;
 }
-.axis {
+.v-axis {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 12px;
 }
 
 /* 道具バー (画面の下に固定。padding 8 + 的 44 + padding 8 + 上の線 1 = 61px) */
-.toolbar {
+.v-toolbar {
   position: fixed;
   left: 0;
   right: 0;
@@ -262,10 +262,10 @@ td.cell-flag {
   background: var(--paper);
   border-top: 1px solid var(--line);
 }
-.toolbar[hidden] {
+.v-toolbar[hidden] {
   display: none;
 }
-.toolbar-in {
+.v-toolbar-in {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -274,7 +274,7 @@ td.cell-flag {
   margin: 0 auto;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
 }
-.mark-switch {
+.v-mark-switch {
   flex: 0 0 44px;
   width: 44px;
   height: 44px;
@@ -287,12 +287,12 @@ td.cell-flag {
   font-size: 13px;
   cursor: pointer;
 }
-.mark-switch[aria-pressed='true'] {
+.v-mark-switch[aria-pressed='true'] {
   background: var(--mark);
   border-color: var(--mark);
   color: #fff;
 }
-.calc {
+.v-calc {
   flex: 1 1 0;
   min-width: 0;
   max-height: 44px;
@@ -301,18 +301,18 @@ td.cell-flag {
   line-height: 1.25;
   font-variant-numeric: tabular-nums;
 }
-.calc-line {
+.v-calc-line {
   white-space: nowrap;
 }
-.toolbar-end {
+.v-toolbar-end {
   flex: 0 0 auto;
 }
-.viewer[data-mode='read'] .viewer-body {
+.v-viewer[data-mode='read'] .v-viewer-body {
   padding-bottom: 84px;
 }
 
 /* 印と強調。印 = 内側の枠 (橙)、強調 = 外側の枠 (赤)。重なっても両方見える */
-.viewer {
+.v-viewer {
   --mark: #b45309;
   --hl: #c0182b;
 }
@@ -325,23 +325,23 @@ td.cell-flag {
   outline-offset: 1px;
 }
 /* 印スイッチが入っている間: 押せる要素は 44px 以上 (指で押せる) */
-.viewer[data-marking='true'] [role='button'] {
+.v-viewer[data-marking='true'] [role='button'] {
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
   -webkit-touch-callout: none;
 }
-.viewer[data-marking='true'] td,
-.viewer[data-marking='true'] th.row-label {
+.v-viewer[data-marking='true'] td,
+.v-viewer[data-marking='true'] th.v-row-label {
   height: 44px;
 }
-.viewer[data-marking='true'] span[role='button'],
-.viewer[data-marking='true'] figcaption[role='button'] {
+.v-viewer[data-marking='true'] span[role='button'],
+.v-viewer[data-marking='true'] figcaption[role='button'] {
   display: inline-block;
   min-height: 44px;
   line-height: 44px;
 }
-.viewer[data-marking='true'] p[role='button'] {
+.v-viewer[data-marking='true'] p[role='button'] {
   min-height: 44px;
 }
 

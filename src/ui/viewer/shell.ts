@@ -19,16 +19,16 @@ const same = (a: ScreenRef, b: ScreenRef) => a.doc === b.doc && a.screen === b.s
 const indexOf = (ref: ScreenRef) => SCREEN_ORDER.findIndex((r) => same(r, ref));
 
 export function createViewer(host: HTMLElement, events: ViewerEvents): Viewer {
-  const root = h('div', { class: 'viewer', 'data-mode': 'read' });
-  const docTabs = h('div', { class: 'tabs tabs-doc', role: 'tablist', 'aria-label': '資料' });
-  const screenTabs = h('div', { class: 'tabs tabs-screen', role: 'tablist', 'aria-label': '画面' });
-  const title = h('h2', { class: 'page-title' });
-  const prev = h('button', { type: 'button', class: 'pager-btn', 'data-dir': 'prev' }, '前へ');
-  const next = h('button', { type: 'button', class: 'pager-btn', 'data-dir': 'next' }, '次へ');
-  const body = h('div', { class: 'viewer-body' });
+  const root = h('div', { class: 'v-viewer', 'data-mode': 'read' });
+  const docTabs = h('div', { class: 'v-tabs v-tabs-doc', role: 'tablist', 'aria-label': '資料' });
+  const screenTabs = h('div', { class: 'v-tabs v-tabs-screen', role: 'tablist', 'aria-label': '画面' });
+  const title = h('h2', { class: 'v-page-title' });
+  const prev = h('button', { type: 'button', class: 'v-pager-btn', 'data-dir': 'prev' }, '前へ');
+  const next = h('button', { type: 'button', class: 'v-pager-btn', 'data-dir': 'next' }, '次へ');
+  const body = h('div', { class: 'v-viewer-body' });
   const toolbar = createToolbar();
-  const top = h('header', { class: 'viewer-top' }, docTabs, screenTabs);
-  root.append(top, h('div', { class: 'page-bar' }, prev, title, next), body, toolbar.el);
+  const top = h('header', { class: 'v-viewer-top' }, docTabs, screenTabs);
+  root.append(top, h('div', { class: 'v-page-bar' }, prev, title, next), body, toolbar.el);
   host.append(root);
 
   let props: ViewerProps | null = null;
@@ -66,7 +66,7 @@ export function createViewer(host: HTMLElement, events: ViewerEvents): Viewer {
     docTabs.replaceChildren(
       ...DOCS.map((d) => {
         const selected = d.doc === view.doc;
-        return h('button', { type: 'button', role: 'tab', class: 'tab', 'data-doc-tab': d.doc, 'aria-selected': String(selected) }, d.label);
+        return h('button', { type: 'button', role: 'tab', class: 'v-tab', 'data-doc-tab': d.doc, 'aria-selected': String(selected) }, d.label);
       }),
     );
     screenTabs.replaceChildren(
@@ -74,7 +74,7 @@ export function createViewer(host: HTMLElement, events: ViewerEvents): Viewer {
         h('button', {
           type: 'button',
           role: 'tab',
-          class: 'tab',
+          class: 'v-tab',
           'data-screen-tab': r.screen,
           'aria-selected': String(r.screen === view.screen),
           'data-visited': visited.has(`${r.doc}.${r.screen}`) ? 'true' : undefined,
@@ -138,7 +138,7 @@ export function createViewer(host: HTMLElement, events: ViewerEvents): Viewer {
   // 印スイッチの切り替えで行の高さが変わるとき、見ていた行の画面上の位置を保つ (SC4-4)
   toolbar.onSwitch(() => {
     const edge = top.getBoundingClientRect().bottom;
-    const anchor = [...body.querySelectorAll<HTMLElement>('tr.row')].find((r) => r.getBoundingClientRect().bottom > edge + 1);
+    const anchor = [...body.querySelectorAll<HTMLElement>('tr.v-row')].find((r) => r.getBoundingClientRect().bottom > edge + 1);
     const before = anchor?.getBoundingClientRect().top;
     paint();
     if (anchor && before !== undefined) window.scrollBy(0, anchor.getBoundingClientRect().top - before);

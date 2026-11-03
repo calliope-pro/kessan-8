@@ -129,15 +129,15 @@ test.describe('F17: 上の固定領域', () => {
       await page.setViewportSize({ width, height: 700 });
       await open(page, '?problem=full');
       await page.getByRole('tab', { name: '貸借', exact: true }).click();
-      const docBar = await page.locator('.tabs-doc').boundingBox();
-      const screenBar = await page.locator('.tabs-screen').boundingBox();
+      const docBar = await page.locator('.v-tabs-doc').boundingBox();
+      const screenBar = await page.locator('.v-tabs-screen').boundingBox();
       expect(docBar!.height).toBe(44);
       expect(screenBar!.height).toBe(44);
-      const tops = await page.locator('.tabs-screen .tab').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+      const tops = await page.locator('.v-tabs-screen .v-tab').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
       expect(new Set(tops).size).toBe(1);
-      for (const h of await page.locator('.tab').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(44);
+      for (const h of await page.locator('.v-tab').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(44);
       await page.evaluate(() => window.scrollTo(0, 600));
-      const top = await page.locator('.viewer-top').evaluate((e) => e.getBoundingClientRect().top);
+      const top = await page.locator('.v-viewer-top').evaluate((e) => e.getBoundingClientRect().top);
       expect(top).toBe(0);
     });
   }
@@ -186,7 +186,7 @@ test.describe('F13・F14: 同じ書式・通信なし', () => {
     const classes = async (query: string, t: (typeof ALL)[number]) => {
       await open(page, query);
       await show(page, t);
-      return page.locator('article.screen').evaluate((a) => [...new Set([a, ...a.querySelectorAll('*')].flatMap((e) => [...e.classList]))].sort());
+      return page.locator('article.v-screen').evaluate((a) => [...new Set([a, ...a.querySelectorAll('*')].flatMap((e) => [...e.classList]))].sort());
     };
     for (const t of ALL) {
       const a = await classes('?problem=normal', t);
@@ -241,10 +241,10 @@ test.describe('C1〜C7: IR スライドの内容', () => {
   test('グラフ: 棒の高さの割合・題・軸の下端の見出しと値', async ({ page }) => {
     await open(page);
     await show(page, IR[1]);
-    const bars = page.locator('[data-path^="ir.results.chart.netSales."].bar');
+    const bars = page.locator('[data-path^="ir.results.chart.netSales."].v-bar');
     await expect(bars).toHaveCount(2);
     expect(await bars.evaluateAll((els) => els.map((e) => e.getAttribute('data-fraction')))).toEqual(['0.9516', '1']);
-    const heights = await bars.locator('.bar-rect').evaluateAll((els) => els.map((e) => Number(e.getAttribute('height'))));
+    const heights = await bars.locator('.v-bar-rect').evaluateAll((els) => els.map((e) => Number(e.getAttribute('height'))));
     expect(heights).toEqual([95, 100]);
     await expect(page.locator('[data-item-key="ir.results.chart.netSales"]')).toBeVisible();
     await expect(page.locator('[data-item-key="ir.results.chart.netSales.axisMin"]')).toBeVisible();
@@ -255,7 +255,7 @@ test.describe('C1〜C7: IR スライドの内容', () => {
       p.ir.results.chart.netSales.axisMin = 10000;
       window.__viewerDemo.set({ problem: p, view: { doc: 'ir', screen: 'results' } });
     });
-    expect(await bars.locator('.bar-rect').evaluateAll((els) => els.map((e) => Number(e.getAttribute('height'))))).toEqual([75, 100]);
+    expect(await bars.locator('.v-bar-rect').evaluateAll((els) => els.map((e) => Number(e.getAttribute('height'))))).toEqual([75, 100]);
   });
 
   test('億円版: IR の金額は小数第一位、単位は 億円', async ({ page }) => {
@@ -268,7 +268,7 @@ test.describe('C1〜C7: IR スライドの内容', () => {
   test('セグメント: 3 セグメントは節が 3 つ。名前のセルがある', async ({ page }) => {
     await open(page, '?problem=full');
     await show(page, IR[2]);
-    await expect(page.locator('.sec-name[data-path^="ir.segments.items."]')).toHaveCount(3);
+    await expect(page.locator('.v-sec-name[data-path^="ir.segments.items."]')).toHaveCount(3);
   });
 });
 
@@ -277,7 +277,7 @@ const marked = (page: Page) => page.locator('[data-marked="true"]');
 const key = (page: Page, path: string) => page.locator(`[data-path="${path}"]`);
 const keys = (page: Page) => page.evaluate(() => window.__viewerDemo.state.marks);
 const turnOn = (page: Page) => page.getByRole('button', { name: '印', exact: true }).click();
-const calcLines = (page: Page) => page.locator('.calc-line').allTextContents();
+const calcLines = (page: Page) => page.locator('.v-calc-line').allTextContents();
 
 test.describe('F6・F7: 印', () => {
   test('F6: スイッチが切れている間は押しても印が付かず onToggleMark も呼ばれない', async ({ page }) => {
@@ -381,7 +381,7 @@ test.describe('F8・E10・E11: 検算', () => {
     await turnOn(page);
     await key(page, 'tanshin.summary.netSales.current').click();
     await key(page, 'tanshin.summary.netSales.previous').click();
-    const line = await page.locator('.calc-line').first().elementHandle();
+    const line = await page.locator('.v-calc-line').first().elementHandle();
     await show(page, TANSHIN[2]);
     await show(page, TANSHIN[0]);
     expect(await line!.evaluate((e) => e.isConnected)).toBe(true);
@@ -424,7 +424,7 @@ test.describe('F9・F10: 道具バー', () => {
     test(`F9: 幅 ${width}px で道具バーは折り返さず 61px 以下。10 桁の検算でも高さが変わらず、文字が欠けない`, async ({ page }) => {
       await page.setViewportSize({ width, height: 700 });
       await open(page, '?problem=full&judge=1');
-      const bar = page.locator('.toolbar');
+      const bar = page.locator('.v-toolbar');
       expect((await bar.boundingBox())!.height).toBeLessThanOrEqual(61);
       await turnOn(page);
       const h0 = (await bar.boundingBox())!.height;
@@ -440,7 +440,7 @@ test.describe('F9・F10: 道具バー', () => {
       const box = (await bar.boundingBox())!;
       expect(box.height).toBe(h0);
       expect(box.height).toBeLessThanOrEqual(61);
-      for (const el of await page.locator('.calc-line').all()) expect(await el.evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
+      for (const el of await page.locator('.v-calc-line').all()) expect(await el.evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
       const sw = (await page.getByRole('button', { name: '印', exact: true }).boundingBox())!;
       expect(sw.width).toBeGreaterThanOrEqual(44);
       expect(sw.height).toBeGreaterThanOrEqual(44);
@@ -461,7 +461,7 @@ test.describe('F9・F10: 道具バー', () => {
 
   test('F10: toolbarEnd を渡さなければ右端は空', async ({ page }) => {
     await open(page);
-    await expect(page.locator('.toolbar-end *')).toHaveCount(0);
+    await expect(page.locator('.v-toolbar-end *')).toHaveCount(0);
     await expect(page.getByRole('button', { name: '判定する' })).toHaveCount(0);
   });
 });
@@ -471,7 +471,7 @@ test.describe('F11: 行の高さ', () => {
     await page.setViewportSize({ width: 375, height: 700 });
     await open(page);
     await show(page, TANSHIN[1]);
-    const rowHeight = () => page.locator('tr.row').first().evaluate((e) => e.getBoundingClientRect().height);
+    const rowHeight = () => page.locator('tr.v-row').first().evaluate((e) => e.getBoundingClientRect().height);
     expect(await rowHeight()).toBeLessThan(40);
     await turnOn(page);
     for (const h of await page.locator('[role="button"][data-path], [role="button"][data-item-key]').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) {
@@ -486,8 +486,8 @@ test.describe('F11: 行の高さ', () => {
     await show(page, TANSHIN[1]);
     for (const pos of [400, 700]) {
       await page.evaluate((y) => window.scrollTo(0, y), pos);
-      const edge = await page.locator('.viewer-top').evaluate((e) => e.getBoundingClientRect().bottom);
-      const rows = await page.locator('tr.row').evaluateAll((els, e) => els.map((el) => [el.querySelector('[data-item-key]')?.getAttribute('data-item-key'), el.getBoundingClientRect().top, el.getBoundingClientRect().bottom] as const).filter(([, , b]) => (b as number) > (e as number) + 1)[0], edge);
+      const edge = await page.locator('.v-viewer-top').evaluate((e) => e.getBoundingClientRect().bottom);
+      const rows = await page.locator('tr.v-row').evaluateAll((els, e) => els.map((el) => [el.querySelector('[data-item-key]')?.getAttribute('data-item-key'), el.getBoundingClientRect().top, el.getBoundingClientRect().bottom] as const).filter(([, , b]) => (b as number) > (e as number) + 1)[0], edge);
       const topOf = (k: string) => page.locator(`[data-item-key="${k}"]`).evaluate((e) => e.closest('tr')!.getBoundingClientRect().top);
       const before = await topOf(rows![0] as string);
       await turnOn(page);
@@ -549,7 +549,7 @@ test.describe('F15・F16: check モードと使い回し', () => {
     await key(page, 'tanshin.summary.netSales.current').click();
     await key(page, 'tanshin.summary.netSales.previous').click();
     await page.evaluate(() => window.__viewerDemo.set({ mode: 'check' }));
-    await expect(page.locator('.toolbar')).toBeHidden();
+    await expect(page.locator('.v-toolbar')).toBeHidden();
     await expect(key(page, 'tanshin.summary.netSales.current')).toHaveAttribute('data-marked', 'true');
     await expect(key(page, 'tanshin.summary.netSales.current')).not.toHaveAttribute('role', 'button');
     const before = (await events(page)).filter((e) => e.type === 'mark').length;
@@ -559,13 +559,13 @@ test.describe('F15・F16: check モードと使い回し', () => {
     await page.getByRole('tab', { name: '貸借', exact: true }).click();
     expect(await screenId(page)).toBe('balanceSheet');
     await page.evaluate(() => window.__viewerDemo.set({ mode: 'read' }));
-    await expect(page.locator('.toolbar')).toBeVisible();
+    await expect(page.locator('.v-toolbar')).toBeVisible();
     expect(await calcLines(page)).toEqual(['差 600', '比 1.05']);
   });
 
   test('F15: ?mode=check で始めると道具バーは最初から出ない', async ({ page }) => {
     await open(page, '?mode=check&judge=1');
-    await expect(page.locator('.toolbar')).toBeHidden();
+    await expect(page.locator('.v-toolbar')).toBeHidden();
     await expect(page.getByRole('button', { name: '判定する' })).toBeHidden();
   });
 
@@ -573,7 +573,7 @@ test.describe('F15・F16: check モードと使い回し', () => {
     await open(page);
     await show(page, TANSHIN[1]);
     await turnOn(page);
-    const article = await page.locator('article.screen').elementHandle();
+    const article = await page.locator('article.v-screen').elementHandle();
     await page.evaluate(() => window.__viewerDemo.set({ marks: ['tanshin.balanceSheet.current.cash'], highlights: [{ doc: 'tanshin', path: 'balanceSheet.current.cash' }] }));
     expect(await article!.evaluate((e) => e.isConnected)).toBe(true);
     await expect(page.getByRole('button', { name: '印', exact: true })).toHaveAttribute('aria-pressed', 'true');

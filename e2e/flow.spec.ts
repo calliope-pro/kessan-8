@@ -469,7 +469,7 @@ test('E30: 帯の社色・淡い色で、8 段すべてで読める。社が変�
 
 test('E31: 資料の紙面は社が変わっても同じ。机の面に質感 (グラデーション)・紙面に影', async ({ page }) => {
   await startGame(page, SEED);
-  const read = () => page.locator('.viewer').evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, fg: getComputedStyle(el).color, shadow: getComputedStyle(el).boxShadow }));
+  const read = () => page.locator('.v-viewer').evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, fg: getComputedStyle(el).color, shadow: getComputedStyle(el).boxShadow }));
   const first = await read();
   expect(first.shadow).not.toBe('none');
   expect(await page.locator('.app').evaluate((el) => getComputedStyle(el).backgroundImage)).toContain('linear-gradient');
