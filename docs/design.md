@@ -580,8 +580,8 @@ export interface Problem {
 | --- | --- | --- |
 | `START` | `title` | `difficulty` |
 | `PICK(難易度, 出題)` | `difficulty`・`cleared` | `reading` (1 社目)。`cleared` からは「もう一度」: 難易度は `cleared` の持つものと同じで、出題を新しくする |
-| `VIEW(doc, screen)` | `reading` | `reading` (見る画面だけ変わる) |
-| `ANSWER(あり/なし)` | `reading` | `revealed` |
+| `VIEW(doc, screen)` | `reading`・`revealed` | 同じ phase (見る画面だけ変わる)。`revealed` でも受け付けるのは、答え合わせで異変の場所の画面 (資料間の異変は短信と IR の両方) を見比べるため。判定は変えない |
+| `ANSWER(あり/なし)` | `reading` | `revealed`。異変のある問題では、見る画面を `screenOf(places[0])` (§4.1) にする (異変の場所の画面を最初に示す) |
 | `NEXT` | `revealed` (正解のときだけ) | `reading` (次の会社)、8 社目なら `cleared` |
 | `RESTART(出題)` | `revealed` (不正解のときだけ) | `reading` (1 社目) |
 | `TO_DIFFICULTY` | `revealed` (不正解のときだけ)・`cleared` | `difficulty` |
@@ -591,7 +591,7 @@ export interface Problem {
 - 出題 (`Problem[]` 8 問) は、`PICK`・`RESTART` の action が持ってくる。`reduce` 自身は乱数を使わない (純粋)。出題は `domain/draw.ts` が作る
 - `reading` 中はいつでも、10 画面 (短信 5 + IR 5) のどれにも移れる (`VIEW`)。順番に読ませる強制はしない。UI の見せかた (タブ・スワイプ・矢印) は Task #28 で決める
 - 不正解のあとは `revealed` で答え合わせを見せ、`RESTART` で `reading` の 1 社目に戻る (または `TO_DIFFICULTY` で難易度の選択へ)。戻るたびに新しく出題する (同じ並びを覚えられないように)
-- `revealed` で `ANSWER`・`VIEW` は受け付けない (判定をやり直す経路を作らない)
+- `revealed` で `ANSWER` は受け付けない (判定をやり直す経路を作らない)。`VIEW` は受け付ける (上の表)
 
 ### 5.3 出題 (`domain/draw.ts`)
 
