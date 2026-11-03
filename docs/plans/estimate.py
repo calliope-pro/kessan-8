@@ -133,6 +133,34 @@ def schedule(tasks, scale_content=1.0, scale_gen=1.0):
                 total=dag_total + review, width=width, n_work=n_work)
 
 
+# ---- 段階公開 (案 B を、1 回目 = 案 A の範囲、2 回目 = IR の追加、の 2 回に分けて出す) ----
+# 1 回目の DAG は案 A そのもの。2 回目は、案 B にしか無い Task だけ (案 A の短信の画面・会社・短信の問題は残す)。
+STAGE2 = {
+    'T1': ('画面テンプレート: IR スライド 5', '中身', 2 * 5, [], 'o'),
+    'T2': ('問題テンプレート (会社 × 資料束) の設計', '中身', 6, ['T1'], 'o'),
+    'T3': ('会社の追加 (6 社 → 8 社) と、実在の法人名との衝突の確認', '中身', 0.5, [], 'o'),
+    'T4': ('問題制作 やさしい 1〜8 問目 (資料束)', '中身', 8 * 1.0, ['T2', 'T3'], 'c'),
+    'T5': ('問題制作 やさしい 9〜15 問目', '中身', 7 * 1.0, ['T2', 'T3'], 'c'),
+    'T6': ('問題制作 むずかしい 1〜8 問目', '中身', 8 * 1.0, ['T2', 'T3'], 'c'),
+    'T7': ('問題制作 むずかしい 9〜15 問目', '中身', 7 * 1.0, ['T2', 'T3'], 'c'),
+    'T8': ('一次資料での会計・資料間整合の確認 (資料束 30 問 × 0.4)', '中身', 30 * 0.4, ['T4', 'T5', 'T6', 'T7'], 'c'),
+    'T9': ('スマホでの資料間の表示の増分 (案 B の 5 − 案 A の 3)', '遊び', 5 - 3, ['T1'], 'o'),
+    'F1': ('2 回目の結合テスト・クリア確認', '品質', 3, ['T8', 'T9'], 'o'),
+    'F2': ('2 回目の Story の包括レビューと是正 (5 Story × 1 時間)', '品質', STORY_REVIEW / K, ['F1'], 'o'),
+}
+
+
+def staged_summary():
+    """段階公開の総工数・1 回目の公開までの経路・完成までの経路 (1 回目の後に 2 回目を始める)。"""
+    s1 = schedule(A)
+    s2 = schedule(STAGE2)
+    return dict(
+        stage1_total=s1['total'], stage1_cp=s1['cp'],
+        stage2_dag=s2['dag_total'], stage2_review=s2['review'], stage2_total=s2['total'], stage2_cp=s2['cp'],
+        total=s1['total'] + s2['total'], elapsed=s1['cp'] + s2['cp'],
+    )
+
+
 def option_hours(plan, key):
     return OPTIONS[key][1][plan] * K
 
@@ -238,3 +266,8 @@ if __name__ == '__main__':
     print('同時に動かす組を絞ったときの経過時間 (h)')
     for k, v in PLANS.items():
         print(' ', k, ' '.join(f'k={n}: {limited_makespan(v, n):.1f}' for n in (1, 2, 3, 5, 8)))
+    st = staged_summary()
+    b = schedule(B)
+    print('段階公開 (1 回目 = 案 A の範囲、2 回目 = IR の追加):')
+    print(f"  1 回目 総工数 {st['stage1_total']:.1f} h・経路 {st['stage1_cp']:.1f} h / 2 回目 DAG の和 {st['stage2_dag']:.1f} h + Task の包括レビュー {st['stage2_review']:.1f} h = {st['stage2_total']:.1f} h・経路 {st['stage2_cp']:.1f} h")
+    print(f"  合計 {st['total']:.1f} h (一括の案 B {b['total']:.1f} h との差 {st['total'] - b['total']:+.1f} h)、完成までの経路 {st['elapsed']:.1f} h (一括 {b['cp']:.1f} h との差 {st['elapsed'] - b['cp']:+.1f} h)、1 回目の公開 {st['stage1_cp']:.1f} h (一括より {b['cp'] - st['stage1_cp']:.1f} h 早い)")
