@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { makePool } from '../testing/fixtures';
 import { TIER_BY_ROUND } from './config';
-import { draw } from './draw';
+import { canDraw, draw } from './draw';
 import { mulberry32 } from './rng';
 import type { Problem } from './types';
 
@@ -109,6 +109,14 @@ describe('出題 draw', () => {
 
   it('UD11: 履歴にプールに無い ID が混じっても出題できる', () => {
     expect(run(pool72, 1, { history: ['no-such-id', 'easy-1-a-1'] })).toHaveLength(8);
+  });
+
+  it('UD13: canDraw は、両方を持つ会社が 8 社そろうときだけ真 (問題が無いときは偽)', () => {
+    expect(canDraw([], 'easy')).toBe(false);
+    const seven = makePool({ difficulty: 'easy', companies: 12, sides: (c) => (c <= 7 ? ['normal', 'anomaly'] : ['normal']) });
+    expect(canDraw(seven, 'easy')).toBe(false);
+    expect(canDraw(pool72, 'easy')).toBe(true);
+    expect(canDraw(pool72, 'hard')).toBe(false);
   });
 
   it('UD12: 難易度の違う問題が混じっていても、指定した難易度だけから引く', () => {

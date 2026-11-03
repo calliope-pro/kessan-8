@@ -1,6 +1,6 @@
 // 画面の組み立て。状態 (domain/game.ts の reduce) と、画面だけの状態 (context.ts の Local) から DOM を作り、操作を action にして返す。
 // 状態が変わるたびに、走行を保存し (sessionStorage)、判定の書き込みのときだけ記録を更新する (localStorage)。docs/design.md §5.4。
-import { draw } from '../domain/draw';
+import { canDraw, draw } from '../domain/draw';
 import { FIRST_VIEW, type Action, type GameState, initialState, reduce } from '../domain/game';
 import { markSampleSeen, loadRecords, recordTransition, saveRecords } from '../domain/records';
 import { mulberry32 } from '../domain/rng';
@@ -23,14 +23,7 @@ export function mountApp(root: HTMLElement, deps: AppDeps): void {
   // 出題できるか (プールが、両方を持つ会社 8 社以上の条件を満たすか)。問題が置かれるまでは「準備中」
   const availability = new Map<Difficulty, boolean>();
   const available = (d: Difficulty): boolean => {
-    if (!availability.has(d)) {
-      try {
-        draw(deps.pools.byDifficulty[d], { difficulty: d, rng: mulberry32(1) });
-        availability.set(d, true);
-      } catch {
-        availability.set(d, false);
-      }
-    }
+    if (!availability.has(d)) availability.set(d, canDraw(deps.pools.byDifficulty[d], d));
     return availability.get(d)!;
   };
   const drawRun = (d: Difficulty): Problem[] | undefined => {

@@ -13,6 +13,16 @@ export interface DrawOptions {
 
 type TierSet = ReadonlySet<number> | null;
 
+/** その難易度で出題できるか (両方を持つ会社が ROUNDS_TO_CLEAR 社そろっているか)。画面は、できない難易度の選択を無効にして「準備中」を出す。 */
+export function canDraw(pool: readonly Problem[], difficulty: Difficulty): boolean {
+  try {
+    draw(pool, { difficulty, rng: () => 0 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** 8 問を引く。両方 (異変あり・なし) を持つ会社が ROUNDS_TO_CLEAR 社に満たないプールは例外 (黙って重複させない)。 */
 export function draw(pool: readonly Problem[], opts: DrawOptions): Problem[] {
   const { rng } = opts;
