@@ -81,10 +81,19 @@ describe('npm run verify:data', () => {
     expect(r.out).toContain('読めません');
   });
 
-  it('L7: --dir なし (既定の src/data) で、ファイルが無い今の状態 → 0 件として 0。数が足りない警告', () => {
-    const r = run();
+  it('L7: --dir なし (既定の src/data) は、問題が揃った今のデータ (やさしい・むずかしい 25 問以上) → 終了コード 0。--require-complete を付けても 0 で、数が足りない警告 (pool-size) が出ない', () => {
+    const r = run('--require-complete');
+    expect(r.code).toBe(0);
+    expect(r.out).not.toContain('pool-size');
+    expect(r.out).not.toContain('致命');
+  });
+
+  it('L7b: 会社・種類・問題が何も無い空のディレクトリ → 0 件として 0。数が足りない警告 (pool-size)。--require-complete なら 1', () => {
+    const d = dataDir({ companies: null, kinds: null, problems: [] });
+    const r = run('--dir', d);
     expect(r.code).toBe(0);
     expect(r.out).toContain('pool-size');
+    expect(run('--dir', d, '--require-complete').code).toBe(1);
   });
 
   it('L8: anomaly-kinds.json だけ無く、異変の問題がある → unknown-kind で 1', () => {

@@ -1,0 +1,418 @@
+{
+  "id": "hard-024",
+  "difficulty": "hard",
+  "companyId": "c07",
+  "fiscalYear": 2022,
+  "tier": 2,
+  "tanshin": {
+    "header": {
+      "companyName": "ザルツァ運輸株式会社",
+      "securitiesCode": "0807",
+      "periodLabel": "2022年6月期",
+      "unit": "百万円"
+    },
+    "summary": {
+      "netSales": {
+        "current": 46600,
+        "previous": 43820,
+        "changeRate": 6.3
+      },
+      "operatingIncome": {
+        "current": 1090,
+        "previous": 990,
+        "changeRate": 10.1
+      },
+      "ordinaryIncome": {
+        "current": 955,
+        "previous": 837,
+        "changeRate": 14.1
+      },
+      "netIncomeParent": {
+        "current": 594,
+        "previous": 569,
+        "changeRate": 4.4
+      },
+      "operatingMargin": 2.3,
+      "roe": 8,
+      "eps": 42.43,
+      "totalAssets": 29671,
+      "netAssets": 7761,
+      "equity": 7761,
+      "equityRatio": 26.2,
+      "bps": 554.36,
+      "annualDividend": 0,
+      "interimDividend": 0,
+      "annualDividendPrevious": 0,
+      "interimDividendPrevious": 0,
+      "dividendTotal": 0,
+      "payoutRatio": 0,
+      "accountingPolicyChange": false,
+      "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+    },
+    "dates": {
+      "periodEnd": "2022-06-30",
+      "previousPeriodEnd": "2021-06-30",
+      "disclosure": "2022-08-15",
+      "shareholdersMeeting": "2022-09-26"
+    },
+    "columnDates": {
+      "balanceSheet": {
+        "previous": "2021-06-30",
+        "current": "2022-06-30"
+      },
+      "incomeStatement": {
+        "previous": "2021-06-30",
+        "current": "2022-06-30"
+      },
+      "cashFlow": {
+        "previous": "2021-06-30",
+        "current": "2022-06-30"
+      }
+    },
+    "balanceSheet": {
+      "previous": {
+        "cash": 1748,
+        "receivables": 5122,
+        "inventories": 307,
+        "otherCurrentAssets": 577,
+        "totalCurrentAssets": 7754,
+        "tangibleAssets": 19221,
+        "investments": 2399,
+        "totalFixedAssets": 21620,
+        "totalAssets": 29374,
+        "payables": 3041,
+        "shortTermDebt": 2906,
+        "incomeTaxesPayable": 165,
+        "otherCurrentLiabilities": 1227,
+        "totalCurrentLiabilities": 7339,
+        "longTermDebt": 14868,
+        "totalLiabilities": 22207,
+        "capitalStock": 1513,
+        "capitalSurplus": 908,
+        "retainedEarnings": 4746,
+        "totalShareholdersEquity": 7167,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 7167,
+        "totalLiabilitiesAndNetAssets": 29374
+      },
+      "current": {
+        "cash": 1537,
+        "receivables": 5352,
+        "inventories": 317,
+        "otherCurrentAssets": 577,
+        "totalCurrentAssets": 7783,
+        "tangibleAssets": 19441,
+        "investments": 2447,
+        "totalFixedAssets": 21888,
+        "totalAssets": 29671,
+        "payables": 3223,
+        "shortTermDebt": 2710,
+        "incomeTaxesPayable": 173,
+        "otherCurrentLiabilities": 1305,
+        "totalCurrentLiabilities": 7411,
+        "longTermDebt": 14499,
+        "totalLiabilities": 21910,
+        "capitalStock": 1513,
+        "capitalSurplus": 908,
+        "retainedEarnings": 5340,
+        "totalShareholdersEquity": 7761,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 7761,
+        "totalLiabilitiesAndNetAssets": 29671
+      }
+    },
+    "incomeStatement": {
+      "previous": {
+        "netSales": 43820,
+        "costOfSales": 35770,
+        "grossProfit": 8050,
+        "sga": 7060,
+        "operatingIncome": 990,
+        "nonOperatingIncome": 131,
+        "nonOperatingExpenses": 284,
+        "ordinaryIncome": 837,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 13,
+        "incomeBeforeTax": 824,
+        "incomeTaxes": 255,
+        "netIncome": 569,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 569
+      },
+      "current": {
+        "netSales": 46600,
+        "costOfSales": 37960,
+        "grossProfit": 8640,
+        "sga": 7550,
+        "operatingIncome": 1090,
+        "nonOperatingIncome": 140,
+        "nonOperatingExpenses": 275,
+        "ordinaryIncome": 955,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 94,
+        "incomeBeforeTax": 861,
+        "incomeTaxes": 267,
+        "netIncome": 594,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 594
+      }
+    },
+    "cashFlow": {
+      "incomeBeforeTax": 861,
+      "depreciation": 1922,
+      "interestDividendIncome": -140,
+      "interestExpense": 275,
+      "receivablesChange": -230,
+      "inventoriesChange": -10,
+      "payablesChange": 182,
+      "otherAssetsChange": 0,
+      "otherLiabilitiesChange": 78,
+      "subtotal": 2938,
+      "interestDividendReceived": 140,
+      "interestPaid": -275,
+      "incomeTaxesPaid": -259,
+      "operatingCashFlow": 2544,
+      "capex": -2142,
+      "otherInvestingChange": -48,
+      "investingCashFlow": -2190,
+      "shortTermDebtChange": -196,
+      "longTermBorrowings": 892,
+      "longTermRepayments": -1261,
+      "dividendsPaid": 0,
+      "financingCashFlow": -565,
+      "fxEffect": 0,
+      "netChangeInCash": -211,
+      "cashBeginning": 1748,
+      "cashEnding": 1537
+    },
+    "notes": {
+      "goingConcern": "該当事項はありません。",
+      "cashScope": "現金及び預金",
+      "segments": {
+        "previous": {
+          "segments": [
+            {
+              "name": "貨物輸送事業",
+              "netSales": 35830,
+              "profit": 641
+            },
+            {
+              "name": "倉庫・センター運営事業",
+              "netSales": 7990,
+              "profit": 428
+            }
+          ],
+          "adjustment": -79,
+          "consolidatedNetSales": 43820,
+          "consolidatedOperatingIncome": 990
+        },
+        "current": {
+          "segments": [
+            {
+              "name": "貨物輸送事業",
+              "netSales": 38320,
+              "profit": 706
+            },
+            {
+              "name": "倉庫・センター運営事業",
+              "netSales": 8280,
+              "profit": 471
+            }
+          ],
+          "adjustment": -87,
+          "consolidatedNetSales": 46600,
+          "consolidatedOperatingIncome": 1090
+        }
+      },
+      "averageSharesThousand": 14000,
+      "bps": 554.36,
+      "eps": 42.43,
+      "subsequentEvents": "期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 300 百万円の見込みである。",
+      "accountingPolicyNote": "該当事項はありません。"
+    }
+  },
+  "ir": {
+    "header": {
+      "companyName": "ザルツァ運輸株式会社",
+      "securitiesCode": "0807",
+      "periodLabel": "2022年6月期",
+      "unit": "百万円"
+    },
+    "highlights": {
+      "netSales": {
+        "amount": 46600,
+        "changeRate": 6.3
+      },
+      "operatingIncome": {
+        "amount": 1090,
+        "changeRate": 10.1
+      },
+      "ordinaryIncome": {
+        "amount": 955,
+        "changeRate": 14.1
+      },
+      "netIncomeParent": {
+        "amount": 594,
+        "changeRate": 4.4
+      },
+      "annualDividend": 0,
+      "payoutRatio": 0
+    },
+    "results": {
+      "netSales": {
+        "previous": 43820,
+        "current": 46600
+      },
+      "grossProfit": {
+        "previous": 8050,
+        "current": 8640
+      },
+      "grossMargin": {
+        "previous": 18.4,
+        "current": 18.5
+      },
+      "operatingIncome": {
+        "previous": 990,
+        "current": 1090
+      },
+      "operatingMargin": {
+        "previous": 2.3,
+        "current": 2.3
+      },
+      "chart": {
+        "netSales": {
+          "axisMin": 0,
+          "previous": 43820,
+          "current": 46600
+        },
+        "operatingIncome": {
+          "axisMin": 0,
+          "previous": 990,
+          "current": 1090
+        }
+      }
+    },
+    "segments": {
+      "items": [
+        {
+          "name": "貨物輸送事業",
+          "netSales": {
+            "previous": 35830,
+            "current": 38320,
+            "changeRate": 6.9
+          },
+          "profit": {
+            "previous": 641,
+            "current": 706,
+            "changeRate": 10.1
+          },
+          "salesShare": 82.2
+        },
+        {
+          "name": "倉庫・センター運営事業",
+          "netSales": {
+            "previous": 7990,
+            "current": 8280,
+            "changeRate": 3.6
+          },
+          "profit": {
+            "previous": 428,
+            "current": 471,
+            "changeRate": 10
+          },
+          "salesShare": 17.8
+        }
+      ],
+      "adjustment": {
+        "previous": -79,
+        "current": -87
+      },
+      "consolidatedOperatingIncome": {
+        "previous": 990,
+        "current": 1090
+      }
+    },
+    "outlook": {
+      "forecast": {
+        "netSales": 48967,
+        "netSalesChangeRate": 5.1,
+        "operatingIncome": 1160,
+        "operatingIncomeChangeRate": 6.4,
+        "capex": 2249,
+        "depreciation": 1999,
+        "annualDividend": 0
+      },
+      "actual": {
+        "netSales": 46600,
+        "operatingIncome": 1090,
+        "capex": 2142,
+        "depreciation": 1922
+      },
+      "subsequentEvent": "期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 300 百万円の見込みである。"
+    },
+    "supplement": {
+      "capex": {
+        "previous": null,
+        "current": 2142
+      },
+      "depreciation": {
+        "previous": null,
+        "current": 1922
+      },
+      "interestBearingDebt": {
+        "previous": 17774,
+        "current": 17209
+      },
+      "cash": {
+        "previous": 1748,
+        "current": 1537
+      },
+      "netDebt": {
+        "previous": 16026,
+        "current": 15672
+      },
+      "equityRatio": 26.2
+    },
+    "statements": [
+      {
+        "slide": "highlights",
+        "text": "当期は増収増益となった。便数と稼働を維持し、運行を続けた。",
+        "claims": [
+          {
+            "metric": "netSales",
+            "direction": "up"
+          },
+          {
+            "metric": "operatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "outlook",
+        "text": "次期は増収増益を見込んでいる。",
+        "claims": [
+          {
+            "metric": "forecastNetSales",
+            "direction": "up"
+          },
+          {
+            "metric": "forecastOperatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "supplement",
+        "text": "営業活動によるキャッシュ・フローはプラスとなった。",
+        "claims": [
+          {
+            "metric": "operatingCashFlow",
+            "direction": "up"
+          }
+        ]
+      }
+    ]
+  },
+  "anomaly": null
+}
