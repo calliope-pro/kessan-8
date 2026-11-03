@@ -207,7 +207,7 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
   // セグメント
   const segInfo = (S: number, OI: number, jitter: number): any => {
     const n = P.seg.length;
-    const sales = P.seg.map((f) => Math.round(S * f * (1 + (R() - 0.5) * jitter)));
+    const sales = P.seg.map((f) => q(S * f * (1 + (R() - 0.5) * jitter), 10)); // 10 百万円の倍数 (億円の会社の IR の比率が丸めでずれない)
     sales[n - 1] = S - sales.slice(0, n - 1).reduce((x, y) => x + y, 0);
     const adj = -q(OI * 0.08, unit10 === 10 ? 10 : 1) - 0;
     const pool = OI - adj;

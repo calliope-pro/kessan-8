@@ -188,6 +188,20 @@ describe('正常な問題の JSON (Sub-task #74)', () => {
     expect(pairs).toBeGreaterThan(0);
   });
 
+  it('J7: 億円の会社 (c03・c05・c06・c08・c10) の比率に使う金額 (売上高・売上総利益・営業利益・セグメントの売上高と利益。前期と当期) は 10 百万円の倍数 (IR の 0.1 億円の丸めで比率がずれないため。技術責任者の決定)', () => {
+    normalRows.filter((r) => companyOf(r.company).irUnit === '億円').forEach((r) => {
+      const t = load(r.id).tanshin;
+      const amounts: number[] = [];
+      for (const k of ['previous', 'current'] as const) {
+        const pl = t.incomeStatement[k];
+        amounts.push(pl.netSales, pl.grossProfit, pl.operatingIncome);
+        t.notes.segments[k].segments.forEach((x) => amounts.push(x.netSales, x.profit));
+        amounts.push(t.notes.segments[k].adjustment);
+      }
+      amounts.forEach((v) => expect(Math.abs(v) % 10, `${r.id} ${v}`).toBe(0));
+    });
+  });
+
   it('J6: 億円の会社の IR は、短信の百万円 ÷ 100 を小数第一位に四捨五入した値 (IR の売上高)', () => {
     normalRows.forEach((r) => {
       const p = load(r.id);

@@ -193,17 +193,17 @@
           "segments": [
             {
               "name": "食品小売事業",
-              "netSales": 69201,
+              "netSales": 69200,
               "profit": 1890
             },
             {
               "name": "衣料・生活雑貨事業",
-              "netSales": 33342,
+              "netSales": 33340,
               "profit": 1320
             },
             {
               "name": "テナント・金融事業",
-              "netSales": 7497,
+              "netSales": 7500,
               "profit": 570
             }
           ],
@@ -220,12 +220,12 @@
             },
             {
               "name": "衣料・生活雑貨事業",
-              "netSales": 34447,
+              "netSales": 34450,
               "profit": 1420
             },
             {
               "name": "テナント・金融事業",
-              "netSales": 9793,
+              "netSales": 9790,
               "profit": 610
             }
           ],
@@ -337,7 +337,7 @@
           "netSales": {
             "previous": 75,
             "current": 97.9,
-            "changeRate": 30.6
+            "changeRate": 30.5
           },
           "profit": {
             "previous": 5.7,

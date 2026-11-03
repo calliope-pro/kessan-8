@@ -193,12 +193,12 @@
           "segments": [
             {
               "name": "貨物輸送事業",
-              "netSales": 35981,
+              "netSales": 35980,
               "profit": 641
             },
             {
               "name": "倉庫・センター運営事業",
-              "netSales": 7839,
+              "netSales": 7840,
               "profit": 428
             }
           ],
@@ -210,12 +210,12 @@
           "segments": [
             {
               "name": "貨物輸送事業",
-              "netSales": 38604,
+              "netSales": 38600,
               "profit": 706
             },
             {
               "name": "倉庫・センター運営事業",
-              "netSales": 7996,
+              "netSales": 8000,
               "profit": 471
             }
           ],
@@ -297,8 +297,8 @@
         {
           "name": "貨物輸送事業",
           "netSales": {
-            "previous": 35981,
-            "current": 38604,
+            "previous": 35980,
+            "current": 38600,
             "changeRate": 7.3
           },
           "profit": {
@@ -311,8 +311,8 @@
         {
           "name": "倉庫・センター運営事業",
           "netSales": {
-            "previous": 7839,
-            "current": 7996,
+            "previous": 7840,
+            "current": 8000,
             "changeRate": 2
           },
           "profit": {

@@ -193,17 +193,17 @@
           "segments": [
             {
               "name": "賃貸事業",
-              "netSales": 12241,
+              "netSales": 12240,
               "profit": 2450
             },
             {
               "name": "分譲事業",
-              "netSales": 6625,
+              "netSales": 6620,
               "profit": 1220
             },
             {
               "name": "管理事業",
-              "netSales": 3124,
+              "netSales": 3130,
               "profit": 410
             }
           ],
@@ -220,12 +220,12 @@
             },
             {
               "name": "分譲事業",
-              "netSales": 6871,
+              "netSales": 6870,
               "profit": 1530
             },
             {
               "name": "管理事業",
-              "netSales": 3539,
+              "netSales": 3540,
               "profit": -240
             }
           ],
@@ -321,9 +321,9 @@
         {
           "name": "分譲事業",
           "netSales": {
-            "previous": 66.3,
+            "previous": 66.2,
             "current": 68.7,
-            "changeRate": 3.7
+            "changeRate": 3.8
           },
           "profit": {
             "previous": 12.2,
@@ -335,9 +335,9 @@
         {
           "name": "管理事業",
           "netSales": {
-            "previous": 31.2,
+            "previous": 31.3,
             "current": 35.4,
-            "changeRate": 13.3
+            "changeRate": 13.1
           },
           "profit": {
             "previous": 4.1,
