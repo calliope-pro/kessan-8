@@ -116,12 +116,16 @@ describe('screenOfPlace: 全部の場所で、選んだ画面に強調される�
 
   it('S14: 本物の問題 (src/data/problems) の異変の全部の場所 (問題があるときだけ)', () => {
     const bad: string[] = [];
+    let places = 0;
     for (const f of files) {
       const p = JSON.parse(readFileSync(f, 'utf-8')) as Problem;
       for (const place of p.anomaly?.places ?? []) {
+        places++;
         if (hitsOn(p, place, screenOfPlace(p, place)) === 0) bad.push(`${f}: ${JSON.stringify(place)}`);
       }
     }
     expect(bad).toEqual([]);
+    // 問題の置き場があるのに 0 か所で通り続けない (置き場の名前が変わったとき、つなぎ目が見えなくなるため)
+    if (existsSync(dir)) expect(places).toBeGreaterThan(0);
   });
 });
