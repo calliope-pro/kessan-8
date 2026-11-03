@@ -81,7 +81,6 @@ export const MESSAGES = {
   cleared: {
     heading: '8 社連続で見抜きました',
     slip: '完了票',
-    morning: '翌朝',
     clears: (n: number) => `クリア ${n} 回`,
     kinds: (n: number) => `見つけた異変の種類 ${n}`,
   },

@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "build:e2e": "tsc --noEmit && E2E_POOL=1 vite build",
+    "build:e2e": "tsc --noEmit && E2E_POOL=1 vite build --outDir dist-e2e",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

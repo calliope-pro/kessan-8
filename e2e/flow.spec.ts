@@ -92,7 +92,8 @@ test('E7・E20: 8 社連続で正解するとクリア (完了票・朝)。も�
   await page.getByRole('button', { name: '結果を見る' }).click();
   await expect(app(page)).toHaveAttribute('data-phase', 'cleared');
   await expect(page.getByTestId('completion-slip')).toBeVisible();
-  await expect(page.getByTestId('morning')).toContainText('6:00');
+  await expect(page.getByTestId('morning')).toHaveText('翌朝 6:00'); // 「翌朝 翌朝 6:00」と重ならない (#30 の包括レビュー X1)
+  await expect(page.getByTestId('completion-slip').locator('ol')).toHaveCount(0); // 番号の二重 (「1. 1 / 8 社目」) を避ける
   await page.getByRole('button', { name: 'もう一度' }).click();
   await page.getByRole('button', { name: '資料を開く' }).click();
   await expect(app(page)).toHaveAttribute('data-round', '1');

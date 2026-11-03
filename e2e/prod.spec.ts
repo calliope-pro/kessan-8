@@ -124,3 +124,8 @@ test('EP8: 本番ビルドに試験用の問題が入らず、転送量が予算
   const r = spawnSync('node', ['scripts/check-dist-size.mjs', 'dist-prod'], { encoding: 'utf-8' });
   expect(r.status, r.stdout + r.stderr).toBe(0);
 });
+
+test('EP10: 本番ビルドの静的な HTML の <title> が題名「８期連続」', async ({ page }) => {
+  const html = await (await page.request.get('/')).text();
+  expect(html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '').toContain('８期連続');
+});

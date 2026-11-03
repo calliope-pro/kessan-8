@@ -29,12 +29,12 @@ export function clearedScreen(ctx: Ctx): HTMLElement {
     h('h1', {}, M.cleared.heading),
     h('div', { class: 'slip-card slip', 'data-testid': 'completion-slip' },
       h('strong', {}, M.cleared.slip),
-      h('ol', {}, ...run.problems.map((problem, i) => {
+      h('ul', { class: 'slip-list' }, ...run.problems.map((problem, i) => {
         const company = ctx.companyOf(problem);
         return applyCompanyColors(h('li', { 'data-testid': 'slip-company' },
           `${i + 1} / ${ROUNDS_TO_CLEAR} 社目 ${timeLabel(i)} `, h('span', { class: 'emblem', 'aria-hidden': 'true' }, company?.emblem ?? ''), ` ${company?.name ?? problem.tanshin.header.companyName} ✓`), company);
       })),
-      h('p', { 'data-testid': 'morning' }, `${M.cleared.morning} ${MORNING_LABEL}`)),
+      h('p', { 'data-testid': 'morning' }, MORNING_LABEL)),
     h('div', { class: 'card', 'data-testid': 'record' }, h('strong', {}, M.record.heading), h('p', {}, M.cleared.clears(rec.clears)), h('p', {}, M.cleared.kinds(rec.kinds.length))),
     h('div', { class: 'row' },
       button(M.button.again, () => ctx.restart(), { class: 'btn btn--primary', 'data-autofocus': true }),

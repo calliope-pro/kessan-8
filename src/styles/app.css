@@ -43,6 +43,7 @@ body { padding: 0; }
 .pip[data-state="done"] { background: currentColor; }
 .pip[data-state="now"] { background: #c0392b; border-color: #c0392b; }
 .emblem { display: inline-block; min-width: 1.6em; text-align: center; padding: 0 4px; border-radius: 4px; color: var(--company-main, #1b1b1b); background: #fffdf7; border: 1px solid var(--company-main, #5d5a55); font-weight: 700; }
+.slip-list { margin: 0; padding: 0; list-style: none; }
 .slip-card { display: grid; gap: 4px; padding: 12px 16px; background: var(--company-light, #fffdf7); color: #1b1b1b; border: 2px dashed var(--company-main, #5d5a55); border-radius: 8px; box-shadow: 0 2px 6px rgb(0 0 0 / 0.3); }
 
 /* V1・SC0-8 資料室の入口の背景 (CSS だけ。画像は使わない): 扉の枠と、閲覧票を置く机の面 */

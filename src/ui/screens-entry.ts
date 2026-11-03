@@ -13,9 +13,10 @@ function recordLine(rec: Records, difficulty: Difficulty): string {
 }
 
 function footer(): HTMLElement {
-  return h('footer', { class: 'note stack' },
+  // 免責は .note (opacity 0.9) の外に置く。祖先の opacity も掛け合わさるので、薄い色にしない (#30 の包括レビュー N1)
+  return h('footer', { class: 'stack' },
     h('p', { class: 'disclaimer' }, M.footer.disclaimer),
-    h('p', {}, M.footer.license, ' ', h('a', { href: M.footer.repo, rel: 'noopener noreferrer' }, 'kessan-8')));
+    h('p', { class: 'note' }, M.footer.license, ' ', h('a', { href: M.footer.repo, rel: 'noopener noreferrer' }, 'kessan-8')));
 }
 
 export function titleScreen(ctx: Ctx): HTMLElement {
