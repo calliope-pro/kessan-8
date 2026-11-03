@@ -51,9 +51,15 @@ export const SEGMENT_RULES: Rule[] = [
     const readNames = (r: Reader, list: { doc: 'tanshin' | 'ir'; base: string; n: number; field: string }): unknown[] =>
       Array.from({ length: list.n }, (_, i) => r.raw(list.doc, `${list.base}.${i}.${list.field}`));
     for (const q of PERIODS) {
-      each((r) => sameNames(`短信のセグメント名 (${q})`, readNames(r, { doc: 'tanshin', base: `${seg(q)}.segments`, n: countOf(ctx, q), field: 'name' }), names));
+      each((r) => {
+        r.used.push(`tanshin.${seg(q)}.segments`); // 入れ物の場所
+        return sameNames(`短信のセグメント名 (${q})`, readNames(r, { doc: 'tanshin', base: `${seg(q)}.segments`, n: countOf(ctx, q), field: 'name' }), names);
+      });
     }
-    each((r) => sameNames('IR のセグメント名', readNames(r, { doc: 'ir', base: 'segments.items', n: ctx.p.ir.segments.items.length, field: 'name' }), names));
+    each((r) => {
+      r.used.push('ir.segments.items'); // 入れ物の場所 (欠けたセグメントの異変の場所)
+      return sameNames('IR のセグメント名', readNames(r, { doc: 'ir', base: 'segments.items', n: ctx.p.ir.segments.items.length, field: 'name' }), names);
+    });
   }),
   rule('seg-count', (each, ctx) => {
     const n = ctx.c.segmentNames.length;

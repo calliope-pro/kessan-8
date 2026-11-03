@@ -85,6 +85,7 @@ export const IR_RULES: Rule[] = [
   rule('ir-seg-reconcile', (each, ctx) => {
     for (const q of PERIODS) {
       each((r) => {
+        r.used.push('ir.segments.items'); // 入れ物の場所 (欠けたセグメントの異変の場所)
         const profits = Array.from({ length: ctx.p.ir.segments.items.length }, (_, i) => scaled10(r.i(`segments.items.${i}.profit.${q}`)));
         return eq(`セグメント利益 + 調整額 (${q}, 10 倍)`, sum(...profits) + scaled10(r.i(`segments.adjustment.${q}`)), scaled10(r.i(`segments.consolidatedOperatingIncome.${q}`)));
       });

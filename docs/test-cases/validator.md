@@ -421,6 +421,8 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | A22 | signOverrides のキーが正の数のセル (`tanshin.balanceSheet.current.cash`) | 「負の記号の差し替えが負の数のセルを指していない」 |
 | A23 | signOverrides のキーが画面全体 (`tanshin.cashFlow`) | 同上 |
 | A24 | signOverrides が負の数のセル (`tanshin.cashFlow.capex`) は通る / unitOverrides のキーが画面でない (`tanshin.cashFlow.capex`) | 前者は 0 件、後者は「単位の差し替えが画面を指していない」 |
+| A25 | 基準問題 B の IR の items から 3 つ目を除いた問題 (H-19 の形。3 → 2)、種類 `k-h19` (cross-document・primary [seg-count]・allowed [seg-count, segment-names, ir-seg-reconcile])、places = `ir.segments.items` (入れ物) | 0 件 (seg-count・segment-names・ir-seg-reconcile の違反が入れ物の path `ir.segments.items` を paths に持つので、場所が違反に触れる) |
+
 
 「触れる」の意味を狭めた: 場所が違反の path と同じか、**その子** (違反の path が `ir.statements.0` のような入れ物のとき) だけ。場所が親 (まとまり全体) の向きは許さない。あわせて、独立の等式を 1 回の評価にまとめていた規則 (sum-*・notes-per-share・link-cf-interest-*・link-capital-unchanged・xdoc-outlook-actual-*・xdoc-supp-capex-depreciation・dates-*) は、等式ごとに評価を分けた (違反の paths が、食い違った式のセルだけになる)。その結果 N2・N5 の `dates-period-end` は 1 件から 2 件 (期末日・前期末日) になった。**理由を残す**: これはレビューの指摘 (場所の検査が緩い) への対応で、実装に合わせてテストを緩めたのではなく、期待を厳しい側 (件数が増える) に直した。D12・L4 は、元の D12 (S3 相当) が S3 で equityRatio を変えると hard の ratio-equity-ratio・xdoc-supp-equity-ratio も破れて「errors 空」と両立しなかったため、soft だけが破れる問題 (株数 8,630 千株) に書き直した。
 

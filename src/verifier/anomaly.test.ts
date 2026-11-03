@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Anomaly, AnomalyKind, AnomalyPlace, Problem } from '../domain/types.ts';
 import { checkAnomaly, verifyProblem } from './index.ts';
-import { add, companyA, mutate, normalA, set } from './test-utils.ts';
+import { add, companyA, companyB, mutate, normalA, normalB, set } from './test-utils.ts';
 
 const kind = (id: string, family: AnomalyKind['family'], primary: string[], allowed = primary): AnomalyKind => ({
   id,
@@ -193,6 +193,19 @@ describe('checkAnomaly', () => {
       expect(checkAnomaly(good, [...KINDS, kind('k-sign', 'appearance', ['sign-consistency'])], verifyProblem(good, companyA()))).toEqual([]);
       const bad = withAnomaly(set(normalA(), 'unitOverrides', { 'tanshin.cashFlow.capex': '千円' }), { kind: 'k-unit', expectedRules: ['unit-consistency'], places: [place('balanceSheet.unit')] });
       expect(has(messages(bad), '画面を指していない')).toBe(true);
+    });
+  });
+
+  describe('H-19 (セグメントが IR から欠けている) の自然な場所', () => {
+    const h19 = (places: AnomalyPlace[]) => {
+      const p0 = set(mutate(normalB(), 'ir.segments.items', (items) => (items as unknown[]).slice(0, 2)), 'difficulty', 'hard');
+      return withAnomaly(p0, { kind: 'k-h19', expectedRules: ['seg-count', 'segment-names', 'ir-seg-reconcile'], places });
+    };
+    const kinds = [...KINDS, kind('k-h19', 'cross-document', ['seg-count'], ['seg-count', 'segment-names', 'ir-seg-reconcile'])];
+    const run = (p: Problem) => checkAnomaly(p, kinds, verifyProblem(p, companyB()));
+
+    it('A25: places = IR のセグメント別 (ir.segments.items、入れ物) → 0 件', () => {
+      expect(run(h19([{ doc: 'ir', path: 'segments.items' }]))).toEqual([]);
     });
   });
 });
