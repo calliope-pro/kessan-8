@@ -1,5 +1,6 @@
 // U2〜U8 (docs/test-cases/scaffold.md): 足場の約束。設定ファイルを外から読んで確かめる。
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import viteConfig from '../vite.config';
@@ -52,6 +53,7 @@ describe('package.json', () => {
     expect(Object.keys(pkg.dependencies ?? {})).toEqual([]);
     expect(Object.keys(pkg.devDependencies).sort()).toEqual(['@playwright/test', '@types/node', 'typescript', 'vite', 'vitest']);
     expect(pkg.engines.node).toBe('>=22.12');
+    expect(pkg.devDependencies['@types/node']).toMatch(/^\^22\./); // CI の Node 22 に型を合わせる
   });
 
   it('U4b: 決まった名前のスクリプトがある', () => {
@@ -71,8 +73,12 @@ describe('秘密を置かない', () => {
     for (const line of ['node_modules/', 'dist/', '.env', '.env.*']) expect(lines, line).toContain(line);
   });
 
-  it('U5b: リポジトリ直下に .env で始まるファイルが無い', () => {
-    expect(readdirSync(root).filter((f) => f.startsWith('.env'))).toEqual([]);
+  it('U5b: コミットされたファイルに、どの階層にも .env で始まる名前が無い', () => {
+    const r = spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf-8' });
+    expect(r.status).toBe(0);
+    const names = r.stdout.split('\n').filter(Boolean).map((f) => f.split('/').pop() ?? '');
+    expect(names.length).toBeGreaterThan(0);
+    expect(names.filter((n) => n.startsWith('.env'))).toEqual([]);
   });
 });
 
@@ -86,6 +92,10 @@ describe('入口と設定', () => {
 
   it('U7: tsconfig は strict', () => {
     expect(read('tsconfig.json')).toMatch(/"strict":\s*true/);
+  });
+
+  it('U10: npm test は e2e/ のファイルを回さない (Playwright の test() を Vitest が読まない)', () => {
+    expect(viteConfig.test?.exclude).toContain('e2e/**');
   });
 
   it('U8: プレビューのヘッダは vercel.json と同じ (出所は 1 か所)', () => {

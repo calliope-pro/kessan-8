@@ -35,8 +35,9 @@ for (const width of [320, 375, 414]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
     await expect(page.getByTestId('app')).toBeVisible();
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow).toBeLessThanOrEqual(0);
+    // innerWidth ではなく、指定した幅と比べる (スマホの project は、はみ出すと表示幅 (innerWidth) のほうが広がって、差が 0 に見えるため)
+    const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(scrollWidth).toBeLessThanOrEqual(width);
   });
 }
 

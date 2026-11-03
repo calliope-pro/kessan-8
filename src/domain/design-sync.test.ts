@@ -9,7 +9,7 @@ const design = readFileSync(`${root}docs/design.md`, 'utf-8');
 function typeBlocks(markdown: string): string[] {
   const blocks: string[] = [];
   const re = /<!-- types:start -->\n```ts\n([\s\S]*?)```\n<!-- types:end -->/g;
-  for (let m = re.exec(markdown); m; m = re.exec(markdown)) blocks.push(m[1]);
+  for (let m = re.exec(markdown); m; m = re.exec(markdown)) blocks.push(m[1] ?? '');
   return blocks;
 }
 
