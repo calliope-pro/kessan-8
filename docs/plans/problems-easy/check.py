@@ -100,6 +100,10 @@ def main():
         if s is None:
             errors.append(f'C3 {p["id"]}: spec.json に無い')
             continue
+        if s['kind'] is not None:
+            if p.get('tier') != s['tier']:
+                errors.append(f'C3 {p["id"]}: tier {p.get("tier")} が設計表の {s["tier"]} と違う')
+            continue
         want = set(s['elements'])
         got = detected(p)
         inherent = {'no-dividend'} if PROFILES[p['companyId']]['payout'] == 0 else set()

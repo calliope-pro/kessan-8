@@ -1,0 +1,430 @@
+{
+ "id": "easy-011",
+ "difficulty": "easy",
+ "companyId": "c04",
+ "fiscalYear": 2024,
+ "tier": 1,
+ "tanshin": {
+  "header": {
+   "companyName": "ゼノメアシステムズ株式会社",
+   "securitiesCode": "0804",
+   "periodLabel": "2024年9月期",
+   "unit": "百万円"
+  },
+  "summary": {
+   "netSales": {
+    "current": 12257,
+    "previous": 11282,
+    "changeRate": 8.6
+   },
+   "operatingIncome": {
+    "current": 1682,
+    "previous": 1635,
+    "changeRate": 2.9
+   },
+   "ordinaryIncome": {
+    "current": 1719,
+    "previous": 1669,
+    "changeRate": 3.0
+   },
+   "netIncomeParent": {
+    "current": 1186,
+    "previous": 1152,
+    "changeRate": 3.0
+   },
+   "operatingMargin": 13.7,
+   "roe": 22.7,
+   "eps": 237.2,
+   "totalAssets": 8452,
+   "netAssets": 5816,
+   "equity": 5816,
+   "equityRatio": 68.8,
+   "bps": 1163.2,
+   "annualDividend": 0,
+   "interimDividend": 0,
+   "annualDividendPrevious": 0,
+   "interimDividendPrevious": 0,
+   "dividendTotal": 0,
+   "payoutRatio": 0.0,
+   "accountingPolicyChange": false,
+   "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+  },
+  "dates": {
+   "periodEnd": "2024-09-30",
+   "previousPeriodEnd": "2023-09-30",
+   "disclosure": "2024-11-14",
+   "shareholdersMeeting": "2024-12-27"
+  },
+  "columnDates": {
+   "balanceSheet": {
+    "previous": "2023-09-30",
+    "current": "2024-09-30"
+   },
+   "incomeStatement": {
+    "previous": "2023-09-30",
+    "current": "2024-09-30"
+   },
+   "cashFlow": {
+    "previous": "2023-09-30",
+    "current": "2024-09-30"
+   }
+  },
+  "balanceSheet": {
+   "previous": {
+    "cash": 2482,
+    "receivables": 1855,
+    "inventories": 0,
+    "otherCurrentAssets": 169,
+    "totalCurrentAssets": 4506,
+    "tangibleAssets": 763,
+    "investments": 1799,
+    "totalFixedAssets": 2562,
+    "totalAssets": 7068,
+    "payables": 257,
+    "shortTermDebt": 0,
+    "incomeTaxesPayable": 258,
+    "otherCurrentLiabilities": 1923,
+    "totalCurrentLiabilities": 2438,
+    "longTermDebt": 0,
+    "totalLiabilities": 2438,
+    "capitalStock": 556,
+    "capitalSurplus": 417,
+    "retainedEarnings": 3657,
+    "totalShareholdersEquity": 4630,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 4630,
+    "totalLiabilitiesAndNetAssets": 7068
+   },
+   "current": {
+    "cash": 2697,
+    "receivables": 2015,
+    "inventories": 0,
+    "otherCurrentAssets": 184,
+    "totalCurrentAssets": 4896,
+    "tangibleAssets": 770,
+    "investments": 2786,
+    "totalFixedAssets": 3556,
+    "totalAssets": 8452,
+    "payables": 281,
+    "shortTermDebt": 0,
+    "incomeTaxesPayable": 266,
+    "otherCurrentLiabilities": 2089,
+    "totalCurrentLiabilities": 2636,
+    "longTermDebt": 0,
+    "totalLiabilities": 2636,
+    "capitalStock": 556,
+    "capitalSurplus": 417,
+    "retainedEarnings": 4843,
+    "totalShareholdersEquity": 5816,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 5816,
+    "totalLiabilitiesAndNetAssets": 8452
+   }
+  },
+  "incomeStatement": {
+   "previous": {
+    "netSales": 11282,
+    "costOfSales": 4270,
+    "grossProfit": 7012,
+    "sga": 5377,
+    "operatingIncome": 1635,
+    "nonOperatingIncome": 34,
+    "nonOperatingExpenses": 0,
+    "ordinaryIncome": 1669,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 1669,
+    "incomeTaxes": 517,
+    "netIncome": 1152,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 1152
+   },
+   "current": {
+    "netSales": 12257,
+    "costOfSales": 4663,
+    "grossProfit": 7594,
+    "sga": 5912,
+    "operatingIncome": 1682,
+    "nonOperatingIncome": 37,
+    "nonOperatingExpenses": 0,
+    "ordinaryIncome": 1719,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 1719,
+    "incomeTaxes": 533,
+    "netIncome": 1186,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 1186
+   }
+  },
+  "cashFlow": {
+   "incomeBeforeTax": 1719,
+   "depreciation": 92,
+   "interestDividendIncome": -37,
+   "interestExpense": 0,
+   "receivablesChange": -160,
+   "inventoriesChange": 0,
+   "payablesChange": 24,
+   "otherAssetsChange": -15,
+   "otherLiabilitiesChange": 166,
+   "subtotal": 1789,
+   "interestDividendReceived": 37,
+   "interestPaid": 0,
+   "incomeTaxesPaid": -525,
+   "operatingCashFlow": 1301,
+   "capex": -99,
+   "otherInvestingChange": -987,
+   "investingCashFlow": -1086,
+   "shortTermDebtChange": 0,
+   "longTermBorrowings": 0,
+   "longTermRepayments": 0,
+   "dividendsPaid": 0,
+   "financingCashFlow": 0,
+   "fxEffect": 0,
+   "netChangeInCash": 215,
+   "cashBeginning": 2482,
+   "cashEnding": 2697
+  },
+  "notes": {
+   "goingConcern": "該当事項はありません。",
+   "cashScope": "現金及び預金",
+   "segments": {
+    "previous": {
+     "segments": [
+      {
+       "name": "クラウド事業",
+       "netSales": 6544,
+       "profit": 1212
+      },
+      {
+       "name": "受託開発事業",
+       "netSales": 4738,
+       "profit": 472
+      }
+     ],
+     "adjustment": -49,
+     "consolidatedNetSales": 11282,
+     "consolidatedOperatingIncome": 1635
+    },
+    "current": {
+     "segments": [
+      {
+       "name": "クラウド事業",
+       "netSales": 7109,
+       "profit": 1246
+      },
+      {
+       "name": "受託開発事業",
+       "netSales": 5148,
+       "profit": 486
+      }
+     ],
+     "adjustment": -50,
+     "consolidatedNetSales": 12257,
+     "consolidatedOperatingIncome": 1682
+    }
+   },
+   "averageSharesThousand": 5000,
+   "bps": 1163.2,
+   "eps": 237.2,
+   "subsequentEvents": "該当事項はありません。",
+   "accountingPolicyNote": "該当事項はありません。"
+  }
+ },
+ "ir": {
+  "header": {
+   "companyName": "ゼノメアシステムズ株式会社",
+   "securitiesCode": "0840",
+   "periodLabel": "2024年9月期",
+   "unit": "百万円"
+  },
+  "highlights": {
+   "netSales": {
+    "amount": 12257,
+    "changeRate": 8.6
+   },
+   "operatingIncome": {
+    "amount": 1682,
+    "changeRate": 2.9
+   },
+   "ordinaryIncome": {
+    "amount": 1719,
+    "changeRate": 3.0
+   },
+   "netIncomeParent": {
+    "amount": 1186,
+    "changeRate": 3.0
+   },
+   "annualDividend": 0,
+   "payoutRatio": 0.0
+  },
+  "results": {
+   "netSales": {
+    "previous": 11282,
+    "current": 12257
+   },
+   "grossProfit": {
+    "previous": 7012,
+    "current": 7594
+   },
+   "grossMargin": {
+    "previous": 62.2,
+    "current": 62.0
+   },
+   "operatingIncome": {
+    "previous": 1635,
+    "current": 1682
+   },
+   "operatingMargin": {
+    "previous": 14.5,
+    "current": 13.7
+   },
+   "chart": {
+    "netSales": {
+     "axisMin": 0,
+     "previous": 11282,
+     "current": 12257
+    },
+    "operatingIncome": {
+     "axisMin": 0,
+     "previous": 1635,
+     "current": 1682
+    }
+   }
+  },
+  "segments": {
+   "items": [
+    {
+     "name": "クラウド事業",
+     "netSales": {
+      "previous": 6544,
+      "current": 7109,
+      "changeRate": 8.6
+     },
+     "profit": {
+      "previous": 1212,
+      "current": 1246,
+      "changeRate": 2.8
+     },
+     "salesShare": 58.0
+    },
+    {
+     "name": "受託開発事業",
+     "netSales": {
+      "previous": 4738,
+      "current": 5148,
+      "changeRate": 8.7
+     },
+     "profit": {
+      "previous": 472,
+      "current": 486,
+      "changeRate": 3.0
+     },
+     "salesShare": 42.0
+    }
+   ],
+   "adjustment": {
+    "previous": -49,
+    "current": -50
+   },
+   "consolidatedOperatingIncome": {
+    "previous": 1635,
+    "current": 1682
+   }
+  },
+  "outlook": {
+   "forecast": {
+    "netSales": 12648,
+    "netSalesChangeRate": 3.2,
+    "operatingIncome": 1637,
+    "operatingIncomeChangeRate": -2.7,
+    "capex": 104,
+    "depreciation": 96,
+    "annualDividend": 0
+   },
+   "actual": {
+    "netSales": 12257,
+    "operatingIncome": 1682,
+    "capex": 99,
+    "depreciation": 92
+   },
+   "subsequentEvent": null
+  },
+  "supplement": {
+   "capex": {
+    "previous": null,
+    "current": 99
+   },
+   "depreciation": {
+    "previous": null,
+    "current": 92
+   },
+   "interestBearingDebt": {
+    "previous": 0,
+    "current": 0
+   },
+   "cash": {
+    "previous": 2482,
+    "current": 2697
+   },
+   "netDebt": {
+    "previous": -2482.0,
+    "current": -2697.0
+   },
+   "equityRatio": 68.8
+  },
+  "statements": [
+   {
+    "slide": "highlights",
+    "text": "売上高は前期より伸びた。営業利益は前期より伸びた。",
+    "claims": [
+     {
+      "metric": "netSales",
+      "direction": "up"
+     },
+     {
+      "metric": "operatingIncome",
+      "direction": "up"
+     }
+    ]
+   },
+   {
+    "slide": "outlook",
+    "text": "次期は増収減益を目指し、拡大を加速する。",
+    "claims": [
+     {
+      "metric": "forecastNetSales",
+      "direction": "up"
+     },
+     {
+      "metric": "forecastOperatingIncome",
+      "direction": "down"
+     }
+    ]
+   },
+   {
+    "slide": "supplement",
+    "text": "営業キャッシュ・フローは良好に推移した。",
+    "claims": [
+     {
+      "metric": "operatingCashFlow",
+      "direction": "up"
+     }
+    ]
+   }
+  ]
+ },
+ "anomaly": {
+  "kind": "E-08",
+  "places": [
+   {
+    "doc": "ir",
+    "path": "header.securitiesCode"
+   }
+  ],
+  "explanation": "決算短信の証券コードは 0804 ですが、IR スライドの証券コードは 0840 です。同じ会社の資料なのに、下 2 桁が入れ替わっています。",
+  "expectedRules": [
+   "header-securities-code"
+  ]
+ }
+}

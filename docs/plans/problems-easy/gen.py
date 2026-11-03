@@ -136,7 +136,21 @@ def split_segments(co, sales, op, loss_index, adjust_ratio=0.03):
 
 
 def step(co, prev, year, knobs):
-    """前期の状態 prev から、year 年の決算期の状態と、出力用の数字を作る。"""
+    """前期の状態 prev から、year 年の決算期の状態と、出力用の数字を作る。
+    疑わしく見える要素を付けない年は、利益の増減率が ±20% に収まるまで乱数を引き直す (異変の問題の土台が、目立つ増減を持たないように)。"""
+    ni_prev = prev['is_']['netSales'] - prev['is_']['costOfSales'] - prev['is_']['sga'] + prev['is_']['nonOperatingIncome'] - prev['is_']['nonOperatingExpenses'] \
+        + prev['is_']['extraordinaryGain'] - prev['is_']['extraordinaryLoss'] - prev['is_']['incomeTaxes']
+    for _ in range(200):
+        state, cf, extra = _step(co, prev, year, knobs)
+        i = state['is_']
+        ni = i['netSales'] - i['costOfSales'] - i['sga'] + i['nonOperatingIncome'] - i['nonOperatingExpenses'] + i['extraordinaryGain'] - i['extraordinaryLoss'] - i['incomeTaxes']
+        if knobs or prev.get('flag_big') or abs(ni - ni_prev) / ni_prev < 0.20:
+            state['flag_big'] = 'big-change' in knobs
+            return state, cf, extra
+    raise SystemExit(f'{co.id} {year}: 利益の増減が収まらない')
+
+
+def _step(co, prev, year, knobs):
     p, rq = co.p, co.rq
     rng = co.rng
     pb, pi = prev['bs'], prev['is_']
@@ -242,7 +256,9 @@ def choose_dps(co, prev_dps, ni, shares, knobs):
         target = prev_dps * 0.7
     elif prev_dps:
         target = (target + prev_dps) / 2  # 配当は急には動かさない
-    cands = sorted({max(1, int(round(target)) + d) for d in range(-4, 5)}, key=lambda x: abs(x - target))
+    cands = sorted({max(1, int(round(target)) + d) for d in range(-6, 7)}, key=lambda x: abs(x - target))
+    if 'dividend-cut' not in knobs and prev_dps:
+        cands = [d for d in cands if d >= prev_dps]  # 要素なしの年は減配しない
     eps100 = rha(ni * 100000, shares)
     for d in cands:
         if 'dividend-cut' in knobs and d >= prev_dps * 0.85:
@@ -482,6 +498,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=None)
     ap.add_argument('--companies', default='src/data/companies.json', help='会社の設定 (docs/plans/companies.md の 10 社)')
+    ap.add_argument('--normals-only', action='store_true', help='異変を入れない (#70 の範囲)')
     ap.add_argument('--base-out', default=None, help='異変の問題の土台 (要素なしの正常) を書く場所。コミットしない')
     args = ap.parse_args()
     spec = json.load(open(os.path.join(HERE, 'spec.json'), encoding='utf-8'))
@@ -508,6 +525,12 @@ def main():
         else:
             if args.base_out:
                 write_json(os.path.join(args.base_out, p['id'] + '.json'), prob)
+            if not args.normals_only:
+                import anomalies  # noqa: E402
+                final = anomalies.apply(prob, p, co)
+                path = os.path.join(out, 'problems', 'easy', p['id'] + '.json')
+                write_json(path, final)
+                written.append(path)
     s = spec['sample']
     co, sim = built[s['company']]
     prev, cur, cf, extra, knobs = sim[s['fiscalYear']]
@@ -516,7 +539,7 @@ def main():
     write_json(os.path.join(out, 'samples', 'sample.json'), dict(problem=prob, notes=sample_notes(prob)))
     if args.base_out:
         write_json(os.path.join(args.base_out, 'sample.json'), prob)
-    print(f'{len(written)} 問の正常な資料と見本を {out} に書いた')
+    print(f'{len(written)} 問と見本を {out} に書いた')
 
 
 def sample_notes(prob):

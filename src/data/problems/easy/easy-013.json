@@ -35,17 +35,17 @@
    "operatingMargin": 11.0,
    "roe": 11.8,
    "eps": 148.4,
-   "totalAssets": 43830,
-   "netAssets": 32850,
-   "equity": 32850,
+   "totalAssets": 43805,
+   "netAssets": 32825,
+   "equity": 32825,
    "equityRatio": 74.9,
-   "bps": 1314.0,
-   "annualDividend": 43,
+   "bps": 1313.0,
+   "annualDividend": 44,
    "interimDividend": 0,
-   "annualDividendPrevious": 42,
+   "annualDividendPrevious": 43,
    "interimDividendPrevious": 0,
-   "dividendTotal": 1075,
-   "payoutRatio": 29.0,
+   "dividendTotal": 1100,
+   "payoutRatio": 29.6,
    "accountingPolicyChange": false,
    "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
   },
@@ -96,15 +96,15 @@
     "totalLiabilitiesAndNetAssets": 40880
    },
    "current": {
-    "cash": 13200,
+    "cash": 13175,
     "receivables": 10380,
     "inventories": 4450,
     "otherCurrentAssets": 710,
-    "totalCurrentAssets": 28740,
+    "totalCurrentAssets": 28715,
     "tangibleAssets": 12870,
     "investments": 2220,
     "totalFixedAssets": 15090,
-    "totalAssets": 43830,
+    "totalAssets": 43805,
     "payables": 1980,
     "shortTermDebt": 1760,
     "incomeTaxesPayable": 830,
@@ -114,11 +114,11 @@
     "totalLiabilities": 10980,
     "capitalStock": 4000,
     "capitalSurplus": 3000,
-    "retainedEarnings": 25850,
-    "totalShareholdersEquity": 32850,
+    "retainedEarnings": 25825,
+    "totalShareholdersEquity": 32825,
     "nonControllingInterests": 0,
-    "totalNetAssets": 32850,
-    "totalLiabilitiesAndNetAssets": 43830
+    "totalNetAssets": 32825,
+    "totalLiabilitiesAndNetAssets": 43805
    }
   },
   "incomeStatement": {
@@ -178,12 +178,12 @@
    "shortTermDebtChange": 0,
    "longTermBorrowings": 0,
    "longTermRepayments": -180,
-   "dividendsPaid": -1050,
-   "financingCashFlow": -1230,
+   "dividendsPaid": -1075,
+   "financingCashFlow": -1255,
    "fxEffect": 0,
-   "netChangeInCash": 1840,
+   "netChangeInCash": 1815,
    "cashBeginning": 11360,
-   "cashEnding": 13200
+   "cashEnding": 13175
   },
   "notes": {
    "goingConcern": "該当事項はありません。",
@@ -225,7 +225,7 @@
     }
    },
    "averageSharesThousand": 25000,
-   "bps": 1314.0,
+   "bps": 1313.0,
    "eps": 148.4,
    "subsequentEvents": "該当事項はありません。",
    "accountingPolicyNote": "該当事項はありません。"
@@ -255,8 +255,8 @@
     "amount": 37.1,
     "changeRate": 9.4
    },
-   "annualDividend": 43,
-   "payoutRatio": 29.0
+   "annualDividend": 44,
+   "payoutRatio": 29.6
   },
   "results": {
    "netSales": {
@@ -340,7 +340,7 @@
     "operatingIncomeChangeRate": 6.3,
     "capex": 13.0,
     "depreciation": 12.0,
-    "annualDividend": 43
+    "annualDividend": 44
    },
    "actual": {
     "netSales": 473.8,
@@ -365,11 +365,11 @@
    },
    "cash": {
     "previous": 113.6,
-    "current": 132.0
+    "current": 131.8
    },
    "netDebt": {
     "previous": -70.4,
-    "current": -90.6
+    "current": -90.4
    },
    "equityRatio": 74.9
   },

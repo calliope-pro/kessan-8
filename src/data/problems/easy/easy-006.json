@@ -334,10 +334,10 @@
   },
   "outlook": {
    "forecast": {
-    "netSales": 22686,
-    "netSalesChangeRate": 4.8,
-    "operatingIncome": 970,
-    "operatingIncomeChangeRate": 1.8,
+    "netSales": 22047,
+    "netSalesChangeRate": 1.9,
+    "operatingIncome": 907,
+    "operatingIncomeChangeRate": -4.8,
     "capex": 719,
     "depreciation": 659,
     "annualDividend": 10
@@ -390,7 +390,7 @@
    },
    {
     "slide": "outlook",
-    "text": "次期は増収増益を見込んでいます。",
+    "text": "次期は増収減益を見込んでいます。",
     "claims": [
      {
       "metric": "forecastNetSales",
@@ -398,7 +398,7 @@
      },
      {
       "metric": "forecastOperatingIncome",
-      "direction": "up"
+      "direction": "down"
      }
     ]
    },
