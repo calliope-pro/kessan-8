@@ -18,11 +18,14 @@ const state: ViewerProps = {
   mode: q.get('mode') === 'check' ? 'check' : 'read',
 };
 
+// ?manual=1: onView で update しない (見る画面の持ち主が #28 の状態で、ビューアはひとりでに画面を替えない確認用)
+const manual = q.get('manual') === '1';
 const events: { type: 'view' | 'mark'; value: unknown }[] = [];
 const host = document.getElementById('root')!;
 const viewer = createViewer(host, {
   onView(ref) {
     events.push({ type: 'view', value: ref });
+    if (manual) return;
     state.view = ref;
     viewer.update({ ...state });
   },

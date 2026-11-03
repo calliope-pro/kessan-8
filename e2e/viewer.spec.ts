@@ -39,14 +39,16 @@ test.describe('F1・F4: 資料の切替・タブ・ページ名', () => {
     expect(views).toEqual(TANSHIN.map((t) => t.id));
   });
 
-  test('F1: update しなければ画面は変わらない (状態を持たない)', async ({ page }) => {
-    await open(page);
-    await page.evaluate(() => {
-      // デモの onView を無効にする代わりに、state を戻して update し直す
-      window.__viewerDemo.set({ view: { doc: 'tanshin', screen: 'summary' } });
-    });
+  test('F1: update しなければ画面は変わらない (状態を持たない)。タブを押すと onView が積まれるだけで、set({ view }) で初めて変わる', async ({ page }) => {
+    await open(page, '?manual=1');
     await page.getByRole('tab', { name: '貸借', exact: true }).click();
-    expect(await screenId(page)).toBe('balanceSheet');
+    expect(await screenId(page)).toBe('summary');
+    await expect(page.getByRole('tab', { name: 'サマリー', exact: true })).toHaveAttribute('aria-selected', 'true');
+    expect((await events(page)).map((e) => [e.type, (e.value as { screen: string }).screen])).toEqual([['view', 'balanceSheet']]);
+    await page.getByRole('button', { name: '次へ' }).click();
+    await page.keyboard.press('ArrowRight');
+    expect(await screenId(page)).toBe('summary');
+    expect((await events(page)).map((e) => (e.value as { screen: string }).screen)).toEqual(['balanceSheet', 'balanceSheet', 'balanceSheet']);
     await page.evaluate(() => window.__viewerDemo.set({ view: { doc: 'tanshin', screen: 'cashFlow' } }));
     expect(await screenId(page)).toBe('cashFlow');
   });

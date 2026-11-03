@@ -22,7 +22,7 @@ export function createViewer(host: HTMLElement, events: ViewerEvents): Viewer {
   const title = h('h2', { class: 'page-title' });
   const prev = h('button', { type: 'button', class: 'pager-btn', 'data-dir': 'prev' }, '前へ');
   const next = h('button', { type: 'button', class: 'pager-btn', 'data-dir': 'next' }, '次へ');
-  const body = h('main', { class: 'viewer-body' });
+  const body = h('div', { class: 'viewer-body' });
   root.append(h('header', { class: 'viewer-top' }, docTabs, screenTabs), h('div', { class: 'page-bar' }, prev, title, next), body);
   host.append(root);
 

@@ -30,7 +30,7 @@ const CF_EMPHASIS = new Set(['subtotal', 'operatingCashFlow', 'investingCashFlow
 function summary(c: Ctx): ViewSection[] {
   const line = (f: string) =>
     c.row(`summary.${f}`, [c.cell(`summary.${f}.previous`, 'money', 'previous'), c.cell(`summary.${f}.current`, 'money', 'current'), c.cell(`summary.${f}.changeRate`, 'percent')]);
-  const one = (f: string, kind: Parameters<Ctx['cell']>[1]) => c.row(`summary.${f}`, [c.cell(`summary.${f}`, kind, 'current')]);
+  const one = (f: string, kind: Parameters<Ctx['cell']>[1], stage: 'previous' | 'current' = 'current') => c.row(`summary.${f}`, [c.cell(`summary.${f}`, kind, stage)]);
   const date = (f: string) => c.row(`dates.${f}`, [c.cell(`dates.${f}`, 'date')]);
   return [
     plain([col('前期'), col('当期'), col('前期比')], ['netSales', 'operatingIncome', 'ordinaryIncome', 'netIncomeParent'].map(line), '経営成績'),
@@ -39,9 +39,9 @@ function summary(c: Ctx): ViewSection[] {
       [one('operatingMargin', 'percent'), one('roe', 'percent'), one('eps', 'perShare'), one('totalAssets', 'money'), one('netAssets', 'money'), one('equity', 'money'), one('equityRatio', 'percent'), one('bps', 'perShare')],
       '財政状態・指標',
     ),
-    plain(
-      [col('当期')],
-      [one('annualDividend', 'perShare'), one('interimDividend', 'perShare'), one('annualDividendPrevious', 'perShare'), one('interimDividendPrevious', 'perShare'), one('dividendTotal', 'money'), one('payoutRatio', 'percent')],
+    // 当期と前期の値が並ぶので、列見出しは付けない (前期の値が「当期」の列に見えないように)。行の名前に 前期 と付いている
+    single(
+      [one('annualDividend', 'perShare'), one('interimDividend', 'perShare'), one('annualDividendPrevious', 'perShare', 'previous'), one('interimDividendPrevious', 'perShare', 'previous'), one('dividendTotal', 'money'), one('payoutRatio', 'percent')],
       '配当',
     ),
     single([one('accountingPolicyChange', 'flag')], '会計方針'),

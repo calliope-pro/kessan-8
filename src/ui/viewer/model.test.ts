@@ -1,4 +1,4 @@
-// docs/test-cases/viewer.md §2・§3 (B0・B1〜B7): 画面の中身 (DOM を使わない純粋な関数 buildScreen)。IR の画面は #64。
+// docs/test-cases/viewer.md §2・§3 (B0・B1〜B7): 画面の中身 (DOM を使わない純粋な関数 buildScreen)。IR の画面は model-ir.test.ts。
 import { describe, expect, it } from 'vitest';
 import { itemKey, LABELS } from '../../domain/labels';
 import { TANSHIN_SCREENS, type DocKind, type Problem } from '../../domain/types';
@@ -177,6 +177,13 @@ describe('B1: サマリー', () => {
     expect(texts(s, 'tanshin.dates.disclosure')).toEqual(['2027年5月14日']);
     expect(texts(s, 'tanshin.dates.shareholdersMeeting')).toEqual(['2027年6月26日']);
     expect(one('auditNote')).toEqual(['決算短信は公認会計士又は監査法人の監査の対象外です']);
+  });
+  it('N8: 配当の節は列見出しを付けず、前期の値のセルの段は previous', () => {
+    const sec = s.sections.find((x) => x.title === '配当')!;
+    expect(sec.columns.map((c) => c.label)).toEqual(['']);
+    expect(row(s, 'tanshin.summary.annualDividendPrevious')!.cells[0]!.stage).toBe('previous');
+    expect(row(s, 'tanshin.summary.interimDividendPrevious')!.cells[0]!.stage).toBe('previous');
+    expect(row(s, 'tanshin.summary.annualDividend')!.cells[0]!.stage).toBe('current');
   });
   it('セルの種別・段・path', () => {
     const c = row(s, 'tanshin.summary.netSales')!.cells;
