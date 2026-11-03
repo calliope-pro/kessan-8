@@ -387,6 +387,14 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | L8 | `--dir` はあるが `anomaly-kinds.json` だけ無く、異変の問題がある | 終了コード 1 (`unknown-kind`)。無いファイルは 0 件として扱うだけ |
 | L9 | CLI の実行に使う TypeScript に、型を消すだけでは動かない書き方 (enum・引数のプロパティ) を持ち込まない | `tsconfig.json` の `erasableSyntaxOnly: true` で型検査が捕まえる。`verbatimModuleSyntax: true` で型だけの import が `import type` になる (相対 import は `.ts` の拡張子つき) |
 
+### 2.10 規則の計算元 (X。実装後の変異で見つかった抜けを足したケース。1 つの規則だけを評価する)
+
+| ID | 入力 | 期待 |
+| --- | --- | --- |
+| X1 | 基準問題 B で短信の売上高 12,449・売上総利益 3,725 (百万円)、IR の売上高 124.5・売上総利益 37.3 (億円)、`ir.results.grossMargin.current` = 29.9 | `ir-results-gross-margin` は破れない (短信から 3,725 ÷ 12,449 = 29.9%)。30.0 にすると破れる (IR の 37.3 ÷ 124.5 = 30.0% から計算していないこと) |
+| X2 | 基準問題 B で短信の売上高 当期 12,449・前期 11,751、IR の amount = 124.5 | `ir-hl-change-net-sales` は changeRate 5.9 で破れず、6.0 で破れる (短信から 5.9%。IR の 124.5 と 117.5 からは 6.0%) |
+| X3 | 基準問題 A で前期の売上高を当期と同じ 12,400 にする。claims の netSales が `up` / `down` | どちらも `claims-direction` が破れる (差が 0 のとき増減は主張できない) |
+
 ## 3. 受け入れ条件との対応
 
 | 受け入れ条件 (Task #23) | ケース |
@@ -402,3 +410,10 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 - `labels.ts` の**画面側の使いかた** (表示名を画面に出す・`data-item-key` を付ける・全項目キーが画面に出る確認) は画面の Task #27。ここ (#23) は、検証器が使う `itemKey`・`LABELS`・`SECTION_OF_ITEM` を作る
 - 実在の企業名との衝突の確認 (Task #24)
 - 会計の分かる人による soft の範囲の確認
+
+## 5. 確かめた記録 (Sub-task #48)
+
+- レッド: 実装の前に、テスト (N・V・C・S・A・SH・D・L ほか) は実装の無い状態で全件失敗 (`math.ts`・`index.ts` などが無い)。基準問題 B は実装より先に commit した (N6 が赤)。
+- グリーン: `npm run typecheck` が通り、`npx vitest run` で 13 ファイル 429 件 (X1〜X3 を足して 432 件) が緑。`npm run verify:data` は 0 件のデータで終了コード 0。
+- 変異 (規則を壊して赤になることの確認): `pl-gross-profit` の式を壊す → 81 件赤。配当を四捨五入に → R8・D12・L4。増減率の分母 0 以下の扱いをやめる → S11。億円の比較を素の引き算に → N6・N7・N8・V53。**緑のまま残った変異が 2 つ**あり (IR の利益率を IR の値から計算する・claims の差 0 を up と扱う)、X1〜X3 を足して赤になることを確かめた。
+- `erasableSyntaxOnly` は、規則の道具 (`Reader`) に引数のプロパティ (`constructor(readonly ctx)`) を書いた時点で型検査が止めた (L9)。

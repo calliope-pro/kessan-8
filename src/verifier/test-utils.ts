@@ -152,3 +152,12 @@ export function softOnly(id: string, difficulty: Difficulty = 'easy', companyId 
   ] as const) p = set(p, path, value);
   return p;
 }
+
+import { HARD_RULES } from './rules/index.ts';
+
+/** 1 つの規則だけを評価する (ほかの式が破れる問題でも、その規則の振る舞いだけを見る)。 */
+export function onlyRule(id: string, problem: Problem, company: Company) {
+  const r = HARD_RULES.find((x) => x.id === id);
+  if (!r) throw new Error(`規則が無い: ${id}`);
+  return r.check({ p: problem, c: company });
+}

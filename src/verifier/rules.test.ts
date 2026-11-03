@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Company, Problem } from '../domain/types.ts';
 import { HARD_RULE_IDS, SOFT_RULE_IDS, verifyProblem } from './index.ts';
 import { numericCells } from './path.ts';
-import { add, clone, companyA, companyB, mutate, normalA, normalB, set } from './test-utils.ts';
+import { add, clone, companyA, companyB, mutate, normalA, normalB, onlyRule, set } from './test-utils.ts';
 
 const hardSet = (p: Problem, c: Company) => [...new Set(verifyProblem(p, c).hard.map((v) => v.rule))].sort();
 const sorted = (xs: string[]) => [...xs].sort();
@@ -265,5 +265,38 @@ describe('参考の規則 (S)', () => {
   it('S13: 基準問題のままなら soft は空、soft の規則 ID は 12 個', () => {
     expect(softs(clone(normalA()))).toEqual([]);
     expect(SOFT_RULE_IDS).toHaveLength(12);
+  });
+});
+
+describe('規則の計算元 (変異で見つかった抜けを埋める。ほかの式が破れる問題でも、1 つの規則だけを評価する)', () => {
+  // 億円の会社: 短信 売上高 12,449・売上総利益 3,725 (百万円) → 短信から 29.9%。IR の表示 37.3 ÷ 124.5 から計算すると 30.0%。
+  const bWithRounding = () => {
+    let p = normalB();
+    p = set(p, 'tanshin.incomeStatement.current.netSales', 12449);
+    p = set(p, 'tanshin.incomeStatement.current.grossProfit', 3725);
+    p = set(p, 'ir.results.netSales.current', 124.5);
+    p = set(p, 'ir.results.grossProfit.current', 37.3);
+    return set(p, 'ir.results.grossMargin.current', 29.9);
+  };
+
+  it('IR の利益率は短信の百万円から計算する (億円の丸めに左右されない)', () => {
+    expect(onlyRule('ir-results-gross-margin', bWithRounding(), companyB())).toEqual([]);
+    expect(onlyRule('ir-results-gross-margin', set(bWithRounding(), 'ir.results.grossMargin.current', 30.0), companyB())).toHaveLength(1);
+  });
+
+  it('IR のハイライトの前期比は短信の百万円から計算する', () => {
+    // 短信 12,449 と 11,751 (百万円) → 5.9%。IR の表示 124.5 と 117.5 (億円) から計算すると 6.0%
+    let p = set(normalB(), 'tanshin.incomeStatement.current.netSales', 12449);
+    p = set(p, 'tanshin.incomeStatement.previous.netSales', 11751);
+    p = set(p, 'ir.highlights.netSales.amount', 124.5);
+    expect(onlyRule('ir-hl-change-net-sales', set(p, 'ir.highlights.netSales.changeRate', 5.9), companyB())).toEqual([]);
+    expect(onlyRule('ir-hl-change-net-sales', set(p, 'ir.highlights.netSales.changeRate', 6.0), companyB())).toHaveLength(1);
+  });
+
+  it('文章の主張: 前期と同じ (差が 0) なら増収も減収も主張できない', () => {
+    const same = set(normalA(), 'tanshin.incomeStatement.previous.netSales', 12400); // 当期と同じ
+    expect(onlyRule('claims-direction', same, companyA())).toHaveLength(1); // netSales の up が破れる
+    const down = mutate(same, 'ir.statements.0.claims', () => [{ metric: 'netSales', direction: 'down' }]);
+    expect(onlyRule('claims-direction', down, companyA())).toHaveLength(1);
   });
 });
