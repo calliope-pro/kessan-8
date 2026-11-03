@@ -415,6 +415,24 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 
 N2 の運用: 問題データが揃ったら、CI の `npm run verify:data` を `--require-complete` にする (難易度ごとに `=easy`・`=hard` を先に足してもよい)。この作業は、最後に閉じる問題作りのチケット (#25 / #26) の受け入れ条件に書く。受け入れ条件 5・6 を受け持つのは `npm run verify:data` (design §7)。
 
+### 2.13 見本 (samples/*.json) の検証 (D28〜D34・L12〜L13。#86、#23 の 2 回目の包括レビュー N1)
+
+見本は `src/data/samples/*.json` の `{ problem, notes }` (design §4.5・P0)。出題のプールには入れないが、遊び手に「これが正常です」と見せるので、**正常な問題として**検証する。数えるのは `verifyDataset` の `samples` (入力の任意項目) と `stats` ではなく `result.samples`。
+
+| ID | 入力 | 期待 |
+| --- | --- | --- |
+| D28 | 正常な見本 (プールと別の会社) | errors 空。プールの数 (stats) には入らない |
+| D29 | 見本が hard を破る (V1) | `hard-violation` (メッセージに見本のファイルと規則 ID) |
+| D30 | 見本の IR の比率が IR の表示金額からの検算と食い違う (Y2 の形) | `ir-display-mismatch` |
+| D31 | 見本が異変の問題 | `sample-anomaly` |
+| D32 | 見本がプールの問題と同じ会社 × 期 | `sample-overlaps-pool` (見本が出題に混ざって「見本だから正常」と当たるのを防ぐ) |
+| D33 | `problem` が無い / `notes` が文字列の record でない / 問題の形の誤り | `sample-shape` |
+| D34 | 見本の会社が一覧に無い / 見本の id がプールの id と同じ | `unknown-company` / `duplicate-id` |
+| D35 | 見本に `labelOverrides` (同じ部の別の科目名)・`unitOverrides` (header と同じ値)・`signOverrides` (△) | `override-on-normal` (正常な問題と同じ。#86 レビュー 1 回目 B1) |
+| D36 | 見本の `notes` のキーが画面の ID でない (打ち間違い) / 画面の ID | 前者は `sample-shape`、後者は通る (#86 N1。全画面の注釈は求めない) |
+| L12 | `samples/sample.json` が正常 / hard を破る | 前者は終了コード 0 で出力に「見本 1 件」、後者は 1 で見本のファイルのパスと規則 ID |
+| L13 | `samples/` が無い | 0 件として扱う (出力に「見本 0 件」) |
+
 ## 3. 受け入れ条件との対応
 
 | 受け入れ条件 (Task #23) | ケース |

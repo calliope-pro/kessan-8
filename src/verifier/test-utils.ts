@@ -102,6 +102,7 @@ export interface DatasetInput {
   companies: Company[];
   kinds: AnomalyKind[];
   problems: { file: string; value: unknown }[];
+  samples?: { file: string; value: unknown }[];
 }
 
 const fileOf = (p: Problem) => `problems/${p.difficulty}/${p.id}.json`;
