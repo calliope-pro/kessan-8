@@ -28,7 +28,7 @@ body { padding: 0; }
 
 /* 閲覧票の帯・進行・時刻・社章 */
 /* V3 閲覧票の帯: 会社の淡い色の地に、社色の縁。段の文字色に依らず読める色を自分で持つ (社色・淡い色は CSSOM で --company-main・--company-light に入る) */
-.band { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 32px; padding: 4px 12px; font-size: 0.95rem; color: #1b1b1b; background: var(--company-light, #fffdf7); border-left: 6px solid var(--company-main, #5d5a55); border-radius: 4px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); }
+.band { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 32px; padding: 4px 12px; font-size: 0.95rem; color: #1b1b1b; background: var(--company-light, #fffdf7); border-left: 6px solid var(--company-main, #5d5a55); border-radius: 4px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); }
 .band strong { font-weight: 700; }
 .pips { display: inline-flex; gap: 4px; }
 .pip { width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; }

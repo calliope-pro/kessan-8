@@ -15,6 +15,19 @@ import { difficultyScreen, helpScreen, sampleScreen, titleScreen } from './scree
 import { introScreen, readingScreen, revealScreen } from './screens-play';
 import type { Viewer, ViewerProps } from './viewer-port';
 
+/** 閲覧票の帯 (.band) の高さを --band-h に入れる。帯は上に固定 (sticky)、資料の切替とタブはその真下に固定する (viewer.css が --band-h を使う)。 */
+let bandObserver: ResizeObserver | undefined;
+function trackBand(app: HTMLElement): void {
+  bandObserver?.disconnect();
+  const band = app.querySelector<HTMLElement>('.band');
+  const set = () => document.documentElement.style.setProperty('--band-h', `${band ? band.offsetHeight : 0}px`);
+  set();
+  if (band && typeof ResizeObserver !== 'undefined') {
+    bandObserver = new ResizeObserver(set);
+    bandObserver.observe(band);
+  }
+}
+
 export function mountApp(root: HTMLElement, deps: AppDeps): void {
   let state: GameState = loadState(deps.session, deps.pools.byId) ?? initialState;
   let records = loadRecords(deps.local);
@@ -154,10 +167,12 @@ export function mountApp(root: HTMLElement, deps: AppDeps): void {
       'data-problem-id': run?.problems[run.round]?.id, 'data-round': run ? run.round + 1 : undefined, 'data-difficulty': run?.difficulty ?? (state.phase === 'cleared' ? state.difficulty : undefined),
     }, section);
     root.replaceChildren(app);
+    trackBand(app);
     if (screen === previous) window.scrollTo(0, y);
     else {
       window.scrollTo(0, 0);
-      app.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+      // フォーカスは残し、スクロールだけ止める (画面の頭を見せる。下の「次へ」のボタンまでスクロールさせない)
+      app.querySelector<HTMLElement>('[data-autofocus]')?.focus({ preventScroll: true });
     }
   }
 

@@ -24,7 +24,7 @@
 /* 上: 資料の切替とタブ (各 1 行・44px・上に固定) */
 .v-viewer-top {
   position: sticky;
-  top: 0;
+  top: var(--band-h, 0px); /* 閲覧票の帯 (app.css の .band。上に固定) の真下 */
   z-index: 3;
   background: var(--paper);
   border-bottom: 1px solid var(--line);

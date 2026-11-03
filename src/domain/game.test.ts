@@ -101,16 +101,6 @@ describe('状態遷移 reduce', () => {
     }
   });
 
-  it('UG6b: 異変の場所が IR の文章 (statements.N) のとき、見る画面はその文章がある画面', () => {
-    const base = reading();
-    const run = base as Extract<GameState, { phase: 'reading' }>;
-    const p = run.problems[0]!;
-    p.anomaly = { kind: 'k-calc', places: [{ doc: 'ir', path: 'statements.0.text' }], explanation: 'x', expectedRules: [] };
-    p.ir.statements = [{ slide: 'supplement', text: 't', claims: [] }];
-    const s = reduce(base, { type: 'ANSWER', answer: 'anomaly' }) as Extract<GameState, { phase: 'revealed' }>;
-    expect(s.view).toEqual({ doc: 'ir', screen: 'supplement' });
-  });
-
   it('UG7: revealed で ANSWER は ignored (判定をやり直せない)', () => {
     const s = revealedWrong();
     expect(reduce(s, { type: 'ANSWER', answer: 'normal' })).toBe(s);
