@@ -35,7 +35,7 @@
 | --- | --- | --- | --- |
 | E1 | `/` を開く | ステータス 200 / `html` の `lang` が `ja` / `data-testid="app"` の要素が見える / タイトルが空でない | 正常 |
 | E2 | `/` を開いて読み込みを待つ | 同じ生成元以外へのリクエストが 0 件 / コンソールのエラーと `pageerror` が 0 件 | セキュリティ (設計 §7) |
-| E3 | 幅 320・375・414 px で `/` を開く | どの幅でも `document.documentElement.scrollWidth` が `window.innerWidth` 以下 (横にはみ出さない) | 境界値 (受け入れ条件 9) |
+| E3 | 幅 320・375・414 px で `/` を開く | どの幅でも `document.documentElement.scrollWidth` が**指定した幅**以下 (横にはみ出さない)。`window.innerWidth` とは比べない: スマホの project では、はみ出すと表示幅 (`innerWidth`) も広がって差が 0 に見えるため | 境界値 (受け入れ条件 9) |
 | E4 | `/` のレスポンスヘッダ | `content-security-policy` があり、`vercel.json` のものと同じ | 同値 (CSP が E2E の下でも当たっている) |
 
 E1〜E4 は、デスクトップ (1280×800) とスマホ (375 px) の 2 つの project の両方で回る。E3 は幅を自分で変える。
