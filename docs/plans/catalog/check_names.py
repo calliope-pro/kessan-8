@@ -20,6 +20,7 @@
  5. JPX の銘柄名 (法人格・記号を除いて 3 字以上) が、社名に含まれる
  6. 英字が、国税庁の英語表記 (列 24) か、正規化した商号 (列 6。ローマ字の商号はここに入る) に含まれる
  7. 語幹を 1 字置き換えるか 1 字挿入した形 (カタカナ・長音。語幹が 4 字以上のとき) が、JPX の銘柄名 (3 字以上) に含まれる
+ 8. JPX の銘柄名 (正規化した全体) が、語幹から 1 字消した形と完全に一致する (上場会社の名に 1 字を足すと語幹になる、の逆向き。語幹が 4 字以上のとき)
  参考 (合否に使わない): 国税庁の商号 (法人格を除く) が、語幹を 1 字置き換え・挿入・削除した形と完全に一致する、
     または社名 (業種語つき) との編集距離が 1 以下である件数。約 585 万件の個人店・小規模法人を含むため、
     3〜4 字のカタカナ語幹には必ず近傍があり、合否にできない。件数が多い・上場会社と思しき名が出たときは目で見る
@@ -113,7 +114,8 @@ def main():
     for c in cands:
         c["n_name"], c["n_yomi"] = norm(c["name"]), norm(c["yomi"])
         c["n_stem"], c["n_stem_yomi"] = norm(c["stem"]), norm(c["stem_yomi"])
-        c.update(jpx_exact=0, jpx_stem=0, jpx_in_name=0, nta_exact=0, nta_yomi=0, nta_stem=0, nta_stem_yomi=0, nta_en=0, jpx_var=0, nta_var=0, samples=[])
+        c.update(jpx_exact=0, jpx_stem=0, jpx_in_name=0, nta_exact=0, nta_yomi=0, nta_stem=0, nta_stem_yomi=0, nta_en=0, jpx_var=0, jpx_del=0, nta_var=0, samples=[])
+        c["var_del"] = {c["n_stem"][:i] + c["n_stem"][i + 1:] for i in range(len(c["n_stem"]))} if len(c["n_stem"]) >= 4 else set()
         c["var_sub_ins"] = variants(c["n_stem"], False) if len(c["n_stem"]) >= 4 else set()
         c["var_all"] = variants(c["n_stem"], True)
 
@@ -129,6 +131,10 @@ def main():
                     c["samples"].append("JPX:" + n)
             if len(n) >= 3 and n in c["n_name"]:
                 c["jpx_in_name"] += 1
+            if n in c["var_del"]:
+                c["jpx_del"] += 1
+                if len(c["samples"]) < 3:
+                    c["samples"].append("JPX 1字消し:" + n)
             if len(n) >= 3 and any(v in n for v in c["var_sub_ins"]):
                 c["jpx_var"] += 1
                 if len(c["samples"]) < 3:
@@ -165,13 +171,13 @@ def main():
                         c["samples"].append("NTA読み:" + yomi)
 
     print(f"JPX 行数 {len(jpx)}、国税庁 行数 {total} (うちフリガナが空 {yomi_empty} 行)\n")
-    print("| id | 社名 | JPX 完全一致 | JPX 語幹を含む | JPX 銘柄が社名に含まれる | 国税庁 商号の完全一致 | 国税庁 読みの完全一致 | 国税庁 語幹を商号に含む | 国税庁 語幹の読みをフリガナに含む | 国税庁 英字を英語表記か商号に含む | JPX 語幹の 1 字差 | (参考) 国税庁 商号の 1 字差 | 判定 |")
-    print("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+    print("| id | 社名 | JPX 完全一致 | JPX 語幹を含む | JPX 銘柄が社名に含まれる | 国税庁 商号の完全一致 | 国税庁 読みの完全一致 | 国税庁 語幹を商号に含む | 国税庁 語幹の読みをフリガナに含む | 国税庁 英字を英語表記か商号に含む | JPX 語幹の 1 字差 | JPX 銘柄が語幹の 1 字消し | (参考) 国税庁 商号の 1 字差 | 判定 |")
+    print("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
     ok_all = True
     for c in cands:
-        ok = not (c["jpx_exact"] or c["jpx_stem"] or c["jpx_in_name"] or c["nta_exact"] or c["nta_yomi"] or c["nta_stem"] or c["nta_stem_yomi"] or c["nta_en"] or c["jpx_var"])
+        ok = not (c["jpx_exact"] or c["jpx_stem"] or c["jpx_in_name"] or c["nta_exact"] or c["nta_yomi"] or c["nta_stem"] or c["nta_stem_yomi"] or c["nta_en"] or c["jpx_var"] or c["jpx_del"])
         ok_all &= ok
-        print(f"| {c['id']} | {c['name']} | {c['jpx_exact']} | {c['jpx_stem']} | {c['jpx_in_name']} | {c['nta_exact']} | {c['nta_yomi']} | {c['nta_stem']} | {c['nta_stem_yomi']} | {c['nta_en']} | {c['jpx_var']} | {c['nta_var']} | {'合格' if ok else '不合格 ' + ' / '.join(c['samples'])} |")
+        print(f"| {c['id']} | {c['name']} | {c['jpx_exact']} | {c['jpx_stem']} | {c['jpx_in_name']} | {c['nta_exact']} | {c['nta_yomi']} | {c['nta_stem']} | {c['nta_stem_yomi']} | {c['nta_en']} | {c['jpx_var']} | {c['jpx_del']} | {c['nta_var']} | {'合格' if ok else '不合格 ' + ' / '.join(c['samples'])} |")
     sys.exit(0 if ok_all else 1)
 
 

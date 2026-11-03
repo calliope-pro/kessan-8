@@ -94,7 +94,8 @@ def main():
         if cap[lv] < 25:
             errors.append(f"{lv}: 独立な問題の数が {cap[lv]} (25 以上が要る)")
 
-    print(f"種類 {len(rows)} (やさしい {count['やさしい']}・むずかしい {count['むずかしい']})")
+    usable = sum(1 for r in rows if r["conf"] in {"A", "B"})
+    print(f"種類 {len(rows)} (やさしい {count['やさしい']}・むずかしい {count['むずかしい']})、問題に使う種類 (確度 A・B) {usable}")
     print(f"独立な問題の数 (確度 A・B のみ): やさしい {cap['やさしい']}・むずかしい {cap['むずかしい']}")
     if errors:
         print("不合格:")
