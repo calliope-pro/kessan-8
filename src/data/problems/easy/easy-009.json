@@ -13,39 +13,39 @@
   },
   "summary": {
    "netSales": {
-    "current": 143360,
+    "current": 148070,
     "previous": 140000,
-    "changeRate": 2.4
+    "changeRate": 5.8
    },
    "operatingIncome": {
-    "current": 5460,
+    "current": 5810,
     "previous": 5040,
-    "changeRate": 8.3
+    "changeRate": 15.3
    },
    "ordinaryIncome": {
-    "current": 5300,
+    "current": 5650,
     "previous": 4870,
-    "changeRate": 8.8
+    "changeRate": 16.0
    },
    "netIncomeParent": {
-    "current": 3660,
+    "current": 3900,
     "previous": 3360,
-    "changeRate": 8.9
+    "changeRate": 16.1
    },
-   "operatingMargin": 3.8,
-   "roe": 12.9,
-   "eps": 61.0,
-   "totalAssets": 72110,
-   "netAssets": 29640,
-   "equity": 29640,
-   "equityRatio": 41.1,
-   "bps": 494.0,
+   "operatingMargin": 3.9,
+   "roe": 13.7,
+   "eps": 65.0,
+   "totalAssets": 72870,
+   "netAssets": 29880,
+   "equity": 29880,
+   "equityRatio": 41.0,
+   "bps": 498.0,
    "annualDividend": 18,
    "interimDividend": 0,
    "annualDividendPrevious": 17,
    "interimDividendPrevious": 0,
    "dividendTotal": 1080,
-   "payoutRatio": 29.5,
+   "payoutRatio": 27.7,
    "accountingPolicyChange": false,
    "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
   },
@@ -96,29 +96,29 @@
     "totalLiabilitiesAndNetAssets": 71050
    },
    "current": {
-    "cash": 8740,
-    "receivables": 1960,
-    "inventories": 12670,
-    "otherCurrentAssets": 2150,
-    "totalCurrentAssets": 25520,
+    "cash": 8880,
+    "receivables": 2030,
+    "inventories": 13150,
+    "otherCurrentAssets": 2220,
+    "totalCurrentAssets": 26280,
     "tangibleAssets": 39450,
     "investments": 7140,
     "totalFixedAssets": 46590,
-    "totalAssets": 72110,
-    "payables": 9010,
+    "totalAssets": 72870,
+    "payables": 9350,
     "shortTermDebt": 2130,
-    "incomeTaxesPayable": 820,
-    "otherCurrentLiabilities": 2870,
-    "totalCurrentLiabilities": 14830,
-    "longTermDebt": 27640,
-    "totalLiabilities": 42470,
+    "incomeTaxesPayable": 880,
+    "otherCurrentLiabilities": 2960,
+    "totalCurrentLiabilities": 15320,
+    "longTermDebt": 27670,
+    "totalLiabilities": 42990,
     "capitalStock": 4320,
     "capitalSurplus": 3240,
-    "retainedEarnings": 22080,
-    "totalShareholdersEquity": 29640,
+    "retainedEarnings": 22320,
+    "totalShareholdersEquity": 29880,
     "nonControllingInterests": 0,
-    "totalNetAssets": 29640,
-    "totalLiabilitiesAndNetAssets": 72110
+    "totalNetAssets": 29880,
+    "totalLiabilitiesAndNetAssets": 72870
    }
   },
   "incomeStatement": {
@@ -140,50 +140,50 @@
     "netIncomeParent": 3360
    },
    "current": {
-    "netSales": 143360,
-    "costOfSales": 102770,
-    "grossProfit": 41810,
-    "sga": 35130,
-    "operatingIncome": 5460,
+    "netSales": 148070,
+    "costOfSales": 106630,
+    "grossProfit": 42680,
+    "sga": 35630,
+    "operatingIncome": 5810,
     "nonOperatingIncome": 220,
     "nonOperatingExpenses": 380,
-    "ordinaryIncome": 5300,
+    "ordinaryIncome": 5650,
     "extraordinaryGain": 0,
     "extraordinaryLoss": 0,
-    "incomeBeforeTax": 5300,
-    "incomeTaxes": 1640,
-    "netIncome": 3660,
+    "incomeBeforeTax": 5650,
+    "incomeTaxes": 1750,
+    "netIncome": 3900,
     "netIncomeNonControlling": 0,
-    "netIncomeParent": 3660
+    "netIncomeParent": 3900
    }
   },
   "cashFlow": {
-   "incomeBeforeTax": 5300,
+   "incomeBeforeTax": 5650,
    "depreciation": 3140,
    "interestDividendIncome": -220,
    "interestExpense": 380,
-   "receivablesChange": -40,
-   "inventoriesChange": -240,
-   "payablesChange": 170,
-   "otherAssetsChange": -50,
-   "otherLiabilitiesChange": 70,
-   "subtotal": 8510,
+   "receivablesChange": -110,
+   "inventoriesChange": -720,
+   "payablesChange": 510,
+   "otherAssetsChange": -120,
+   "otherLiabilitiesChange": 160,
+   "subtotal": 8670,
    "interestDividendReceived": 220,
    "interestPaid": -380,
-   "incomeTaxesPaid": -1380,
-   "operatingCashFlow": 6970,
+   "incomeTaxesPaid": -1430,
+   "operatingCashFlow": 7080,
    "capex": -3390,
    "otherInvestingChange": -140,
    "investingCashFlow": -3530,
    "shortTermDebtChange": 0,
-   "longTermBorrowings": 0,
+   "longTermBorrowings": 30,
    "longTermRepayments": -2080,
    "dividendsPaid": -1020,
-   "financingCashFlow": -3100,
+   "financingCashFlow": -3070,
    "fxEffect": 0,
-   "netChangeInCash": 340,
+   "netChangeInCash": 480,
    "cashBeginning": 8400,
-   "cashEnding": 8740
+   "cashEnding": 8880
   },
   "notes": {
    "goingConcern": "該当事項はありません。",
@@ -193,17 +193,17 @@
      "segments": [
       {
        "name": "食品小売事業",
-       "netSales": 81200,
-       "profit": 2300
+       "netSales": 79880,
+       "profit": 2260
       },
       {
        "name": "衣料・生活雑貨事業",
-       "netSales": 42000,
-       "profit": 1340
+       "netSales": 43350,
+       "profit": 1380
       },
       {
        "name": "テナント・金融事業",
-       "netSales": 16800,
+       "netSales": 16770,
        "profit": 1550
       }
      ],
@@ -215,28 +215,28 @@
      "segments": [
       {
        "name": "食品小売事業",
-       "netSales": 83150,
-       "profit": 2490
+       "netSales": 87180,
+       "profit": 2710
       },
       {
        "name": "衣料・生活雑貨事業",
-       "netSales": 43010,
-       "profit": 1450
+       "netSales": 43540,
+       "profit": 1520
       },
       {
        "name": "テナント・金融事業",
-       "netSales": 17200,
-       "profit": 1680
+       "netSales": 17350,
+       "profit": 1750
       }
      ],
-     "adjustment": -160,
-     "consolidatedNetSales": 143360,
-     "consolidatedOperatingIncome": 5460
+     "adjustment": -170,
+     "consolidatedNetSales": 148070,
+     "consolidatedOperatingIncome": 5810
     }
    },
    "averageSharesThousand": 60000,
-   "bps": 494.0,
-   "eps": 61.0,
+   "bps": 498.0,
+   "eps": 65.0,
    "subsequentEvents": "該当事項はありません。",
    "accountingPolicyNote": "該当事項はありません。"
   }
@@ -250,55 +250,55 @@
   },
   "highlights": {
    "netSales": {
-    "amount": 1433.6,
-    "changeRate": 2.4
+    "amount": 1480.7,
+    "changeRate": 5.8
    },
    "operatingIncome": {
-    "amount": 54.6,
-    "changeRate": 8.3
+    "amount": 58.1,
+    "changeRate": 15.3
    },
    "ordinaryIncome": {
-    "amount": 53.0,
-    "changeRate": 8.8
+    "amount": 56.5,
+    "changeRate": 16.0
    },
    "netIncomeParent": {
-    "amount": 36.6,
-    "changeRate": 8.9
+    "amount": 39.0,
+    "changeRate": 16.1
    },
    "annualDividend": 18,
-   "payoutRatio": 29.5
+   "payoutRatio": 27.7
   },
   "results": {
    "netSales": {
     "previous": 1400.0,
-    "current": 1433.6
+    "current": 1480.7
    },
    "grossProfit": {
     "previous": 392.0,
-    "current": 405.9
+    "current": 414.4
    },
    "grossMargin": {
     "previous": 28.0,
-    "current": 28.3
+    "current": 28.0
    },
    "operatingIncome": {
     "previous": 50.4,
-    "current": 54.6
+    "current": 58.1
    },
    "operatingMargin": {
     "previous": 3.6,
-    "current": 3.8
+    "current": 3.9
    },
    "chart": {
     "netSales": {
      "axisMin": 0,
      "previous": 1400.0,
-     "current": 1433.6
+     "current": 1480.7
     },
     "operatingIncome": {
      "axisMin": 0,
      "previous": 50.4,
-     "current": 54.6
+     "current": 58.1
     }
    }
   },
@@ -307,68 +307,68 @@
     {
      "name": "食品小売事業",
      "netSales": {
-      "previous": 812.0,
-      "current": 831.5,
-      "changeRate": 2.4
+      "previous": 798.8,
+      "current": 871.8,
+      "changeRate": 9.1
      },
      "profit": {
-      "previous": 23.0,
-      "current": 24.9,
-      "changeRate": 8.3
+      "previous": 22.6,
+      "current": 27.1,
+      "changeRate": 19.9
      },
-     "salesShare": 58.0
+     "salesShare": 58.9
     },
     {
      "name": "衣料・生活雑貨事業",
      "netSales": {
-      "previous": 420.0,
-      "current": 430.1,
-      "changeRate": 2.4
+      "previous": 433.5,
+      "current": 435.4,
+      "changeRate": 0.4
      },
      "profit": {
-      "previous": 13.4,
-      "current": 14.5,
-      "changeRate": 8.2
+      "previous": 13.8,
+      "current": 15.2,
+      "changeRate": 10.1
      },
-     "salesShare": 30.0
+     "salesShare": 29.4
     },
     {
      "name": "テナント・金融事業",
      "netSales": {
-      "previous": 168.0,
-      "current": 172.0,
-      "changeRate": 2.4
+      "previous": 167.7,
+      "current": 173.5,
+      "changeRate": 3.5
      },
      "profit": {
       "previous": 15.5,
-      "current": 16.8,
-      "changeRate": 8.4
+      "current": 17.5,
+      "changeRate": 12.9
      },
-     "salesShare": 12.0
+     "salesShare": 11.7
     }
    ],
    "adjustment": {
     "previous": -1.5,
-    "current": -1.6
+    "current": -1.7
    },
    "consolidatedOperatingIncome": {
     "previous": 50.4,
-    "current": 54.6
+    "current": 58.1
    }
   },
   "outlook": {
    "forecast": {
-    "netSales": 1485.1,
-    "netSalesChangeRate": 3.6,
-    "operatingIncome": 54.7,
-    "operatingIncomeChangeRate": 0.2,
+    "netSales": 1525.9,
+    "netSalesChangeRate": 3.1,
+    "operatingIncome": 57.9,
+    "operatingIncomeChangeRate": -0.3,
     "capex": 35.6,
     "depreciation": 32.7,
     "annualDividend": 18
    },
    "actual": {
-    "netSales": 1433.6,
-    "operatingIncome": 54.6,
+    "netSales": 1480.7,
+    "operatingIncome": 58.1,
     "capex": 33.9,
     "depreciation": 31.4
    },
@@ -385,17 +385,17 @@
    },
    "interestBearingDebt": {
     "previous": 318.5,
-    "current": 297.7
+    "current": 298.0
    },
    "cash": {
     "previous": 84.0,
-    "current": 87.4
+    "current": 88.8
    },
    "netDebt": {
     "previous": 234.5,
-    "current": 210.3
+    "current": 209.2
    },
-   "equityRatio": 41.1
+   "equityRatio": 41.0
   },
   "statements": [
    {
@@ -414,7 +414,7 @@
    },
    {
     "slide": "outlook",
-    "text": "次期見通し: 増収増益。",
+    "text": "次期見通し: 増収減益。",
     "claims": [
      {
       "metric": "forecastNetSales",
@@ -422,7 +422,7 @@
      },
      {
       "metric": "forecastOperatingIncome",
-      "direction": "up"
+      "direction": "down"
      }
     ]
    },
@@ -446,7 +446,7 @@
     "path": "incomeStatement.current.grossProfit"
    }
   ],
-  "explanation": "売上総利益は 売上高 143,360 − 売上原価 102,770 = 40,590 百万円になるはずですが、41,810 百万円と書かれています。",
+  "explanation": "売上総利益は 売上高 148,070 − 売上原価 106,630 = 41,440 百万円になるはずですが、42,680 百万円と書かれています。",
   "expectedRules": [
    "ir-results-gross-margin",
    "pl-gross-profit",

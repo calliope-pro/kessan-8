@@ -193,18 +193,18 @@
      "segments": [
       {
        "name": "機械・資材事業",
-       "netSales": 98630,
-       "profit": 1810
+       "netSales": 99310,
+       "profit": 1820
       },
       {
        "name": "食品原料事業",
-       "netSales": 61640,
-       "profit": 1500
+       "netSales": 61670,
+       "profit": 1510
       },
       {
        "name": "化成品事業",
-       "netSales": 45210,
-       "profit": 920
+       "netSales": 44500,
+       "profit": 900
       }
      ],
      "adjustment": -120,
@@ -215,18 +215,18 @@
      "segments": [
       {
        "name": "機械・資材事業",
-       "netSales": 103030,
-       "profit": 2080
+       "netSales": 100130,
+       "profit": 2010
       },
       {
        "name": "食品原料事業",
-       "netSales": 64390,
-       "profit": 1730
+       "netSales": 66200,
+       "profit": 1780
       },
       {
        "name": "化成品事業",
-       "netSales": 47220,
-       "profit": 1060
+       "netSales": 48310,
+       "profit": 1080
       }
      ],
      "adjustment": -140,
@@ -307,44 +307,44 @@
     {
      "name": "機械・資材事業",
      "netSales": {
-      "previous": 986.3,
-      "current": 1030.3,
-      "changeRate": 4.5
+      "previous": 993.1,
+      "current": 1001.3,
+      "changeRate": 0.8
      },
      "profit": {
-      "previous": 18.1,
-      "current": 20.8,
-      "changeRate": 14.9
+      "previous": 18.2,
+      "current": 20.1,
+      "changeRate": 10.4
      },
-     "salesShare": 48.0
+     "salesShare": 46.7
     },
     {
      "name": "食品原料事業",
      "netSales": {
-      "previous": 616.4,
-      "current": 643.9,
-      "changeRate": 4.5
+      "previous": 616.7,
+      "current": 662.0,
+      "changeRate": 7.3
      },
      "profit": {
-      "previous": 15.0,
-      "current": 17.3,
-      "changeRate": 15.3
+      "previous": 15.1,
+      "current": 17.8,
+      "changeRate": 17.9
      },
-     "salesShare": 30.0
+     "salesShare": 30.8
     },
     {
      "name": "化成品事業",
      "netSales": {
-      "previous": 452.1,
-      "current": 472.2,
-      "changeRate": 4.4
+      "previous": 445.0,
+      "current": 483.1,
+      "changeRate": 8.6
      },
      "profit": {
-      "previous": 9.2,
-      "current": 10.6,
-      "changeRate": 15.2
+      "previous": 9.0,
+      "current": 10.8,
+      "changeRate": 20.0
      },
-     "salesShare": 22.0
+     "salesShare": 22.5
     }
    ],
    "adjustment": {
@@ -358,10 +358,10 @@
   },
   "outlook": {
    "forecast": {
-    "netSales": 2206.3,
-    "netSalesChangeRate": 2.8,
-    "operatingIncome": 49.8,
-    "operatingIncomeChangeRate": 5.3,
+    "netSales": 2187.0,
+    "netSalesChangeRate": 1.9,
+    "operatingIncome": 47.5,
+    "operatingIncomeChangeRate": 0.4,
     "capex": 14.4,
     "depreciation": 13.2,
     "annualDividend": 13

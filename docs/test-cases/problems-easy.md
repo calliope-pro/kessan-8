@@ -22,7 +22,15 @@ Task #25。設計表: [docs/plans/problems-easy.md](../plans/problems-easy.md)�
 | C5 | 正常な問題に `labelOverrides`・`unitOverrides`・`signOverrides` が無い。非支配株主持分が 0 | JSON を読む |
 | C6 | 営業赤字・最終赤字を使わない | 営業利益・当期純利益が正 |
 
-上の C1〜C6 は `docs/plans/problems-easy/check.py` で確かめる (標準ライブラリのみ)。
+上の C1〜C6 は `docs/plans/problems-easy/check.py` で確かめる (標準ライブラリのみ)。手順:
+
+```
+python3 docs/plans/problems-easy/gen.py --base-out <土台のディレクトリ>   # src/data を作り直し、異変の土台 (要素なしの正常) も書く
+python3 docs/plans/problems-easy/check.py --base <土台のディレクトリ>     # 違反 0 件
+python3 docs/plans/problems-easy/check.py                                # --base なし: 異変の問題を C1 の連続の確認から外して、違反 0 件
+```
+
+`--base` が無いと、異変の問題 (土台と違う数字を持つ) は C1 から外れる。
 
 ## 3. 異変の問題 (Sub-task #71)
 

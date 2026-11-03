@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """検証器が見ない約束の確認 (docs/test-cases/problems-easy.md §2 の C1〜C6)。標準ライブラリのみ。
-使いかた: python3 docs/plans/problems-easy/check.py [--pool src/data/problems/easy] [--base <異変の問題の土台のディレクトリ>] [--sample src/data/samples/sample.json]
+使いかた (--base が無いときは、異変の問題を C1 の連続の確認から外す。異変の問題は土台と違う数字を持つため): python3 docs/plans/problems-easy/check.py [--pool src/data/problems/easy] [--base <異変の問題の土台のディレクトリ>] [--sample src/data/samples/sample.json]
 """
 import argparse
 import glob
@@ -61,7 +61,9 @@ def main():
     pool = load(a.pool)
     base = load(a.base)
     sample = json.load(open(a.sample, encoding='utf-8'))['problem'] if a.sample and os.path.exists(a.sample) else None
-    allp = pool + base + ([sample] if sample else [])
+    # --base が無いときは、異変の問題 (土台と違う数字を持つ) を C1 の連続の確認から外す。--base があれば土台が代わりに入る
+    chain_pool = pool if base else [q for q in pool if by_id.get(q['id'], {}).get('kind') is None]
+    allp = chain_pool + base + ([sample] if sample else [])
     errors = []
 
     # C1: 同じ会社の期は続いている
@@ -77,7 +79,7 @@ def main():
                 if a1['summary']['annualDividend'] != b1['summary']['annualDividendPrevious']:
                     errors.append(f'C1 {cid} {y}→{y + 1}: 前期の年間配当金が違う')
 
-    for p in allp:
+    for p in pool + base + ([sample] if sample else []):
         pid = p['id']
         # C2: 発表日が過去
         if p['tanshin']['dates']['disclosure'] >= TODAY:

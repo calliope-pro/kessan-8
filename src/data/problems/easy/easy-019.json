@@ -13,33 +13,33 @@
   },
   "summary": {
    "netSales": {
-    "current": 59135,
-    "previous": 57788,
-    "changeRate": 2.3
+    "current": 59333,
+    "previous": 56819,
+    "changeRate": 4.4
    },
    "operatingIncome": {
-    "current": 1310,
-    "previous": 1562,
-    "changeRate": -16.1
+    "current": 1840,
+    "previous": 1558,
+    "changeRate": 18.1
    },
    "ordinaryIncome": {
-    "current": 1063,
-    "previous": 1304,
-    "changeRate": -18.5
+    "current": 1593,
+    "previous": 1297,
+    "changeRate": 22.8
    },
    "netIncomeParent": {
-    "current": 733,
-    "previous": 900,
-    "changeRate": -18.6
+    "current": 1099,
+    "previous": 895,
+    "changeRate": 22.8
    },
-   "operatingMargin": 2.2,
-   "roe": 5.8,
-   "eps": 48.87,
-   "totalAssets": 48905,
-   "netAssets": 13037,
-   "equity": 13037,
-   "equityRatio": 26.7,
-   "bps": 869.13,
+   "operatingMargin": 3.1,
+   "roe": 8.6,
+   "eps": 73.27,
+   "totalAssets": 48949,
+   "netAssets": 13292,
+   "equity": 13292,
+   "equityRatio": 27.2,
+   "bps": 886.13,
    "annualDividend": 0,
    "interimDividend": 0,
    "annualDividendPrevious": 0,
@@ -71,119 +71,119 @@
   },
   "balanceSheet": {
    "previous": {
-    "cash": 4045,
-    "receivables": 7125,
-    "inventories": 731,
-    "otherCurrentAssets": 867,
-    "totalCurrentAssets": 12768,
+    "cash": 3977,
+    "receivables": 7005,
+    "inventories": 716,
+    "otherCurrentAssets": 852,
+    "totalCurrentAssets": 12550,
     "tangibleAssets": 28889,
     "investments": 2965,
     "totalFixedAssets": 31854,
-    "totalAssets": 44622,
-    "payables": 2924,
+    "totalAssets": 44404,
+    "payables": 2864,
     "shortTermDebt": 1318,
-    "incomeTaxesPayable": 202,
-    "otherCurrentLiabilities": 1156,
-    "totalCurrentLiabilities": 5600,
-    "longTermDebt": 26718,
-    "totalLiabilities": 32318,
+    "incomeTaxesPayable": 201,
+    "otherCurrentLiabilities": 1136,
+    "totalCurrentLiabilities": 5519,
+    "longTermDebt": 26692,
+    "totalLiabilities": 32211,
     "capitalStock": 1687,
     "capitalSurplus": 1266,
-    "retainedEarnings": 9351,
-    "totalShareholdersEquity": 12304,
+    "retainedEarnings": 9240,
+    "totalShareholdersEquity": 12193,
     "nonControllingInterests": 0,
-    "totalNetAssets": 12304,
-    "totalLiabilitiesAndNetAssets": 44622
+    "totalNetAssets": 12193,
+    "totalLiabilitiesAndNetAssets": 44404
    },
    "current": {
-    "cash": 4139,
-    "receivables": 7291,
-    "inventories": 745,
-    "otherCurrentAssets": 887,
-    "totalCurrentAssets": 13062,
+    "cash": 4153,
+    "receivables": 7315,
+    "inventories": 748,
+    "otherCurrentAssets": 890,
+    "totalCurrentAssets": 13106,
     "tangibleAssets": 32819,
     "investments": 3024,
     "totalFixedAssets": 35843,
-    "totalAssets": 48905,
-    "payables": 2981,
+    "totalAssets": 48949,
+    "payables": 2992,
     "shortTermDebt": 1318,
-    "incomeTaxesPayable": 165,
-    "otherCurrentLiabilities": 1183,
-    "totalCurrentLiabilities": 5647,
-    "longTermDebt": 30221,
-    "totalLiabilities": 35868,
+    "incomeTaxesPayable": 247,
+    "otherCurrentLiabilities": 1187,
+    "totalCurrentLiabilities": 5744,
+    "longTermDebt": 29913,
+    "totalLiabilities": 35657,
     "capitalStock": 1687,
     "capitalSurplus": 1266,
-    "retainedEarnings": 10084,
-    "totalShareholdersEquity": 13037,
+    "retainedEarnings": 10339,
+    "totalShareholdersEquity": 13292,
     "nonControllingInterests": 0,
-    "totalNetAssets": 13037,
-    "totalLiabilitiesAndNetAssets": 48905
+    "totalNetAssets": 13292,
+    "totalLiabilitiesAndNetAssets": 48949
    }
   },
   "incomeStatement": {
    "previous": {
-    "netSales": 57788,
-    "costOfSales": 53364,
-    "grossProfit": 4424,
-    "sga": 2862,
-    "operatingIncome": 1562,
-    "nonOperatingIncome": 87,
-    "nonOperatingExpenses": 345,
-    "ordinaryIncome": 1304,
+    "netSales": 56819,
+    "costOfSales": 52273,
+    "grossProfit": 4546,
+    "sga": 2988,
+    "operatingIncome": 1558,
+    "nonOperatingIncome": 85,
+    "nonOperatingExpenses": 346,
+    "ordinaryIncome": 1297,
     "extraordinaryGain": 0,
     "extraordinaryLoss": 0,
-    "incomeBeforeTax": 1304,
-    "incomeTaxes": 404,
-    "netIncome": 900,
+    "incomeBeforeTax": 1297,
+    "incomeTaxes": 402,
+    "netIncome": 895,
     "netIncomeNonControlling": 0,
-    "netIncomeParent": 900
+    "netIncomeParent": 895
    },
    "current": {
-    "netSales": 59135,
-    "costOfSales": 54406,
-    "grossProfit": 4729,
-    "sga": 3419,
-    "operatingIncome": 1310,
+    "netSales": 59333,
+    "costOfSales": 54612,
+    "grossProfit": 4721,
+    "sga": 2881,
+    "operatingIncome": 1840,
     "nonOperatingIncome": 89,
     "nonOperatingExpenses": 336,
-    "ordinaryIncome": 1063,
+    "ordinaryIncome": 1593,
     "extraordinaryGain": 0,
     "extraordinaryLoss": 0,
-    "incomeBeforeTax": 1063,
-    "incomeTaxes": 330,
-    "netIncome": 733,
+    "incomeBeforeTax": 1593,
+    "incomeTaxes": 494,
+    "netIncome": 1099,
     "netIncomeNonControlling": 0,
-    "netIncomeParent": 733
+    "netIncomeParent": 1099
    }
   },
   "cashFlow": {
-   "incomeBeforeTax": 1063,
+   "incomeBeforeTax": 1593,
    "depreciation": 2456,
    "interestDividendIncome": -89,
    "interestExpense": 336,
-   "receivablesChange": -166,
-   "inventoriesChange": -14,
-   "payablesChange": 57,
-   "otherAssetsChange": -20,
-   "otherLiabilitiesChange": 27,
-   "subtotal": 3650,
+   "receivablesChange": -310,
+   "inventoriesChange": -32,
+   "payablesChange": 128,
+   "otherAssetsChange": -38,
+   "otherLiabilitiesChange": 51,
+   "subtotal": 4095,
    "interestDividendReceived": 89,
    "interestPaid": -336,
-   "incomeTaxesPaid": -367,
-   "operatingCashFlow": 3036,
+   "incomeTaxesPaid": -448,
+   "operatingCashFlow": 3400,
    "capex": -6386,
    "otherInvestingChange": -59,
    "investingCashFlow": -6445,
    "shortTermDebtChange": 0,
-   "longTermBorrowings": 5373,
-   "longTermRepayments": -1870,
+   "longTermBorrowings": 5089,
+   "longTermRepayments": -1868,
    "dividendsPaid": 0,
-   "financingCashFlow": 3503,
+   "financingCashFlow": 3221,
    "fxEffect": 0,
-   "netChangeInCash": 94,
-   "cashBeginning": 4045,
-   "cashEnding": 4139
+   "netChangeInCash": 176,
+   "cashBeginning": 3977,
+   "cashEnding": 4153
   },
   "notes": {
    "goingConcern": "該当事項はありません。",
@@ -193,40 +193,40 @@
      "segments": [
       {
        "name": "貨物輸送事業",
-       "netSales": 47386,
-       "profit": 1252
+       "netSales": 47079,
+       "profit": 1265
       },
       {
        "name": "倉庫・センター運営事業",
-       "netSales": 10402,
-       "profit": 357
+       "netSales": 9740,
+       "profit": 340
       }
      ],
      "adjustment": -47,
-     "consolidatedNetSales": 57788,
-     "consolidatedOperatingIncome": 1562
+     "consolidatedNetSales": 56819,
+     "consolidatedOperatingIncome": 1558
     },
     "current": {
      "segments": [
       {
        "name": "貨物輸送事業",
-       "netSales": 48491,
-       "profit": 1430
+       "netSales": 49024,
+       "profit": 2009
       },
       {
        "name": "倉庫・センター運営事業",
-       "netSales": 10644,
-       "profit": -81
+       "netSales": 10309,
+       "profit": -114
       }
      ],
-     "adjustment": -39,
-     "consolidatedNetSales": 59135,
-     "consolidatedOperatingIncome": 1310
+     "adjustment": -55,
+     "consolidatedNetSales": 59333,
+     "consolidatedOperatingIncome": 1840
     }
    },
    "averageSharesThousand": 15000,
-   "bps": 869.13,
-   "eps": 48.87,
+   "bps": 886.13,
+   "eps": 73.27,
    "subsequentEvents": "期末後に、新たな物流拠点の建設に関する契約を締結しました。契約金額は 1,200 百万円です。",
    "accountingPolicyNote": "該当事項はありません。"
   }
@@ -240,55 +240,55 @@
   },
   "highlights": {
    "netSales": {
-    "amount": 59135,
-    "changeRate": 2.3
+    "amount": 59333,
+    "changeRate": 4.4
    },
    "operatingIncome": {
-    "amount": 1310,
-    "changeRate": -16.1
+    "amount": 1840,
+    "changeRate": 18.1
    },
    "ordinaryIncome": {
-    "amount": 1063,
-    "changeRate": -18.5
+    "amount": 1593,
+    "changeRate": 22.8
    },
    "netIncomeParent": {
-    "amount": 733,
-    "changeRate": -18.6
+    "amount": 1099,
+    "changeRate": 22.8
    },
    "annualDividend": 0,
    "payoutRatio": 0.0
   },
   "results": {
    "netSales": {
-    "previous": 57788,
-    "current": 59135
+    "previous": 56819,
+    "current": 59333
    },
    "grossProfit": {
-    "previous": 4424,
-    "current": 4729
+    "previous": 4546,
+    "current": 4721
    },
    "grossMargin": {
-    "previous": 7.7,
+    "previous": 8.0,
     "current": 8.0
    },
    "operatingIncome": {
-    "previous": 1562,
-    "current": 1310
+    "previous": 1558,
+    "current": 1840
    },
    "operatingMargin": {
     "previous": 2.7,
-    "current": 2.2
+    "current": 3.1
    },
    "chart": {
     "netSales": {
      "axisMin": 0,
-     "previous": 57788,
-     "current": 59135
+     "previous": 56819,
+     "current": 59333
     },
     "operatingIncome": {
      "axisMin": 0,
-     "previous": 1562,
-     "current": 1310
+     "previous": 1558,
+     "current": 1840
     }
    }
   },
@@ -297,54 +297,54 @@
     {
      "name": "貨物輸送事業",
      "netSales": {
-      "previous": 47386,
-      "current": 48491,
-      "changeRate": 2.3
+      "previous": 47079,
+      "current": 49024,
+      "changeRate": 4.1
      },
      "profit": {
-      "previous": 1252,
-      "current": 1430,
-      "changeRate": 14.2
+      "previous": 1265,
+      "current": 2009,
+      "changeRate": 58.8
      },
-     "salesShare": 82.0
+     "salesShare": 82.6
     },
     {
      "name": "倉庫・センター運営事業",
      "netSales": {
-      "previous": 10402,
-      "current": 10644,
-      "changeRate": 2.3
+      "previous": 9740,
+      "current": 10309,
+      "changeRate": 5.8
      },
      "profit": {
-      "previous": 357,
-      "current": -81,
-      "changeRate": -122.7
+      "previous": 340,
+      "current": -114,
+      "changeRate": -133.5
      },
-     "salesShare": 18.0
+     "salesShare": 17.4
     }
    ],
    "adjustment": {
     "previous": -47,
-    "current": -39
+    "current": -55
    },
    "consolidatedOperatingIncome": {
-    "previous": 1562,
-    "current": 1310
+    "previous": 1558,
+    "current": 1840
    }
   },
   "outlook": {
    "forecast": {
-    "netSales": 61857,
-    "netSalesChangeRate": 4.6,
-    "operatingIncome": 1370,
-    "operatingIncomeChangeRate": 4.6,
+    "netSales": 60242,
+    "netSalesChangeRate": 1.5,
+    "operatingIncome": 1763,
+    "operatingIncomeChangeRate": -4.2,
     "capex": 6705,
     "depreciation": 2554,
     "annualDividend": 0
    },
    "actual": {
-    "netSales": 59135,
-    "operatingIncome": 1310,
+    "netSales": 59333,
+    "operatingIncome": 1840,
     "capex": 6386,
     "depreciation": 2456
    },
@@ -360,23 +360,23 @@
     "current": 2456
    },
    "interestBearingDebt": {
-    "previous": 28036,
-    "current": 31539
+    "previous": 28010,
+    "current": 31231
    },
    "cash": {
-    "previous": 4045,
-    "current": 4139
+    "previous": 3977,
+    "current": 4153
    },
    "netDebt": {
-    "previous": 23991.0,
-    "current": 27400.0
+    "previous": 24033.0,
+    "current": 27078.0
    },
-   "equityRatio": 26.7
+   "equityRatio": 27.2
   },
   "statements": [
    {
     "slide": "highlights",
-    "text": "売上高は前期を上回った。営業利益は前期を下回った。",
+    "text": "売上高は前期を上回った。営業利益は前期を上回った。",
     "claims": [
      {
       "metric": "netSales",
@@ -384,13 +384,13 @@
      },
      {
       "metric": "operatingIncome",
-      "direction": "down"
+      "direction": "up"
      }
     ]
    },
    {
     "slide": "outlook",
-    "text": "次期は増収増益を見込む。",
+    "text": "次期は増収減益を見込む。",
     "claims": [
      {
       "metric": "forecastNetSales",
@@ -398,7 +398,7 @@
      },
      {
       "metric": "forecastOperatingIncome",
-      "direction": "up"
+      "direction": "down"
      }
     ]
    },

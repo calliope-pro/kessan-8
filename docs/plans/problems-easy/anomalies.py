@@ -168,8 +168,14 @@ def e17(p, co):
     claim['direction'] = flipped
     shown = '増加' if not now_up else '減少'
     real = '増加' if now_up else '減少'
+    ir_r = p['ir']['results']['operatingIncome']
+    unit = p['ir']['header']['unit']
+    if unit == '億円':
+        where = f'IR の業績では {ir_r["previous"]:,.1f} 億円から {ir_r["current"]:,.1f} 億円へ{real} (決算短信では {n(t["previous"])} 百万円から {n(t["current"])} 百万円へ、{pct(t["changeRate"])})'
+    else:
+        where = f'営業利益は {n(t["previous"])} 百万円から {n(t["current"])} 百万円へ{real} ({pct(t["changeRate"])})'
     return ([place('ir', 'statements.0.text')],
-            f'IR のハイライトの文章は営業利益が前期より{shown}したと読めますが、営業利益は {n(t["previous"])} 百万円から {n(t["current"])} 百万円へ{real} ({pct(t["changeRate"])}) しています。')
+            f'IR のハイライトの文章は営業利益が前期より{shown}したと読めますが、{where}しています。')
 
 
 KINDS = {'E-01': e01, 'E-02': e02, 'E-04': e04, 'E-06': e06, 'E-08': e08, 'E-09': e09, 'E-10': e10, 'E-11': e11, 'E-12': e12, 'E-13': e13, 'E-14': e14, 'E-16': e16, 'E-17': e17}

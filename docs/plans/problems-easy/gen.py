@@ -112,8 +112,10 @@ def split_segments(co, sales, op, loss_index, adjust_ratio=0.03):
     n = len(seg)
     adj = -rq(abs(op) * adjust_ratio)
     segment_total = op - adj  # セグメント利益の合計
-    # 売上高
-    sales_list = [rq(sales * s) for s, _ in seg[:-1]]
+    # 売上高: 構成比は毎期、数 % ゆらす (セグメントごとに伸び率が違う)
+    raw = [s_ * (1 + co.rng.uniform(-0.06, 0.06)) for s_, _ in seg]
+    shares = [x / sum(raw) for x in raw]
+    sales_list = [rq(sales * s_) for s_ in shares[:-1]]
     sales_list.append(sales - sum(sales_list))
     # 利益: 売上 × 相対利益率の重みで配分
     if loss_index:
@@ -144,8 +146,12 @@ def step(co, prev, year, knobs):
         state, cf, extra = _step(co, prev, year, knobs)
         i = state['is_']
         ni = i['netSales'] - i['costOfSales'] - i['sga'] + i['nonOperatingIncome'] - i['nonOperatingExpenses'] + i['extraordinaryGain'] - i['extraordinaryLoss'] - i['incomeTaxes']
+        op_cur = i['netSales'] - i['costOfSales'] - i['sga']
+        op_prev = prev['is_']['netSales'] - prev['is_']['costOfSales'] - prev['is_']['sga']
+        if op_cur == op_prev or i['netSales'] == prev['is_']['netSales']:
+            continue  # 前期と同じ値だと、文章の増減の主張が成り立たない
         if knobs or prev.get('flag_big') or abs(ni - ni_prev) / ni_prev < 0.20:
-            state['flag_big'] = 'big-change' in knobs
+            state['flag_big'] = bool(knobs)
             return state, cf, extra
     raise SystemExit(f'{co.id} {year}: 利益の増減が収まらない')
 
@@ -386,6 +392,11 @@ def build_problem(co, pid, difficulty, year, prev, cur, cf, extra, knobs, tier):
     if 'big-change' in knobs:
         f_op = co.rq(CI['operatingIncome'] * 1.18)
     a_sales10, a_op10 = ir10(CI['netSales']), ir10(CI['operatingIncome'])
+    # 次期の予想が当期の実績と同じ値(IR の表示で)になると、増減の主張が成り立たない。必ず違う値にする
+    if ir10(f_sales) == a_sales10:
+        f_sales += co.q * 10
+    if ir10(f_op) == a_op10:
+        f_op += co.q * 10
     capex_act = -cf['capex']
     outlook = dict(
         forecast=dict(netSales=ir(f_sales), netSalesChangeRate=rha((ir10(f_sales) - a_sales10) * 1000, a_sales10) / 10,
@@ -455,9 +466,9 @@ def sgn(x):
 TONE = {
     # 会社ごとの口調 (docs/plans/companies.md §5.3)。(増・減) の語と、文の型。
     'c01': dict(up='上回った', down='下回った', fmt=lambda a, b: f'売上高は前期を{a}。営業利益は前期を{b}。', out=lambda a, b: f'次期は{a}{b}を見込む。', cash={1: '営業キャッシュ・フローは堅調であった。'}),
-    'c02': dict(up='上回りました', down='下回りました', fmt=lambda a, b: f'おかげさまで、売上高は前期を{a}。営業利益は前期を{b}。', out=lambda a, b: f'次期は{a}{b}を見込んでいます。', cash={1: '営業キャッシュ・フローは安定しました。'}),
+    'c02': dict(up='上回りました', down='下回りました', fmt=lambda a, b: ('おかげさまで、' if a == '上回りました' else '') + f'売上高は前期を{a}。営業利益は前期を{b}。', out=lambda a, b: f'次期は{a}{b}を見込んでいます。', cash={1: '営業キャッシュ・フローは安定しました。'}),
     'c03': dict(up='増', down='減', fmt=lambda a, b: f'売上高 前期比{a}。営業利益 前期比{b}。', out=lambda a, b: f'次期見通し: {a}{b}。', cash={1: '営業 CF は黒字。'}),
-    'c04': dict(up='伸びた', down='縮んだ', fmt=lambda a, b: f'売上高は前期より{a}。営業利益は前期より{b}。', out=lambda a, b: f'次期は{a}{b}を目指し、拡大を加速する。', cash={1: '営業キャッシュ・フローは良好に推移した。'}),
+    'c04': dict(up='伸びた', down='縮んだ', fmt=lambda a, b: f'売上高は前期より{a}。営業利益は前期より{b}。', out=lambda a, b: f'次期は{a}{b}を見込む。', cash={1: '営業キャッシュ・フローは良好に推移した。'}),
     'c05': dict(up='上回った', down='下回った', fmt=lambda a, b: f'売上高は前期を{a}。営業利益は前期を{b}。研究開発の進捗はリスクとあわせて別に示す。', out=lambda a, b: f'次期は{a}{b}となる見込みであるが、承認の時期により変動する可能性がある。', cash={1: '営業キャッシュ・フローは黒字を確保した。'}),
     'c06': dict(up='増加', down='減少', fmt=lambda a, b: f'売上高は前期比{a}。営業利益は前期比{b}。', out=lambda a, b: f'次期見通し: {a}{b}。', cash={1: '営業キャッシュ・フローは黒字。'}),
     'c07': dict(up='上回った', down='下回った', fmt=lambda a, b: f'売上高は前期を{a}。営業利益は前期を{b}。', out=lambda a, b: f'次期は{a}{b}を見込む。', cash={1: '営業キャッシュ・フローは黒字であった。'}),
