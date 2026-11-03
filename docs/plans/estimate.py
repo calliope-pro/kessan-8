@@ -1,7 +1,7 @@
 """案 A・B・C の Story/Task の DAG から、総工数・クリティカルパス・並列の幅を出す (標準ライブラリのみ)。
 
 使いかた: python3 docs/plans/estimate.py
-入力はすべて仮定 (docs/plans/plan-comparison.md の「見積もりの単位」)。測った値ではない。
+入力はすべて仮定 (docs/plans/plan-comparison.md の「見積もりの単位」)。測った値ではない (AI の利用枠の実測値 MEASURED を除く)。
 
 案の軸は 2 つだけ: 画面の単位 (A は決算短信のみ / B・C は決算短信 + IR) と、問題の作りかた
 (A・B は手書き / C は生成)。図鑑・共有・演出・解説・3 段目の難易度は、全案で同じ「追加オプション」
@@ -31,9 +31,9 @@ COMMON = {
 def tail(contents):
     deps = list(contents) + ['C2', 'C3', 'C4', 'C5', 'C6']
     return {
-        'Q1': ('結合テスト・クリア確認 (全難易度)', '品質', 3, deps, 'o'),
+        'F1': ('結合テスト・クリア確認 (全難易度)', '品質', 3, deps, 'o'),
         # Story の包括レビューと是正。実作業の時間なので K を打ち消して入れる
-        'Q2': ('Story の包括レビューと是正 (5 Story × 1 時間)', '品質', STORY_REVIEW / K, ['Q1'], 'o'),
+        'F2': ('Story の包括レビューと是正 (5 Story × 1 時間)', '品質', STORY_REVIEW / K, ['F1'], 'o'),
     }
 
 
@@ -42,7 +42,7 @@ A = dict(COMMON)
 A.update({
     'A1': ('画面テンプレート: 短信サマリー・貸借・損益', '中身', 2 * 3, ['C1'], 'o'),
     'A2': ('画面テンプレート: キャッシュ・フロー・注記', '中身', 2 * 2, ['C1'], 'o'),
-    'A3': ('架空の会社の設定 (6 社) と実在の企業名との衝突の確認', '中身', 1.5, ['C1'], 'o'),
+    'A3': ('架空の会社の設定 (6 社。明らかに架空と分かる付けかた) と、実在の法人名との衝突の確認 (国税庁の法人番号公表サイトの全件データと突き合わせる)', '中身', 1.5, ['C1'], 'o'),
     'A4': ('問題制作 やさしい 1〜8 問目', '中身', 8 * 0.5, ['A1', 'A2', 'A3'], 'c'),
     'A5': ('問題制作 やさしい 9〜15 問目', '中身', 7 * 0.5, ['A1', 'A2', 'A3'], 'c'),
     'A6': ('問題制作 むずかしい 1〜8 問目', '中身', 8 * 0.5, ['A1', 'A2', 'A3'], 'c'),
@@ -57,7 +57,7 @@ B = dict(COMMON)
 B.update({
     'B1': ('画面テンプレート: 短信 5 (サマリー・貸借・損益・CF・注記)', '中身', 2 * 5, ['C1'], 'o'),
     'B2': ('画面テンプレート: IR スライド 5 (ハイライト・業績・セグメント・見通し・補足)', '中身', 2 * 5, ['C1'], 'o'),
-    'B3': ('架空の会社の設定 (8 社) と実在の企業名との衝突の確認', '中身', 2, ['C1'], 'o'),
+    'B3': ('架空の会社の設定 (8 社。明らかに架空と分かる付けかた) と、実在の法人名との衝突の確認 (法人番号公表サイトの全件データ)', '中身', 2, ['C1'], 'o'),
     'B4': ('問題テンプレート (会社 × 資料束) の設計', '中身', 6, ['B1', 'B2', 'B3'], 'o'),
     'B5': ('問題制作 やさしい 1〜8 問目 (資料束)', '中身', 8 * 1.0, ['B4'], 'c'),
     'B6': ('問題制作 やさしい 9〜15 問目', '中身', 7 * 1.0, ['B4'], 'c'),
@@ -71,19 +71,19 @@ B.update(tail(['B5', 'B6', 'B7', 'B8', 'B9', 'B10']))
 # ---- 案 C: 案 B と同じ画面・同じ資料束。問題を生成して異変を注入する ----
 C = dict(COMMON)
 C.update({
-    'G1': ('画面テンプレート: 短信 5', '中身', 2 * 5, ['C1'], 'o'),
-    'G2': ('画面テンプレート: IR スライド 5', '中身', 2 * 5, ['C1'], 'o'),
-    'G3': ('会社の名前と設定の生成規則と、実在の企業名との衝突の確認', '中身', 3, ['C1'], 'o'),
-    'G4': ('問題テンプレート (会社 × 資料束) の設計', '中身', 6, ['G1', 'G2', 'G3'], 'o'),
-    'G5': ('正常データの生成 (貸借の等式・損益の連鎖・CF の連動・比率)', '生成', 12, ['G4'], 'g'),
-    'G6': ('異変の注入: 見た目・計算 10 種類', '生成', 10 * 1.0, ['G5'], 'g'),
-    'G7': ('異変の注入: 会計・注記・継続企業 10 種類', '生成', 10 * 1.0, ['G5'], 'g'),
-    'G8': ('異変の注入: 資料間の矛盾 5 種類 (IR と短信)', '生成', 5 * 1.0, ['G5'], 'g'),
-    'G9': ('整合の検証 (正常データが全規則を満たす・異変が 1 つだけを変える)', '生成', 8, ['G6', 'G7', 'G8'], 'g'),
-    'G10': ('一次資料での確認 (生成の規則と異変の規則のレビュー)', '中身', 8, ['G9'], 'c'),
-    'G11': ('スマホでの資料間の表示', '遊び', 5, ['G1', 'G2', 'C3'], 'o'),
+    'S1': ('画面テンプレート: 短信 5', '中身', 2 * 5, ['C1'], 'o'),
+    'S2': ('画面テンプレート: IR スライド 5', '中身', 2 * 5, ['C1'], 'o'),
+    'S3': ('会社の名前と設定の生成規則 (明らかに架空と分かる付けかた) と、実在の法人名との衝突の確認 (法人番号公表サイトの全件データ)', '中身', 3, ['C1'], 'o'),
+    'S4': ('問題テンプレート (会社 × 資料束) の設計', '中身', 6, ['S1', 'S2', 'S3'], 'o'),
+    'S5': ('正常データの生成 (貸借の等式・損益の連鎖・CF の連動・比率)', '生成', 12, ['S4'], 'g'),
+    'S6': ('異変の注入: 見た目・計算 10 種類', '生成', 10 * 1.0, ['S5'], 'g'),
+    'S7': ('異変の注入: 会計・注記・継続企業 10 種類', '生成', 10 * 1.0, ['S5'], 'g'),
+    'S8': ('異変の注入: 資料間の矛盾 5 種類 (IR と短信)', '生成', 5 * 1.0, ['S5'], 'g'),
+    'S9': ('整合の検証 (正常データが全規則を満たす・異変が 1 つだけを変える)', '生成', 8, ['S6', 'S7', 'S8'], 'g'),
+    'S10': ('一次資料での確認 (生成の規則と異変の規則のレビュー)', '中身', 8, ['S9'], 'c'),
+    'S11': ('スマホでの資料間の表示', '遊び', 5, ['S1', 'S2', 'C3'], 'o'),
 })
-C.update(tail(['G6', 'G7', 'G8', 'G9', 'G10', 'G11']))
+C.update(tail(['S6', 'S7', 'S8', 'S9', 'S10', 'S11']))
 
 PLANS = {'A': A, 'B': B, 'C': C}
 # 異変の種類の数 (設計値。仮定): A は見た目 5・計算 5・会計 10、B・C はそれに資料間の矛盾 5
@@ -126,7 +126,7 @@ def schedule(tasks, scale_content=1.0, scale_gen=1.0):
     path.reverse()
     pts = sorted(set(list(ES.values()) + list(EF.values())))
     width = max(sum(1 for i in T if ES[i] <= (a + b) / 2 < EF[i]) for a, b in zip(pts, pts[1:]))
-    n_work = len([i for i in T if i not in ('Q1', 'Q2')])
+    n_work = len([i for i in T if i not in ('F1', 'F2')])
     review = REVIEW_PER_TASK * n_work
     dag_total = sum(t['h'] for t in T.values())
     return dict(T=T, ES=ES, EF=EF, cp=cp, path=path, dag_total=dag_total, review=review,
@@ -135,6 +135,80 @@ def schedule(tasks, scale_content=1.0, scale_gen=1.0):
 
 def option_hours(plan, key):
     return OPTIONS[key][1][plan] * K
+
+
+# ---- 1 回のクリアの長さ: 間違えると最初に戻る型での期待値 ----
+def expected_questions(p, n):
+    """1 問を正しく判定する確率 p、連続 n 問でクリアのとき、クリアまでに見る問題数の期待値。
+    (1 - p^n) / ((1 - p) * p^n)。間違えたら最初から数え直す。"""
+    return (1 - p ** n) / ((1 - p) * p ** n)
+
+
+def pool_extension_hours(plan, extra_questions):
+    """難易度ごとの問題のプールを広げる追加工数 (組の作業時間 h)。案 C は生成なので 0。
+    手書き 1 問あたり: 案 A (制作 0.5 + 確認 0.25) × K、案 B (制作 1.0 + 確認 0.4) × K。"""
+    per = {'A': (0.5 + 0.25) * K, 'B': (1.0 + 0.4) * K, 'C': 0.0}[plan]
+    return per * extra_questions
+
+
+# ---- AI の利用枠 (測った値)。~/.claude/projects/ の組のセッションの記録から、assistant の usage を
+# メッセージ ID ごとに 1 回だけ合計した (2026-11-03)。Task #3 の作業 (Sub-task #4・#5・#6 と、
+# Sub-task のレビュー) の区間 12:34:32〜13:17:10 UTC。包括レビューは別。 ----
+MEASURED = {
+    'window_hours': (42 * 60 + 38) / 3600,  # 12:34:32〜13:17:10 UTC は 42 分 38 秒
+    'executor_sonnet': {'input': 216, 'output': 188_199, 'cache_read': 20_794_908, 'cache_creation': 449_853},
+    'inspector_opus': {'input': 124, 'output': 66_609, 'cache_read': 9_487_046, 'cache_creation': 232_441},
+    'comprehensive_review_opus': {'input': 38, 'output': 33_579, 'cache_read': 1_888_005, 'cache_creation': 115_893},
+    'comprehensive_review_minutes': 6.2,  # 13:23:01〜13:29:12 UTC
+    'task3_estimate_hours': 3.0,  # Task #3 の見積もり (仮定)
+}
+
+
+def ai_rates():
+    """Task #3 の実測から、見積もり 1 時間あたりと、経過 1 時間あたり (1 組) の消費。
+    下限 = 見積もり 3 h あたり (見積もりが実際より大きかった分を割り引く)、
+    上限 = 経過時間あたり (1 見積もり時間 = 1 経過時間と置く)。"""
+    m = MEASURED
+    out = m['executor_sonnet']['output'] + m['inspector_opus']['output']
+    cache = m['executor_sonnet']['cache_read'] + m['inspector_opus']['cache_read']
+    return {
+        'out_per_est_h': out / m['task3_estimate_hours'],
+        'out_per_elapsed_h': out / m['window_hours'],
+        'cache_per_est_h': cache / m['task3_estimate_hours'],
+        'cache_per_elapsed_h': cache / m['window_hours'],
+    }
+
+
+def limited_makespan(tasks, k):
+    """同時に動かせる組を k に限ったときの経過時間 (h)。依存が済んだ Task を、残りの経路が長い順に k 個まで始める
+    (リスト・スケジューリング)。k が十分大きければ最早開始の経路 (cp) と一致する。"""
+    T = {i: v[2] * K for i, v in tasks.items()}
+    deps = {i: v[3] for i, v in tasks.items()}
+    succ = {i: [] for i in tasks}
+    for i, ds in deps.items():
+        for d in ds:
+            succ[d].append(i)
+    rem = {}
+
+    def tail_len(i):
+        if i in rem:
+            return rem[i]
+        rem[i] = T[i] + max([tail_len(s) for s in succ[i]], default=0.0)
+        return rem[i]
+
+    for i in tasks:
+        tail_len(i)
+    done, running, t = {}, {}, 0.0  # running: id -> finish time
+    while len(done) < len(tasks):
+        ready = [i for i in tasks if i not in done and i not in running and all(d in done for d in deps[i])]
+        ready.sort(key=lambda i: -rem[i])
+        while ready and len(running) < k:
+            i = ready.pop(0)
+            running[i] = t + T[i]
+        t = min(running.values())
+        for i in [i for i, f in running.items() if f <= t + 1e-9]:
+            done[i] = running.pop(i)
+    return t
 
 
 if __name__ == '__main__':
@@ -151,3 +225,16 @@ if __name__ == '__main__':
                         (1, 2, '生成だけ ×2'), (2, 1, '内容だけ ×2')]:
         print(' ', lab, ' | '.join(
             f"{k} {schedule(v, sc, sg)['total']:.0f}/{schedule(v, sc, sg)['cp']:.0f}" for k, v in PLANS.items()))
+    print('期待問題数 (間違えると最初から): p=1問の正答率, n=連続クリア数')
+    for n in (5, 8):
+        print(' ', f'n={n}', ' '.join(f'p={p}: {expected_questions(p, n):.1f}問' for p in (0.7, 0.8, 0.9)))
+    print('プールを 25 問/難易度にする追加工数 (+10 問/難易度 = +20 問):',
+          ' '.join(f'{k} {pool_extension_hours(k, 20):.1f}h' for k in 'ABC'))
+    r = ai_rates()
+    print('AI の利用枠 (出力トークン): 見積もり 1 h あたり %.0f / 経過 1 h あたり %.0f' % (r['out_per_est_h'], r['out_per_elapsed_h']))
+    for k, v in PLANS.items():
+        s = schedule(v)
+        print(f"  案 {k} 総工数 {s['total']:.1f} h -> 出力 {s['total']*r['out_per_est_h']/1e6:.1f}〜{s['total']*r['out_per_elapsed_h']/1e6:.1f} M")
+    print('同時に動かす組を絞ったときの経過時間 (h)')
+    for k, v in PLANS.items():
+        print(' ', k, ' '.join(f'k={n}: {limited_makespan(v, n):.1f}' for n in (1, 2, 3, 5, 8)))
