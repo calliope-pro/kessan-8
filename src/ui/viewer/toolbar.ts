@@ -21,6 +21,7 @@ export function createToolbar(): Toolbar {
   const end = h('div', { class: 'toolbar-end' });
   const el = h('div', { class: 'toolbar' }, h('div', { class: 'toolbar-in' }, sw, calc, end));
   let marking = false;
+  let shown = '';
   let listener: (on: boolean) => void = () => {};
   sw.addEventListener('click', () => {
     marking = !marking;
@@ -44,7 +45,12 @@ export function createToolbar(): Toolbar {
         }
         return marking ? [HINT] : [];
       })();
-      calc.replaceChildren(...lines.map((l) => h('div', { class: 'calc-line' }, l)));
+      // 同じ文字なら作り直さない (aria-live の読み上げが、画面を移るたびに繰り返されないように)
+      const text = lines.join('\n');
+      if (text !== shown) {
+        shown = text;
+        calc.replaceChildren(...lines.map((l) => h('div', { class: 'calc-line' }, l)));
+      }
       if (slot) {
         if (slot.parentElement !== end) end.replaceChildren(slot);
       } else end.replaceChildren();

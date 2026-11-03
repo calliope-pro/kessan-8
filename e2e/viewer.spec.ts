@@ -376,6 +376,17 @@ test.describe('F8・E10・E11: 検算', () => {
     expect(await calcLines(page)).toEqual(['差 600', '比 1.05']);
   });
 
+  test('N11: 同じ結果の欄は、画面を移っても作り直さない (aria-live が繰り返し読まれない)', async ({ page }) => {
+    await open(page);
+    await turnOn(page);
+    await key(page, 'tanshin.summary.netSales.current').click();
+    await key(page, 'tanshin.summary.netSales.previous').click();
+    const line = await page.locator('.calc-line').first().elementHandle();
+    await show(page, TANSHIN[2]);
+    await show(page, TANSHIN[0]);
+    expect(await line!.evaluate((e) => e.isConnected)).toBe(true);
+  });
+
   test('F8: 3 つ目を付けると直近の 2 つが対象 (別の画面の印も使える)', async ({ page }) => {
     await open(page);
     await turnOn(page);
