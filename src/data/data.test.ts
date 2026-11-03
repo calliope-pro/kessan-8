@@ -54,7 +54,7 @@ describe('companies.json (docs/plans/companies.md §5 の 10 社)', () => {
   });
 
   it('K8: 社章は、十字形・三日月・星と月などの公的・宗教的な標章に見える記号でない (包括レビュー B1)', () => {
-    const forbidden = Array.from('✚✙✛✜✝✞✟✠☥☦☩☪☫☬☭☮☯☸☽☾卍卐＋+†‡➕✖✕✗✘❌❎✓');
+    const forbidden = Array.from('✚✙✛✜✝✞✟✠☥☦☩☪☫☬☭☮☯☸☽☾卍卐＋+†‡➕✖✕✗✘❌❎✓✿❀☀');
     companies.forEach((c) => expect(forbidden, `${c.id} の社章 ${c.emblem}`).not.toContain(c.emblem));
   });
 
