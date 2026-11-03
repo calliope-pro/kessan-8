@@ -100,7 +100,7 @@
 - **単位**: 金額は百万円 (百万円未満切捨ての整数)、比率は % (小数第一位)、1 株当たりは円。符号は数値の符号で持ち、表示 (△) は 1 つの整形関数 (`ui/format.ts`) だけが決める
 - **見た目の異変**は、資料の見出し (`header`) の文字列と、項目名の差し替え (`labelOverrides`、キーは項目キー) で表す。項目名の標準は `domain/labels.ts` にあり、正常な問題には `labelOverrides` が無い
 - **同じ事実を 2 か所に書かないもの**: 異変の系統は `AnomalyKind.family` だけが持つ (`Anomaly` には書かない。系統は `kind` から引く)。複製が避けられないもの (見出しの社名 = `Company.name`、セグメント名 = `Company.segmentNames`、期の表記 = `fiscalYear` と決算期末の月から作る表記) は、異変のために別の値を入れられる形にしてあるので、**正常な問題では一致することを検証器が確かめる**
-- **IR の単位と換算**: 短信の金額は百万円。IR の金額は `Company.irUnit` の単位で持つ。億円の会社 (`c03`・`c05`・`c06`・`c08`・`c10`) の IR は、**短信の百万円 ÷ 100 を小数第一位まで四捨五入した値** (0.5 は遠い側へ。12,456 百万円 → 124.6 億円) を持ち、`header.unit` は `億円`。IR の増減率・構成比などの比率は、短信の百万円の値から計算した値を持つ (単位に依らず同じ値になる)。IR の中の式 (純有利子負債 = 有利子負債 − 現金など) は表示値どうしで完全に一致させる (作る側が、丸めても一致する値を選ぶ。anomalies.md G2・G8)
+- **IR の単位と換算**: 短信の金額は百万円。IR の金額は `Company.irUnit` の単位で持つ。億円の会社 (`c03`・`c05`・`c06`・`c08`・`c10`) の IR は、**短信の百万円 ÷ 100 を小数第一位まで四捨五入した値** (0.5 は遠い側へ。12,456 百万円 → 124.6 億円) を持ち、`header.unit` は `億円`。IR の増減率・構成比などの比率は、短信の百万円の値から計算した値を持つ (単位に依らず同じ値になる)。IR の中の式 (純有利子負債 = 有利子負債 − 現金など) は表示値どうしで完全に一致させる。**検証器は、億円の値を 10 倍した整数 (`Math.round(x × 10)`) にしてから比べる** (浮動小数の誤差のため: JavaScript で 124.6 − 30.2 は 94.39999999999999 になり、94.4 と `===` で一致しない。測った) (作る側が、丸めても一致する値を選ぶ。anomalies.md G2・G8)
 - **セグメント**: 会社によって 2 つか 3 つ (`Company.segmentNames`)。短信の注記・IR のセグメント別は、同じ数・同じ並びで持つ。数が食い違うのは異変 (H-19)
 - **見た目の異変の上書き**: 項目名は `labelOverrides`、画面ごとの単位は `unitOverrides` (キー `<doc>.<画面の ID>`)、負の数の記号は `signOverrides` (キー `<doc>.<path>`)。どれも正常な問題には無い。画面は、上書きがあればそれを表示し、無ければ標準 (項目名は `labels.ts`、単位は `header.unit`、負の記号は `ui/format.ts` の標準 △) を表示する
 - **文章と数字の矛盾 (文章の異変)**: IR の文章は `statements` に、それが主張する数字の動き (`claims`) と一緒に持つ。検証器は主張を短信の数字の動きと照らす。文章を自由に書いても、主張の構造が無ければ機械では確かめられない
@@ -559,22 +559,39 @@ export interface Problem {
 
 ```
  title ──START──▶ difficulty ──PICK(難易度, 出題)──▶ reading(1 社目)
-                                                      │  ▲
-                                          VIEW(画面)──┘  │ (同じ phase のまま見る画面を変える)
-                                                      │
-                                                  ANSWER(あり/なし)
-                                                      ▼
-   ┌──────────────────────────────────────────── revealed
+   ▲                 │  ▲                              │  ▲
+   └──TO_TITLE───────┘  │                  VIEW(画面)──┘  │ (同じ phase のまま見る画面を変える)
+                        │                              │
+                        │                          ANSWER(あり/なし)
+                        │                              ▼
+   ┌────────────────────┼───────────────────────── revealed
    │  NEXT (正解 かつ 8 社目でない)  → reading(次の会社)
    │  NEXT (正解 かつ 8 社目)        → cleared
    │  RESTART(新しい出題) (不正解)   → reading(1 社目) … 最初の会社に戻る
+   │  TO_DIFFICULTY (不正解)         → difficulty      … 難易度を選び直す
    │
- cleared ──TO_TITLE──▶ title        (reading・revealed からも TO_TITLE で title に戻れる)
+ cleared ──PICK(同じ難易度, 新しい出題)──▶ reading(1 社目)   … もう一度
+         ──TO_DIFFICULTY──▶ difficulty                        … 別の難易度
 ```
 
+**action と、受け付ける phase の表** (これ以外の組み合わせは、状態を変えずに返す。`reduce` は全域):
+
+| action | 受け付ける phase | 遷移先 |
+| --- | --- | --- |
+| `START` | `title` | `difficulty` |
+| `PICK(難易度, 出題)` | `difficulty`・`cleared` | `reading` (1 社目)。`cleared` からは「もう一度」: 難易度は `cleared` の持つものと同じで、出題を新しくする |
+| `VIEW(doc, screen)` | `reading` | `reading` (見る画面だけ変わる) |
+| `ANSWER(あり/なし)` | `reading` | `revealed` |
+| `NEXT` | `revealed` (正解のときだけ) | `reading` (次の会社)、8 社目なら `cleared` |
+| `RESTART(出題)` | `revealed` (不正解のときだけ) | `reading` (1 社目) |
+| `TO_DIFFICULTY` | `revealed` (不正解のときだけ)・`cleared` | `difficulty` |
+| `TO_TITLE` | `difficulty`・`reading`・`revealed`・`cleared` | `title` (走行は捨てる) |
+
+- すべてのボタンは、この表の action のどれかに結ばれる。**画面の側で `TO_TITLE → START → PICK` のように action をつなげて、表に無い遷移を作らない** (ボタンの文言と action の対応: 「難易度を選び直す」(不正解の答え合わせ) = `TO_DIFFICULTY`、「もう一度」(クリア) = `PICK`、「別の難易度」(クリア) = `TO_DIFFICULTY`、難易度の選択の「戻る」 = `TO_TITLE`)
 - 出題 (`Problem[]` 8 問) は、`PICK`・`RESTART` の action が持ってくる。`reduce` 自身は乱数を使わない (純粋)。出題は `domain/draw.ts` が作る
 - `reading` 中はいつでも、10 画面 (短信 5 + IR 5) のどれにも移れる (`VIEW`)。順番に読ませる強制はしない。UI の見せかた (タブ・スワイプ・矢印) は Task #28 で決める
-- 不正解のあとは `revealed` で答え合わせを見せ、`RESTART` で `reading` の 1 社目に戻る。戻るたびに新しく出題する (同じ並びを覚えられないように)
+- 不正解のあとは `revealed` で答え合わせを見せ、`RESTART` で `reading` の 1 社目に戻る (または `TO_DIFFICULTY` で難易度の選択へ)。戻るたびに新しく出題する (同じ並びを覚えられないように)
+- `revealed` で `ANSWER`・`VIEW` は受け付けない (判定をやり直す経路を作らない)
 
 ### 5.3 出題 (`domain/draw.ts`)
 
@@ -626,6 +643,6 @@ export interface Problem {
 
 | Task | この設計から |
 | --- | --- |
-| #22 問題 (#23 検証器・#24 会社と異変の一覧・#25/#26 問題の制作) | `Problem` の形 (§4.2) で作る。検証器は `src/verifier/` に置き、規則 ID を `anomaly-kinds.json` の `rules` と対応させる。試作の `docs/plans/spike/verify.py` (67 の必須規則 + 12 の参考規則) が出発点 |
+| #22 問題 (#23 検証器・#24 会社と異変の一覧・#25/#26 問題の制作) | `Problem` の形 (§4.2) で作る。検証器は `src/verifier/` に置き、規則 ID を `anomaly-kinds.json` の `primaryRules`・`allowedRules` と、問題の `anomaly.expectedRules` で参照させる (§4.5)。試作の `docs/plans/spike/verify.py` (67 の必須規則 + 12 の参考規則) が出発点 |
 | #27 画面・#28 遊びの流れ | UX の部品が要る追加項目は [docs/plans/ux-tech-assessment.md](plans/ux-tech-assessment.md) §4.2 (型には任意項目として足してある。部品が選ばれたら検証器で必須にする)。`ui/` に置く。状態は §5 の `reduce` を使い、数字と文言は問題データから読む。`data-path` を各セルに持たせる (§4.1)。UI/UX の案 (#19) が素の DOM で足りないと分かったら、フレームワーク導入をチケットで提案する |
 | #30 公開 | Vercel の取り込みは人間の作業 (open-decisions D-R6)。`vercel.json` は #37 で用意する |

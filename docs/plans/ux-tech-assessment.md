@@ -119,7 +119,6 @@ plan-comparison の O3 (雰囲気のある演出、6 h、仮定) に、V1・V2�
 
 | 項目 | 場所 | 要る部品 | 内容 |
 | --- | --- | --- | --- |
-| (配色) | 業種 → 配色の表 (ui の定数。問題データには持たない) | V3 | `Company.industry` から引く。会社ごとに配色を書くと、業種ごとの配色の知識が会社の数だけ写される |
 | (社章・配色) | 会社の設定 companies.md §4 にあり、`Company.emblem`・`Company.colors` として型に入っている | V3 | 追加の項目ではない |
 | `business: string` | `Company` | P2 | 事業の説明 1 文。数字・増減の語を含めない |
 | `tip: string` | `AnomalyKind` (anomaly-kinds.json) | R7 | 種類ごとの 1 行 |
@@ -147,7 +146,7 @@ plan-comparison の O3 (雰囲気のある演出、6 h、仮定) に、V1・V2�
 
 ## 6. 技術から見た、案に足りない・危ない点
 
-1. **CSP が `style` 属性を許さない** (vercel.json の `style-src 'self'`。足場 #37 の E2E が違反を捕まえる)。V2 の背景・V3 の配色・T 系の強調を、`element.setAttribute('style', …)` や style 属性つきの HTML 文字列で作ると、公開版で崩れる。**CSSOM (`el.style.width = …`) は使える** (測った: 試作の変異で、`el.style.width = '600px'` が CSP の下で効き、E3 を赤にした)。勧め: **`data-` 属性 + CSS のセレクタ**で状態 (段・印・強調) を表す。SVG の社章も、`style` 属性でなく表現属性 (`fill` など) と CSS のクラスで塗る。
+1. **CSP が `style` 属性を許さない** (vercel.json の `style-src 'self'`。足場 #37 の E2E が違反を捕まえる)。V2 の背景・V3 の配色・T 系の強調を、`element.setAttribute('style', …)` や style 属性つきの HTML 文字列で作ると、公開版で崩れる。**CSSOM (`el.style.width = …`) は使える** (測った: 試作の変異で、`el.style.width = '600px'` が CSP の下で効き、E3 を赤にした)。勧め: **`data-` 属性 + CSS のセレクタ**で状態 (段・印・強調) を表す。社章は記号 1 字 (文字として表示する) で、色は `Company.colors` を CSS の変数かクラスで当てる。
 2. **印の付け外しは「状態」**: 設計 §5.1 の `reading` に `marks` を足す (T1 を選ぶ場合)。`revealed` には持ち越し、R3 が使う。`RESTART`・`NEXT` では空にする。
 3. **PC のキーボードと読み上げ**: セルを押せるものにする (T1) と、`button` 相当の役割と `aria-pressed` が要る。要件に無い (PC 優先・スマホ可) が、押せる要素にフォーカスが無いと PC の操作が成り立たない。工数は T1 に含めた。
 4. **T3 の対応表の定義**: 資料間の食い違いを「同じ定義の数字どうし」に限る (tech-assessment §5-4)。対応表の項目が、実在の様式でも一致するもの (売上高・営業利益・純利益・セグメント) に限られることを、表を作る人 (問題の制作の担当) が確かめる。
