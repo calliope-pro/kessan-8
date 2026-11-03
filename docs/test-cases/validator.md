@@ -356,7 +356,7 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | D9 | 型の形が誤り (SH2) | code `shape` だけを出し、その問題の規則の検証は行わない (落ちない) |
 | D10 | `AnomalyKind.primaryRules`・`allowedRules` に存在しない規則 ID (`bs-nothing`) | code `unknown-rule` (種類の ID を含む) |
 | D11 | 会社の `id` が重複 / 異変の種類の `id` が重複 | code `duplicate-company`・`duplicate-kind` |
-| D12 | `soft` の違反だけ (S3 相当) | `errors` 空。`soft` に出る (`--fail-on-soft` で致命) |
+| D12 | `soft` の違反だけ: 基準問題で株数を 8,630 千株にし、EPS 99.65・BPS 951.1・配当性向 30.1 (summary・notes・IR) を表示値の再計算に合わせた問題。hard はすべて通るが、配当性向 (1 株配当 ÷ EPS = 30.1%) と配当金総額 ÷ 純利益 (258 ÷ 860 = 30.0%) の別経路だけがずれる | `errors` 空。`soft` に `soft-payout-cross-path` だけが出る (`--fail-on-soft` で致命) |
 | D13 | 難易度ごとの問題数が 25 未満 | `shortfalls` に code `pool-size` (easy・hard それぞれ)。`errors` ではない |
 | D14 | 異変あり・なしの両方を持つ会社が難易度ごとに 8 社未満 | `shortfalls` に code `both-sided-companies` |
 | D15 | **満たすデータ**: 難易度ごとに、会社 8 社 × (正常 1 + 異変 1) = 16 件 + 9 件 (異変 4・正常 5) = 25 件 (異変 12・正常 13)。異変は V7 の変更を施した `k-rate`、系統の割合は D17 の閾値を満たすように、`k-rate` (calculation) をやさしいに、`k-balance` (accounting) をむずかしいにする | `shortfalls` 空、`errors` 空 |
@@ -380,7 +380,7 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | L1 | 基準問題 1 件のディレクトリ | 終了コード 0。出力に検証した問題の数と、`shortfalls` (数が足りない) が警告として出る |
 | L2 | 規則を破る問題 (V1) | 終了コード 1。出力に問題のファイルのパス・規則 ID・場所 |
 | L3 | 数が足りない (D13) だけ | 既定は終了コード 0。`--require-complete` を付けると 1 |
-| L4 | 参考の規則だけ (D12) | 既定は終了コード 0。`--fail-on-soft` を付けると 1 |
+| L4 | 参考の規則だけ (D12 の問題) | 既定は終了コード 0 (出力に soft-payout-cross-path)。`--fail-on-soft` を付けると 1 |
 | L5 | JSON として壊れたファイル | 終了コード 1。出力にファイルのパス (他のファイルの検証は続ける) |
 | L6 | `--dir` を明示して、そのディレクトリが無い | 終了コード 1。「読めません」 |
 | L7 | `--dir` を付けない (既定の `src/data`)。そこに `companies.json`・`anomaly-kinds.json`・`problems/` が無い (いまの状態) | 終了コード 0。0 件として扱い、「数が足りない」の警告が出る。**CI はこの状態で通る** |
