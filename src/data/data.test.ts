@@ -59,16 +59,16 @@ describe('companies.json (docs/plans/companies.md §5 の 10 社)', () => {
     companies.forEach((c) => expect(forbidden, `${c.id} の社章 ${c.emblem}`).not.toContain(c.emblem));
   });
 
-  it('K9: 赤系 (色相 345°〜15°) の社色の会社は、社章が塗りつぶした円盤 (● ⬤) でない (白地に赤の円盤・十字を作らない)', () => {
+  it('K9: 赤系 (色相 345°〜30°。朱・煉瓦色を含む) の社色の会社は、社章が塗りつぶした円盤 (● ⬤ ◉ ⚫ ⏺) でない (白地に赤の円盤・十字を作らない)', () => {
     const hue = (hex: string): number => {
       const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
       const max = Math.max(r, g, b), d = max - Math.min(r, g, b);
       const h = d === 0 ? 0 : max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
       return (h * 60 + 360) % 360;
     };
-    const reds = companies.filter((c) => hue(c.colors.main) >= 345 || hue(c.colors.main) <= 15);
-    expect(reds.map((c) => c.id)).toContain('c05'); // 赤系の会社が実際にあること (この確かめが空振りしない)
-    reds.forEach((c) => expect(['●', '⬤', '◉']).not.toContain(c.emblem));
+    const reds = companies.filter((c) => hue(c.colors.main) >= 345 || hue(c.colors.main) <= 30);
+    expect(reds.map((c) => c.id)).toEqual(expect.arrayContaining(['c02', 'c05'])); // 赤系の会社が実際にあること (c02 は 17°・c05 は 350°。この確かめが空振りしない)
+    reds.forEach((c) => expect(['●', '⬤', '◉', '⚫', '⏺']).not.toContain(c.emblem));
   });
 
   it('N4-1: 見本の IR スライドの注釈は、短信と「同じ」と言うとき、IR を億円で出す会社があることを断る (包括レビュー n4)', () => {
