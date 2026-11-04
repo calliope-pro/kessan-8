@@ -40,9 +40,9 @@ show('案 1', it, seq(a, mx(b, UI, add(c, d)), E2E1, R))
 # 案 2
 b = files(25); c = W; d = (0.5, 1.0)
 it = [('2-a カード', CARD), ('2-b データ 25 件', b), ('2-c 展開', c), ('2-d 状態遷移', d), ('UI 核', UI), ('E2E', E2E2), ('R', R)]
-show('案 2', it, seq(CARD, mx(b, c, add(UI, d)), E2E2, R))
+show('案 2', it, seq(CARD, mx(b, c, UI, d), E2E2, R))   # 3 案とも、UI 核と状態遷移・出題の系 (ロジック) は並列
 # 案 3 (社数 n、異変の版 k=1 で 1 期 = 正常 + 異変 1 版)
 for n, new in ((1, 13), (3, 40), (10, 132)):
     a3 = (1.0, 2.5); b3 = files(new, FIXED3); c3 = (0.7, 1.5); d3 = (1.0, 2.4); e3 = (0.5, 1.0)
     it = [('3-a 系列の規則', a3), (f'3-b データ {new} 件', b3), ('3-c 出題・保存', c3), ('3-d カード+持ち越し', d3), ('3-e 状態遷移', e3), ('UI 核', UI), ('E2E', E2E2), ('R', R)]
-    show(f'案 3 (N={n} 社, k=1)', it, seq(mx(seq(a3, b3), add(d3, mx(UI, e3), (0, 0))), E2E2, R))
+    show(f'案 3 (N={n} 社, k=1)', it, seq(mx(seq(a3, b3), add(d3, mx(UI, add(c3, e3)))), E2E2, R))
