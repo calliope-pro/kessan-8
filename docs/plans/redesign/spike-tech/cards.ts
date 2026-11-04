@@ -59,13 +59,14 @@ for (const d of ['easy', 'hard']) {
 }
 console.log('id  種類  名前  | 和: 画面/セル | 最小: 画面/セル (規則) [注]');
 for (const r of rows) console.log([r.id, r.kind, r.name, `| 和 ${r.sumScreens}/${r.sumCells}`, `| 最小 ${r.min.screens.length}/${r.min.cells.length} (${r.min.rule})${r.min.note ? ' [会社の設定と比べる規則か、セルが出ない規則。画面のセルだけでは確かでない]' : ''}`].join('  '));
+const a_ids = (d: string) => rows.filter((r) => r.id.startsWith(d) && !r.dets.some((x) => !x.note && x.cells.length > 0 && x.cells.length <= 4)).map((r) => r.id).join(' ') || 'なし';
 for (const d of ['easy', 'hard']) {
   const a = rows.filter((r) => r.id.startsWith(d));
   const cnt = (f: (r: Row) => boolean) => a.filter(f).length;
   console.log(`${d}: 異変あり ${a.length} 問`);
   console.log(`  和   : 1 画面以内 ${cnt((r) => r.sumScreens <= 1)} / 2 画面 ${cnt((r) => r.sumScreens === 2)} / 3 画面以上 ${cnt((r) => r.sumScreens >= 3)}`);
   console.log(`  最小 : 1 画面以内 ${cnt((r) => r.min.screens.length <= 1 && !r.min.note)} / 2 画面 ${cnt((r) => r.min.screens.length === 2 && !r.min.note)} / 3 画面以上 ${cnt((r) => r.min.screens.length >= 3 && !r.min.note)} / 会社の設定と比べる規則 ${cnt((r) => r.min.note)}`);
-  console.log(`  最小で、検出のセルが 4 つ以内: ${cnt((r) => r.min.cells.length <= 4 && !r.min.note)} (会社の設定と比べる規則の問題は除く)`);
+  console.log(`  いずれかの違反の検出のセルが 4 つ以内: ${cnt((r) => r.dets.some((x) => !x.note && x.cells.length > 0 && x.cells.length <= 4))} (会社の設定と比べる規則の違反は除く。最小で選んだ違反とは限らない。外れる問題: ${a_ids(d)})`);
   console.log(`  最小がサマリーだけ: ${a.filter((r) => r.min.screens.length === 1 && r.min.screens[0] === 'tanshin.summary').map((r) => r.id).join(' ') || 'なし'}`);
 }
 
