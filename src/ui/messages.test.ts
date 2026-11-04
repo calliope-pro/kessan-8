@@ -20,6 +20,10 @@ describe('固定の文言', () => {
     expect(MESSAGES.intro.slip).toBe('閲覧票');
   });
 
+  it('N5: 最初へ戻る画面の文言は、時刻 18:00 をそれ自身の中で 1 回だけ言う (画面が時刻を足さない)', () => {
+    expect(MESSAGES.restart.rewind.split('18:00').length - 1).toBe(1);
+  });
+
   it('ボタンの名前 (docs/test-cases/flow.md §0) がそろっている', () => {
     const b = MESSAGES.button;
     expect([b.start, b.help, b.easy, b.hard, b.sample, b.begin, b.skip, b.close, b.back, b.openDocs, b.judge, b.anomaly, b.normal, b.backToReading, b.next, b.result, b.restartRun, b.again, b.reselect, b.otherDifficulty, b.toTitle]).toEqual([
