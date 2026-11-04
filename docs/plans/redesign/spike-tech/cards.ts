@@ -32,7 +32,7 @@ function screenOf(p: any, full: string): string | null {
 const norm = (c: string) => c.split('.').map((s) => (/^\d+$/.test(s) ? '*' : s)).join('.');
 
 // 会社の設定 (Company: 社名・証券コード・セグメント名と数・決算期の月) と比べる規則。paths のセルだけでは検出できない (設定は画面に出ない)。
-const COMPANY_RULES = new Set(['header-company-name', 'header-securities-code', 'segment-names', 'seg-count', 'dates-column-headings']);
+const COMPANY_RULES = new Set(['header-company-name', 'header-securities-code', 'segment-names', 'seg-count']);
 
 interface Det { rule: string; cells: string[]; screens: string[]; note: boolean }
 interface Row { id: string; kind: string; name: string; sumScreens: number; sumCells: number; min: Det; dets: Det[] }
@@ -64,42 +64,66 @@ for (const d of ['easy', 'hard']) {
   const cnt = (f: (r: Row) => boolean) => a.filter(f).length;
   console.log(`${d}: 異変あり ${a.length} 問`);
   console.log(`  和   : 1 画面以内 ${cnt((r) => r.sumScreens <= 1)} / 2 画面 ${cnt((r) => r.sumScreens === 2)} / 3 画面以上 ${cnt((r) => r.sumScreens >= 3)}`);
-  console.log(`  最小 : 1 画面以内 ${cnt((r) => r.min.screens.length <= 1 && !r.min.note)} / 2 画面 ${cnt((r) => r.min.screens.length === 2)} / 3 画面以上 ${cnt((r) => r.min.screens.length >= 3)} / セルが出ない規則 ${cnt((r) => r.min.note)}`);
-  console.log(`  最小で、検出のセルが 4 つ以内: ${cnt((r) => r.min.cells.length <= 4 && !r.min.note)}`);
+  console.log(`  最小 : 1 画面以内 ${cnt((r) => r.min.screens.length <= 1 && !r.min.note)} / 2 画面 ${cnt((r) => r.min.screens.length === 2 && !r.min.note)} / 3 画面以上 ${cnt((r) => r.min.screens.length >= 3 && !r.min.note)} / 会社の設定と比べる規則 ${cnt((r) => r.min.note)}`);
+  console.log(`  最小で、検出のセルが 4 つ以内: ${cnt((r) => r.min.cells.length <= 4 && !r.min.note)} (会社の設定と比べる規則の問題は除く)`);
   console.log(`  最小がサマリーだけ: ${a.filter((r) => r.min.screens.length === 1 && r.min.screens[0] === 'tanshin.summary').map((r) => r.id).join(' ') || 'なし'}`);
 }
 
-// 固定したスロットの組への収まり。各問題の選択肢 = 期待する規則の違反ごとの検出のセル (正規化)。
-interface Opt { cells: string[] }
-function best(probs: { id: string; opts: Opt[] }[], fits: (u: Set<string>) => boolean) {
-  let top: { n: number; slots: string[]; ids: string[] } = { n: -1, slots: [], ids: [] };
-  const go = (i: number, u: Set<string>, ids: string[]) => {
-    if (ids.length + (probs.length - i) <= top.n) return; // 枝刈り
-    if (i === probs.length) { if (ids.length > top.n) top = { n: ids.length, slots: [...u].sort(), ids: [...ids] }; return; }
+// 固定したスロットの組への収まり。各問題の選択肢 = 期待する規則の違反ごとの検出のセル。
+// 正規化: 違反の中で、添字 (数字の経路の要素) を出てきた順に *0・*1… に置く (複数の添字を読む規則を、スロットを少なく数えない)。
+const numericCell = new Map<string, boolean>(); // 正規化したセル → 数字のセル (JSON の値が number) か
+function normViolation(p: any, cells: string[]): string[] {
+  const rank = new Map<string, number>();
+  return cells.map((c) => {
+    const nc = c.split('.').map((seg) => (/^\d+$/.test(seg) ? `*${rank.has(seg) ? rank.get(seg) : (rank.set(seg, rank.size), rank.size - 1)}` : seg)).join('.');
+    const [doc, ...rest] = c.split('.');
+    const v = rest.reduce((n: any, k) => (n == null ? n : n[k]), p[doc]);
+    numericCell.set(nc, typeof v === 'number');
+    return nc;
+  });
+}
+interface Opt { cells: string[]; rule: string }
+interface Prob { id: string; opts: Opt[] }
+const problemsOf = (prefix: string): Prob[] => rows.filter((r) => r.id.startsWith(prefix)).map((r) => {
+  const p = read(`src/data/problems/${prefix}/${r.id}.json`);
+  return { id: `${r.id} ${r.kind}`, opts: r.dets.filter((x) => !x.note && x.cells.length > 0).map((x) => ({ cells: normViolation(p, x.cells), rule: x.rule })) };
+}).filter((x) => x.opts.length > 0);
+interface Top { n: number; slots: string[]; picks: { id: string; rule: string; cells: string[] }[] }
+function best(probs: Prob[], fits: (u: Set<string>) => boolean): Top {
+  let top: Top = { n: -1, slots: [], picks: [] };
+  const go = (i: number, u: Set<string>, picks: Top['picks']) => {
+    if (picks.length + (probs.length - i) <= top.n) return; // 枝刈り
+    if (i === probs.length) { if (picks.length > top.n) top = { n: picks.length, slots: [...u].sort(), picks: [...picks] }; return; }
     for (const o of probs[i].opts) {
       const nu = new Set([...u, ...o.cells]);
-      if (fits(nu)) go(i + 1, nu, [...ids, probs[i].id]);
+      if (fits(nu)) go(i + 1, nu, [...picks, { id: probs[i].id, rule: o.rule, cells: o.cells }]);
     }
-    go(i + 1, u, ids);
+    go(i + 1, u, picks);
   };
   go(0, new Set(), []);
   return top;
 }
-const optsOf = (r: Row) => ({ id: `${r.id} ${r.kind}`, opts: r.dets.filter((x) => !x.note && x.cells.length > 0).map((x) => ({ cells: x.cells.map(norm) })) }).opts.length ? { id: `${r.id} ${r.kind}`, opts: r.dets.filter((x) => !x.note && x.cells.length > 0).map((x) => ({ cells: x.cells.map(norm) })) } : null;
-const easy = rows.filter((r) => r.id.startsWith('easy')).map(optsOf).filter(Boolean) as any[];
-const hard = rows.filter((r) => r.id.startsWith('hard')).map(optsOf).filter(Boolean) as any[];
-const be = best(easy, (u) => u.size <= 4);
-console.log(`\n[固定したスロットへの収まり] やさしい: カード 1 枚・スロット 4 つ → 最大 ${be.n} / ${easy.length} 問  スロット: ${be.slots.join(', ')}\n   収まる問題: ${be.ids.join(' | ')}`);
+const easy = problemsOf('easy');
+const hard = problemsOf('hard');
 const isIr = (c: string) => c.startsWith('ir.');
-const bh = best(hard, (u) => [...u].filter(isIr).length <= 4 && [...u].filter((c) => !isIr(c)).length <= 4);
-console.log(`[固定したスロットへの収まり] むずかしい: 短信型 4 つ + IR 型 4 つ → 最大 ${bh.n} / ${hard.length} 問  スロット: ${bh.slots.join(', ')}\n   収まる問題: ${bh.ids.join(' | ')}`);
-const bh1 = best(hard, (u) => u.size <= 4);
-console.log(`[参考] むずかしい: カード 1 枚・スロット 4 つ → 最大 ${bh1.n} / ${hard.length} 問`);
-const bhAny = best(hard, (u) => u.size <= 8);
-console.log(`[参考] むずかしい: スロット 8 つ (文書の区別なし) → 最大 ${bhAny.n} / ${hard.length} 問`);
+// 2 つの数えかた: (全) どのセルもスロット 1 つ / (数+文) 数字のセルは 1 枚 4 つ以内、文字のセルは 1 枚 3 つ以内 (ビジネスのカード = 見出し 1 行 + 3 文 + 数字 4 つ以内)
+const fitsAll = (cap: number) => (u: Set<string>) => u.size <= cap;
+const fitsNT = (u: Set<string>) => [...u].filter((c) => numericCell.get(c)).length <= 4 && [...u].filter((c) => !numericCell.get(c)).length <= 3;
+const fitsAllHard = (u: Set<string>) => [...u].filter(isIr).length <= 4 && [...u].filter((c) => !isIr(c)).length <= 4;
+const fitsNTHard = (u: Set<string>) => ['tanshin', 'ir'].every((d) => { const cs = [...u].filter((c) => (d === 'ir') === isIr(c)); return cs.filter((c) => numericCell.get(c)).length <= 4 && cs.filter((c) => !numericCell.get(c)).length <= 3; });
+function report(label: string, probs: Prob[], t: Top) {
+  const types = new Set(t.picks.map((x) => `${x.rule}|${[...x.cells].sort().join(',')}`));
+  console.log(`[固定したスロットへの収まり] ${label}: 最大 ${t.n} / ${probs.length} 問、見え方の違う型 ${types.size} 個\n   スロット: ${t.slots.join(', ')}\n   収まる問題 (使った規則): ${t.picks.map((x) => `${x.id} (${x.rule})`).join(' | ')}`);
+}
+console.log('');
+report('やさしい・カード 1 枚・スロット 4 つ (全セル)', easy, best(easy, fitsAll(4)));
+report('やさしい・カード 1 枚・数字 4 + 文 3', easy, best(easy, fitsNT));
+report('むずかしい・短信型 4 + IR 型 4 (全セル)', hard, best(hard, fitsAllHard));
+report('むずかしい・短信型 + IR 型・各 数字 4 + 文 3', hard, best(hard, fitsNTHard));
+console.log(`[参考] むずかしい・カード 1 枚・スロット 4 つ → 最大 ${best(hard, fitsAll(4)).n} / ${hard.length} 問 / スロット 8 つ (文書の区別なし) → 最大 ${best(hard, fitsAll(8)).n} / ${hard.length} 問`);
 
 // テンプレートを複数にする別案 (§6.1 の別案): 1 つ目の最良の組で収まらない問題から、次の最良の組を取る (貪欲。最適とは限らない)。
-function greedy(label: string, probs: { id: string; opts: Opt[] }[], fits: (u: Set<string>) => boolean, max: number) {
+function greedy(label: string, probs: Prob[], fits: (u: Set<string>) => boolean, max: number) {
   let rest = probs;
   let total = 0;
   const out: string[] = [];
@@ -107,10 +131,12 @@ function greedy(label: string, probs: { id: string; opts: Opt[] }[], fits: (u: S
     const b = best(rest, fits);
     if (b.n <= 0) break;
     total += b.n;
-    rest = rest.filter((p) => !b.ids.includes(p.id));
+    rest = rest.filter((p) => !b.picks.some((x) => x.id === p.id));
     out.push(`${t} 個目で +${b.n} (累計 ${total}/${probs.length})`);
   }
   console.log(`[テンプレートを複数にした場合の貪欲な収まり] ${label}: ${out.join(' / ')}`);
 }
-greedy('やさしい (4 スロット)', easy, (u) => u.size <= 4, 4);
-greedy('むずかしい (短信型 4 + IR 型 4)', hard, (u) => [...u].filter(isIr).length <= 4 && [...u].filter((c) => !isIr(c)).length <= 4, 4);
+greedy('やさしい (全セル 4 スロット)', easy, fitsAll(4), 4);
+greedy('やさしい (数字 4 + 文 3)', easy, fitsNT, 4);
+greedy('むずかしい (短信型 4 + IR 型 4。全セル)', hard, fitsAllHard, 4);
+greedy('むずかしい (各 数字 4 + 文 3)', hard, fitsNTHard, 4);
