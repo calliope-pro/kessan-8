@@ -140,3 +140,31 @@ greedy('やさしい (全セル 4 スロット)', easy, fitsAll(4), 4);
 greedy('やさしい (数字 4 + 文 3)', easy, fitsNT, 4);
 greedy('むずかしい (短信型 4 + IR 型 4。全セル)', hard, fitsAllHard, 4);
 greedy('むずかしい (各 数字 4 + 文 3)', hard, fitsNTHard, 4);
+
+// 全問を出すのに要るテンプレートの数 (厳密。問題を K 個のスロットの組に割り当てる探索で、K を 1 から増やす)。貪欲より正確。
+function minTemplates(probs: Prob[], fits: (u: Set<string>) => boolean, kmax = 8): number {
+  for (let K = 1; K <= kmax; K++) {
+    const groups: Set<string>[] = [];
+    const go = (i: number): boolean => {
+      if (i === probs.length) return true;
+      for (const o of probs[i].opts) {
+        for (let g = 0; g < groups.length; g++) {
+          const merged = new Set([...groups[g], ...o.cells]);
+          if (!fits(merged)) continue;
+          const old = groups[g]; groups[g] = merged;
+          if (go(i + 1)) return true;
+          groups[g] = old;
+        }
+        if (groups.length < K && fits(new Set(o.cells))) {
+          groups.push(new Set(o.cells));
+          if (go(i + 1)) return true;
+          groups.pop();
+        }
+      }
+      return false;
+    };
+    if (go(0)) return K;
+  }
+  return -1;
+}
+console.log(`[全問を出すのに要るテンプレートの数 (厳密)] やさしい (全セル 4 スロット): ${minTemplates(easy, fitsAll(4))} 個 / やさしい (数字 4 + 文 3): ${minTemplates(easy, fitsNT)} 個 / むずかしい (全セル 各 4): ${minTemplates(hard, fitsAllHard)} 個 / むずかしい (各 数字 4 + 文 3): ${minTemplates(hard, fitsNTHard)} 個`);
