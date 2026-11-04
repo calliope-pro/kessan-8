@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import companies from './companies.json';
 import kinds from './anomaly-kinds.json';
+import sample from './samples/sample.json';
 import { ANOMALY_FAMILIES, FAMILY_DIFFICULTY } from '../domain/types';
 
 /** WCAG の相対輝度とコントラスト比 (docs/plans/companies.md §4 が「計算で確かめた」とした値を、ここで再計算する)。 */
@@ -68,6 +69,14 @@ describe('companies.json (docs/plans/companies.md §5 の 10 社)', () => {
     const reds = companies.filter((c) => hue(c.colors.main) >= 345 || hue(c.colors.main) <= 15);
     expect(reds.map((c) => c.id)).toContain('c05'); // 赤系の会社が実際にあること (この確かめが空振りしない)
     reds.forEach((c) => expect(['●', '⬤', '◉']).not.toContain(c.emblem));
+  });
+
+  it('N4-1: 見本の IR スライドの注釈は、短信と「同じ」と言うとき、IR を億円で出す会社があることを断る (包括レビュー n4)', () => {
+    for (const key of ['highlights', 'segments', 'outlook', 'supplement'] as const) {
+      const note = (sample.notes as Record<string, string>)[key] as string;
+      expect(note, key).toContain('同じ');
+      expect(note, key).toContain('億円');
+    }
   });
 
   it('K7: 事業の説明は「会社」で終わる 1 文で、数字を含まず、全社で重複しない (companies.md §5.4)', () => {
