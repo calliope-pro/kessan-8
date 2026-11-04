@@ -9,7 +9,7 @@ Task #115 (再設計の企画)。前半 = Sub-task #117、後半 = Sub-task #118
 
 # 前半: 8番出口のゲーム性の芯 (#117)
 
-改訂 2 (監視役のレビュー 1 回目の指摘 B1〜B7・N1〜N5 を反映)。改訂 4 (#120 の途中で、原典のゲームメーカーズのインタビューを取得し、前半の「未確認」の 2 つ (開始時の最初の通路・異変の割合) を確かめた。監視役に差分の確認を頼む)。
+改訂 2 (監視役のレビュー 1 回目の指摘 B1〜B7・N1〜N5 を反映)。改訂 4 (#120 の途中で、原典のゲームメーカーズのインタビューを取得し、前半の「未確認」の 2 つ (開始時の最初の通路・異変の割合) を確かめた。監視役に差分の確認を頼み、#120 の 1 回目のレビューで「可」(原文と照合済み) の確認を得た。Task #115 の包括レビューの N8 で、この記録が無いことを指摘され、#117・#120 のコメントに記録した)。
 
 ## 1. 元作品『8番出口』の一次・準一次資料
 
@@ -21,7 +21,7 @@ Task #115 (再設計の企画)。前半 = Sub-task #117、後半 = Sub-task #118
 | [AUTOMATON 日本語版 (2023-12-06)](https://automaton-media.com/articles/newsjp/20231206-274835/) | 開発者の X の投稿 (2023-12-06) の引用 | 本文を取得 |
 | [AUTOMATON 日本語版 (2024-01-11)](https://automaton-media.com/articles/newsjp/20240111-278656/) | 開発者の X の投稿 (2024-01-10) の引用 | 本文を取得 |
 | [ゲームメーカーズ「『8番出口』のおじさんは約14万ポリゴン…開発者に制作過程をインタビュー」(2024-02-14)](https://gamemakers.jp/article/2024_02_14_60602/) | **開発者へのインタビュー (原典)**。AUTOMATON (EN) 2024-02-14 の元の記事。#117 の合意のあと、Task #116 の評価 (ui-assessment.md) の出典にあるのを見つけて取得した (改訂 4) | 本文を取得して読んだ (WebFetch)。以下の「(ゲームメーカーズ)」の事実 |
-| [AUTOMATON (EN) 2024-02-14](https://automaton-media.com/en/news/20240214-27192) | 開発者の Game Makers でのインタビューを要約した**二次**記事 | WordPress の API で本文を取得。原典の Game Makers の記事は検索で見つからず、**直接は読めていない** |
+| [AUTOMATON (EN) 2024-02-14](https://automaton-media.com/en/news/20240214-27192) | 開発者の Game Makers でのインタビューを要約した**二次**記事 | WordPress の API で本文を取得。原典の Game Makers の記事は、#117 の合意のときは検索で見つからなかったが、**改訂 4 で取得して読んだ** (上の行) |
 | [AUTOMATON (EN) 2024-06-28](https://automaton-media.com/en/interviews/interview-the-exit-8-developer-kotake-create-on-the-perks-of-being-a-solo-dev-and-how-platform-8-came-to-be/) | 上の日本語インタビューの要約英訳。日本語原文が読めた発言は日本語を引く。英訳にだけある内容は「(英訳)」と付ける | 本文を取得 |
 | [AUTOMATON (EN) 2023-12-25](https://automaton-media.com/en/news/20231225-24850/) | 開発者の X の投稿 (2023-12-22) の引用と訳 | 本文を取得 |
 | [Game*Spark プレイ記事 (2023-12-03)](https://www.gamespark.jp/article/2023/12/03/136451.html) | **プレイの記録** (筆者の体験) | 本文を取得 |
