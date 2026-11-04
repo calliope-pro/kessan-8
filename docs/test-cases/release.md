@@ -71,6 +71,7 @@ experience.md §6.3 の 3b (上の固定領域: 帯 32 px + 資料の切替と�
 
 - **公開 URL**: https://nimble-antimony-g4qast2.tmp.now (責任者の一時的な公開。Vercel。09:23 JST に期限切れ)。公開した版は main の `de86bee` (PR #99 のマージ) と同じ: 配信中の `assets/index-J2ONKVM4.js`・`index-cMFB70Fb.css` が、`de86bee` を手元でビルドしたもの (`npm run build`) の出力と同じファイル名 (Vite はファイルの内容でハッシュを付ける)。配信ヘッダに `content-security-policy` (`default-src 'self'` ほか)・`x-content-type-options: nosniff`・`referrer-policy: no-referrer`。
 - **08:28 JST**、`E2E_LIVE_URL=https://nimble-antimony-g4qast2.tmp.now npx playwright test e2e/live.spec.ts`: **LV1〜LV8 は 40 件すべて通過** (10 ケース × 幅 1280・414・375・320 px。LV3・LV5 は easy・hard の 2 つずつ)。**LV9 (静的な `<title>`) は 4 幅とも不通過**: 公開した版の HTML の `<title>` は「kessan-8」のままで (JavaScript が走ったあとだけタブの題名が「８期連続」になる)、LV1 の `page.title()` は通るが、JavaScript なしの取得・検索結果・共有では題名が出ない (責任者の指摘。同じ日に直した: `index.html`・UD8・EP10)。
+- **WebKit・Firefox** (包括レビュー n2。CI は Chrome だけなので、手で回した。4d7db54 の `npm run build` の出力を `vite preview` (127.0.0.1:4181) で配信し、`e2e/live.spec.ts` (LV1〜LV9 = 11 ケース) を Playwright の WebKit iPhone 13・WebKit 1280×800・Firefox 1280×800 の 3 project で回した。公開 URL ではなく手元の本番ビルドに対して): **33 件すべて通過** (11 ケース × 3 project。2026-11-04 09:05 JST ごろ)。LV1 の CSP・LV7 の外部通信 0・LV9 の静的な `<title>` も通った。監視役も別に同じ構成で 44 件 (Chromium 320 px を含む) が通ったと記録している (Epic #1 の Story 包括レビュー)。**公開 URL に対する WebKit・Firefox は未実施** (公開 URL は一時的で、引き取りのあとの公開で回し直す)。実機の iOS Safari は人の目 (未確認の項)。落とし穴: preview のポートに 4190 などブラウザが制限する番号 (ManageSieve の 4190 ほか) を使うと、WebKit・Firefox だけが `goto` で固まる (Chromium は通る)。4173・4181 は使える。
 - 受け入れ条件ごと:
 
 | 受け入れ条件 | 確かめ | 結果 |

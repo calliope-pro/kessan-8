@@ -650,13 +650,13 @@ export interface Problem {
 | 問題データ | `npm run verify:data` | `scripts/verify-data.ts` + 検証器 (`src/verifier/`)。`npm test` の次に CI で回る | 全問: 型の形・正常な問題は会計の整合をすべて満たす・異変の問題は指定した規則だけが破れる・ファイル名と `id`・置き場と `difficulty`・会社と異変の種類への参照・難易度ごとの問題数と「両面の会社が 8 社以上」(§4.3)・`labelOverrides` のキーがすべて `labels.ts` の項目キーにあり、値が標準と違う・`anomaly.places` の `path` が実在する値を指す・**正常な問題の見出しの社名・証券コード・期・単位、セグメント名・数が `companies.json` と `fiscalYear` と一致する**・正常な問題に `labelOverrides`・`unitOverrides`・`signOverrides` が無い・`anomaly.expectedRules` が実際に落ちた集合と一致し、種類の `primaryRules`・`allowedRules` に合う・`itemKey` の場所が `labels.ts` の項目キーにある・異変あり・なしの問題数の比 (§4.3)・系統の偏り (§4.5 の閾値) |
 | E2E | `e2e/*.spec.ts` | Playwright | 受け入れ条件 1〜4・9 を 1 本ずつ + スマホ幅 375 px で 1 本。ビルドした成果物 (`vite preview`) に対して回す。**問題データが main に入るまでは、`npm run build:e2e` が、試験用の問題 (`src/testing/`) に差し替えて回す** (本番のバンドルには入れない)。データが入ったら、本番のビルドに対して回す project を足す (ケース表 flow.md §4) |
 
-- E2E の projects は、デスクトップ (1280×800) とスマホ (375 px 幅)。Chrome を既定にし、Safari (WebKit)・Firefox は公開の Task (#30) の通しで確かめる (対応ブラウザは方針)
+- E2E の projects は、デスクトップ (1280×800) とスマホ (375 px 幅)。CI は Chrome だけで回す。Safari (WebKit)・Firefox (対応ブラウザは方針) は、本番ビルドに対する通し (`e2e/live.spec.ts`。docs/test-cases/release.md §4) を手で回して確かめる。結果は release.md §4.1 に記録した (WebKit iPhone 13・WebKit 1280・Firefox 1280 で通った)
 - 受け入れ条件 5・6・8 (問題の数・異変の系統の偏り・実在の名前が無いこと) は、問題データのテストが受け持つ (6 の閾値は §4.5。8 は §8)。E2E には載せない
 - E2E は **外部への通信が無い**ことも確かめる (ページの全リクエストが同じ生成元)。方針の「外部への通信をしない静的サイト」
 - E2E は、`vercel.json` のセキュリティヘッダ (CSP) を、`vite.config.ts` が同じファイルから読んで `preview.headers` に当てた状態で回す。ヘッダの出所は `vercel.json` の 1 か所で、公開した版と同じ CSP の下で画面が動くことを CI が確かめる (`setAttribute('style', …)` や style 属性つきの HTML 文字列で描くと、ここで落ちる)
 - E2E の出題は `?seed=N` で固定する。正解は、表示中の問題の `data-problem-id` から `src/data/problems/<難易度>/<id>.json` を `fs` で読んで知る (Playwright のテストは Vite を通らないので、`import.meta.glob` のプールを使わず、プールの並び順にも頼らない。§5.3)
 - 項目名の差し替えが画面に出ることは、`labels.ts` の項目キーのすべてが、どこかの画面の `data-item-key` に出ることを E2E (または `ui/` の単体テスト) で確かめる。キーの表にあっても画面に出ないキーがあると、差し替えが無効になる (Task #27・#28 の受け入れ条件)
-- CI (`.github/workflows/ci.yml`) は、job 1: `npm ci` → 型検査 → 単体テスト → ビルド → `npm run check:size` (dist の予算、§8)、job 2: E2E。どちらも PR と main への push で動く
+- CI (`.github/workflows/ci.yml`) は、job 1: `npm ci` → 型検査 → 単体テスト → `npm run verify:data -- --require-complete` (問題データ全件) → ビルド → `npm run check:size` (dist の予算、§8)、job 2: E2E。どちらも PR と main への push で動く
 
 ## 8. 品質の予算と守り
 
