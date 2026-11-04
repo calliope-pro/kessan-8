@@ -80,3 +80,4 @@ const real = hard.filter((h) => !h.id.startsWith('syn-')).map((h) => h.kind);
 for (const k of real) show('必ず ' + k, best([k]));
 for (const pair of [['H-03','H-05'],['H-03','H-06'],['H-05','H-06'],['H-03','H-23'],['H-05','H-23'],['H-06','H-23'],['H-01','H-03']]) show('必ず ' + pair.join('+'), best(pair));
 if (process.argv.includes('--with-ledger')) for (const k of Object.keys(syn)) show('台帳 ' + k, best([k]));
+if (process.argv.includes('--with-ledger')) for (const pair of [['H-03','H-04'],['H-04','H-05'],['H-04','H-06'],['H-04','H-08'],['H-03','H-08'],['H-04','H-23']]) show('台帳 ' + pair.join('+'), best(pair));
