@@ -15,7 +15,7 @@ export function restartScreen(ctx: Ctx): HTMLElement {
       h('h1', {}, M.restart.reached(reached)),
       reached > ctx.records[run.difficulty].bestBefore && h('strong', { 'data-testid': 'new-best' }, M.restart.best),
       h('p', {}, M.restart.bestIs(ctx.records[run.difficulty].best)),
-      h('p', {}, `${M.restart.rewind} (${timeLabel(0)})`)),
+      h('p', {}, M.restart.rewind)),
     h('div', { class: 'row' },
       button(M.button.again, () => ctx.restart(), { class: 'btn btn--primary', 'data-autofocus': true }),
       button(M.button.reselect, () => ctx.dispatch({ type: 'TO_DIFFICULTY' }), { class: 'btn' })),

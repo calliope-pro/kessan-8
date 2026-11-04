@@ -290,6 +290,8 @@ test('E19: 社が進むと時刻と段が進み、不正解で最初に戻ると
   await answer(page, false);
   await page.getByRole('button', { name: '最初に戻る' }).click();
   await expect(page.getByTestId('rewind')).toContainText('18:00');
+  // 時刻は 1 回だけ (「時刻は 18:00 に戻ります。 (18:00)」と二重に出さない。包括レビュー n5)
+  expect(((await page.getByTestId('rewind').innerText()).match(/18:00/g) ?? []).length).toBe(1);
   await expect(app(page)).toHaveAttribute('data-stage', '0');
 });
 
