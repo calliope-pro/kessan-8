@@ -10,3 +10,12 @@ coverage/
 playwright-report/
 test-results/
 .vitest/
+
+# impeccable (docs/plans/redesign/impeccable-install.md)
+# 17.7MB の実行形式 (OS ごと)。起動スクリプトが検証つきで取り直す
+.claude/skills/impeccable/scripts/bin/
+# 各自の hook 設定と、hook の作業ファイル
+.claude/settings.local.json
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/pending/
