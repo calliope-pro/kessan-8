@@ -15,9 +15,12 @@ const sorted = (xs: string[]) => [...new Set(xs)].sort();
 const inSet = (xs: string[], set: string[]) => xs.filter((x) => !set.includes(x));
 const placeKey = (p: AnomalyPlace): string => (p.doc === 'card' ? `card.${p.shape}.${p.card}.${p.slot}` : 'itemKey' in p ? p.itemKey : `${p.doc}.${p.path}`);
 
-/** 違反が、変えたセル (または変えた要素の下) を読むか (docs/design-v2.md §2.8)。 */
+/**
+ * 違反が、変えたセルを読むか (docs/design-v2.md §2.8)。changed のパスと、同じ・changed の下 (changed が要素のパスのとき)・changed の入れ物
+ * (違反が ir.segments.items のような入れ物を読み、changed がその要素 ir.segments.items.2 のとき。H-19 の二次の違反) のいずれか。
+ */
 const readsChanged = (changed: string[] | undefined, violationPaths: string[]): boolean =>
-  changed !== undefined && violationPaths.some((p) => changed.some((c) => p === c || p.startsWith(`${c}.`)));
+  changed !== undefined && violationPaths.some((p) => changed.some((c) => p === c || p.startsWith(`${c}.`) || c.startsWith(`${p}.`)));
 
 /** 場所が、違反の path と同じか、その子 (違反の path が statements.0 のような入れ物のとき)。場所が親 (まとまり全体) の向きは許さない。 */
 const touches = (place: string, violationPath: string): boolean => place === violationPath || place.startsWith(`${violationPath}.`);

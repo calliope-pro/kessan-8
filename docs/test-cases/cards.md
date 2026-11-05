@@ -281,7 +281,7 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 
 ## 9. 設計 §2.8 を取り込んだ追加 (Sub-task #153。`changed`・`base`・カード上の場所・二重の食い違い)
 
-**実装で決めたこと (#153)**: (a) 「違反が `changed` のセルを読む」は、違反の path が `changed` の 1 つと**同じか、その下** (`changed` が要素のパスのとき。`ir.segments.items.2` なら `…items.2.name`) で判定する。(b) `changed` が要素の過不足 (`ir.segments.items` の要素が足りない) のときは、`changedCells` が**足りない・余った要素のパス 1 つ**を差とする (リーフに分けない)。(c) 今のデータとの整合のため、H-19 の `primaryRules` を `xdoc-seg-names` にし (設計 §2.3)、hard-003 の `expectedRules` に `xdoc-seg-names` を足し、`places` に欠けたセグメントの短信側の名前のセルを足した (入れ物 `ir.segments.items` も残す: `seg-count`・`segment-names` が読むため)。E-04 の `primaryRules`・`allowedRules` に `card-period` を足し (設計の一覧どおり)、easy-022 の `expectedRules` に `card-period` を足した。
+**実装で決めたこと (#153)**: (a) 「違反が `changed` のセルを読む」は、違反の path が `changed` の 1 つと**同じか、その下** (`changed` が要素のパスのとき。`ir.segments.items.2` なら `…items.2.name`)、または**その入れ物** (違反が `ir.segments.items` を読み、`changed` がその要素 `…items.2` のとき。H-19 の二次の違反。#153 レビュー B1) で判定する。(b) `changed` が要素の過不足 (`ir.segments.items` の要素が足りない) のときは、`changedCells` が**足りない・余った要素のパス 1 つ**を差とする (リーフに分けない)。(c) 今のデータとの整合のため、H-19 の `primaryRules` を `xdoc-seg-names` にし (設計 §2.3)、hard-003 の `expectedRules` に `xdoc-seg-names` を足し、`places` に欠けたセグメントの短信側の名前のセルを足した (入れ物 `ir.segments.items` も残す: `seg-count`・`segment-names` が読むため)。E-04 の `primaryRules`・`allowedRules` に `card-period` を足し (設計の一覧どおり)、easy-022 の `expectedRules` に `card-period` を足した。
 
 ### 9.1 `anomalyIssues`・`checkAnomaly` の許容集合 (**§2.8** の検査 1・2)
 
@@ -294,6 +294,7 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 | A3 | A1 で `changed` に別のセル (`tanshin.summary.eps`) を入れる | 変えたセルを読まない規則が落ちる → 許容集合の外の指摘 |
 | A4 | A1 で `places` = `summary.operatingMargin` だけ。`pl-operating-income` は `places` に触れない | **§2.8 検査 2**: `changed` を読む違反なので「場所に触れない違反」は出ない。`changed` を読まない違反が `places` に触れないなら今のまま出る (`anomaly-mismatch`) |
 | A5 | 場所 `{doc:'card',shape:'E1',card:0,slot:'margin'}` の問題 (`cardEdits` の drop) | 場所の key = `card.E1.0.margin` が `card-slots` の違反の `paths` に触れる。形・欄が形に無い (`slot: 'nope'`・`shape: 'H1'` で難易度が違う・`card` が範囲外) と `anomaly-mismatch` (場所が実在しない) |
+| A7 | 要素の欠け (H-19 型。正常な B から IR のセグメントを 1 つ消す。`changed = ['ir.segments.items.2']`、places = 欠けたセグメントの短信側の名前のセル、`expectedRules` = 実際に落ちた規則) | 問題なし。`seg-count`・`segment-names`・`ir-seg-reconcile` は入れ物 `ir.segments.items` を読む違反で、changed の要素 (`…items.2`) の入れ物なので「変えたセルを読む」に数える。`changed` を空にすると「場所に触れない違反」が出る (#153 レビュー B1) |
 | A6 | `shapeErrors`: `{doc:'card',shape,card,slot}` | 正しければ誤りなし。`shape` が未知・`card` が整数でない・`slot` が無い・`path` か `itemKey` を持つ・未知のキー → 誤り |
 
 ### 9.2 データ全件の `base`・`changed` (**§2.8**。S12〜S14)

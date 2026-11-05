@@ -187,6 +187,18 @@ describe('K9 anomalyIssues の cardEdits の検査・A1〜A6', () => {
     const other = op(['tanshin.summary.eps'], [{ doc: 'tanshin', path: 'summary.operatingMargin' }]);
     expect(has(ms(other), '場所に触れない違反')).toBe(true);
   });
+  it('A7: 要素の欠け (H-19 型) は changed = 要素のパス。入れ物を読む二次の違反 (seg-count・segment-names・ir-seg-reconcile) も、changed の入れ物なので許される', () => {
+    const base = normalB();
+    const missing = set({ ...base, difficulty: 'hard' as const }, 'ir.segments.items', base.ir.segments.items.slice(0, 2));
+    const actual = [...new Set(verifyProblem(missing, companyB()).hard.map((v) => v.rule))].sort();
+    const h19 = kindOf('k-h19', 'cross-document', ['xdoc-seg-names'], ['xdoc-seg-names']);
+    const p = set(missing, 'anomaly', { kind: 'k-h19', places: [{ doc: 'tanshin', path: 'notes.segments.current.segments.2.name' }], explanation: 'x', expectedRules: actual, changed: ['ir.segments.items.2'] });
+    expect(actual).toEqual(expect.arrayContaining(['seg-count', 'segment-names', 'xdoc-seg-names']));
+    expect(checkAnomaly(p, [h19], verifyProblem(p, companyB()))).toEqual([]);
+    // changed が無ければ、入れ物を読む違反は場所に触れない
+    const noChanged = set(p, 'anomaly.changed', []);
+    expect(checkAnomaly(noChanged, [h19], verifyProblem(noChanged, companyB())).some((m) => m.includes('場所に触れない違反'))).toBe(true);
+  });
   it('expectedRules = 実際に落ちた集合は changed があっても求める', () => {
     const p = set(op(['tanshin.incomeStatement.current.operatingIncome']), 'anomaly.expectedRules', ['ratio-operating-margin']);
     expect(has(ms(p), '期待集合が実際に落ちた規則と違う')).toBe(true);
