@@ -32,6 +32,19 @@ for (const s of SLOTS) {
   if (share < 1) bad.push(`${s.shape} ${s.name}`);
 }
 console.log(`\n100% でない金額の欄 (${bad.length}): ${bad.join('、')} → format はこの欄では問題ごとに「元の表示に桁区切りがある」を検査 5 で確かめる`);
+// comma-shift (太罫が 1 桁ずれる) は、ずらした罫の位置が見た目で変わる整数部 5 桁以上だけ (技術責任者の決定。実装 #162 と同じ)
+const hasCommaShift = (v: number) => Math.floor(Math.abs(v)) >= 10000;
+console.log('\nop=format の comma-shift: 整数部 5 桁以上の割合 (no-comma は上の 4 桁以上)');
+const bad5: string[] = [];
+for (const s of SLOTS) {
+  if (s.kind !== 'amount') continue;
+  const bs = bases.filter((b) => (s.shape[0] === 'E') === (b.difficulty === 'easy'));
+  const vals = bs.map((b) => g(b[s.doc], s.path!)).filter((v) => typeof v === 'number');
+  const n5 = vals.filter(hasCommaShift).length;
+  console.log(`  ${s.shape} ${s.name}: ${((n5 / vals.length) * 100).toFixed(0)}% (${n5}/${vals.length})`);
+  if (n5 < vals.length) bad5.push(`${s.shape} ${s.name}`);
+}
+console.log(`\n5 桁以上が 100% でない金額の欄 (${bad5.length}): ${bad5.join('、')}`);
 console.log('\nop=unit: 単位を表示する金額の欄だけ。% の欄・棒・文には当てない (§1.6)');
 console.log('op=swap: itemKey が違う欄どうしだけ (前期・当期の同じ科目の入れ替えは E-17 と同じ見え方なので禁じる。Slot.column で前期・当期を区別する)');
 console.log('op=headline: 元の語の組の外の語だけ (E1 = 増益・減益 → 増収・減収、E2 = 増収・減収 → 増益・減益)');
