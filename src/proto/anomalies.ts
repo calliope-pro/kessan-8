@@ -49,8 +49,8 @@ const FORMAT_SLOT: Record<ShapeId, string> = { E1: 'sales', E2: 'salesCurr', E3:
 const DUP_SLOT: Record<ShapeId, string> = { E1: 'margin', E2: 'salesCurr', E3: 'fixed' };
 const TYPO: Record<ShapeId, { itemKey: string; from: string; to: string; slots: string[] }> = {
   E1: { itemKey: 'tanshin.incomeStatement.operatingIncome', from: '営業利益', to: '営業和益', slots: ['opPrev', 'opCurr'] },
-  E2: { itemKey: 'tanshin.incomeStatement.netSales', from: '売上高', to: '売上髙', slots: ['salesPrev', 'salesCurr'] },
-  E3: { itemKey: 'tanshin.balanceSheet.totalCurrentAssets', from: '流動資産', to: '流働資産', slots: ['current'] },
+  E2: { itemKey: 'tanshin.incomeStatement.netSales', from: '売上高', to: '売上商', slots: ['salesPrev', 'salesCurr'] },
+  E3: { itemKey: 'tanshin.balanceSheet.totalCurrentAssets', from: '流動資産', to: '流動貸産', slots: ['current'] },
 };
 const LABEL: Record<string, string> = {
   margin: '営業利益率', salesPrev: '売上高 (前期)', fixed: '固定資産', sales: '売上高', salesCurr: '売上高 (当期)', current: '流動資産', total: '総資産', opCurr: '営業利益 (当期)',
@@ -136,8 +136,9 @@ export const ANOMALIES: readonly AnomalyDef[] = [
     id: 'E-05', name: '科目名の誤字', shapes: ALL,
     make(p, shape) {
       const t = TYPO[shape];
+      const d = [...t.to].findIndex((ch, i) => ch !== [...t.from][i]);
       p.labelOverrides = { ...(p.labelOverrides ?? {}), [t.itemKey]: t.to };
-      return { edits: [], places: t.slots.map((k) => `slot:${k}`), explanation: `「${t.to}」は誤字です。正しくは「${t.from}」です。` };
+      return { edits: [], places: t.slots.map((k) => `slot:${k}`), explanation: `「${t.to}」は誤字です。「${[...t.to][d]}」ではなく「${[...t.from][d]}」で、正しくは「${t.from}」です。` };
     },
   },
   {

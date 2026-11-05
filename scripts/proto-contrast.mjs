@@ -16,15 +16,18 @@ export const ratio = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-const T = Object.fromEntries(['ground', 'paper', 'paper-sunk', 'rule', 'rule-soft', 'ink', 'ink-soft', 'stamp', 'stamp-wash'].map((n) => [n, token(n)]));
+const T = Object.fromEntries(['ground', 'paper', 'paper-sunk', 'rule', 'rule-soft', 'rule-mid', 'ink', 'ink-soft', 'stamp', 'stamp-wash'].map((n) => [n, token(n)]));
 const rows = [
   ['インク / 紙 (本文・数字)', T.ink, T.paper, 4.5],
   ['インク / 台紙 (点検欄の文字など)', T.ink, T.ground, 4.5],
   ['インク (薄) / 紙 (言い換え・期末日)', T['ink-soft'], T.paper, 4.5],
   ['朱 / 紙 (押印・間違いの文字)', T.stamp, T.paper, 4.5],
-  ['朱 / 台紙 (差し戻しの枠)', T.stamp, T.ground, 3],
+  ['朱 / 台紙 (差し戻し・完了の字。通常の文字の基準)', T.stamp, T.ground, 4.5],
+  ['朱 / 朱の薄塗り (動きを減らす設定の差し戻し)', T.stamp, T['stamp-wash'], 4.5],
+  ['朱 / 紙の沈み (点検欄の「いま」の縁)', T.stamp, T['paper-sunk'], 3],
   ['罫 (青緑) / 紙 (罫線・桁マス。図形は 3:1)', T.rule, T.paper, 3],
-  ['罫 (淡) / 紙 (補助の罫。装飾で、情報を載せない)', T['rule-soft'], T.paper, 1],
+  ['桁マスの内側の罫 / 紙 (桁数の手がかり。図形は 3:1)', T['rule-mid'], T.paper, 3],
+  ['罫 (淡) / 紙 (行の罫。装飾で、情報を載せない)', T['rule-soft'], T.paper, 1],
   ['紙 / インク (黒い札の白文字)', T.paper, T.ink, 4.5],
 ];
 console.log('| 組み合わせ | 比 | 基準 | 判定 |\n| --- | --- | --- | --- |');

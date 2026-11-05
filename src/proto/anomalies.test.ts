@@ -137,6 +137,21 @@ describe('A5〜A12・A15 種類ごとの中身', () => {
   });
 });
 
+describe('A16 E-05 の綴りは一目で違う字', () => {
+  it('異体字をやめ、別の字に変える。説明は違う字を示す', () => {
+    for (const shape of ['E1', 'E2', 'E3'] as const) {
+      const { base, card, res } = build('E-05', shape);
+      const before = base.slots.map((s) => s.label), after = card.slots.map((s) => s.label);
+      const i = after.findIndex((l, k) => l !== before[k]);
+      const a = [...before[i]!], b = [...after[i]!];
+      const diff = b.findIndex((ch, k) => ch !== a[k]);
+      expect(b[diff]!.codePointAt(0)).not.toBe(0x9ad9); // 髙 (高の異体字) は使わない
+      expect(res.explanation).toContain(`「${b[diff]}」`);
+      expect(res.explanation).toContain(`「${a[diff]}」`);
+    }
+  });
+});
+
 describe('形の網羅', () => {
   it('SHAPES の全形に種類がある', () => {
     for (const s of SHAPES) expect(kindsFor(s).length).toBeGreaterThanOrEqual(4);

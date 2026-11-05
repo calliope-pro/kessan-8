@@ -3,7 +3,7 @@ import type { Company, Problem } from '../../domain/types';
 import { deriveCard, locate, SHAPES, type ShapeId } from '../cards';
 import { drawRun, ROUNDS_TO_CLEAR, type Round } from '../draw';
 import { initial, reduce, type Action, type Answer, type State } from '../flow';
-import { h, setVar } from './dom';
+import { arm, h, scrollMarksIntoView, screenHeading, seal, setVar } from './dom';
 import { renderSlip, slipOf } from './slip';
 
 export interface GameEnv {
@@ -30,7 +30,7 @@ export function cardOf(env: Pick<GameEnv, 'companies'>, r: Round) {
 export function checks(label: string, index: number, doneCount: number): HTMLElement {
   const boxes = h('ol', { class: 'boxes', 'aria-hidden': 'true' });
   for (let i = 0; i < ROUNDS_TO_CLEAR; i++) boxes.append(h('li', { class: i < doneCount ? 'done' : i === index ? 'now-box' : '' }));
-  return h('header', { class: 'checks' }, h('p', { class: 'now' }, label), boxes);
+  return h('header', { class: 'checks' }, screenHeading(label), boxes);
 }
 
 export function mountGame(root: HTMLElement, env: GameEnv): void {
@@ -60,12 +60,6 @@ export function mountGame(root: HTMLElement, env: GameEnv): void {
     if (state.phase === 'revealed' && state.lastCorrect === false) timer = setTimeout(() => dispatch({ type: 'RESTART', rounds: redraw() }), REJECT_MS);
   }
 
-  function seal(text: string, sub: string | null, cls: string, onClick: () => void, mini?: string): HTMLButtonElement {
-    const b = h('button', { type: 'button', class: `seal ${cls}` }, mini && h('span', { class: 'mini', 'aria-hidden': 'true' }, mini), h('span', {}, text, sub && h('small', {}, sub)));
-    b.addEventListener('click', onClick);
-    return b;
-  }
-
   function render(): void {
     const desk = h('main', { class: 'desk', tabindex: '-1' });
     const actions = h('footer', { class: 'actions' });
@@ -93,7 +87,8 @@ export function mountGame(root: HTMLElement, env: GameEnv): void {
       const showMarks = revealed && r.anomaly ? locate(card, r.anomaly.places) : [];
       const sheet = renderSlip(card, { marks: showMarks });
       if (revealed && pressed) {
-        slipOf(sheet).querySelector('.slot')!.append(h('span', { class: 'stamp', 'aria-hidden': 'true' }, STAMP_WORD[pressed]));
+        // 正解: 押した印 (確認・訂正) が伝票の右上に落ちる。不正解: 「差戻」の印が重く落ちて、伝票が差し戻される
+        slipOf(sheet).append(h('span', { class: `stamp${state.lastCorrect ? '' : ' stamp-back'}`, 'aria-hidden': 'true' }, state.lastCorrect ? STAMP_WORD[pressed] : '差戻'));
         slipOf(sheet).classList.add(state.lastCorrect ? 'sink' : 'rejected');
       }
       desk.append(sheet);
@@ -118,6 +113,7 @@ export function mountGame(root: HTMLElement, env: GameEnv): void {
     } else {
       head = checks('完了', -1, ROUNDS_TO_CLEAR);
       desk.append(
+        h('span', { class: 'stamp big-stamp', 'aria-hidden': 'true' }, '完了'),
         h('p', { class: 'verdict ok' }, `${ROUNDS_TO_CLEAR} 社連続で、点検を通りました。`),
         h('ol', { class: 'done-list' }, ...state.rounds.map((r) => {
           const c = companyOf(env, r.problem);
@@ -126,14 +122,15 @@ export function mountGame(root: HTMLElement, env: GameEnv): void {
           setVar(li, '--company-light', c.colors.light);
           return li;
         })),
-        h('span', { class: 'stamp big-stamp', 'aria-hidden': 'true' }, '完了'),
       );
       actions.classList.add('single');
       actions.append(seal('もう一度', null, 'primary', () => dispatch({ type: 'PLAY_AGAIN', rounds: redraw() })));
     }
     view.replaceChildren(head, desk, actions);
-    desk.focus({ preventScroll: true });
+    arm(actions);
+    head.querySelector<HTMLElement>('h1')!.focus({ preventScroll: true });
     window.scrollTo(0, 0);
+    scrollMarksIntoView(actions);
   }
 
   render();

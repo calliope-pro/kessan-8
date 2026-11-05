@@ -1,6 +1,6 @@
 // ケース表 docs/proto/test-cases.md の C (カードの導出)。
 import { describe, expect, it } from 'vitest';
-import { deriveCard, fmtAmount, locate, SHAPES, type CardEdit, type EditBody, type ShapeId } from './cards';
+import { barsSummary, deriveCard, fmtAmount, headlineGloss, locate, SHAPES, type CardEdit, type EditBody, type ShapeId } from './cards';
 import { companyOf, NORMALS } from './testing';
 
 const edit = (shape: ShapeId, e: EditBody): CardEdit => ({ shape, card: 0, ...e });
@@ -158,5 +158,38 @@ describe('locate (R-D3 答え合わせの場所)', () => {
   });
   it('当たらない場所は空 (V1 の検査に使う)', () => {
     expect(locate(card('E1'), ['tanshin.cashFlow.cashEnding'])).toEqual([]);
+  });
+});
+
+describe('C16・C17 言い換え (要件 7)', () => {
+  it('C16 科目名ごとに最初の 1 欄に付く。前期・当期の 2 欄目には付かない', () => {
+    for (const p of NORMALS) for (const s of SHAPES) {
+      const c = card(s, [], p);
+      const seen = new Set<string>();
+      for (const sl of c.slots) {
+        if (!seen.has(sl.itemKey)) expect(sl.gloss, `${s} ${sl.key}`).toBeTruthy();
+        else expect(sl.gloss, `${s} ${sl.key}`).toBeUndefined();
+        seen.add(sl.itemKey);
+      }
+    }
+  });
+  it('C17 見出し語に言い換えが付く。E-23 のように語を差し替えると、差し替えた語の言い換えになる', () => {
+    expect(headlineGloss('増益')).toBe('もうけが増えた');
+    expect(headlineGloss('減益')).toBe('もうけが減った');
+    expect(headlineGloss('増収')).toBe('売上が増えた');
+    expect(headlineGloss('減収')).toBe('売上が減った');
+    expect(card('E1').headline?.gloss).toBe(headlineGloss(card('E1').headline!.text));
+    expect(card('E1', [edit('E1', { op: 'headline', word: '減収' })]).headline?.gloss).toBe('売上が減った');
+    expect(card('E3').headline).toBeNull();
+  });
+});
+
+describe('C18 棒グラフの読み上げ文', () => {
+  it('高さの大小だけを言い、数字は言わない', () => {
+    expect(barsSummary({ axisMin: 0, previous: 900, current: 1000 })).toBe('当期の棒は前期より高い');
+    expect(barsSummary({ axisMin: 0, previous: 1000, current: 800 })).toBe('当期の棒は前期より低い');
+    expect(barsSummary({ axisMin: 0, previous: 1000, current: 1020 })).toBe('当期の棒と前期の棒はほぼ同じ高さ');
+    // 軸の下端を引いた長さで比べる (E-06)
+    expect(barsSummary({ axisMin: 800, previous: 900, current: 1000 })).toBe('当期の棒は前期より高い');
   });
 });

@@ -1,5 +1,5 @@
 // 仕訳伝票 1 枚 (docs/design-v2.md §4・DESIGN.md)。カード (cards.ts の Card) を DOM にする。金額は桁マスに記入する。
-import type { Card, CardSlot, Location } from '../cards';
+import { barsSummary, type Card, type CardSlot, type Location } from '../cards';
 import { h, setVar } from './dom';
 
 /** 金額欄の桁マスの数 (最大 7 桁)。 */
@@ -35,8 +35,9 @@ export function amountField(text: string, kind: CardSlot['kind']): HTMLElement {
   return field;
 }
 
+/** 読み上げ用: 科目名は見える `.label` が読まれるので、ここは数字と単位だけ。 */
 function spoken(s: CardSlot): string {
-  return `${s.label} ${s.text}${s.unit}`;
+  return `${s.text} ${s.unit}`;
 }
 
 function bars(card: NonNullable<Card['bars']>, marked: boolean): HTMLElement {
@@ -49,7 +50,7 @@ function bars(card: NonNullable<Card['bars']>, marked: boolean): HTMLElement {
     col.append(h('span', { class: 'bar-track' }, b), h('span', { class: 'bar-label' }, label));
     return col;
   };
-  const wrap = h('div', { class: `bars${marked ? ' marked' : ''}`, role: 'img', 'aria-label': '売上高の棒グラフ (前期と当期)', 'data-place': 'bars' }, bar('前期', previous), bar('当期', current));
+  const wrap = h('div', { class: `bars${marked ? ' marked' : ''}`, role: 'img', 'aria-label': `売上高の棒グラフ。${barsSummary(card)}`, 'data-place': 'bars' }, bar('前期', previous), bar('当期', current));
   if (marked) wrap.append(h('span', { class: 'tag' }, '異変'));
   return wrap;
 }
@@ -95,7 +96,7 @@ export function renderSlip(card: Card, opt: SlipOptions = {}): HTMLElement {
   );
   if (card.headline) {
     const m = isMarked('headline');
-    slip.append(h('p', { class: `headline${m ? ' marked' : ''}`, 'data-place': 'headline' }, `【${card.headline.text}】`, m && h('span', { class: 'tag' }, '異変')));
+    slip.append(h('p', { class: `headline${m ? ' marked' : ''}`, 'data-place': 'headline' }, `【${card.headline.text}】`, h('span', { class: 'gloss' }, card.headline.gloss), m && h('span', { class: 'tag' }, '異変')));
   }
 
   const rows = h('div', { class: 'rows' });
@@ -115,11 +116,11 @@ export function renderSlip(card: Card, opt: SlipOptions = {}): HTMLElement {
   card.dropped.filter((d) => d.index >= card.slots.length && isMarked('dropped', d.key)).forEach((d) => rows.append(h('div', { class: 'row ghost marked', 'data-place': `dropped:${d.key}` }, `ここに「${d.label}」の欄があるはずです`)));
   slip.append(rows);
   if (card.bars) slip.append(bars(card.bars, isMarked('bars')));
-  // 確認欄: 押した印がここに落ちる。見本は「記入例」の朱印がもう押してある
+  // 足元: 期末日 (見本は「記入例」の朱印がもう押してある)。押した印は伝票の右上に落ちる (どの高さの画面でも見える位置)
   slip.append(
     h('div', { class: 'slip-foot' },
       h('p', { class: `period-end${periodMarked ? ' marked' : ''}`, 'data-place': 'period' }, `期末 ${card.periodEnd}`, periodMarked && h('span', { class: 'tag' }, '異変')),
-      h('span', { class: 'slot', 'aria-hidden': 'true' }, opt.example ? h('span', { class: 'example-stamp' }, '記入例') : null)),
+      opt.example ? h('span', { class: 'example-stamp', 'aria-hidden': 'true' }, '記入例') : null),
   );
   return h('div', { class: 'sheet' }, slip);
 }

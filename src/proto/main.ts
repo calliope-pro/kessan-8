@@ -5,15 +5,20 @@
 //   ?measure=1         : 320 px・7 桁・18 px の測定用
 //   ?seed=N            : 出題の再現
 import './proto.css';
-import { companies, problems, sample } from '../data/pool-source';
+import type { Company, Problem } from '../domain/types';
+import type { Sample } from '../domain/sample';
 import { SHAPES, type ShapeId } from './cards';
 import { mountGame } from './ui/game';
 import { mountMeasure } from './ui/measure';
 import { mountPlaytest } from './ui/playtest';
 import { mountSummary } from './ui/summary';
 
+// 試作はやさしいの正常な問題だけを使う。束に入れるのも、やさしいの問題・会社・見本だけ (むずかしいの問題は入れない)
+const problems = Object.values(import.meta.glob<Problem>('../data/problems/easy/*.json', { eager: true, import: 'default' }));
+const companies = Object.values(import.meta.glob<Company[]>('../data/companies.json', { eager: true, import: 'default' }))[0]!;
+const sample = Object.values(import.meta.glob<Sample>('../data/samples/*.json', { eager: true, import: 'default' }))[0];
 const q = new URLSearchParams(location.search);
-const normals = problems.filter((p) => p.difficulty === 'easy' && p.anomaly === null);
+const normals = problems.filter((p) => p.anomaly === null);
 const root = document.getElementById('root')!;
 document.title = '８期連続 (試作)';
 

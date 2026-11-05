@@ -1,6 +1,6 @@
 // 確かめの集計の画面 (?mode=summary): 参加者の「記録をコピー」の文を貼ると、5 人ぶんの合否と判定 (plans.md §8.1・Q17) を出す。
 import { aggregate, parseRecord, splitRecords, type ParsedRecord } from '../playtest';
-import { h } from './dom';
+import { h, screenHeading } from './dom';
 
 export function summaryText(text: string): string {
   const parsed = splitRecords(text).map(parseRecord);
@@ -30,7 +30,7 @@ export function mountSummary(root: HTMLElement): void {
   run.addEventListener('click', () => { out.textContent = summaryText(input.value); });
   root.replaceChildren(
     h('div', { class: 'stage' },
-      h('header', { class: 'checks' }, h('p', { class: 'now' }, '確かめの集計')),
+      h('header', { class: 'checks' }, screenHeading('確かめの集計')),
       h('main', { class: 'desk' }, h('p', { class: 'lead' }, '参加者ごとの記録を貼ってください。'), input, out),
       h('footer', { class: 'actions single' }, run)),
   );

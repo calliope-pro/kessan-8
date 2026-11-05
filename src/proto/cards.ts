@@ -41,7 +41,7 @@ export interface Card {
   period: string;
   /** 期末日 (枠の外。列見出しの日付)。 */
   periodEnd: string;
-  headline: { text: string; reads: string[] } | null;
+  headline: { text: string; reads: string[]; gloss: string } | null;
   slots: CardSlot[];
   dropped: { key: string; label: string; index: number }[];
   bars: { axisMin: number; previous: number; current: number; reads: string[] } | null;
@@ -67,9 +67,28 @@ interface SlotDef {
   key: string;
   itemKey: string;
   suffix?: string;
-  gloss?: string;
   kind: 'amount' | 'ratio';
   path: string;
+}
+
+/** 見て分かる言い換え (要件 7)。科目名ごとに、最初の 1 欄に付ける。 */
+const GLOSS: Record<string, string> = {
+  'tanshin.incomeStatement.netSales': '売れた金額',
+  'tanshin.incomeStatement.operatingIncome': '本業のもうけ',
+  'tanshin.summary.operatingMargin': 'もうけの割合',
+  'tanshin.balanceSheet.totalCurrentAssets': 'すぐ使える資産',
+  'tanshin.balanceSheet.totalFixedAssets': '長く使う資産',
+  'tanshin.balanceSheet.totalAssets': '持ち物の合計',
+};
+const HEADLINE_GLOSS: Record<string, string> = { 増益: 'もうけが増えた', 減益: 'もうけが減った', 増収: '売上が増えた', 減収: '売上が減った' };
+export const headlineGloss = (word: string): string => HEADLINE_GLOSS[word] ?? '';
+
+/** 棒グラフの読み上げ文: 高さ (軸の下端を引いた長さ) の大小だけを言う。数字は言わない (数字は欄に出ている)。 */
+export function barsSummary(b: { axisMin: number; previous: number; current: number }): string {
+  const prev = b.previous - b.axisMin, cur = b.current - b.axisMin;
+  const r = cur / prev;
+  if (Math.abs(r - 1) < 0.05) return '当期の棒と前期の棒はほぼ同じ高さ';
+  return r > 1 ? '当期の棒は前期より高い' : '当期の棒は前期より低い';
 }
 
 const IS = 'tanshin.incomeStatement';
@@ -79,16 +98,16 @@ const SHAPE_SLOTS: Record<ShapeId, SlotDef[]> = {
     { key: 'sales', itemKey: 'tanshin.incomeStatement.netSales', kind: 'amount', path: `${IS}.current.netSales` },
     { key: 'opPrev', itemKey: 'tanshin.incomeStatement.operatingIncome', suffix: ' (前期)', kind: 'amount', path: `${IS}.previous.operatingIncome` },
     { key: 'opCurr', itemKey: 'tanshin.incomeStatement.operatingIncome', suffix: ' (当期)', kind: 'amount', path: `${IS}.current.operatingIncome` },
-    { key: 'margin', itemKey: 'tanshin.summary.operatingMargin', gloss: 'もうけの割合', kind: 'ratio', path: 'tanshin.summary.operatingMargin' },
+    { key: 'margin', itemKey: 'tanshin.summary.operatingMargin', kind: 'ratio', path: 'tanshin.summary.operatingMargin' },
   ],
   E2: [
     { key: 'salesPrev', itemKey: 'tanshin.incomeStatement.netSales', suffix: ' (前期)', kind: 'amount', path: `${IS}.previous.netSales` },
-    { key: 'salesCurr', itemKey: 'tanshin.incomeStatement.netSales', suffix: ' (当期)', gloss: '売れた金額', kind: 'amount', path: `${IS}.current.netSales` },
+    { key: 'salesCurr', itemKey: 'tanshin.incomeStatement.netSales', suffix: ' (当期)', kind: 'amount', path: `${IS}.current.netSales` },
   ],
   E3: [
     { key: 'current', itemKey: 'tanshin.balanceSheet.totalCurrentAssets', kind: 'amount', path: `${BS}.totalCurrentAssets` },
     { key: 'fixed', itemKey: 'tanshin.balanceSheet.totalFixedAssets', kind: 'amount', path: `${BS}.totalFixedAssets` },
-    { key: 'total', itemKey: 'tanshin.balanceSheet.totalAssets', gloss: '持ち物の合計', kind: 'amount', path: `${BS}.totalAssets` },
+    { key: 'total', itemKey: 'tanshin.balanceSheet.totalAssets', kind: 'amount', path: `${BS}.totalAssets` },
   ],
 };
 /** 見出し語の組は、形が見せる量 (営業利益 = 益、売上高 = 収) で決まる (設計 R-D5・台帳 E-23)。 */
@@ -128,14 +147,18 @@ export function deriveCard(problem: Problem, company: Company, shape: ShapeId, e
   const mine = edits.filter((e) => e.shape === shape);
   const overrides = problem.labelOverrides ?? {};
 
+  const glossed = new Set<string>();
   const slots: CardSlot[] = SHAPE_SLOTS[shape].map((d) => {
     const value = getCell(problem, d.path) as number;
     const label = (overrides[d.itemKey] ?? CARD_LABELS[d.itemKey] ?? d.itemKey) + (d.suffix ?? '');
+    const first = !glossed.has(d.itemKey);
+    glossed.add(d.itemKey);
+    const gloss = first ? GLOSS[d.itemKey] : undefined;
     return {
       key: d.key,
       itemKey: d.itemKey,
       label,
-      ...(d.gloss ? { gloss: d.gloss } : {}),
+      ...(gloss ? { gloss } : {}),
       kind: d.kind,
       value,
       text: d.kind === 'ratio' ? value.toFixed(1) : fmtAmount(value),
@@ -149,7 +172,10 @@ export function deriveCard(problem: Problem, company: Company, shape: ShapeId, e
   if (hm) {
     const n = problem.ir.statements.findIndex((s) => s.slide === 'highlights' && s.claims.some((c) => c.metric === hm.metric));
     const claim = problem.ir.statements[n]?.claims.find((c) => c.metric === hm.metric);
-    if (n >= 0 && claim) headline = { text: headlineWord(claim.direction, hm.noun), reads: [`ir.statements.${n}`] };
+    if (n >= 0 && claim) {
+      const text = headlineWord(claim.direction, hm.noun);
+      headline = { text, reads: [`ir.statements.${n}`], gloss: headlineGloss(text) };
+    }
   }
 
   let bars: Card['bars'] = null;
@@ -184,7 +210,7 @@ export function deriveCard(problem: Problem, company: Company, shape: ShapeId, e
         list.splice(i + 1, 0, { ...list[i]!, key: `${e.slot}#2` });
       }
     } else if (e.op === 'headline') {
-      if (headline) headline = { ...headline, text: e.word };
+      if (headline) headline = { ...headline, text: e.word, gloss: headlineGloss(e.word) };
     }
   }
 

@@ -5,7 +5,7 @@ import { deriveCard, locate, type ShapeId } from '../cards';
 import { isCorrect, type Answer } from '../flow';
 import { buildDeck, scoreSession, type Response } from '../playtest';
 import { cardOf, checks } from './game';
-import { h } from './dom';
+import { arm, h, scrollMarksIntoView, seal } from './dom';
 import { renderSlip, slipOf } from './slip';
 
 export interface TestEnv {
@@ -45,11 +45,6 @@ export function mountPlaytest(root: HTMLElement, env: TestEnv): void {
   const view = h('div', { class: 'stage' });
   root.replaceChildren(view);
 
-  const seal = (text: string, sub: string | null, cls: string, onClick: () => void, mini?: string) => {
-    const b = h('button', { type: 'button', class: `seal ${cls}` }, mini && h('span', { class: 'mini', 'aria-hidden': 'true' }, mini), h('span', {}, text, sub && h('small', {}, sub)));
-    b.addEventListener('click', onClick);
-    return b;
-  };
   const answer = (a: Answer) => {
     const r = deck[index]!;
     times.push(performance.now() - shownAt);
@@ -92,7 +87,7 @@ export function mountPlaytest(root: HTMLElement, env: TestEnv): void {
       const revealed = phase === 'revealed';
       const sheet = renderSlip(card, { marks: revealed && r.anomaly ? locate(card, r.anomaly.places) : [] });
       if (revealed && pressed) {
-        slipOf(sheet).querySelector('.slot')!.append(h('span', { class: 'stamp', 'aria-hidden': 'true' }, pressed === 'normal' ? '確認' : '訂正'));
+        slipOf(sheet).append(h('span', { class: 'stamp', 'aria-hidden': 'true' }, pressed === 'normal' ? '確認' : '訂正'));
         slipOf(sheet).classList.add('sink');
       }
       desk.append(sheet);
@@ -125,8 +120,10 @@ export function mountPlaytest(root: HTMLElement, env: TestEnv): void {
       actions.append(copy);
     }
     view.replaceChildren(head, desk, actions);
-    desk.focus({ preventScroll: true });
+    arm(actions);
+    head.querySelector<HTMLElement>('h1')!.focus({ preventScroll: true });
     window.scrollTo(0, 0);
+    scrollMarksIntoView(actions);
   }
   render();
 }
