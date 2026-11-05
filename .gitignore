@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-prod/
 dist-e2e/
+dist-proto/
 .env
 .env.*
 .DS_Store
