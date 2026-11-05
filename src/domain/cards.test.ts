@@ -228,6 +228,37 @@ describe('10.1 文欄を claims から型で作る (R-D5。D44〜D49)', () => {
   });
 });
 
+describe('11.1 設計 #160 の取り込み (D60〜D62)', () => {
+  it('D60: H3 短信 ④ の科目名に資金の範囲 (notes.cashScope)。数字・文の数に入らない', () => {
+    const tan = deriveCards(hardA(), companyA(), 'H3')[0] as Card;
+    expect(slot(tan, 'cfEnd').label).toBe('現金及び現金同等物の期末残高 (資金の範囲 = 現金及び預金)');
+    expect(slot(tan, 'cfEnd').reads).toEqual(['tanshin.cashFlow.cashEnding', 'tanshin.notes.cashScope']);
+    expect(cardCells([tan]).has('tanshin.notes.cashScope')).toBe(true);
+    expect([countNumbers(tan), countTexts(tan)]).toEqual([4, 3]);
+    const other = set(hardA(), 'tanshin.notes.cashScope', '現金及び預金・定期預金');
+    expect(slot(deriveCards(other, companyA(), 'H3')[0], 'cfEnd').label).toBe('現金及び現金同等物の期末残高 (資金の範囲 = 現金及び預金・定期預金)');
+    const typo = { ...hardA(), labelOverrides: { 'tanshin.cashFlow.cashEnding': '現金及び現金同等物の期末残' } };
+    expect(slot(deriveCards(typo, companyA(), 'H3')[0], 'cfEnd').label).toBe('現金及び現金同等物の期末残 (資金の範囲 = 現金及び預金)');
+    expect(slot(deriveCards(hardA(), companyA(), 'H3')[0], 'cfEnd').text).toBe('2,300');
+  });
+  it('D61: H2 ③ の科目名は「売上債権 (売掛金) の増減額」。売上債権の行の差し替えは読まない', () => {
+    const label = (p: Problem) => slot(deriveCards(p, companyA(), 'H2')[0], 'recvChange').label;
+    expect(label(hardA())).toBe('売上債権 (売掛金) の増減額');
+    expect(label({ ...hardA(), labelOverrides: { 'tanshin.balanceSheet.receivables': '買掛金' } })).toBe('売上債権 (売掛金) の増減額');
+  });
+  it('D62: Slot.column (前期・当期)。添え字は欄と一緒に動く', () => {
+    const cols = (shape: ShapeId, p: Problem) => (deriveCards(p, companyA(), shape) as Card[]).flatMap((c) => c.slots.filter((s) => s.column !== undefined).map((s) => `${s.key}:${s.column}`));
+    expect(cols('E1', easyA())).toEqual(['opPrev:previous', 'opCur:current']);
+    expect(cols('E2', easyA())).toEqual(['salesPrev:previous', 'salesCur:current']);
+    expect(cols('H1', hardA())).toEqual(['salesPrev:previous', 'salesCur:current']);
+    expect(cols('H2', hardA())).toEqual(['recvPrev:previous', 'recvCur:current']);
+    expect(cols('H3', hardA())).toEqual(['cashCur:current', 'cashPrev:previous']);
+    expect(cols('E3', easyA())).toEqual([]);
+    const swapped = E1(withEdit(easyA(), { shape: 'E1', card: 0, op: 'swap', slots: ['opPrev', 'opCur'] }));
+    expect(swapped.slots.map((s) => `${s.key}:${s.label}:${s.text}`)).toEqual(['netSales:売上高:12,400', 'opCur:営業利益 (当期):1,240', 'opPrev:営業利益 (前期):1,120', 'margin:売上高営業利益率:10.0']);
+  });
+});
+
 describe('1.3 書式', () => {
   const fmt = (value: number, p = easyA()) => E1(set(p, 'tanshin.incomeStatement.current.netSales', value)).slots[0]?.text;
   it('D21: 3 桁区切り・0', () => {

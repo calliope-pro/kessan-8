@@ -376,3 +376,33 @@ describe('10.2 設計 #156 の取り込み (S16〜S19)', () => {
     });
   });
 });
+
+describe('11.2 S22・S23 (設計 #160)', () => {
+  const normalsOf = (input: DatasetInput) => input.problems.filter((p) => (p.value as Problem).anomaly === null);
+  it('S22: cashScope が現金の標準の名前と違う → cash-scope (問題・異変の問題・見本)', () => {
+    const input = cardPool();
+    expect(errCodes(verifyDataset(input))).not.toContain('cash-scope');
+    const normal = normalsOf(input)[0]!.value as Problem;
+    const r = verifyDataset(replace(input, normal.id, set(normal, 'tanshin.notes.cashScope', '現金及び預金・定期預金')));
+    expect(r.errors.filter((e) => e.code === 'cash-scope').map((e) => e.problem)).toEqual([normal.id]);
+    const anomaly = input.problems.find((p) => (p.value as Problem).anomaly !== null)!.value as Problem;
+    expect(verifyDataset(replace(input, anomaly.id, set(anomaly, 'tanshin.notes.cashScope', 'x'))).errors.some((e) => e.code === 'cash-scope' && e.problem === anomaly.id)).toBe(true);
+    const sample = { problem: set(normalVariant('sample', 'easy', 'c-sample'), 'tanshin.notes.cashScope', 'x'), notes: {} };
+    const withSample = { ...input, companies: [...input.companies, { ...companyA(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: sample }] };
+    expect(verifyDataset(withSample).errors.some((e) => e.code === 'cash-scope' && e.problem === 'sample')).toBe(true);
+  });
+  it('S23: 検査 5 で見える形が 0 になる問題は card-invisible (V3)。card-edit-op は errors', () => {
+    const input = cardPool({ difficulty: 'hard' });
+    const normal = normalsOf(input).find((p) => (p.value as Problem).companyId === 'c1')!.value as Problem;
+    const fmt = kindOf('k-fmt', 'card-form', ['card-format'], ['card-format']);
+    const edit = { shape: 'H2' as const, card: 0, slot: 'recvChange', op: 'format' as const, style: 'no-comma' as const };
+    const p0 = { ...normalVariant('hard-950', 'hard', 'c1'), cardEdits: [edit] } as Problem;
+    const actual = [...new Set(verifyProblem(p0, companyA()).hard.map((v) => v.rule))].sort();
+    const p = set(p0, 'anomaly', { kind: 'k-fmt', places: [{ doc: 'card', shape: 'H2', card: 0, slot: 'recvChange' }], explanation: 'x', expectedRules: actual, base: normal.id, changed: [] });
+    const r = verifyDataset({ ...input, kinds: [...input.kinds, fmt], problems: [...input.problems, { file: file(p), value: p }] });
+    const inv = r.shortfalls.find((s) => s.code === 'card-invisible' && s.problem === 'hard-950');
+    expect(inv?.message).toContain('V3');
+    expect(r.errors.some((e) => e.code === 'card-edit-op' && e.problem === 'hard-950')).toBe(true);
+  });
+});
+

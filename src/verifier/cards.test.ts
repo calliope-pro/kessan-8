@@ -4,7 +4,7 @@ import { companies, problems } from '../data/pool-source.ts';
 import { deriveCards, shapesOf } from '../domain/cards.ts';
 import type { Card } from '../domain/cards.ts';
 import type { AnomalyKind, Company, Problem, ShapeId } from '../domain/types.ts';
-import { cardRelationIssues, cardStructureIssues, cardTextLengthIssues, deviationIssues, doubleDiscrepancies, visibleShapes } from './cards.ts';
+import { cardEditIssues, cardRelationIssues, cardStructureIssues, cardTextLengthIssues, deviationIssues, doubleDiscrepancies, visibleShapes } from './cards.ts';
 import { add, clone, companyA, companyB, kindOf, normalA, normalB, set, shapeAnomaly } from './test-utils.ts';
 
 const easy = (p: Problem = normalA()): Problem => p;
@@ -410,5 +410,88 @@ describe('8 道具なしで気づける最小のずれ deviationIssues (M1〜M8)
     const before = clone(p);
     dev(make('E-12', p));
     expect(p).toEqual(before);
+  });
+});
+
+describe('11.2 K11 cardEditIssues (§1.6 の op ごとに当ててよい欄)', () => {
+  const run = (p: Problem, edit: NonNullable<Problem['cardEdits']>[number], c: Company = companyA()) => cardEditIssues({ ...p, cardEdits: [edit] }, c);
+  const ok = (p: Problem, edit: NonNullable<Problem['cardEdits']>[number]) => expect(run(p, edit), JSON.stringify(edit)).toEqual([]);
+  const ng = (p: Problem, edit: NonNullable<Problem['cardEdits']>[number]) => expect(run(p, edit).length, JSON.stringify(edit)).toBeGreaterThan(0);
+  it('unit: 金額の欄だけ (% の欄・文欄は不可)', () => {
+    ok(easy(), { shape: 'E1', card: 0, slot: 'netSales', op: 'unit', unit: '億円' });
+    ng(easy(), { shape: 'E1', card: 0, slot: 'margin', op: 'unit', unit: '億円' });
+    ng(hard(), { shape: 'H2', card: 0, slot: 'policyNote', op: 'unit', unit: '億円' });
+  });
+  it('format: 金額の欄で、表示の整数部が no-comma は 4 桁以上・comma-shift は 5 桁以上', () => {
+    ok(easy(), { shape: 'E1', card: 0, slot: 'netSales', op: 'format', style: 'no-comma' }); // 12,400
+    ok(easy(), { shape: 'E1', card: 0, slot: 'netSales', op: 'format', style: 'comma-shift' });
+    ok(easy(), { shape: 'E1', card: 0, slot: 'opCur', op: 'format', style: 'no-comma' }); // 1,240 (4 桁)
+    ng(easy(), { shape: 'E1', card: 0, slot: 'opCur', op: 'format', style: 'comma-shift' }); // 4 桁では 5 桁未満
+    ng(hard(), { shape: 'H2', card: 0, slot: 'recvChange', op: 'format', style: 'no-comma' }); // △100 (3 桁)
+    ng(easy(), { shape: 'E1', card: 0, slot: 'margin', op: 'format', style: 'no-comma' }); // % の欄
+    ng(hard(), { shape: 'H2', card: 0, slot: 'recvRow', op: 'format', style: 'no-comma' }); // 文欄
+  });
+  it('swap: itemKey が違う欄どうしだけ', () => {
+    ok(easy(), { shape: 'E1', card: 0, op: 'swap', slots: ['netSales', 'margin'] });
+    ng(easy(), { shape: 'E1', card: 0, op: 'swap', slots: ['opPrev', 'opCur'] });
+    ng(easy(), { shape: 'E2', card: 0, op: 'swap', slots: ['salesPrev', 'salesCur'] });
+  });
+  it('headline: 元の語の組の外の語だけ', () => {
+    ok(easy(), { shape: 'E1', card: 0, op: 'headline', word: '増収' });
+    ng(easy(), { shape: 'E1', card: 0, op: 'headline', word: '減益' });
+    ok(easy(), { shape: 'E2', card: 0, op: 'headline', word: '減益' });
+    ng(easy(), { shape: 'E2', card: 0, op: 'headline', word: '増収' });
+    ng(easy(), { shape: 'E1', card: 0, op: 'headline', word: 'ほげ' });
+  });
+  it('dup: E3 だけ。drop: どの欄でも', () => {
+    ok(easy(), { shape: 'E3', card: 0, slot: 'totalAssets', op: 'dup' });
+    ng(easy(), { shape: 'E1', card: 0, slot: 'margin', op: 'dup' });
+    ng(hard(), { shape: 'H3', card: 0, slot: 'cfStart', op: 'dup' });
+    ok(easy(), { shape: 'E1', card: 0, slot: 'margin', op: 'drop' });
+    ok(hard(), { shape: 'H2', card: 1, slot: 'claim', op: 'drop' });
+  });
+  it('編集が無い・形や欄が無い編集は空 (anomalyIssues が別に拾う)', () => {
+    expect(cardEditIssues(easy(), companyA())).toEqual([]);
+    expect(run(easy(), { shape: 'E1', card: 0, slot: 'nope', op: 'unit', unit: 'x' })).toEqual([]);
+  });
+});
+
+describe('11.2 V28〜V31 検査 5 (表示が実際に変わる)', () => {
+  const kindOf2 = (primary: string[]) => kindOf('k', 'card-form', primary, primary);
+  const base = () => normalA();
+  const make = (p: Problem, kind: AnomalyKind, places: NonNullable<Problem['anomaly']>['places']): Problem => {
+    const actual = [...new Set(verifyProblem(p, companyA()).hard.map((v) => v.rule))].sort();
+    return set(p, 'anomaly', { kind: kind.id, places, explanation: 'x', expectedRules: actual, base: 'base' });
+  };
+  const vis = (p: Problem, kind: AnomalyKind, b: Problem | undefined = base()) => visibleShapes(p, companyA(), [kind], undefined, b);
+  it('V29: 数値の異変・unit・drop・swap・dup・headline・format (4 桁以上) は表示が変わる → 見える', () => {
+    const margin = kindOf2(['ratio-operating-margin']);
+    expect(vis(make(set(easy(), 'tanshin.summary.operatingMargin', 20), margin, [{ doc: 'tanshin', path: 'summary.operatingMargin' }]), margin)).toEqual(['E1']);
+    const slots = kindOf2(['card-slots']);
+    const e = (edit: NonNullable<Problem['cardEdits']>[number], k: AnomalyKind, slot: string) => make({ ...easy(), cardEdits: [edit] }, k, [{ doc: 'card', shape: edit.shape, card: 0, slot }]);
+    expect(vis(e({ shape: 'E1', card: 0, slot: 'margin', op: 'drop' }, slots, 'margin'), slots)).toEqual(['E1']);
+    expect(vis(e({ shape: 'E1', card: 0, op: 'swap', slots: ['netSales', 'margin'] }, slots, 'margin'), slots)).toEqual(['E1']);
+    expect(vis(e({ shape: 'E3', card: 0, slot: 'totalAssets', op: 'dup' }, slots, 'totalAssets'), slots)).toEqual(['E3']);
+    const unit = kindOf2(['card-unit']);
+    expect(vis(e({ shape: 'E1', card: 0, slot: 'netSales', op: 'unit', unit: '億円' }, unit, 'netSales'), unit)).toEqual(['E1']);
+    const fmt = kindOf2(['card-format']);
+    expect(vis(e({ shape: 'E1', card: 0, slot: 'netSales', op: 'format', style: 'no-comma' }, fmt, 'netSales'), fmt)).toEqual(['E1']);
+    const head = kindOf2(['card-headline']);
+    expect(vis(e({ shape: 'E1', card: 0, op: 'headline', word: '増収' }, head, 'headline'), head)).toEqual(['E1']);
+  });
+  it('V29: H2 の売上債権の増減額 (△100) の no-comma は表示が変わらない → 見えない。base が無ければ検査しない (V31)', () => {
+    const fmt = kindOf2(['card-format']);
+    const p = make({ ...hard(), cardEdits: [{ shape: 'H2', card: 0, slot: 'recvChange', op: 'format', style: 'no-comma' }] }, fmt, [{ doc: 'card', shape: 'H2', card: 0, slot: 'recvChange' }]);
+    expect(vis(p, fmt, hard())).toEqual([]);
+    expect(vis(p, fmt, undefined)).toEqual(['H2']);
+  });
+  it('V30: 別名だけを変えた異変 (ir.results.netSales.current) は E2 で表示が変わらない', () => {
+    const kind = kindOf2(['xdoc-results-net-sales']);
+    const p = make(add(easy(), 'ir.results.netSales.current', 10), kind, [{ doc: 'ir', path: 'results.netSales.current' }]);
+    expect(vis(p, kind, undefined)).toContain('E2'); // 検査 5 が無ければ見える
+    expect(vis(p, kind, easy())).toEqual([]);
+  });
+  it('V28: 基の正常な問題どうしでは (異変の無い問題) 難易度の全形', () => {
+    expect(visibleShapes(easy(), companyA(), [], undefined, easy())).toEqual(['E1', 'E2', 'E3']);
   });
 });
