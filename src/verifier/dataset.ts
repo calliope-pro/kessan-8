@@ -154,17 +154,18 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     for (const issue of anomalyIssues(p, kinds, result)) add(issue.code, issue.message);
     // 見本は毎周の 0 社目にカードで出る (両方の難易度で共有)。問題・異変の問題と同じ検査 (主張・構造・関係・文欄の長さ) を、両方の難易度の形で当てる
     for (const m of claimsCountIssues(p)) add('claims-count', m);
-    const long: string[] = [];
     for (const difficulty of DIFFICULTIES) {
       const q = { ...p, difficulty };
+      const long: string[] = [];
       for (const shape of shapesOf(difficulty)) {
         const cards = deriveCards(q, company, shape);
         for (const m of cardStructureIssues(cards, shape)) add('card-structure', m);
         for (const m of cardRelationIssues(cards, shape, { company, statements: p.ir.statements })) add('card-relation', m);
         long.push(...cardTextLengthIssues(cards));
       }
+      // 超えた形の難易度を付ける (--require-cards=easy / =hard が数える。難易度が無いと、どちらでも致命にならない)
+      if (long.length > 0) shortfalls.push({ code: 'card-text-length', problem: p.id, difficulty, message: `${file}: 見本の文欄が ${difficulty} の形で 40 字を超える (${long.join('、')})` });
     }
-    if (long.length > 0) shortfalls.push({ code: 'card-text-length', problem: p.id, message: `${file}: 見本の文欄が 40 字を超える (${[...new Set(long)].join('、')})` });
     sampleCount++;
   }
 

@@ -350,6 +350,6 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 | S18 | `card-text-length` は**異変の問題にも**当てる (S3 を広げる。異変の問題の文欄だけが長いと、行の数で答えが分かる。設計 §1.1)。cardEdits の問題はテンプレートのカードで見る。**実データ (測った)**: 異変の問題も含めて、hard-018 (方針注記 56)・hard-019 (IR 後発 69)・hard-023・hard-024・hard-031・hard-032 の 6 問 (やさしいは 0) |
 | S19 | 異変の問題の `cardEdits` を当てたカードも、数字 ≤ 4 (やさしい)・文 ≤ 3 (むずかしい) を守る → 守らないと `card-structure` (errors。メッセージに形・カード・上限)。**E-22 (欄の重複) は E3 だけ**: E3 (数字 3 つ) の `dup` は 4 つで可、E1・E2 (数字 4 つ) の `dup` は 5 つで errors |
 | R7 | 関係 R4・R5 の文の向きは、**カードが読んだ文 (`ir.statements.<N>`) の claims の向き**と数字を照らす (今のまま。文の `text` は照らさない) |
-| S20 | `card-place-text` (shortfalls。#158 レビュー N2) | 異変の `places` が `ir.statements.<N>.text` (text の下) を指す問題 (問題ごとに 1 件)。カードの文は claims から作り、`text` は読まないので、場所は `ir.statements.<N>` (claims の入れ物) で書く。今の easy-024 (E-17)・hard-007 (H-21) が当たる (データの Task が直す) |
-| S21 | 見本にも同じ検査 (N3) | `samples/*.json` の問題にも、`claims-count`・`card-structure`・`card-relation` (errors)・`card-text-length` (shortfalls。見本は両方の難易度で共有するので、問題の難易度を easy・hard に替えて両方の形で数える) を当てる。基準の見本は出ない |
+| S20 | `card-place-text` (shortfalls。#158 レビュー N2): 異変の `places` が `ir.statements.<N>.text` (text の下) を指す問題 (問題ごとに 1 件)。カードの文は claims から作り、`text` は読まないので、場所は `ir.statements.<N>` (claims の入れ物) で書く。今の easy-024 (E-17)・hard-007 (H-21) が当たる (データの Task が直す) |
+| S21 | 見本にも同じ検査 (N3・B2): `samples/*.json` の問題にも、`claims-count`・`card-structure`・`card-relation` (errors)・`card-text-length` (shortfalls) を当てる。見本は両方の難易度で共有するので、問題の難易度を easy・hard に替えて両方の形で数え、**超えた形の難易度ごとに `difficulty` を付けて 1 件** (文欄はむずかしいの形にしか無いので実際は `hard` の 1 件。`--require-cards=hard` が数える。難易度が無いと `=easy`・`=hard` のどちらでも致命にならない)。基準の見本は出ない |
 

@@ -362,7 +362,17 @@ describe('10.2 設計 #156 の取り込み (S16〜S19)', () => {
     it('文欄が 41 字 → card-text-length (shortfalls。見本はどちらの難易度の形でも見せるので、両方の形で数える)', () => {
       let p = set(sample(), 'tanshin.notes.subsequentEvents', 'あ'.repeat(41));
       p = set(p, 'ir.outlook.subsequentEvent', '期末後の出来事 (300 百万円)。');
-      expect(verifyDataset(withSample(p)).shortfalls.filter((s) => s.code === 'card-text-length' && s.problem === 'sample')).toHaveLength(1);
+      const found = verifyDataset(withSample(p)).shortfalls.filter((s) => s.code === 'card-text-length' && s.problem === 'sample');
+      expect(found).toHaveLength(1);
+      // 難易度を持つ: CI の --require-cards=easy / =hard が数える (文欄はむずかしいの形にしか無いので hard)
+      expect(found.map((s) => s.difficulty)).toEqual(['hard']);
+    });
+    it('--require-cards=hard の範囲に入る (見本の長い文欄で、hard の致命が 1 件増え、easy は増えない)', () => {
+      let p = set(sample(), 'tanshin.notes.subsequentEvents', 'あ'.repeat(41));
+      p = set(p, 'ir.outlook.subsequentEvent', '期末後の出来事 (300 百万円)。');
+      const count = (input: ReturnType<typeof withSample>, d: Difficulty) => verifyDataset(input).shortfalls.filter((s) => s.code.startsWith('card-') && s.difficulty === d).length;
+      expect(count(withSample(p), 'hard')).toBe(count(withSample(sample()), 'hard') + 1);
+      expect(count(withSample(p), 'easy')).toBe(count(withSample(sample()), 'easy'));
     });
   });
 });
