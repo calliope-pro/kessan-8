@@ -3,7 +3,7 @@
 Task #136。作成: 2026-11-05。根拠: [requirements.md](requirements.md) (第 2 版、凍結)・[charter.md](charter.md)・`docs/plans/redesign/` (research.md・root-causes.md・plans.md・tech-estimates.md・ui-assessment.md)・今の `src/` (domain・verifier・data)。
 印: **要件** (requirements.md にある) / **測った** (コマンドの結果。再現を添える) / **導いた** (式・入力を示す) / **設計** (本書が決める取り決め。責任者が変えてよい) / **仮定** / **未確認**。印の無い数字は書かない。
 
-本書の節と Sub-task: §1 カードの仕様 (#143)・§2 異変の台帳 v2 (#144)・§3 画面の流れ (#145)。PRODUCT.md・DESIGN.md は #146 (別のファイル)。
+本書の節と Sub-task: §1 カードの仕様 (#143)・§2 異変の台帳 v2 (#144)・§3 画面の流れ (#145)・§4 見た目の方向 (#146)。PRODUCT.md・DESIGN.md は #146 の別のファイル (リポジトリの根)。
 
 ---
 
