@@ -76,3 +76,68 @@ export function guessProbability(): { one: number; fourOfFive: number } {
   const one = atLeast3of4 * atMost1of4;
   return { one, fourOfFive: 5 * one ** 4 * (1 - one) + one ** 5 };
 }
+
+// ---- 確かめの集計 (?mode=summary): 参加者が「記録をコピー」した文を貼って、5 人ぶんを集計する ----
+
+export const RECORD_HEADER = '８期連続 試作 確かめ記録';
+
+export interface ParsedRecord {
+  pid: string;
+  shape: ShapeId;
+  /** 0 社目 (見本) を見せた条件か。 */
+  withSample: boolean;
+  seed: number;
+  found: number;
+  anomalies: number;
+  falseAlarms: number;
+  normals: number;
+  pass: boolean;
+}
+
+export function parseRecord(text: string): ParsedRecord | null {
+  const pid = /^参加者: (.*)$/m.exec(text)?.[1];
+  const cond = /^条件: 形=(E[123]) 0社目=(あり|なし) 種=(\d+)$/m.exec(text);
+  const res = /^結果: 異変 (\d+)\/(\d+) を見つけた \/ 正常 (\d+)\/(\d+) を異変と答えた → (合格|不合格)/m.exec(text);
+  if (pid === undefined || !cond || !res) return null;
+  return {
+    pid: pid.trim(),
+    shape: cond[1] as ShapeId,
+    withSample: cond[2] === 'あり',
+    seed: Number(cond[3]),
+    found: Number(res[1]),
+    anomalies: Number(res[2]),
+    falseAlarms: Number(res[3]),
+    normals: Number(res[4]),
+    pass: res[5] === '合格',
+  };
+}
+
+/** 貼った文を、記録の頭の行で分ける。 */
+export function splitRecords(text: string): string[] {
+  return text.split(RECORD_HEADER).slice(1).map((t) => `${RECORD_HEADER}${t}`.trim());
+}
+
+export interface Aux {
+  pid: string;
+  foundWith: number;
+  foundWithout: number;
+  diff: number;
+  /** 両方が全部見つかった (4/4)。正常を覚えなくても見つかる型のずれ: 「効かない」に数えない (plans.md §8.1)。 */
+  ceiling: boolean;
+}
+
+export function aggregate(records: readonly ParsedRecord[]): { n: number; passed: number; verdict: Verdict; aux: Aux[] } {
+  const byPid = new Map<string, ParsedRecord[]>();
+  for (const r of records) byPid.set(r.pid, [...(byPid.get(r.pid) ?? []), r]);
+  const primary: ParsedRecord[] = [];
+  const aux: Aux[] = [];
+  for (const [pid, rs] of byPid) {
+    const withS = rs.find((r) => r.withSample);
+    const without = rs.find((r) => !r.withSample);
+    if (withS) primary.push(withS);
+    if (withS && without) {
+      aux.push({ pid, foundWith: withS.found, foundWithout: without.found, diff: withS.found - without.found, ceiling: withS.found === withS.anomalies && without.found === without.anomalies });
+    }
+  }
+  return { ...summarize(primary), aux };
+}

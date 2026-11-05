@@ -1,6 +1,7 @@
 // ケース表 docs/proto/test-cases.md の P (遊び手に渡す形)。
 import { describe, expect, it } from 'vitest';
-import { buildDeck, FORM_KINDS, guessProbability, scoreSession, summarize, type Response } from './playtest';
+import { aggregate, buildDeck, FORM_KINDS, guessProbability, parseRecord, scoreSession, splitRecords, summarize, type Response } from './playtest';
+import { recordText } from './ui/playtest';
 import { COMPANIES, NORMALS } from './testing';
 
 const resp = (anomalyHits: number, falseAlarms: number): Response[] => [
@@ -77,5 +78,72 @@ describe('P7 偶然の合格率 (導出の再現)', () => {
     expect(one).toBeCloseTo(25 / 256, 6);
     expect(Math.round(one * 1000) / 10).toBe(9.8);
     expect(Math.round(fourOfFive * 100000) / 1000).toBeCloseTo(0.04, 2);
+  });
+});
+
+const env = (pid: string, withSample: boolean, shape: 'E1' | 'E3' = 'E1', seed = 5) => ({ normals: NORMALS, companies: COMPANIES, sample: NORMALS[0]!, seed, shape, withSample, pid });
+function record(pid: string, withSample: boolean, found: number, fa: number, shape: 'E1' | 'E3' = 'E1', seed = 5): string {
+  const e = env(pid, withSample, shape, seed);
+  const deck = buildDeck(seed, shape, NORMALS);
+  const anomalyIdx = deck.map((r, i) => (r.anomaly ? i : -1)).filter((i) => i >= 0);
+  const normalIdx = deck.map((r, i) => (r.anomaly ? -1 : i)).filter((i) => i >= 0);
+  const rs: Response[] = deck.map((r, i) => ({
+    index: i,
+    hasAnomaly: !!r.anomaly,
+    said: (anomalyIdx.indexOf(i) >= 0 && anomalyIdx.indexOf(i) < found) || (normalIdx.indexOf(i) >= 0 && normalIdx.indexOf(i) < fa) ? 'anomaly' : 'normal',
+  }));
+  return recordText(e, deck, rs, rs.map(() => 3000));
+}
+
+describe('P8 記録の文を読み戻す', () => {
+  it('参加者・形・0 社目・種・見つけ・誤り・合否', () => {
+    expect(parseRecord(record('T1', true, 3, 1))).toEqual({ pid: 'T1', shape: 'E1', withSample: true, seed: 5, found: 3, anomalies: 4, falseAlarms: 1, normals: 4, pass: true });
+    expect(parseRecord(record('T2', false, 2, 0, 'E3', 9))).toEqual({ pid: 'T2', shape: 'E3', withSample: false, seed: 9, found: 2, anomalies: 4, falseAlarms: 0, normals: 4, pass: false });
+  });
+  it('壊れた文は null', () => {
+    expect(parseRecord('')).toBeNull();
+    expect(parseRecord('８期連続 試作 確かめ記録\n参加者: T1')).toBeNull();
+  });
+});
+
+describe('P9 複数の記録の集計', () => {
+  const people = (passes: boolean[]) => passes.map((ok, i) => record(`P${i + 1}`, true, ok ? 4 : 1, 0, 'E1', 100 + i));
+  it('記録の頭の行で分ける', () => {
+    expect(splitRecords(people([true, true, false]).join('\n\n'))).toHaveLength(3);
+    expect(splitRecords('なにもない文')).toEqual([]);
+  });
+  it('参加者ごとに「0 社目あり」の記録で合否を数え、P6 の言い方で返す', () => {
+    expect(aggregate(people([true, true, true, true, true]).map(parseRecord) as never).verdict).toBe('強い合図');
+    expect(aggregate(people([true, true, true, true, false]).map(parseRecord) as never).verdict).toBe('弱い合図');
+    expect(aggregate(people([true, true, true, false, false]).map(parseRecord) as never).verdict).toBe('効かない');
+    expect(aggregate(people([true, true]).map(parseRecord) as never)).toMatchObject({ n: 2, passed: 2, verdict: '弱い合図' });
+    expect(aggregate(people([true, false]).map(parseRecord) as never).verdict).toBe('未確認');
+  });
+  it('同じ参加者の 0 社目なしの記録は、合否に数えない', () => {
+    const recs = [record('A', true, 4, 0, 'E1', 1), record('A', false, 0, 0, 'E3', 2)].map(parseRecord);
+    expect(aggregate(recs as never)).toMatchObject({ n: 1, passed: 1 });
+  });
+});
+
+describe('P10 補助: 0 社目なしとの比較', () => {
+  it('同じ人が両方を遊んだときだけ、見つけ数の差を出す', () => {
+    const recs = [record('A', true, 4, 0, 'E1', 1), record('A', false, 2, 0, 'E3', 2), record('B', true, 3, 1, 'E1', 3)].map(parseRecord);
+    const a = aggregate(recs as never);
+    expect(a.aux).toEqual([{ pid: 'A', foundWith: 4, foundWithout: 2, diff: 2, ceiling: false }]);
+  });
+  it('両方が 4/4 のときは天井と添える', () => {
+    const recs = [record('A', true, 4, 0, 'E1', 1), record('A', false, 4, 0, 'E3', 2)].map(parseRecord);
+    expect(aggregate(recs as never).aux[0]).toMatchObject({ diff: 0, ceiling: true });
+  });
+});
+
+describe('集計の文 (?mode=summary の中身)', () => {
+  it('5 人ぶんの記録から、判定と表を出す', async () => {
+    const { summaryText } = await import('./ui/summary');
+    const text = [1, 2, 3, 4, 5].map((i) => record(`P${i}`, true, i === 5 ? 1 : 4, 0, 'E1', 200 + i)).join('\n\n');
+    const out = summaryText(text);
+    expect(out).toContain('判定: 弱い合図 (合格 4 / 5 人');
+    expect(out).toContain('P5 | あり | E1 | 205 | 1/4 | 0/4 | 不合格');
+    expect(summaryText('なにもない')).toContain('記録が読めません');
   });
 });
