@@ -8,15 +8,17 @@ const { verifyProblem } = await import(pathToFileURL(resolve(root, 'src/verifier
 const read = (p: string) => JSON.parse(readFileSync(resolve(root, p), 'utf-8'));
 const companies = read('src/data/companies.json');
 const kinds = read('src/data/anomaly-kinds.json');
-const norm = (c: string) => c.split('.').map((s) => (/^\d+$/.test(s) ? '*' : s)).join('.');
+const norm = (c: string) => (c.startsWith('ir.statements.') ? c : c.split('.').map((s) => (/^\d+$/.test(s) ? '*' : s)).join('.'));
 const T = (s: string) => `tanshin.${s}`, I = (s: string) => `ir.${s}`;
 const FRAME = [T('header.periodLabel'), T('header.companyName'), T('header.securitiesCode'), I('header.periodLabel'), I('header.companyName'), I('header.securitiesCode')];
 // 形ごとに載るセル (§1.4)。名前の並びの欄の reads は名前のセルだけで、入れ物 (ir.segments.items) を含まない
 const SHOWN: Record<string, string[]> = {
-  H1: [T('incomeStatement.previous.netSales'), T('incomeStatement.current.netSales'), T('balanceSheet.current.totalAssets'), T('balanceSheet.current.totalLiabilitiesAndNetAssets'), I('highlights.netSales.amount'), 'ir.statements.*'],
-  H2: [T('balanceSheet.previous.receivables'), T('balanceSheet.current.receivables'), T('cashFlow.receivablesChange'), T('cashFlow.operatingCashFlow'), T('summary.accountingPolicyChange'), T('notes.accountingPolicyNote'), 'ir.statements.*'],
+  H1: [T('incomeStatement.previous.netSales'), T('incomeStatement.current.netSales'), T('balanceSheet.current.totalAssets'), T('balanceSheet.current.totalLiabilitiesAndNetAssets'), I('highlights.netSales.amount'), '@stmt'],
+  H2: [T('balanceSheet.previous.receivables'), T('balanceSheet.current.receivables'), T('cashFlow.receivablesChange'), T('cashFlow.operatingCashFlow'), T('summary.accountingPolicyChange'), T('notes.accountingPolicyNote'), '@stmt'],
   H3: [T('cashFlow.incomeBeforeTax'), T('incomeStatement.current.incomeBeforeTax'), T('balanceSheet.current.cash'), T('cashFlow.cashEnding'), T('summary.auditNote'), T('notes.subsequentEvents'), T('notes.segments.current.segments.*.name'), I('supplement.cash.current'), I('supplement.cash.previous'), I('supplement.interestBearingDebt.previous'), I('supplement.netDebt.previous'), I('outlook.subsequentEvent'), I('segments.items.*.name')],
 };
+// 文の欄の reads は、型が使った 1 つの文の ir.statements.<N> だけ (設計 v2 §1.2 R-D5)。添字は基ごとに、その metric の主張を持つ最初の文
+const stmtIndex = (q: any, metric: string) => q.ir.statements.findIndex((x: any) => x.claims.some((c: any) => c.metric === metric));
 const gv = (o: any, path: string) => path.split('.').reduce((a: any, k) => a[k], o);
 const sv = (o: any, path: string, v: unknown) => { const ks = path.split('.'); ks.slice(0, -1).reduce((a: any, k) => a[k], o)[ks.at(-1)!] = v; };
 const mul = (doc: 'tanshin' | 'ir', path: string, m: number) => (q: any) => { const v = gv(q[doc], path); sv(q[doc], path, Math.round(v * m * 10) / 10); };
@@ -30,6 +32,8 @@ const RECIPES: { kind: string; shape: string; label: string; make: (q: any) => v
   { kind: 'H-20', shape: 'H3', label: 'IR の純有利子負債 (前期) を 20% ずらす', make: mul('ir', 'supplement.netDebt.previous', 1.2) },
   { kind: 'H-19', shape: 'H3', label: 'IR のセグメントを 1 つ消す', make: (q) => { q.ir.segments.items.pop(); } },
   { kind: 'H-21', shape: 'H1', label: '売上高の主張の向きを逆にする', make: (q) => { for (const s of q.ir.statements) for (const c of s.claims) if (c.metric === 'netSales') c.direction = c.direction === 'up' ? 'down' : 'up'; } },
+  { kind: 'H-21', shape: 'H2', label: '営業 CF の主張の向きを逆にする', make: (q) => { for (const s of q.ir.statements) for (const c of s.claims) if (c.metric === 'operatingCashFlow') c.direction = c.direction === 'up' ? 'down' : 'up'; } },
+  { kind: 'H-21', shape: 'H1', label: '(同じ metric の主張を 2 つ持たせ、カードに出ない 2 つ目だけを逆にする。reads が 1 つの文なら弾かれる)', make: (q) => { const i = stmtIndex(q, 'netSales'); q.ir.statements.push({ slide: 'results', text: '売上高は前期比増加。', claims: [{ metric: 'netSales', direction: 'up' }] }); void i; q.ir.statements[q.ir.statements.length - 1].claims[0].direction = 'down'; } },
   { kind: 'H-22', shape: 'H3', label: '監査の注意書きを「監査済みです」に', make: (q) => sv(q.tanshin, 'summary.auditNote', '決算短信は監査済みです') },
   { kind: 'H-23', shape: 'H2', label: '会計方針の変更の有無を反転', make: (q) => sv(q.tanshin, 'summary.accountingPolicyChange', !q.tanshin.summary.accountingPolicyChange) },
   { kind: 'H-24', shape: 'H3', label: 'IR に期末後の出来事を書く', make: (q) => sv(q.ir, 'outlook.subsequentEvent', '期末後に子会社の売却を決定した (売却益は約 10 億円)') },
@@ -40,7 +44,7 @@ const RECIPES: { kind: string; shape: string; label: string; make: (q: any) => v
 const sentence = (q: any, metric: 'netSales' | 'operatingCashFlow'): string | null => {
   const c = q.ir.statements.flatMap((x: any) => x.claims).find((x: any) => x.metric === metric);
   if (!c) return null;
-  return metric === 'netSales' ? (c.direction === 'up' ? '売上高は前期より増えた' : '売上高は前期より減った') : c.direction === 'up' ? '営業活動のキャッシュ・フローはプラス' : '営業活動のキャッシュ・フローはマイナス';
+  return metric === 'netSales' ? (c.direction === 'up' ? '売上高は前期より増えた' : '売上高は前期より減った') : c.direction === 'up' ? '営業活動によるキャッシュ・フローはプラス' : '営業活動によるキャッシュ・フローはマイナス';
 };
 const bases = readdirSync(resolve(root, 'src/data/problems/hard')).sort().map((f) => read(`src/data/problems/hard/${f}`)).filter((p) => !p.anomaly);
 console.log(`基: むずかしいの正常な問題 ${bases.length} 問`);
@@ -50,14 +54,15 @@ for (const r of RECIPES) {
   for (const b of bases) {
     const q = JSON.parse(JSON.stringify(b)); r.make(q);
     const vs = verifyProblem(q, companies.find((c: any) => c.id === b.companyId)).hard;
-    const shown = new Set([...SHOWN[r.shape]!, ...FRAME]);
+    const sel = (m: string) => `ir.statements.${stmtIndex(b, m)}`;
+    const shown = new Set([...SHOWN[r.shape]!.filter((x) => x !== '@stmt'), ...FRAME, ...(r.shape === 'H1' ? [sel('netSales')] : r.shape === 'H2' ? [sel('operatingCashFlow')] : [])]);
     const onCard = vs.filter((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x) => shown.has(norm(x))));
     const extra = [...new Set<string>(onCard.map((v: any) => v.rule))].filter((x) => !primary.includes(x));
     if (extra.length) { doubled++; extra.forEach((x) => extras.add(x)); }
     if (!onCard.some((v: any) => primary.includes(v.rule))) noPrimary++;
   }
   let changed = 0;
-  if (r.kind === 'H-21') for (const b of bases) { const q = JSON.parse(JSON.stringify(b)); r.make(q); if (sentence(q, 'netSales') !== sentence(b, 'netSales')) changed++; }
-  const sentenceNote = r.kind === 'H-21' ? ` (カードの文が変わる ${changed}/${bases.length}。claims から型で作るので text はずれない)` : '';
+  if (r.kind === 'H-21') for (const b of bases) { const q = JSON.parse(JSON.stringify(b)); r.make(q); const m = r.shape === 'H2' ? 'operatingCashFlow' : 'netSales'; if (sentence(q, m) !== sentence(b, m)) changed++; }
+  const sentenceNote = r.kind === 'H-21' ? ` (カードの文が変わる ${changed}/${bases.length}。カードの文は選んだ 1 つの文の claims から型で作る。変わらず「主な規則が無い」なら、検査 3 で弾かれる)` : '';
   console.log(`${r.kind} [${r.shape}] ${r.label}: 二重の食い違い ${doubled}/${bases.length}${extras.size ? ` (${[...extras].join(', ')})` : ''}・カードに収まる主な規則が無い ${noPrimary}/${bases.length}${sentenceNote}`);
 }
