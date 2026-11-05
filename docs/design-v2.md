@@ -353,7 +353,7 @@ phase: `title`・`difficulty`・**`sample` (0 社目。新しい)**・`reading` 
 | **捨てる** | `marks.ts` (34)・`calc.ts` (62)・`screen.ts` (5) | 印・検算・資料の画面の参照 (道具と 10 画面は無い。Q14 の 4) |
 | **足す** | `src/domain/cards.ts` (新規)・検証器の `card-*` の規則 (§1.5・§2) | `deriveCards`・見える条件・形のずれの規則 |
 
-- **使える**: `reduce` の骨格 (5 つの phase と 7 つの action は残り、`sample` と `BEGIN` が増え、2 つの action が減る)・出題の枠先決めの手順 (`draw` の増加路)・保存と記録の仕組み (`session`・`records`)・判定 (`answer`) は、考え方も形もそのまま使える。**捨てるのは、10 画面の資料と道具に結んだ部分** (印・検算・画面の参照) だけ。
+- **使える**: `reduce` の骨格 (今の 5 つの phase と、9 つの action のうち 7 つ (`VIEW`・`TOGGLE_MARK` を除く) は残り、`sample` phase と `BEGIN` が増える)・出題の枠先決めの手順 (`draw` の増加路)・保存と記録の仕組み (`session`・`records`)・判定 (`answer`) は、考え方も形もそのまま使える。**捨てるのは、10 画面の資料と道具に結んだ部分** (印・検算・画面の参照) だけ。
 - 保存の版を上げるので、今の保存データ (`kessan8.run`・`kessan8.records`) は読み出しで捨てる。**公開前なので、遊び手の記録は失われない** (公開は全部できてから。要件)。
 
 ### 3.4 出題 (`draw`) の v2
