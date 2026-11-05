@@ -49,7 +49,9 @@ const RECIPES: { kind: string; shape: string; label: string; make: (q: any) => v
   { kind: 'H-22', shape: 'H3', label: '監査の注意書きを「監査済みです」に', make: (q) => sv(q.tanshin, 'summary.auditNote', '決算短信は監査済みです') },
   { kind: 'H-23', shape: 'H2', label: '会計方針の変更の有無を反転', make: (q) => sv(q.tanshin, 'summary.accountingPolicyChange', !q.tanshin.summary.accountingPolicyChange) },
   { kind: 'H-24', shape: 'H3', label: 'IR に期末後の出来事を書く', make: (q) => sv(q.ir, 'outlook.subsequentEvent', '期末後に子会社の売却を決定した (売却益は約 10 億円)') },
-  { kind: 'H-05', shape: 'H2', label: 'cashFlow.receivablesChange の符号を逆に', make: (q) => sv(q.tanshin, 'cashFlow.receivablesChange', -q.tanshin.cashFlow.receivablesChange) },
+  { kind: 'H-05', shape: 'H2', label: 'cashFlow.receivablesChange の符号を逆に (再計算なし)', make: (q) => sv(q.tanshin, 'cashFlow.receivablesChange', -q.tanshin.cashFlow.receivablesChange) },
+  { kind: 'H-05', shape: 'H2', label: 'cashFlow.receivablesChange の符号を逆に + 小計以降を再計算 (anomalies.md のとおり)', make: (q) => { const c = q.tanshin.cashFlow; const d = -2 * c.receivablesChange; c.receivablesChange += d; c.subtotal += d; c.operatingCashFlow += d; c.netChangeInCash += d; c.cashEnding += d; } },
+  { kind: 'H-05', shape: 'H2', label: 'cashFlow.receivablesChange を 20% ずらし + 小計以降を再計算 (営業 CF がマイナスの基向け)', make: (q) => { const c = q.tanshin.cashFlow; const d = Math.round(c.receivablesChange * 0.2) || 1; c.receivablesChange += d; c.subtotal += d; c.operatingCashFlow += d; c.netChangeInCash += d; c.cashEnding += d; } },
   { kind: 'H-01', shape: 'H1', label: '買掛金を +10% ずらし、負債・純資産の合計を再計算 (総資産は元のまま)', make: (q) => { const b = q.tanshin.balanceSheet.current; const d = Math.round(b.payables * 0.1); b.payables += d; b.totalCurrentLiabilities += d; b.totalLiabilities += d; b.totalLiabilitiesAndNetAssets += d; } },
 ];
 // H1・H2 の IR 型の文は claims から型で作る (設計 v2 §1.2 R-D5)。text は使わない
