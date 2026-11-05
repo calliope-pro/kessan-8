@@ -9,7 +9,7 @@ Task #137 / Sub-task #150。根拠: [plans.md](../plans/redesign/plans.md) §8.1
 
 > 0 社目 (見本) を見たあと、**型からのずれ**を見つけ、**正常を異変と誤らない**か。
 
-- 「型からのずれ」= 欄の欠落・欄の並びの入れ替え・単位の語の違い・同じ欄の重複 (台帳 E-19・E-20・E-03・E-22)。向きの逆・桁・比率の計算違いは、0 社目が無くても 1 枚の中で見つかるので使わない (**文書**: plans.md §8.1)。
+- 「型からのずれ」= 欄の欠落・欄の並びの入れ替え・単位の語の違い・同じ欄の重複 (台帳 E-19・E-20・E-03・E-22)。**plans.md §8.1 は 3 つ (欠落・並びの入れ替え・単位の表記) で、本書は「欄の重複 (E-22)」を足して 4 つにした (試作の決め)。理由: 異変 4 枚を、別々の種類にするため**。向きの逆・桁・比率の計算違いは、0 社目が無くても 1 枚の中で見つかるので使わない (**文書**: plans.md §8.1)。
 - 効けば、「カードの形を毎周同じにして、正常を覚えさせる」設計 (要件) が成り立つ見込みになる。効かなければ、責任者が 1 回直し (0 社目に「正常」と「異変の例」を並べるなど)、それでも駄目なら人間に聞く (**文書**: plans.md Q16 の既定 1)。
 
 ## 2. 必要なもの
@@ -22,6 +22,24 @@ Task #137 / Sub-task #150。根拠: [plans.md](../plans/redesign/plans.md) §8.1
 | 時間 | 1 人 約 15 分 (**仮定**: 1 周 = 8 枚 × 約 30 秒 ≈ 4 分 × 2 条件 + 説明・感想 約 7 分) |
 | 係 | 進行 1 人 (人間か責任者が頼む人)。**ヒントを出さない** |
 
+### 公開の手順 (責任者。本書を書いた時点では**実行していない**: Vercel の認証が要る)
+
+`dist-proto/` が、そのまま 1 つの静的サイトとして出せる形になっている (`npm run build:proto` が作る。`e2e-proto/site.spec.ts` が中身を確かめる): `index.html`・`proto.html` (どちらも同じ。根の URL でも開ける)・`assets/`・`vercel.json` (**ヘッダだけ**。本体の `vercel.json` の `headers` と同じ。`buildCommand` などは入れない = 公開側でビルドを走らせない)。むずかしいの問題は束に入れていない (JS 約 200 KB)。
+
+```sh
+npm ci
+npm run build:proto
+npx vercel deploy dist-proto --temporary     # ログイン不要の一時的な公開 (下の出典)
+# 出た URL で、ヘッダが付いたかを確かめる (下の「未確認」):
+curl -sI "<URL>/proto.html" | grep -i -E "content-security-policy|x-content-type-options|referrer-policy"
+```
+
+- **出典 (2026-11-05 に本文を取得して確認)**: Vercel CLI の deploy (https://vercel.com/docs/cli/deploy。最終更新 2026-09-18): 「To deploy other files without logging in, run `vercel deploy --temporary` on a directory, which works for any project.」。deployments の概要 (https://vercel.com/docs/deployments/overview): 「To deploy without an account, run `vercel deploy --temporary`. You get a temporary production deployment that you can claim to keep.」(**production の deployment**)。Deployment Protection (https://vercel.com/docs/deployment-protection。最終更新 2026-09-15): 「Standard Protection … protects all domains except [production domains]」。
+- **未確認 1: `dist-proto/vercel.json` のヘッダが効くか**。公式文書は、`vercel deploy <ディレクトリ>` のとき `vercel.json` をどのディレクトリから読むかを書いていない (cli/deploy・project-configuration・vercel-json の 3 ページで確認)。`vercel.json` は「プロジェクトの根に置く」(https://vercel.com/docs/project-configuration/vercel-json) と書いてあり、渡したディレクトリがその根になる、というのが本書の読み。**上の `curl` で確かめる**。付いていなくても、試作は外部へ通信せず、動く (CSP は守りの二重化)。
+- **未確認 2: ログインなしの人が URL を開けるか**。一時的な公開は production の deployment で、Standard Protection は production のドメインを保護しない、と文書から読めるが、「一時的な公開は保護されない」とは書いていない。**遊び手に渡す前に、ログインしていないブラウザ (私用ウィンドウ) で開いて確かめる**。開けなければ、Vercel の Deployment Protection の例外・共有リンク (どちらも Hobby で使える: https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection) を使う。
+- 本体の公開 (`npm run build` → `dist`) には、試作を入れない (`vite.config.ts` は `index.html` だけを入力にしている)。リポジトリの根から `vercel` を実行すると、出るのは**捨てる予定の今の画面**で、`proto.html` は出ない (404)。必ず `dist-proto` を指定する。
+- ローカルで確かめるだけなら `npm run dev:proto` (`http://localhost:5173/proto.html`)。
+
 ## 3. 条件と URL
 
 1 人が 2 つの条件を、続けて遊ぶ。**条件 A (見本あり)** が合否の対象、**条件 B (見本なし・別の型)** は補助 (見本の効きを見る比較)。
@@ -31,18 +49,18 @@ Task #137 / Sub-task #150。根拠: [plans.md](../plans/redesign/plans.md) §8.1
 | A 見本あり | 0 社目に、型 E1 (もうけ) の「記入例」を見せる → 8 枚 (異変 4 + 正常 4)。型はすべて E1 | `<URL>?mode=test&shape=E1&sample=on&pid=<P>&seed=<S>` |
 | B 見本なし | 見本を見せず、型 E3 (持ち物。別の語・並び) の 8 枚 | `<URL>?mode=test&shape=E3&sample=off&pid=<P>&seed=<S>` |
 
-- **順序は入れ替える** (学習の持ち越しを均す): 1・3・5 人目は A → B、2・4 人目は B → A。
+- **順序は全員 A → B** (入れ替えない)。B は毎枚の答え合わせで異変の場所と説明を見せ、使う異変の種類も A と同じ (欠落・並び・単位・重複) なので、B を先に遊ぶと、「何が異変か」を覚えてから A に入り、**合否を数える A が膨らむ** (#150 レビュー 1 回目 B1)。A は初見で測る。B は補助の比較だけに使い、B を先に遊ぶ人は作らない。
 - **種は人と条件ごとに変える** (同じ会社の並びを覚えさせない。同じ種は同じ 8 枚を出す):
 
 | 参加者 | 記号 `<P>` | A の種 | B の種 | 順序 |
 | --- | --- | --- | --- | --- |
 | 1 人目 | P1 | 1011 | 1012 | A → B |
-| 2 人目 | P2 | 1021 | 1022 | B → A |
+| 2 人目 | P2 | 1021 | 1022 | A → B |
 | 3 人目 | P3 | 1031 | 1032 | A → B |
-| 4 人目 | P4 | 1041 | 1042 | B → A |
+| 4 人目 | P4 | 1041 | 1042 | A → B |
 | 5 人目 | P5 | 1051 | 1052 | A → B |
 
-- A と B で型が違うのは、同じ人が同じ型を 2 回見ると、2 回目に型を覚えてしまうため。**そのぶん、A と B の差には型の違いが混ざる** (交絡)。補助の読み方は §6。
+- A と B で型が違うのは、同じ人が同じ型を 2 回見ると、2 回目に型を覚えてしまうため。**そのぶん、A と B の差には型の違いと、A を先に遊んだことの影響が混ざる** (交絡。順序を入れ替えて均していない)。補助の読み方は §6。
 
 ## 4. 進行の台本 (進行が読む)
 
@@ -87,9 +105,9 @@ Task #137 / Sub-task #150。根拠: [plans.md](../plans/redesign/plans.md) §8.1
 | 人 | 順序 | 条件 A の見つけ / 誤り | 合否 | 条件 B の見つけ / 誤り | 感想 (気づいた所・見本は役に立ったか・迷った所) |
 | --- | --- | --- | --- | --- | --- |
 | P1 | A → B | | | | |
-| P2 | B → A | | | | |
+| P2 | A → B | | | | |
 | P3 | A → B | | | | |
-| P4 | B → A | | | | |
+| P4 | A → B | | | | |
 | P5 | A → B | | | | |
 
 ## 8. 限界 (**未確認**を含む)
