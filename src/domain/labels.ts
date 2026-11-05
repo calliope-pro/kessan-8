@@ -96,7 +96,7 @@ export const LABELS: Record<string, string> = {
   'tanshin.cashFlow.otherInvestingChange': 'その他投資の増減額',
   'tanshin.cashFlow.otherLiabilitiesChange': 'その他負債の増減額',
   'tanshin.cashFlow.payablesChange': '仕入債務の増減額',
-  'tanshin.cashFlow.receivablesChange': '売上債権の増減額',
+  'tanshin.cashFlow.receivablesChange': '売上債権 (売掛金) の増減額', // 売上債権には受取手形なども入るが、このゲームの資料に受取手形は無いと示す (docs/design-v2.md §1.4・anomalies.md G11)
   'tanshin.cashFlow.shortTermDebtChange': '短期借入金の増減額',
   'tanshin.cashFlow.subtotal': '小計',
   'tanshin.incomeStatement.costOfSales': '売上原価',

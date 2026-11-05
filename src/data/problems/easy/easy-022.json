@@ -424,6 +424,7 @@
   ],
   "explanation": "表題の期は 2025年3月期 (期末日 2025年3月31日) ですが、貸借対照表の当期末の見出しは 2024年3月31日です。",
   "expectedRules": [
+   "card-period",
    "dates-column-headings"
   ]
  }

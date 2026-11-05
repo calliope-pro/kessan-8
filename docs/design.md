@@ -141,10 +141,10 @@ export const IR_SLIDES = ['highlights', 'results', 'segments', 'outlook', 'suppl
 export type IrSlideId = (typeof IR_SLIDES)[number];
 
 /** 異変の系統 (docs/plans/anomalies.md §5 の「系統」。見た目・計算・文章・会計・資料間・注記・手口)。 */
-export const ANOMALY_FAMILIES = ['appearance', 'calculation', 'text', 'accounting', 'cross-document', 'notes', 'tactics'] as const;
+export const ANOMALY_FAMILIES = ['appearance', 'calculation', 'text', 'accounting', 'cross-document', 'notes', 'tactics', 'card-form'] as const;
 export type AnomalyFamily = (typeof ANOMALY_FAMILIES)[number];
 
-/** 系統 → 出す難易度。やさしい = 見た目・計算・文章、むずかしい = 会計・資料間・注記・手口。受け入れ条件 6 の「やさしいは見た目と計算、むずかしいは会計と資料間を多め」は、この表で数える。 */
+/** 系統 → 出す難易度。やさしい = 見た目・計算・文章、むずかしい = 会計・資料間・注記・手口・形のずれ (card-form。docs/design-v2.md §2.3)。受け入れ条件 6 の「やさしいは見た目と計算、むずかしいは会計と資料間を多め」は、この表で数える。 */
 export const FAMILY_DIFFICULTY: Record<AnomalyFamily, Difficulty> = {
   appearance: 'easy',
   calculation: 'easy',
@@ -153,7 +153,24 @@ export const FAMILY_DIFFICULTY: Record<AnomalyFamily, Difficulty> = {
   'cross-document': 'hard',
   notes: 'hard',
   tactics: 'hard',
+  'card-form': 'hard',
 };
+
+/** カードの形 (docs/design-v2.md §1)。やさしい = E1〜E3 (カード 1 枚)、むずかしい = H1〜H3 (短信型・IR 型の 2 枚)。 */
+export const SHAPE_IDS = ['E1', 'E2', 'E3', 'H1', 'H2', 'H3'] as const;
+export type ShapeId = (typeof SHAPE_IDS)[number];
+
+/**
+ * 形のずれの異変 (欄の欠落・並びの入れ替え・数字の書式・単位の語・欄の重複・見出し語) を、問題データで表す編集 (docs/design-v2.md §1.6)。
+ * 1 つの異変は 1 つの編集。shape の形のカードにだけ効く。card は 0 = 短信型 (やさしいは唯一のカード)・1 = IR 型。slot は形の欄の key。
+ */
+export type CardEdit =
+  | { shape: ShapeId; card: number; slot: string; op: 'drop' }
+  | { shape: ShapeId; card: number; op: 'swap'; slots: [string, string] }
+  | { shape: ShapeId; card: number; slot: string; op: 'format'; style: 'no-comma' | 'comma-shift' }
+  | { shape: ShapeId; card: number; slot: string; op: 'unit'; unit: string }
+  | { shape: ShapeId; card: number; slot: string; op: 'dup' }
+  | { shape: ShapeId; card: number; op: 'headline'; word: string };
 
 /** 前期と当期の組。 */
 export interface Pair {
@@ -459,7 +476,11 @@ export interface IrDeck {
  * 異変の場所。数字・文のセルは path (先頭が画面の ID か header。例: incomeStatement.current.ordinaryIncome、header.companyName)。
  * 項目名 (行の名前。科目名の誤字など) は itemKey (docs/design.md §4.1 の項目キー)。
  */
-export type AnomalyPlace = { doc: DocKind; path: string } | { doc: DocKind; itemKey: string };
+export type AnomalyPlace =
+  | { doc: DocKind; path: string }
+  | { doc: DocKind; itemKey: string }
+  /** 形のずれ (cardEdits) の場所: shape の形の card 番号のカードの slot の欄 (docs/design-v2.md §2.8)。欄の欠落 (drop) は、欠けた位置 (テンプレートのカードのその欄の位置)。 */
+  | { doc: 'card'; shape: ShapeId; card: number; slot: string };
 
 /** 異変の指定と答え合わせの文言。問題データのここが唯一の出所で、画面はこれを表示するだけ。 */
 export interface Anomaly {
@@ -474,6 +495,10 @@ export interface Anomaly {
    * 検証器は、実際に落ちた集合とこれが一致すること、kind の primaryRules を 1 つ以上含み allowedRules に収まることを確かめる。
    */
   expectedRules: string[];
+  /** 基の正常な問題の ID (同じ companyId・同じ header.periodLabel。docs/design-v2.md §2.8)。changed と一緒に持つ。 */
+  base?: string;
+  /** 基との差のセル `<doc>.<path>` (種類の作り方が決めたセルと、必然の再計算のセル。要素の過不足は要素のパス)。基との実際の差と一致させる。落ちた規則が変えたセルを読めば、許容集合に無くてもよい。 */
+  changed?: string[];
 }
 
 /** 1 問 = 架空の 1 社の資料束。src/data/problems/<難易度>/<id>.json の中身そのもの。 */
@@ -495,6 +520,8 @@ export interface Problem {
   unitOverrides?: Record<string, string>;
   /** 負の数の記号の差し替え (見た目の異変用)。キーは `<doc>.<path>`、値は表示する記号。正常な問題には無い。 */
   signOverrides?: Record<string, string>;
+  /** 形のずれの異変 (カードの欄そのものの編集)。1 つの異変は 1 つの編集。正常な問題には無い。 */
+  cardEdits?: CardEdit[];
   /** null = 正常。 */
   anomaly: Anomaly | null;
 }

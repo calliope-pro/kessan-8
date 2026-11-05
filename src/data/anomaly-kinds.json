@@ -62,9 +62,11 @@
       "dates-period-end",
       "dates-order",
       "dates-column-headings",
-      "header-period-label"
+      "header-period-label",
+      "card-period"
     ],
     "allowedRules": [
+      "card-period",
       "dates-column-headings",
       "dates-order",
       "dates-period-end",
@@ -663,7 +665,7 @@
     "family": "cross-document",
     "name": "セグメントが IR から欠けている",
     "primaryRules": [
-      "seg-count"
+      "xdoc-seg-names"
     ],
     "allowedRules": [
       "ir-seg-change-profit",
@@ -674,6 +676,7 @@
       "segment-names",
       "xdoc-seg-adjustment",
       "xdoc-seg-consolidated",
+      "xdoc-seg-names",
       "xdoc-seg-profit",
       "xdoc-seg-sales"
     ]

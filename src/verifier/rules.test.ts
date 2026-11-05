@@ -109,7 +109,7 @@ const V: VCase[] = [
   { id: 'V21', build: (p) => set(p, 'ir.header.companyName', '第七試作電機株式会杜'), expected: ['header-company-name'] },
   { id: 'V22', build: (p) => set(p, 'tanshin.header.unit', '千円'), expected: ['header-unit'] },
   { id: 'V23', build: (p) => set(p, 'ir.header.periodLabel', '2026年3月期'), expected: ['header-period-label'] },
-  { id: 'V24', build: (p) => set(p, 'tanshin.notes.segments.current.segments.1.name', '別の事業'), expected: ['segment-names'] },
+  { id: 'V24', build: (p) => set(p, 'tanshin.notes.segments.current.segments.1.name', '別の事業'), expected: ['segment-names', 'xdoc-seg-names'] }, // 短信の名前が IR の名前と違う (xdoc-seg-names は短信と IR の名前を直接比べる)
   { id: 'V25', build: A('tanshin.summary.payoutRatio', 3), expected: ['ratio-payout', 'xdoc-hl-payout'] },
   { id: 'V26', build: A('tanshin.notes.averageSharesThousand', 400), expected: ['ratio-eps', 'ratio-bps', 'ratio-dividend-total', 'link-cf-dividends-paid', 'check-eps-product', 'check-bps-product'] },
   { id: 'V27', build: A('tanshin.summary.eps', 10), expected: ['ratio-eps', 'notes-per-share', 'ratio-payout', 'check-eps-product'] },
@@ -128,7 +128,7 @@ const V: VCase[] = [
   { id: 'V40', build: (p) => set(p, 'tanshin.summary.auditNote', '監査済みです'), expected: ['audit-note'] },
   { id: 'V41', build: (p) => set(p, 'tanshin.summary.accountingPolicyChange', true), expected: ['accounting-policy-match'] },
   { id: 'V42', build: (p) => set(p, 'tanshin.dates.disclosure', '2027-03-01'), expected: ['dates-order'] },
-  { id: 'V43', build: (p) => set(p, 'tanshin.columnDates.incomeStatement.current', '2028-03-31'), expected: ['dates-column-headings'] },
+  { id: 'V43', build: (p) => set(p, 'tanshin.columnDates.incomeStatement.current', '2028-03-31'), expected: ['dates-column-headings', 'card-period'] }, // 期 (2027年3月期) と列見出しの期末日が合わない (card-period)
   { id: 'V44', build: (p) => set(p, 'ir.results.chart.operatingIncome.current', 900), expected: ['chart-bars'] },
   { id: 'V45', build: (p) => set(p, 'ir.results.chart.netSales.axisMin', 11000), expected: ['chart-axis-zero'] },
   { id: 'V46', build: (p) => set(p, 'ir.statements.0.claims.0.direction', 'down'), expected: ['claims-direction'] },
@@ -138,11 +138,11 @@ const V: VCase[] = [
   { id: 'V50', build: (p) => set(p, 'signOverrides', { 'tanshin.cashFlow.capex': '-' }), expected: ['sign-consistency'] },
   { id: 'V51', build: (p) => set(p, 'labelOverrides', { 'tanshin.incomeStatement.operatingIncome': '営業利金' }), expected: ['label-spelling'] },
   { id: 'V52', build: (p) => set(p, 'labelOverrides', { 'tanshin.balanceSheet.receivables': '買掛金' }), expected: ['account-section'] },
-  { id: 'V53', onB: true, build: (p) => mutate(p, 'ir.segments.items', (items) => (items as unknown[]).slice(0, 2)), expected: ['seg-count', 'segment-names', 'ir-seg-reconcile'] },
+  { id: 'V53', onB: true, build: (p) => mutate(p, 'ir.segments.items', (items) => (items as unknown[]).slice(0, 2)), expected: ['seg-count', 'segment-names', 'ir-seg-reconcile', 'xdoc-seg-names'] },
   {
     id: 'V54',
     build: (p) => mutate(p, 'tanshin.notes.segments.current.segments', (s) => [...(s as unknown[]), { name: 'x', netSales: 0, profit: 0 }]),
-    expected: ['seg-count', 'segment-names'],
+    expected: ['seg-count', 'segment-names', 'xdoc-seg-names'],
   },
   {
     id: 'V55a',

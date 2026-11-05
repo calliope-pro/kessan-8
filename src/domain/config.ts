@@ -18,3 +18,12 @@ export const FAMILY_SHARE_MIN = { easy: 0.8, hard: 0.6 } as const;
 export const TIER_BY_ROUND: readonly (1 | 2 | 3)[] = [1, 1, 2, 2, 2, 3, 3, 3];
 
 export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'hard'];
+
+/**
+ * claims から作る語 (見出し語・H1 の文・H2 の文) が、正常な問題に両方の向きで出るための下限 (docs/design-v2.md §1.5 R-S5 (f))。
+ * 難易度ごとの正常な問題で、その向きを持つ会社の数。値は仮定 (減益は今の正常 28 問の 3/28 に合わせた水準)。
+ */
+export const CLAIM_DOWN_MIN_COMPANIES = { netSales: 3, operatingIncome: 3, operatingCashFlow: 1 } as const;
+/** 難易度ごとに、カードに語が出る主張 (やさしい = 見出し語、むずかしい = H1・H2 の文)。 */
+export const CLAIMS_SHOWN: Record<Difficulty, readonly (keyof typeof CLAIM_DOWN_MIN_COMPANIES)[]> = { easy: ['netSales', 'operatingIncome'], hard: ['netSales', 'operatingCashFlow'] };
+

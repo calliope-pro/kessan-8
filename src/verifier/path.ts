@@ -30,3 +30,27 @@ export function numericCells(problem: Problem): string[] {
   walk(problem.ir, ['ir']);
   return out;
 }
+
+/**
+ * 2 つの問題の、短信・IR のセルの違い `<doc>.<path>` (docs/design-v2.md §2.8 の changed と比べる)。リーフ (数・文・真偽・null) の違いはそのパス。
+ * 配列の要素が片方にしか無い (要素の過不足) ときは、その要素のパス (`ir.segments.items.2`) 1 つで、リーフに分けない。
+ */
+export function changedCells(base: Problem, other: Problem): string[] {
+  const out: string[] = [];
+  const walk = (a: unknown, b: unknown, trail: string[]): void => {
+    const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null;
+    if (isObj(a) && isObj(b)) {
+      const keys = Array.isArray(a) && Array.isArray(b) ? [...Array(Math.max(a.length, b.length)).keys()].map(String) : [...new Set([...Object.keys(a), ...Object.keys(b)])];
+      for (const k of keys) {
+        const [x, y] = [a[k], b[k]];
+        if (Array.isArray(a) && Array.isArray(b) && (!(k in a) || !(k in b))) out.push([...trail, k].join('.'));
+        else walk(x, y, [...trail, k]);
+      }
+      return;
+    }
+    if (a !== b) out.push(trail.join('.'));
+  };
+  walk(base.tanshin, other.tanshin, ['tanshin']);
+  walk(base.ir, other.ir, ['ir']);
+  return out;
+}
