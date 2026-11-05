@@ -25,7 +25,8 @@ const SHAPES: Record<string, string[]> = {
   H3: [T(`${CF}.incomeBeforeTax`), T(`${IS}.current.incomeBeforeTax`), T(`${BS}.current.cash`), T(`${CF}.cashEnding`), T('summary.auditNote'), T('notes.subsequentEvents'), T('notes.segments.current.segments.*.name'), I('supplement.cash.current'), I('supplement.cash.previous'), I('supplement.interestBearingDebt.previous'), I('supplement.netDebt.previous'), I('outlook.subsequentEvent'), I('segments.items.*.name')],
 };
 // セルの無い規則 (科目名・名前の並び・表記) は、種類から形を直接決める
-const BY_KIND: Record<string, string[]> = { 'H-28': ['H2'], 'E-05': ['E1', 'E2', 'E3'], 'E-03': ['E1', 'E2', 'E3'], 'E-08': [] } // E-08 (短信と IR の社名・コード) はやさしいのカードに IR の枠が無いので載らない;
+// H-28 = 売上債権の itemKey (receivables) の欄がある形 (H2 だけ)。E-03・E-05 は今の異変の問題に無いので載せない (itemKey が一致する形でだけ見える。§1.5 V1)
+const BY_KIND: Record<string, string[]> = { 'H-28': ['H2'], 'E-08': [] } // E-08 (短信と IR の社名・コード) はやさしいのカードに IR の枠が無いので載らない;
 const rows: { id: string; kind: string; shapes: string[] }[] = [];
 for (const d of ['easy', 'hard']) for (const f of readdirSync(resolve(root, `src/data/problems/${d}`)).sort()) {
   const p = read(`src/data/problems/${d}/${f}`);

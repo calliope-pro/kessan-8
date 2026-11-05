@@ -45,7 +45,7 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
 規則:
 1. **R-D1 純関数**: `deriveCards(problem, company, shape)` は、問題データと形の定義だけから、表示する文字列を作る。乱数・時刻・保存を見ない。同じ入力は同じカード。
 2. **R-D2 異変は問題データの変更で表す**: 異変のカードは、異変の問題データ (数字・文のセルを 1 つ変えたもの、`labelOverrides`・`unitOverrides`、§1.6 の `cardEdits`) から `deriveCards` で導く。**カードを手で書き換えない**。正常と異変で同じ関数を使う。
-3. **R-D3 答え合わせも同じ出所**: 答え合わせは `anomaly.places` (異変の場所) を、`Slot.reads` に当てて、カード上の欄を示す。パスでない場所は、科目名の異変 (`itemKey`。台帳 H-28) = `Slot.itemKey` が同じ欄、文章の異変 (`ir.statements.<N>.text`。台帳 E-17) = 見出し語の欄 (`Derived` が `ir.statements.<N>` を読む) に当てる。文言は `anomaly.explanation` (今のまま)。**`places` は、カードの上で食い違いが見えるセルだけ**を書く (R-S4 の V1。二次の症状でカードの外にあるセルは書かない)。
+3. **R-D3 答え合わせも同じ出所**: 答え合わせは `anomaly.places` (異変の場所) を、`Slot.reads` に当てて、カード上の欄を示す。パスでない場所は、科目名の異変 (`itemKey`。台帳 H-28) = `Slot.itemKey` が同じ欄、文章の異変 (`ir.statements.<N>.text`。台帳 E-17) = 見出し語の欄 (`Derived` が `ir.statements.<N>` を読む) に当てる。文言は `anomaly.explanation` (今のまま)。パスでない場所のうち、`cardEdits` の種類の場所 `{ doc: 'card', shape, card, slot }` は、その欄に当てる (swap = 2 つの場所を並べる、headline = 見出し語の欄の key、drop = 欠けた位置 (前後の欄のあいだ)。§2.8)。**`places` は、カードの上で食い違いが見えるセルだけ**を書く (R-S4 の V1。二次の症状でカードの外にあるセルは書かない)。
 4. **R-D4 正常の整合**: 異変の無い問題は、今の検証器の全規則を満たす (今の 28 問の正常な問題はすべて満たす。**測った**: §1.7)。カードは正常な問題から導くので、正常のカードの数字は必ず整合する。
 5. **R-D5 見出し語**: 【増益】【減益】【増収】【減収】は、`ir.statements` の主張 (`claims` の `metric` と `direction`) から作る (`up` → 増、`down` → 減。語の組は metric で決まる: `netSales` = 増収・減収、`operatingIncome` = 増益・減益。**今のデータでは、1 問の中で同じ metric の主張は重ならない** (57 問。監視役が確かめた) ので、metric で引けば 1 つに決まる)。主張は問題データの文なので、見出し語が数字と逆なら、今の検証器の規則 `claims-direction` が落ちる (向きの逆の異変 = 台帳の E-17 型)。
 
@@ -106,7 +106,7 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
    - 異変の問題: s で**見える** (R-S4) もの。
    そのうえで、今の `draw` の決まり (会社の重複なし・段・履歴) を、同じ増加路で当てる。
 4. **R-S4 見える条件** (検証器に足す。**カードの検出可能性の検査**): 異変の問題 p が形 s で見えるとは、次の 2 つを満たすこと。
-   - (V1) `anomaly.places` の全セルが、s のカードに載っている。`places` は「カードの上で食い違いが見えるセル」で、二次の症状 (カードの外のセル) は書かない (R-D3)。**今のデータの `places` は二次の症状も持つ** (台帳 H-05 = `receivablesChange` + `cashEnding` など) ので、V1 を今のデータにそのまま当てると、むずかしい 16 種類のうち見えるのは 7 種類 (H-03・H-13・H-17・H-22・H-23・H-24・H-28) だけになる (**測った**: `places-fit.ts`)。**カードのために異変の問題を作り直すとき、`places` を書き直す** (カードの外のセルを外し、欠けるときは V2 を満たすカード上のセルを入れる)。`cardEdits` の種類は場所を (shape, card, slot) で持ち、V1 は「編集の shape = 枠の形」(§2.8)。今の問題をそのまま使えるかは台帳 §2 が数える。
+   - (V1) `anomaly.places` の全セルが、s のカードに載っている。`places` は「カードの上で食い違いが見えるセル」で、二次の症状 (カードの外のセル) は書かない (R-D3)。**今のデータの `places` は二次の症状も持つ** (台帳 H-05 = `receivablesChange` + `cashEnding` など) ので、V1 を今のデータにそのまま当てると、むずかしい 16 種類のうち見えるのは 7 種類 (H-03・H-13・H-17・H-22・H-23・H-24・H-28) だけになる (**測った**: `places-fit.ts`)。**カードのために異変の問題を作り直すとき、`places` を書き直す** (カードの外のセルを外し、欠けるときは V2 を満たすカード上のセルを入れる)。`cardEdits` の種類は場所を (shape, card, slot) で持ち、V1 は「編集の shape = 枠の形」(§2.8)。**`itemKey` の場所 (E-05・H-28・H-30) は、s のカードに同じ itemKey の欄があること**を V1 とする (欄が無い形では出さない)。今の問題をそのまま使えるかは台帳 §2 が数える。
    - (V2) `anomaly.expectedRules` のうち種類の主な規則 (`primaryRules`) の 1 つが落とした違反の `paths` が、**s のカードに載るセル**だけで足りる。ただし、正常では必ず等しい別のセル (別名) で足りるものは載っているとみなす。別名は、検証器の `xdoc-*`・`sum-*` の規則 (正常では 2 つのセルが必ず等しい) から選ぶ。今の形で要るのは E2 の棒の 1 組だけ: `ir.results.netSales.{previous,current}` (棒の規則 `chart-bars` が読む) = `tanshin.incomeStatement.{previous,current}.netSales` (規則 `xdoc-results-net-sales`)。台帳 §2 が、種類ごとに別名の要不要を表にする。
    - 短信と IR のあいだの食い違い (台帳の資料間) は、V1・V2 の帰結として、両側のセルを載せる形でだけ見える (別に条件は足さない)。E2 のように、やさしいの形が IR のセル (`ir.results.chart`) を持つのは、同じ理由で許す。
 5. **R-S5 形ごとの異変の候補** (データの検査。起動時に落とす。今の `canDraw` と同じ作法):
@@ -151,7 +151,8 @@ type CardEdit =
 | 1 つの規則が 1 回の評価で読むセル (検証器の規則 128 件) | 規則ごとの組を取り出せた | `shape-fit.ts` の前半 (`Reader` の `get`・`raw` を差し替えて記録) |
 | むずかしいの 3 形 (§1.4) の上限 (数字 4・文 3) と、収まる見え方の分類 | 上限超えなし。分類は **14 / 候補 14**: H1 = C06・C07・C08・C14、H2 = C02・C03・C11・C18、H3 = C01・C04・C05・C07・C09・C10・C12 (C07 は H1 と H3 の両方) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/shape-fit.ts`。分類と台帳の対応は `shape-fit.ts` の `CLASSES`。**C02・C05 は疑似セル (科目名・名前の並びを 1 セルに置いた)。C14・C18 も文のセルを疑似セルで置いた** |
 | 今のデータの `places` に V1 を文字どおり当てたときに見えるむずかしいの種類 | 16 種類のうち 7 (H-03・H-13・H-17・H-22・H-23・H-24・H-28)。**カードに合わせて `places` を書き直す前提**で §1.4 の 14 分類を数えた (V2 の数) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/places-fit.ts` |
-| やさしいの E-02・E-09・E-18 を今の正常な問題に注入したときに落ちる規則と、カードに収まる規則 | §2.8 の表 (基 easy-017。easy-004・013・025 でもカードに収まる規則は同じ)。採るのは E-09 = 流動資産の小計をずらす (落ちる 2 規則とも許容集合内)・E-02 = E1・E2 (E3 は外す)・E-18 = E1 | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy.ts <正常な問題の ID>` |
+| やさしいの E-02・E-09・E-18 の作り方 (向きを変えない倍率) を正常 12 問すべてに注入したときの二重の食い違い (カードに収まる違反が `primaryRules` の外にもある問題) | 0 件 (E-02/E1・E-02/E2・E-09/E3 は 12/12、E-18/E1 は増益の 10 問に適用) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy-all.ts` |
+| やさしいの E-02・E-09・E-18 を 1 問に注入したときに落ちる規則と、カードに収まる規則 | §2.8 の表 (基 easy-017。easy-004・013・025 でも、カードに収まる hard の規則は同じ。ソフトの規則は基で違う)。採るのは E-09 = 流動資産の小計をずらす (落ちる 2 規則とも許容集合内)・E-02 = E1・E2 (E3 は外す)・E-18 = E1 | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy.ts <正常な問題の ID>` |
 | 3 形を選ぶ探索 | 18 の候補から、14 分類を収める 3 形が見つかる (90 秒のランダムな貪欲法を 2 回。どちらも 14) | `spike-design/hard-search.mjs` (入力は `rule-cells.ts` が出す JSON) |
 
 ---
@@ -175,7 +176,7 @@ type CardEdit =
 | E-02 | 桁がずれた数字 (E1 = 営業利益 49,200。売上高と釣り合わない) | **E1・E2** (E3 には使わない。§2.8) | E1 = `incomeStatement.current.operatingIncome`、E2 = `incomeStatement.current.netSales` を 10 倍にする。**再計算しない** (§2.8 の表) | E1 = `ratio-operating-margin`、E2 = `xdoc-results-net-sales` (別名。§1.5 V2) | 今の E-02 の考え方。primaryRules の変更あり (§2.8) | 1 |
 | E-18 | 2 つの数字が入れ替わっている (売上高 4,920・営業利益 96,930) | E1 | `incomeStatement.current.netSales` と `…current.operatingIncome` を入れ替える (**1 つの原因 = 転記の取り違え**として、2 セルの変更を 1 つに数える。E2 の前期と当期の入れ替えは、遊び手に E-17 と同じに見えるので E-18 にしない。§2.8) | `ratio-operating-margin` | **新規** (原作の「位置の入れ替え」の決算版。plans.md §3.4 の「並びの入れ替え」の数字版) | 1〜2 |
 | E-03 | 単位の語が 1 つだけ違う (「百万円」の中に「億円」) | 全形 | `cardEdits` の `unit` | カードの型 (正常は、金額の欄がすべて同じ単位。比率の欄は % で別。検証器の新しい規則 `card-unit`) | 今の E-03 の単位の半分。**負の数の記号の半分 (△ と −) は載せない**: 今の正常 12 問の E1・E3 の数字に負は 0 (**測った**)。負の数が出ないカードでは、記号の違いを見せられない | 1 |
-| E-05 | 科目名の誤字 (営業利益 → 営業和益) | 全形 | `labelOverrides` | `label-spelling` | 今の E-05 | 1 |
+| E-05 | 科目名の誤字 (営業利益 → 営業和益) | **その科目名の欄がある形** (itemKey が一致する形。E1 の「営業利益」の誤字は E3 に出さない。§1.5 V1) | `labelOverrides` | `label-spelling` | 今の E-05 | 1 |
 | E-19 | 欄が 1 つ足りない (営業利益率の行が無い) | 全形 | `cardEdits` の `drop` | カードの型 (正常は全欄がそろう。`card-slots`) | **新規** (plans.md §3.4 の「項目の欠落」) | 1〜2 |
 | E-20 | 欄の並びが違う (売上高と営業利益率の位置が入れ替わっている) | 全形 | `cardEdits` の `swap` | カードの型 (`card-slots`) | **新規** (plans.md §3.4 の「並びの入れ替え」) | 2 |
 | E-21 | 数字の書式が違う (96,930 → 96930 や 9,6930) | 全形 | `cardEdits` の `format` | カードの型 (`card-format`) | **新規** (書式の崩れ。原作の「見た目のずれ」) | 1 |
@@ -186,7 +187,7 @@ type CardEdit =
 | E-06 | 棒の高さの比が数字の比と合わない (軸が 0 から始まらず、差が大きく見える。遊び手に軸の下端は見えない) | E2 | `ir.results.chart.netSales.axisMin` を、描いた長い棒 ÷ 短い棒が 1.5 以上になる値にする (§2.7) | `chart-axis-zero` (今の問題 easy-018 が V2 を満たす) | 今の E-06。軸を 0 から始める作法は事業者の記事 (anomalies.md の S5。目安) で、ゲームの中では正常を必ず 0 起点にして一意にする (設計) | 2 |
 | E-09 | 足し算が合わない (流動資産 49,200 + 固定資産 14,720 = 63,920 ≠ 総資産 58,080。上から 2 桁の概算 49 + 15 = 64 と合わない) | E3 | **流動資産の小計 `balanceSheet.current.totalCurrentAssets` を、総資産の 10% 以上ずらす。総資産は元のまま** (§2.7・§2.8。総資産を変えると `bs-balance`・`sum-total-assets`・`ratio-equity-ratio` も落ち、`bs-balance` は E-09 の許容集合に無い。測った) | `bs-total-assets` (3 セルがすべて E3 に載る。`primaryRules` に足す) | 今の E-09。**財務諸表等規則 第 14 条「資産は、流動資産、固定資産及び繰延資産に分類」(原文を確認。2026-11-05)**。繰延資産はこのゲームの資料に置かない (anomalies.md G5。設計) ので、総資産 = 流動資産 + 固定資産が正常で成り立つ | 2 |
 
-形ごとの種類の数 (R-S5 (c): 4 つ以上。形のずれ = E-03・E-05・E-19・E-20・E-21・E-22・E-04 の 7 つ): **E1 = E-17・E-12・E-02・E-18・E-23 + 7 = 12**、**E2 = E-17・E-02・E-07・E-06・E-23 + 7 = 12**、**E3 = E-09 + 7 = 8** (E3 は 4 つ以上を満たすが、数字の種類は 2 つ。単調にならないかは作り始めの確認で見る。**未確認**)。
+形ごとの種類の数 (R-S5 (c): 4 つ以上。形のずれ = E-03・E-05・E-19・E-20・E-21・E-22・E-04 の 7 つ): **E1 = E-17・E-12・E-02・E-18・E-23 + 7 = 12**、**E2 = E-17・E-02・E-07・E-06・E-23 + 7 = 12**、**E3 = E-09 + 7 = 8** (E3 は 4 つ以上を満たすが、数字の種類は 1 つ (E-09 だけ)。単調にならないかは作り始めの確認で見る。**未確認**)。
 
 ### 2.3 むずかしい: 17 種類 (会計・資料間 13 + 形のずれ 4)
 
@@ -294,7 +295,7 @@ anomalies.md の G3 (「端数で説明できない最小のずれ」。金額�
 
 **問題**: §1.5 の V2 は「種類の `primaryRules` の 1 つが落とした違反の `paths` がカードに載る」で見えるかを決める。しかし今の `anomaly-kinds.json` の `primaryRules`・`allowedRules` と、`checkAnomaly` の検査は、サマリーと表の対応を読むセル (カードに無い) を前提にしている。やさしいの E-02・E-09・E-18 を今の正常な問題に 1 問ずつ注入して測り (`inject-easy.ts`)、定義を決めた。
 
-**測った** (基: easy-017。easy-004・easy-013・easy-025 でも、カードに収まる規則は同じ。`node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy.ts <ID>`):
+**測った** (基: easy-017。easy-004・easy-013・easy-025 でも、カードに収まる hard の規則は同じ。`node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy.ts <ID>`):
 
 | 注入 | 落ちた hard 規則の数 | カードに収まる規則 (V2 の候補) | 採るか |
 | --- | --- | --- | --- |
@@ -317,10 +318,17 @@ anomalies.md の G3 (「端数で説明できない最小のずれ」。金額�
 | E-09 足し算 | E3 | `tanshin.balanceSheet.current.totalCurrentAssets` (流動資産の小計) を、総資産の 10% 以上ずらす (§2.7) | しない (**総資産は元のまま**) | 今の `bs-current-assets`・`bs-fixed-assets`・`bs-current-liabilities` に **`bs-total-assets`** を足す | 今のまま (`bs-total-assets` は今の許容集合内) |
 | E-18 入れ替え | E1 | `incomeStatement.current.netSales` と `…current.operatingIncome` を入れ替える (2 セル = **1 つの原因 = 転記の取り違え**。anomalies.md G1 の「1 つの原因」を、2 セルの入れ替えまで広げる) | しない | **新しい種類**。`ratio-operating-margin` | 変えたセルを読む規則すべて |
 
-**許容集合の定義 (`checkAnomaly` の変更)**: 問題に `Anomaly.changed: string[]` (`<doc>.<path>`。基の正常な問題 (R-S5 (d)) との差のセルすべて。再計算したセルを含む) を持たせる。検査は次の 3 つに変える:
+**作り方の決まり (向きを変えない。包括レビュー 2 回目 B1)**: 見出し語・棒・前期比の向きと、数字の桁ずれを混ぜない。
+- **E-02**: 倍率は、**向きを変えない方**にする。増益・増収の期 (当期 > 前期) は 10 倍、減益・減収の期は 1/10 (E1 は営業利益の向き、E2 は売上高の向き)。向きを変える倍率で作ると、見出し語の向きの逆 (E-17 の見え方) がカードの上に同時に出る (測った: 減益の期に ×10 すると `claims-direction` も E1 のカードに収まって落ちる)。
+- **E-18**: **増益の期 (当期の営業利益 > 前期) の基だけ**に作る。減益の期では、入れ替えると営業利益の主張の向きが必ず逆になる。
+- **E-09**: 向きを持たないので制限しない。
+- 測った (`node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy-all.ts`。正常 12 問): E-02/E1・E-02/E2・E-09/E3 は 12/12 に適用でき、E-18/E1 は増益の 10 問に適用できる (減益の 2 問は適用しない)。**どれも、カードに収まる違反が `primaryRules` の外に出る問題は 0 件、カードに収まる主な規則が無い問題も 0 件**。
+
+**許容集合の定義 (`checkAnomaly` の変更)**: 問題に `Anomaly.base: string` (基の正常な問題の ID。同じ `companyId` と `header.periodLabel` の正常な問題で、R-S5 (d) により 1 つに決まる。検査で一致を確かめる) と `Anomaly.changed: string[]` (`<doc>.<path>`。**種類の作り方が決めたセル** (E-02 = 1 セル、E-09 = 1 セル、E-18 = 2 セル) **と、anomalies.md G1 が求める再計算のセル**。基との実際の差と一致させる) を持たせる。この定義 1・2 は全種類に当てる。検査は次の 4 つに変える:
 1. **許容集合**: 落ちた hard 規則は、`kind.allowedRules` に入るか、**違反の `paths` が `changed` のセルを 1 つ以上読む**こと。単一の原因の変更から落ちる規則は、必ず変えたセルを読むので、連鎖を許容集合に 1 つずつ書かずに済む。
 2. **場所に触れない違反**: 今は「どの `places` にも触れない違反」を落とす。これを「違反が `places` に触れない場合も、`changed` のセルを読んでいれば許す」に緩める (二次の症状の違反がカードの外にあってよい。§1.5 V1 と整合させる)。
 3. **主な規則**: 主な規則のどれかが落ち、**その違反が V2 を満たす** (カードに収まる)。V2 を満たす主な規則が無い問題は、その形では出さない (§1.5 R-S3)。
+4. **カードの上の食い違いは 1 つだけ (二重の食い違いの禁止)**: その問題を出す形 s ごとに、**違反の `paths` がすべて s のカードのセル (別名・見出し語の文を含む) に収まる hard の違反は、すべて種類の `primaryRules` に入る**こと。1・2 の `changed` による緩めは、**カードの外** (二次の症状) の違反にだけ効く。測った (§1.7・`inject-easy-all.ts`): 下の作り方で、正常 12 問に注入して 0 件。
 - `changed` が、基の正常な問題との実際の差と一致することも検査する (機械で確かめる)。
 
 **`card-*` の種類の場所と V2 (N1)**: `cardEdits` の種類 (E-03・E-19〜E-23・H-29〜H-32) は、数字のセルの変更でないので、`places` の代わりに**場所を (shape, card, slot) で持つ** (`AnomalyPlace` に `{ doc: 'card', shape, card, slot }` を足す)。`card-*` の規則 (`card-unit`・`card-slots`・`card-format`・`card-period`・`card-headline`) は、違反の場所をこの形で返す。V1 は「編集の shape = 枠の形」(カードに欄がある形でだけ出る)、V2 は「規則の違反の場所がその形のカードの欄」。**欄の欠落 (E-19・H-31)**: 欠けたセルはカードに載らないので、答え合わせは**欠けた位置 (前後の欄のあいだ)** を示す。
@@ -399,7 +407,7 @@ phase: `title`・`difficulty`・**`sample` (0 社目。新しい。`missed?: Rou
 |  | `draw.ts` (110) | 枠ごとに形を先に引く (§1.5 R-S1〜S5)、返り値を `Round[]` に、履歴に種類 (kind) を足す |
 |  | `session.ts` (96) | ① `sample` phase (出題 = (問題 ID, 形) 8 つと `missed` を持つ) を保存し、読み出す (今の `hydrate` は phase を列挙で受けるので、足さないと 0 社目での再読み込みがタイトルに戻る) ② `view`・`marks` の保存と検査を消す ③ `game.ts` の `isScreen` の読み込みと再輸出を消す ④ `SESSION_VERSION` を 2 に上げる (版違いは捨てる。今の読み出しの決まり) |
 |  | `records.ts` (104) | 見本の済 (`sampleSeen`) を消す (見本は毎周出る)。最高到達社数・クリア回数・見つけた異変の種類 ID・答えた問題 ID の履歴は残す。`RECORDS_VERSION` を 2 に |
-|  | `types.ts` (375) | `ShapeId`・`Round`・`CardEdit`・`Problem.cardEdits`・系統 `card-form` (§2.3)・`IrStatement` などの変更。`IrDeck`・`Tanshin` は今のまま (カードは問題データから導く。§1.2) |
+|  | `types.ts` (375) | `ShapeId`・`Round`・`CardEdit`・`Problem.cardEdits`・**`Anomaly.changed` と `Anomaly.base` (§2.8)・`AnomalyPlace` の `{ doc: 'card', shape, card, slot }`**・系統 `card-form` (§2.3)・`IrStatement` などの変更。`IrDeck`・`Tanshin` は今のまま (カードは問題データから導く。§1.2) |
 |  | `sample.ts` (9) | `notes` (画面ごとの注釈) を消す。見本 = 正常な問題 1 つ |
 | **捨てる** | `marks.ts` (34)・`calc.ts` (62)・`screen.ts` (5) | 印・検算・資料の画面の参照 (道具と 10 画面は無い。Q14 の 4) |
 | **足す** | `src/domain/cards.ts` (新規)・検証器の `card-*` の規則 (§1.5・§2) | `deriveCards`・見える条件・形のずれの規則 |
