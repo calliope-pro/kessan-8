@@ -273,7 +273,7 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
         numberSlot('cashCur', 'ir.supplement.cash.current', { suffix: ' (当期)' }),
         numberSlot('cashPrev', 'ir.supplement.cash.previous', { suffix: ' (前期)' }),
         numberSlot('debtPrev', 'ir.supplement.interestBearingDebt.previous', { base: '有利子負債', suffix: ' (前期)' }),
-        numberSlot('netDebtPrev', 'ir.supplement.netDebt.previous', { suffix: ' (有利子負債 − 現金)' }),
+        numberSlot('netDebtPrev', 'ir.supplement.netDebt.previous', { suffix: ' (前期・有利子負債 − 現金)' }),
         textCell('subsequent', 'ir.outlook.subsequentEvent', { fallback: 'なし' }),
         namesSlot('segments', 'ir'),
       ],
@@ -461,9 +461,13 @@ export function cardCells(cards: Card[]): Set<string> {
   return out;
 }
 
-const covers = (read: string, key: string): boolean => key === read || key.startsWith(`${read}.`);
+/** 場所 key が、セル read と同じ・read の子・read の入れ物 (key の下に read がある。例: 欠けたセグメントを指す ir.segments.items) のどれか。 */
+const covers = (read: string, key: string): boolean => key === read || key.startsWith(`${read}.`) || read.startsWith(`${key}.`);
 
-/** 異変の場所を見せる欄 (R-D3)。パスの場所は reads が同じか親 (入れ物)、itemKey の場所は欄の itemKey が同じ。cardEdits の問題には applyEdits: false のカードを渡す。 */
+/** 場所 key (`<doc>.<path>` か itemKey) が、見えるセルの集合に載っているか。同じ・子・入れ物のいずれか (placeSlots と同じ決まり)。 */
+export const placeVisible = (cells: Set<string>, key: string): boolean => cells.has(key) || [...cells].some((c) => covers(c, key));
+
+/** 異変の場所を見せる欄 (R-D3)。パスの場所は reads が同じ・場所の親・場所の入れ物の下 (covers)、itemKey の場所は欄の itemKey が同じ。cardEdits の問題には applyEdits: false のカードを渡す。 */
 export function placeSlots(cards: Card[], place: { doc: 'tanshin' | 'ir'; path: string } | { doc: 'tanshin' | 'ir'; itemKey: string }): { card: number; key: string }[] {
   const out: { card: number; key: string }[] = [];
   cards.forEach((card, ci) => {

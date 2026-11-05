@@ -10,6 +10,7 @@ import {
   deriveCards,
   difficultyOfShape,
   placeSlots,
+  placeVisible,
   SHAPE_IDS,
   shapesOf,
   templateKeys,
@@ -151,7 +152,7 @@ describe('1.2 値 (基準問題 A・B)', () => {
     expect(slot(tan, 'plStart').label).toBe('税金等調整前当期純利益 (損益)');
     expect(slot(tan, 'segments').reads).toEqual(['tanshin.notes.segments.current.segments.0.name', 'tanshin.notes.segments.current.segments.1.name']);
     expect(texts(ir)).toEqual(['2,300', '2,100', '4,834', '2,734', 'なし', '電機部品事業・産業機器事業']);
-    expect(slot(ir, 'netDebtPrev').label).toBe('純有利子負債 (有利子負債 − 現金)');
+    expect(slot(ir, 'netDebtPrev').label).toBe('純有利子負債 (前期・有利子負債 − 現金)');
   });
 
   it('D18: B の H3 (億円)', () => {
@@ -376,6 +377,23 @@ describe('1.7 純関数・性質', () => {
     const e2 = deriveCards(easyA(), companyA(), 'E2');
     expect(placeSlots(e2, { doc: 'ir', path: 'results.netSales.current' })).toEqual([{ card: 0, key: 'salesCur' }]);
     expect(placeSlots(e2, { doc: 'ir', path: 'results.chart.netSales.current' })).toEqual([{ card: 0, key: 'bars' }]);
+  });
+  it('D56: 場所が入れ物 (欄の reads の親) のときも、その下を読む欄を拾う (欠けたセグメントを指す ir.segments.items など)', () => {
+    const h3 = deriveCards(hardA(), companyA(), 'H3');
+    expect(placeSlots(h3, { doc: 'ir', path: 'segments.items' })).toEqual([{ card: 1, key: 'segments' }]);
+    expect(placeSlots(h3, { doc: 'ir', path: 'segments.items.1.name' })).toEqual([{ card: 1, key: 'segments' }]);
+    expect(placeSlots(h3, { doc: 'tanshin', path: 'notes.segments.current.segments' })).toEqual([{ card: 0, key: 'segments' }]);
+    // 入れ物でも、下のセルが 1 つも載っていない形では拾わない
+    expect(placeSlots(deriveCards(hardA(), companyA(), 'H1'), { doc: 'ir', path: 'segments.items' })).toEqual([]);
+    // 兄弟のセルは拾わない (netSales の入れ物 incomeStatement.current.netSales は netSalesX を拾わない)
+    expect(placeSlots(deriveCards(easyA(), companyA(), 'E1'), { doc: 'tanshin', path: 'incomeStatement.current.net' })).toEqual([]);
+  });
+  it('placeVisible: 同じ・子・入れ物', () => {
+    const cells = cardCells(deriveCards(hardA(), companyA(), 'H3'));
+    expect(placeVisible(cells, 'ir.segments.items')).toBe(true);
+    expect(placeVisible(cells, 'tanshin.balanceSheet.current.cash')).toBe(true);
+    expect(placeVisible(cells, 'tanshin.balanceSheet.current.receivables')).toBe(false);
+    expect(placeVisible(cells, 'tanshin.balanceSheet.current.ca')).toBe(false);
   });
   it('cardCells: reads・itemKey・枠・別名', () => {
     const cells = cardCells(deriveCards(easyA(), companyA(), 'E1'));
