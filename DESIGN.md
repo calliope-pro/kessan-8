@@ -4,7 +4,7 @@ description: 決算の要約カードを、桁マスと朱の印のある仕訳�
 ---
 
 <!-- SEED: established with the user before implementation; re-run /impeccable document once there's code to capture the actual tokens and components. -->
-<!-- 補足: 「user」は、人間が答えられなかったため、責任者の組 (進める役と監視役) が、impeccable の抽選 (seed:c296a2149d79abdf) と挑戦者の評価 (.impeccable/surfaces/index-html.md の Direction round) で決めたもの。人間は確かめていない。 -->
+<!-- 補足 (暫定): この方向は **仮定**。人間は選択を責任者に任せた (requirements.md Q15)。impeccable の抽選 (seed:c296a2149d79abdf) の割り当てと、挑戦者の評価 (.impeccable/surfaces/index-html.md の Direction round) を、進める役が責任者に送り、**責任者の決定を待つ** (#146 のレビュー 1 回目 B10)。決まったら、決めた人と日時をここに書く。決まるまで、後続の作業はこの方向を確定として受け継がない。 -->
 
 # Design System: ８期連続
 
@@ -35,7 +35,7 @@ description: 決算の要約カードを、桁マスと朱の印のある仕訳�
 - **罫線 (rule)**: 青緑の細い線。桁区切りは同じ色で太くする。[to be resolved during implementation]
 - **インク (ink)**: 黒に近い濃い色。数字と文字。[to be resolved during implementation]
 - **朱 (stamp)**: 印影・間違い・「いま」の枠だけに使う唯一の強い色。[to be resolved during implementation]
-- **社色 (company)**: 会社ごとの色 (`src/data/companies.json` の `colors.main`・`colors.light`。白に対するコントラスト比 4.5 以上を計算済み)。角印と社名の下線だけに使い、台紙や罫線の色は変えない。
+- **社色 (company)**: 会社ごとの色 (`src/data/companies.json` の `colors.main`・`colors.light`。白に対するコントラスト比 4.5 以上を計算済み。**台紙の色に対しては実装時に計算し直す**: 台紙が白でないと 4.5 を切りうる)。角印と社名の下線だけに使い、台紙や罫線の色は変えない。
 
 **Named Rules**
 - **The One Red Rule.** 朱は印影と間違いと「いま」にだけ使う。ほかの強調に使わない。朱が出たら、遊び手に意味がある。
@@ -73,6 +73,7 @@ description: 決算の要約カードを、桁マスと朱の印のある仕訳�
 ## Do's and Don'ts
 
 ### Do:
+- 色だけに頼らない: 朱 (「いま」・間違い) には、形・塗り・文字を必ず併せる (点検欄の「いま」は塗りつぶしと太い枠、間違いは訂正の二重線と文字)。
 - 金額は桁マスに記入し、桁のずれを格子で見せる。
 - 判定は押印で表し、強い動きは押印の 1 回だけにする。
 - 答え合わせは、紙の上に朱書きで直接書く。
