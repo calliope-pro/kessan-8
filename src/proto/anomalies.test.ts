@@ -71,14 +71,32 @@ describe('A5〜A12・A15 種類ごとの中身', () => {
       expect(r >= 2 || r <= 0.5).toBe(true);
     }
   });
-  it('A7 E-02: 1 つの数字が 10 倍 (E3 は総資産を足し直す)', () => {
+  it('A7 E-02: 1 つの数字が 10 倍。再計算はしない (カードの中に食い違いが残る)', () => {
     const e1 = build('E-02', 'E1');
     expect(slot(e1.card, 'sales').value).toBe(slot(e1.base, 'sales').value * 10);
+    expect(slot(e1.card, 'margin').value).toBe(slot(e1.base, 'margin').value); // 営業利益率は元のまま
     const e2 = build('E-02', 'E2');
     expect(slot(e2.card, 'salesCurr').value).toBe(slot(e2.base, 'salesCurr').value * 10);
     const e3 = build('E-02', 'E3');
     expect(slot(e3.card, 'fixed').value).toBe(slot(e3.base, 'fixed').value * 10);
-    expect(slot(e3.card, 'total').value).toBe(slot(e3.card, 'current').value + slot(e3.card, 'fixed').value);
+    expect(slot(e3.card, 'total').value).toBe(slot(e3.base, 'total').value); // 総資産は元のまま
+  });
+  it('A7b E-02 は、桁マスの空きに頼らず、1 枚の中の食い違いで見える (設計 §2.2 の見つける規則。R-S4 の V2)', () => {
+    for (const p of NORMALS) {
+      // E1: 営業利益率 = 当期の営業利益 ÷ 売上高 が合わない (ratio-operating-margin)
+      const e1 = build('E-02', 'E1', p).card;
+      const calc = (slot(e1, 'opCurr').value / slot(e1, 'sales').value) * 100;
+      expect(Math.abs(slot(e1, 'margin').value - calc), `${p.id} E1`).toBeGreaterThanOrEqual(1.0);
+      // E3: 総資産 = 流動資産 + 固定資産 が合わない (bs-total-assets)
+      const e3 = build('E-02', 'E3', p).card;
+      const sum = slot(e3, 'current').value + slot(e3, 'fixed').value;
+      expect(Math.abs(slot(e3, 'total').value - sum) / slot(e3, 'total').value, `${p.id} E3`).toBeGreaterThanOrEqual(0.1);
+      // E2: 数字の比 (当期 ÷ 前期) が棒の比と合わない (chart-bars)
+      const e2 = build('E-02', 'E2', p).card;
+      const ratioNum = slot(e2, 'salesCurr').value / slot(e2, 'salesPrev').value;
+      const ratioBar = (e2.bars!.current - e2.bars!.axisMin) / (e2.bars!.previous - e2.bars!.axisMin);
+      expect(ratioNum / ratioBar, `${p.id} E2`).toBeGreaterThanOrEqual(5);
+    }
   });
   it('A8 E-09: 総資産が足し算の値から 10% 以上ずれる', () => {
     for (const p of NORMALS) {
@@ -106,6 +124,12 @@ describe('A5〜A12・A15 種類ごとの中身', () => {
       const lo = Math.min(previous, current) - axisMin, hi = Math.max(previous, current) - axisMin;
       expect(lo).toBeGreaterThan(0);
       expect(hi / lo).toBeGreaterThanOrEqual(1.5);
+    }
+  });
+  it('A11b E-18 は、営業利益率が売上高と営業利益から出る割合と合わなくなる (1 枚の中で見える)', () => {
+    for (const p of NORMALS) {
+      const c = build('E-18', 'E1', p).card;
+      expect(Math.abs(slot(c, 'margin').value - (slot(c, 'opCurr').value / slot(c, 'sales').value) * 100)).toBeGreaterThanOrEqual(1.0);
     }
   });
   it('A11 E-18: 売上高と当期の営業利益が入れ替わる', () => {

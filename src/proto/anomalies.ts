@@ -88,21 +88,20 @@ export const ANOMALIES: readonly AnomalyDef[] = [
     id: 'E-02', name: '桁がずれた数字', shapes: ALL,
     make(p, shape) {
       if (shape === 'E1') {
+        // 営業利益率は元のまま (再計算しない): 売上高と営業利益から出る割合と合わなくなり、1 枚の中で見える (設計 §2.2。ratio-operating-margin)
         const was = p.tanshin.incomeStatement.current.netSales;
-        const op = p.tanshin.incomeStatement.current.operatingIncome;
         setCell(p, `${IS}.current.netSales`, was * 10);
-        p.tanshin.summary.operatingMargin = round1((op / (was * 10)) * 100);
-        return { edits: [], places: [`${IS}.current.netSales`], explanation: `売上高が ${fmtAmount(was * 10)} になっています。ほかの数字と釣り合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
+        return { edits: [], places: [`${IS}.current.netSales`, 'tanshin.summary.operatingMargin'], explanation: `売上高が ${fmtAmount(was * 10)} になっています。営業利益率 ${p.tanshin.summary.operatingMargin}% と合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
       }
       if (shape === 'E2') {
         const was = p.tanshin.incomeStatement.current.netSales;
         setCell(p, `${IS}.current.netSales`, was * 10);
         return { edits: [], places: [`${IS}.current.netSales`], explanation: `当期の売上高が ${fmtAmount(was * 10)} になっています。棒の高さと釣り合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
       }
+      // 総資産は元のまま (足し直さない): 流動資産 + 固定資産と合わなくなり、1 枚の中で見える (設計 §2.2。bs-total-assets)
       const was = p.tanshin.balanceSheet.current.totalFixedAssets;
       setCell(p, `${BS}.totalFixedAssets`, was * 10);
-      setCell(p, `${BS}.totalAssets`, p.tanshin.balanceSheet.current.totalCurrentAssets + was * 10);
-      return { edits: [], places: [`${BS}.totalFixedAssets`], explanation: `固定資産が ${fmtAmount(was * 10)} になっています。ほかの数字と釣り合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
+      return { edits: [], places: [`${BS}.totalFixedAssets`, `${BS}.totalAssets`], explanation: `固定資産が ${fmtAmount(was * 10)} になっています。流動資産との和が総資産 ${fmtAmount(p.tanshin.balanceSheet.current.totalAssets)} と合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
     },
   },
   {
