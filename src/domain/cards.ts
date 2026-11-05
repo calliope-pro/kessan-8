@@ -21,6 +21,8 @@ export interface CardSlot {
   /** 欄の ID (形の中で一意)。 */
   key: string;
   kind: 'number' | 'text';
+  /** 前期・当期の列 (同じ itemKey の欄を区別する。科目名の添え字は、欄と一緒に動く)。列を持たない欄は undefined。 */
+  column?: 'previous' | 'current';
   /** 数字の種類 (金額・比率)。文欄は text。標準の単位・書式を引くのに使う (検証器の card-unit・card-format)。 */
   measure: 'money' | 'percent' | 'text';
   /** 科目名の項目キー (labels.ts)。科目名でない文欄は null。 */
@@ -75,7 +77,10 @@ interface SlotDef {
   itemKey: string | null;
   /** 標準の名前 (LABELS の代わり)。 */
   base?: string;
-  suffix?: string;
+  suffix?: string | ((ctx: Ctx) => string);
+  column?: 'previous' | 'current';
+  /** 数字のセルに足して読むセル (科目名に出す語の出所。reads の 2 つ目以降)。 */
+  alsoReads?: string[];
   unit?: 'money' | 'pct';
   /** 科目名の差し替えを使わない固定の名前。 */
   label?: string;
@@ -109,8 +114,20 @@ const num = (ctx: Ctx, ref: string): Value | null => {
   return typeof v === 'number' ? { raw: v, reads: [ref] } : null;
 };
 
-function numberSlot(key: string, ref: string, o: { base?: string; suffix?: string; unit?: 'money' | 'pct' } = {}): SlotDef {
-  return { key, kind: 'number', itemKey: itemKeyOf(docOf(ref), pathOf(ref)), base: o.base, suffix: o.suffix, unit: o.unit ?? 'money', read: (ctx) => num(ctx, ref) };
+function numberSlot(key: string, ref: string, o: { base?: string; suffix?: string | ((ctx: Ctx) => string); column?: 'previous' | 'current'; alsoReads?: string[]; unit?: 'money' | 'pct' } = {}): SlotDef {
+  return {
+    key,
+    kind: 'number',
+    itemKey: itemKeyOf(docOf(ref), pathOf(ref)),
+    base: o.base,
+    suffix: o.suffix,
+    column: o.column,
+    unit: o.unit ?? 'money',
+    read: (ctx) => {
+      const v = num(ctx, ref);
+      return v === null || o.alsoReads === undefined ? v : { ...v, reads: [...v.reads, ...o.alsoReads] };
+    },
+  };
 }
 
 function textCell(key: string, ref: string, o: { base?: string; fallback?: string } = {}): SlotDef {
@@ -184,8 +201,8 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
       headline: { metric: 'operatingIncome', up: '増益', down: '減益' },
       slots: [
         numberSlot('netSales', `${IS}.current.netSales`),
-        numberSlot('opPrev', `${IS}.previous.operatingIncome`, { suffix: ' (前期)' }),
-        numberSlot('opCur', `${IS}.current.operatingIncome`, { suffix: ' (当期)' }),
+        numberSlot('opPrev', `${IS}.previous.operatingIncome`, { suffix: ' (前期)', column: 'previous' }),
+        numberSlot('opCur', `${IS}.current.operatingIncome`, { suffix: ' (当期)', column: 'current' }),
         numberSlot('margin', 'tanshin.summary.operatingMargin', { unit: 'pct' }),
       ],
     },
@@ -200,7 +217,7 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
         ['ir.results.netSales.previous', `${IS}.previous.netSales`],
         ['ir.results.netSales.current', `${IS}.current.netSales`],
       ],
-      slots: [numberSlot('salesPrev', `${IS}.previous.netSales`, { suffix: ' (前期)' }), numberSlot('salesCur', `${IS}.current.netSales`, { suffix: ' (当期)' })],
+      slots: [numberSlot('salesPrev', `${IS}.previous.netSales`, { suffix: ' (前期)', column: 'previous' }), numberSlot('salesCur', `${IS}.current.netSales`, { suffix: ' (当期)', column: 'current' })],
     },
   ],
   E3: [
@@ -219,8 +236,8 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
       doc: 'tanshin',
       screen: 'incomeStatement',
       slots: [
-        numberSlot('salesPrev', `${IS}.previous.netSales`, { suffix: ' (前期)' }),
-        numberSlot('salesCur', `${IS}.current.netSales`, { suffix: ' (当期)' }),
+        numberSlot('salesPrev', `${IS}.previous.netSales`, { suffix: ' (前期)', column: 'previous' }),
+        numberSlot('salesCur', `${IS}.current.netSales`, { suffix: ' (当期)', column: 'current' }),
         numberSlot('totalAssets', `${BS}.current.totalAssets`),
         numberSlot('totalLiabNet', `${BS}.current.totalLiabilitiesAndNetAssets`),
       ],
@@ -238,8 +255,8 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
       doc: 'tanshin',
       screen: 'cashFlow',
       slots: [
-        numberSlot('recvPrev', `${BS}.previous.receivables`, { suffix: ' (前期末)' }),
-        numberSlot('recvCur', `${BS}.current.receivables`, { suffix: ' (当期末)' }),
+        numberSlot('recvPrev', `${BS}.previous.receivables`, { suffix: ' (前期末)', column: 'previous' }),
+        numberSlot('recvCur', `${BS}.current.receivables`, { suffix: ' (当期末)', column: 'current' }),
         numberSlot('recvChange', `${CF}.receivablesChange`),
         numberSlot('operatingCf', `${CF}.operatingCashFlow`),
         {
@@ -282,7 +299,11 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
         numberSlot('cfStart', `${CF}.incomeBeforeTax`, { base: LABELS['tanshin.cashFlow.incomeBeforeTax'], suffix: ' (CF)' }),
         numberSlot('plStart', `${IS}.current.incomeBeforeTax`, { suffix: ' (損益)' }),
         numberSlot('cash', `${BS}.current.cash`),
-        numberSlot('cfEnd', `${CF}.cashEnding`),
+        numberSlot('cfEnd', `${CF}.cashEnding`, {
+          // 科目名に資金の範囲を出す (H-04 の正常を一意にする。範囲の語は notes.cashScope から作る。枠の外の語)
+          suffix: (ctx) => ` (資金の範囲 = ${ctx.p.tanshin.notes.cashScope})`,
+          alsoReads: ['tanshin.notes.cashScope'],
+        }),
         textCell('auditNote', 'tanshin.summary.auditNote'),
         textCell('subsequent', 'tanshin.notes.subsequentEvents'),
         namesSlot('segments', 'tanshin'),
@@ -291,8 +312,8 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
     {
       doc: 'ir',
       slots: [
-        numberSlot('cashCur', 'ir.supplement.cash.current', { suffix: ' (当期)' }),
-        numberSlot('cashPrev', 'ir.supplement.cash.previous', { suffix: ' (前期)' }),
+        numberSlot('cashCur', 'ir.supplement.cash.current', { suffix: ' (当期)', column: 'current' }),
+        numberSlot('cashPrev', 'ir.supplement.cash.previous', { suffix: ' (前期)', column: 'previous' }),
         numberSlot('debtPrev', 'ir.supplement.interestBearingDebt.previous', { base: '有利子負債', suffix: ' (前期)' }),
         numberSlot('netDebtPrev', 'ir.supplement.netDebt.previous', { suffix: ' (前期・有利子負債 − 現金)' }),
         textCell('subsequent', 'ir.outlook.subsequentEvent', { fallback: 'なし' }),
@@ -346,7 +367,8 @@ function build(def: SlotDef, ctx: Ctx): Built | null {
   if (v === null) return null;
   const overrides = ctx.p.labelOverrides ?? {};
   const name = def.label ?? (def.itemKey !== null ? overrides[def.itemKey] : undefined) ?? def.base ?? (def.itemKey !== null ? LABELS[def.itemKey] : undefined) ?? '';
-  const label = `${name}${def.suffix ?? ''}`;
+  const suffix = typeof def.suffix === 'function' ? def.suffix(ctx) : (def.suffix ?? '');
+  const label = `${name}${suffix}`;
   const ref = v.reads[0] ?? '';
   const sign = ctx.p.signOverrides?.[ref] ?? '△';
   if (def.kind === 'text') {
@@ -360,7 +382,7 @@ function build(def: SlotDef, ctx: Ctx): Built | null {
     const doc = docOf(ref);
     unit = ctx.p.unitOverrides?.[`${doc}.${ref.split('.')[1] ?? ''}`] ?? ctx.p[doc].header.unit;
   }
-  return { slot: { key: def.key, kind: 'number', measure: isPct ? 'percent' : 'money', itemKey: def.itemKey, label, text: formatNumber(v.raw as number, fmt), unit, raw: v.raw, reads: v.reads }, fmt };
+  return { slot: { key: def.key, kind: 'number', measure: isPct ? 'percent' : 'money', ...(def.column ? { column: def.column } : {}), itemKey: def.itemKey, label, text: formatNumber(v.raw as number, fmt), unit, raw: v.raw, reads: v.reads }, fmt };
 }
 
 function headlineOf(def: CardDef, ctx: Ctx): Card['headline'] {

@@ -463,7 +463,7 @@ describe('11.2 V28〜V31 検査 5 (表示が実際に変わる)', () => {
     const actual = [...new Set(verifyProblem(p, companyA()).hard.map((v) => v.rule))].sort();
     return set(p, 'anomaly', { kind: kind.id, places, explanation: 'x', expectedRules: actual, base: 'base' });
   };
-  const vis = (p: Problem, kind: AnomalyKind, b: Problem | undefined = base()) => visibleShapes(p, companyA(), [kind], undefined, b);
+  const vis = (p: Problem, kind: AnomalyKind, b: Problem | null = base()) => visibleShapes(p, companyA(), [kind], undefined, b ?? undefined);
   it('V29: 数値の異変・unit・drop・swap・dup・headline・format (4 桁以上) は表示が変わる → 見える', () => {
     const margin = kindOf2(['ratio-operating-margin']);
     expect(vis(make(set(easy(), 'tanshin.summary.operatingMargin', 20), margin, [{ doc: 'tanshin', path: 'summary.operatingMargin' }]), margin)).toEqual(['E1']);
@@ -479,16 +479,16 @@ describe('11.2 V28〜V31 検査 5 (表示が実際に変わる)', () => {
     const head = kindOf2(['card-headline']);
     expect(vis(e({ shape: 'E1', card: 0, op: 'headline', word: '増収' }, head, 'headline'), head)).toEqual(['E1']);
   });
-  it('V29: H2 の売上債権の増減額 (△100) の no-comma は表示が変わらない → 見えない。base が無ければ検査しない (V31)', () => {
+  it('V29: H2 の売上債権の増減額 (△100) の no-comma は表示が変わらない (card-format も落ちない) → 見えない。K11 も別に弾く', () => {
     const fmt = kindOf2(['card-format']);
     const p = make({ ...hard(), cardEdits: [{ shape: 'H2', card: 0, slot: 'recvChange', op: 'format', style: 'no-comma' }] }, fmt, [{ doc: 'card', shape: 'H2', card: 0, slot: 'recvChange' }]);
     expect(vis(p, fmt, hard())).toEqual([]);
-    expect(vis(p, fmt, undefined)).toEqual(['H2']);
+    expect(cardEditIssues(p, companyA()).length).toBe(1);
   });
   it('V30: 別名だけを変えた異変 (ir.results.netSales.current) は E2 で表示が変わらない', () => {
     const kind = kindOf2(['xdoc-results-net-sales']);
     const p = make(add(easy(), 'ir.results.netSales.current', 10), kind, [{ doc: 'ir', path: 'results.netSales.current' }]);
-    expect(vis(p, kind, undefined)).toContain('E2'); // 検査 5 が無ければ見える
+    expect(vis(p, kind, null)).toContain('E2'); // 基が無ければ検査 5 を当てない (V31)。V1・V2 は別名で通る
     expect(vis(p, kind, easy())).toEqual([]);
   });
   it('V28: 基の正常な問題どうしでは (異変の無い問題) 難易度の全形', () => {

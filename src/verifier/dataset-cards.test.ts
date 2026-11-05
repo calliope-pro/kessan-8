@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { AnomalyKind, Company, Difficulty, Problem, ShapeId } from '../domain/types.ts';
 import { verifyDataset, verifyProblem } from './index.ts';
 import { changedCells } from './path.ts';
-import { inYear, kindOf, normalVariant, set, shapeAnomaly, anomalyVariant, type DatasetInput } from './test-utils.ts';
+import { add, inYear, kindOf, normalVariant, set, shapeAnomaly, anomalyVariant, type DatasetInput } from './test-utils.ts';
 import { companyA } from './test-utils.ts';
 
 const SHAPES: Record<Difficulty, ShapeId[]> = { easy: ['E1', 'E2', 'E3'], hard: ['H1', 'H2', 'H3'] };
@@ -391,18 +391,24 @@ describe('11.2 S22・S23 (設計 #160)', () => {
     const withSample = { ...input, companies: [...input.companies, { ...companyA(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: sample }] };
     expect(verifyDataset(withSample).errors.some((e) => e.code === 'cash-scope' && e.problem === 'sample')).toBe(true);
   });
-  it('S23: 検査 5 で見える形が 0 になる問題は card-invisible (V3)。card-edit-op は errors', () => {
+  it('S23: 検査 5 で見える形が 0 になる問題 (別名だけを変えた異変) は card-invisible (V3)', () => {
+    const input = cardPool();
+    const normal = normalsOf(input).find((p) => (p.value as Problem).companyId === 'c1')!.value as Problem;
+    const kind = kindOf('k-alias', 'calculation', ['xdoc-results-net-sales'], ['xdoc-results-net-sales', 'chart-bars']);
+    const p0 = add(normalVariant('easy-950', 'easy', 'c1'), 'ir.results.netSales.current', 10);
+    const actual = [...new Set(verifyProblem(p0, companyA()).hard.map((v) => v.rule))].sort();
+    const p = set(p0, 'anomaly', { kind: 'k-alias', places: [{ doc: 'ir', path: 'results.netSales.current' }], explanation: 'x', expectedRules: actual, base: normal.id, changed: ['ir.results.netSales.current'] });
+    const r = verifyDataset({ ...input, kinds: [...input.kinds, kind], problems: [...input.problems, { file: file(p), value: p }] });
+    expect(r.shortfalls.find((s) => s.code === 'card-invisible' && s.problem === 'easy-950')?.message).toContain('V3');
+  });
+  it('S23: card-edit-op は errors (H2 の売上債権の増減額 △100 に no-comma)', () => {
     const input = cardPool({ difficulty: 'hard' });
     const normal = normalsOf(input).find((p) => (p.value as Problem).companyId === 'c1')!.value as Problem;
     const fmt = kindOf('k-fmt', 'card-form', ['card-format'], ['card-format']);
     const edit = { shape: 'H2' as const, card: 0, slot: 'recvChange', op: 'format' as const, style: 'no-comma' as const };
     const p0 = { ...normalVariant('hard-950', 'hard', 'c1'), cardEdits: [edit] } as Problem;
-    const actual = [...new Set(verifyProblem(p0, companyA()).hard.map((v) => v.rule))].sort();
-    const p = set(p0, 'anomaly', { kind: 'k-fmt', places: [{ doc: 'card', shape: 'H2', card: 0, slot: 'recvChange' }], explanation: 'x', expectedRules: actual, base: normal.id, changed: [] });
+    const p = set(p0, 'anomaly', { kind: 'k-fmt', places: [{ doc: 'card', shape: 'H2', card: 0, slot: 'recvChange' }], explanation: 'x', expectedRules: [], base: normal.id, changed: [] });
     const r = verifyDataset({ ...input, kinds: [...input.kinds, fmt], problems: [...input.problems, { file: file(p), value: p }] });
-    const inv = r.shortfalls.find((s) => s.code === 'card-invisible' && s.problem === 'hard-950');
-    expect(inv?.message).toContain('V3');
     expect(r.errors.some((e) => e.code === 'card-edit-op' && e.problem === 'hard-950')).toBe(true);
   });
 });
-

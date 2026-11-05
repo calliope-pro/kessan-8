@@ -1,10 +1,11 @@
 // データ全件の検証 (ケース表 §2.8)。errors = 致命、shortfalls = 数が足りない (完成の段階で効く)、soft = 参考の規則。
+import { LABELS } from '../domain/labels.ts';
 import { CLAIMS_SHOWN, CLAIM_DOWN_MIN_COMPANIES, FAMILY_SHARE_MIN, MIN_POOL_PER_DIFFICULTY, ROUNDS_TO_CLEAR } from '../domain/config.ts';
 import { deriveCards, shapesOf } from '../domain/cards.ts';
 import { FAMILY_DIFFICULTY, IR_SLIDES, TANSHIN_SCREENS } from '../domain/types.ts';
 import type { AnomalyKind, Company, Difficulty, Problem, ShapeId } from '../domain/types.ts';
 import { anomalyIssues } from './anomaly.ts';
-import { cardLimitIssues, cardRelationIssues, cardStructureIssues, cardTextLengthIssues, deviationIssues, doubleDiscrepancies, shapeChecks, visibleShapes } from './cards.ts';
+import { cardEditIssues, cardLimitIssues, cardRelationIssues, cardStructureIssues, cardTextLengthIssues, deviationIssues, doubleDiscrepancies, shapeChecks, visibleShapes } from './cards.ts';
 import { changedCells } from './path.ts';
 import { verifyIrDisplay, verifyProblem } from './index.ts';
 import type { VerifyResult } from './index.ts';
@@ -94,6 +95,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     if (dir !== p.difficulty) add('difficulty-mismatch', `置き場 ${dir} と difficulty ${p.difficulty} が違う`);
     valid.push(p);
     for (const m of claimsCountIssues(p)) add('claims-count', m);
+    for (const m of cashScopeIssues(p)) add('cash-scope', m);
     stats[p.difficulty].total++;
     stats[p.difficulty][p.anomaly ? 'anomaly' : 'normal']++;
 
@@ -154,6 +156,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     for (const issue of anomalyIssues(p, kinds, result)) add(issue.code, issue.message);
     // 見本は毎周の 0 社目にカードで出る (両方の難易度で共有)。問題・異変の問題と同じ検査 (主張・構造・関係・文欄の長さ) を、両方の難易度の形で当てる
     for (const m of claimsCountIssues(p)) add('claims-count', m);
+    for (const m of cashScopeIssues(p)) add('cash-scope', m);
     for (const difficulty of DIFFICULTIES) {
       const q = { ...p, difficulty };
       const long: string[] = [];
@@ -204,6 +207,12 @@ function claimsCountIssues(p: Problem): string[] {
   return out;
 }
 
+/** 資金の範囲 (notes.cashScope) は現金の標準の名前と同じ (H-04 の正常を一意にする。定期預金などを書くと、2 つの金額の差が説明できてしまう。docs/design-v2.md §2.8)。 */
+function cashScopeIssues(p: Problem): string[] {
+  const standard = LABELS['tanshin.balanceSheet.cash'];
+  return p.tanshin.notes.cashScope === standard ? [] : [`資金の範囲 ${p.tanshin.notes.cashScope} が ${standard} と違う`];
+}
+
 /** 異変の問題の基との差 (§2.8)。base・changed の誤りは errors、無いものは shortfalls (データの Task が足す)。 */
 function baseIssues(p: Problem, valid: Problem[], errors: Entry[], shortfalls: Entry[]): void {
   const a = p.anomaly;
@@ -248,9 +257,11 @@ function cardChecks(judged: { p: Problem; company: Company; result: VerifyResult
         if (!(error instanceof RangeError)) throw error;
       }
     }
+    const baseProblem = p.anomaly.base === undefined ? undefined : valid.find((q) => q.id === p.anomaly?.base && q.anomaly === null && q.companyId === p.companyId);
+    for (const m of cardEditIssues(p, company)) errors.push({ code: 'card-edit-op', problem: p.id, message: `${p.id}: ${m}` });
     let shapes: ShapeId[] = [];
     try {
-      shapes = visibleShapes(p, company, kinds, result);
+      shapes = visibleShapes(p, company, kinds, result, baseProblem);
     } catch (error) {
       if (!(error instanceof RangeError)) throw error;
     }
@@ -258,7 +269,7 @@ function cardChecks(judged: { p: Problem; company: Company; result: VerifyResult
     if (shapes.length === 0 && kinds.some((k) => k.id === p.anomaly?.kind)) {
       let why = '';
       try {
-        why = shapeChecks(p, company, kinds, result).map((c) => `${c.shape}: ${c.missingPlaces.length > 0 ? `V1 カードに載らない場所 ${c.missingPlaces.join('・')}` : 'V2 主な規則の違反がカードに収まらない'}`).join(' / ');
+        why = shapeChecks(p, company, kinds, result, baseProblem).map((c) => `${c.shape}: ${c.missingPlaces.length > 0 ? `V1 カードに載らない場所 ${c.missingPlaces.join('・')}` : !c.v2 ? 'V2 主な規則の違反がカードに収まらない' : 'V3 表示が基と変わらない'}`).join(' / ');
       } catch {
         why = 'cardEdits が導けない';
       }
@@ -268,7 +279,7 @@ function cardChecks(judged: { p: Problem; company: Company; result: VerifyResult
     if (textPlaces.length > 0) short('card-place-text', p, p.difficulty, `${p.id}: 異変の場所が ir.statements.<N>.text を指す (カードの文は claims から作り、text は読まない。場所は ir.statements.<N> で書く)`);
     const dev = deviationIssues(p, company);
     if (dev.length > 0) short('anomaly-min-deviation', p, p.difficulty, `${p.id}: ${dev.join('、')}`);
-    const doubles = shapes.length > 0 ? doubleDiscrepancies(p, company, kinds, result) : [];
+    const doubles = shapes.length > 0 ? doubleDiscrepancies(p, company, kinds, result, baseProblem) : [];
     if (doubles.length > 0) short('card-double-discrepancy', p, p.difficulty, `${p.id}: カードの上の食い違いが主な規則の外にもある (${doubles.map((x) => `${x.shape}: ${x.rules.join('・')}`).join(' / ')})`);
   }
   for (const d of DIFFICULTIES) {

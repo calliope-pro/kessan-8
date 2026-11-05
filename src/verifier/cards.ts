@@ -1,5 +1,5 @@
 // カードの整合・構造・見える条件・二重の食い違い・最小のずれ (ケース表 docs/test-cases/cards.md §2・§4・§8・§9.3。設計 docs/design-v2.md §1.5・§2.7・§2.8)。
-import { CARD_LIMITS, CARD_TEXT_MAX, cardCells, deriveCards, difficultyOfShape, headlineWords, placeVisible, shapesOf, templateKeys } from '../domain/cards.ts';
+import { CARD_LIMITS, CARD_TEXT_MAX, cardCells, deriveCards, difficultyOfShape, headlineWords, placeSlots, placeVisible, shapesOf, templateKeys } from '../domain/cards.ts';
 import type { Card } from '../domain/cards.ts';
 import { LABELS, SECTION_OF_ITEM } from '../domain/labels.ts';
 import type { AnomalyKind, AnomalyPlace, Company, IrStatement, Problem, ShapeId } from '../domain/types.ts';
@@ -141,8 +141,80 @@ export function cardRelationIssues(cards: Card[], shape: ShapeId, ctx: RelationC
 
 // ---- 見える条件 (R-S4 の V1・V2) ----
 
+/** カードの欄の「見えるもの」だけの表示モデル (§2.8 検査 5)。出す文字列 (科目名・添え字・資金の範囲を含む)・数字の文字列・単位の語・見える順の位置・欄の有無・見出し語・棒の値・枠。編集の印 (op・style)・欄の key・itemKey は入れない。 */
+function viewOf(cards: Card[], card: number, key: string): string {
+  const c = cards[card];
+  if (c === undefined) return 'none';
+  if (key === 'headline') return JSON.stringify(c.headline?.word ?? null);
+  if (key === 'bars') return JSON.stringify(c.bars === undefined ? null : { axisMin: c.bars.axisMin, values: c.bars.items.map((i) => i.value) });
+  if (key === 'frame') return JSON.stringify({ n: c.frame.companyName, s: c.frame.securitiesCode, p: c.frame.periodLabel, e: c.frame.periodEnd ?? null });
+  return JSON.stringify(c.slots.flatMap((s, pos) => (s.key === key ? [{ pos, label: s.label, text: s.text, unit: s.unit }] : [])));
+}
+
+/** 検査 5: 形 shape で、places の欄の表示が基の同じ形のカードと違うか (どれか 1 つの欄でも違えばよい)。cardEdits の問題は、場所をテンプレートのカードで引く (drop は欠けた位置)。 */
+export function displayChanges(problem: Problem, base: Problem, company: Company, shape: ShapeId): boolean {
+  const anomaly = problem.anomaly;
+  if (anomaly === null) return false;
+  try {
+    const template = deriveCards(problem, company, shape, { applyEdits: false });
+    const edited = deriveCards(problem, company, shape);
+    const reference = deriveCards({ ...base, difficulty: problem.difficulty }, company, shape);
+    return anomaly.places.flatMap((p) => placeSlots(template, p)).some(({ card, key }) => viewOf(edited, card, key) !== viewOf(reference, card, key));
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+/** cardEdits が、§1.6 の op ごとに当ててよい欄に当たっているか (検査 5 とは別の検査)。形や欄が形に無い編集は、ここでは数えない (anomalyIssues が拾う)。 */
+export function cardEditIssues(problem: Problem, company: Company): string[] {
+  const out: string[] = [];
+  for (const e of problem.cardEdits ?? []) {
+    if (!shapesOf(problem.difficulty).includes(e.shape)) continue;
+    const card = deriveCards(problem, company, e.shape, { applyEdits: false })[e.card];
+    if (card === undefined) continue;
+    const at = `cardEdits (${e.shape} カード ${e.card} ${e.op})`;
+    const find = (key: string) => card.slots.find((s) => s.key === key);
+    const intDigits = (text: string) => (text.replace(/[^\d.]/g, '').split('.')[0] ?? '').length;
+    switch (e.op) {
+      case 'unit': {
+        const s = find(e.slot);
+        if (s !== undefined && s.measure !== 'money') out.push(`${at}: 単位を表示する金額の欄でない (${e.slot})`);
+        break;
+      }
+      case 'format': {
+        const s = find(e.slot);
+        if (s === undefined) break;
+        const need = e.style === 'no-comma' ? 4 : 5;
+        if (s.measure !== 'money') out.push(`${at}: 金額の欄でない (${e.slot})`);
+        else if (intDigits(s.text) < need) out.push(`${at}: ${e.slot} の表示 ${s.text} の整数部が ${need} 桁未満で、書式を変えても見た目が変わらない`);
+        break;
+      }
+      case 'swap': {
+        const [a, b] = [find(e.slots[0]), find(e.slots[1])];
+        if (a !== undefined && b !== undefined && a.itemKey !== null && a.itemKey === b.itemKey) out.push(`${at}: 同じ科目の欄どうし (${e.slots.join('・')}) の入れ替えは、向きの逆 (E-17) と同じ見え方になる`);
+        break;
+      }
+      case 'headline': {
+        const other = headlineWords(e.shape === 'E1' ? 'E2' : 'E1', 0);
+        if (headlineWords(e.shape, e.card) === null) break;
+        if (other === null || !other.includes(e.word)) out.push(`${at}: 見出し語 ${e.word} は、元の語の組の外 (${other?.join('・') ?? ''}) でない`);
+        break;
+      }
+      case 'dup':
+        if (e.shape !== 'E3') out.push(`${at}: 欄の重複は E3 だけ (数字の欄が 4 つの形は、重複すると画面に 5 つ出る)`);
+        break;
+      case 'drop':
+        break;
+    }
+  }
+  return out;
+}
+
 export interface ShapeCheck {
   shape: ShapeId;
+  /** 検査 5 (基があるときだけ): places の欄の表示が基と変わるか。基が無いとき null。 */
+  v3: boolean | null;
   /** V1 を満たさない場所 (カードに載らない)。 */
   missingPlaces: string[];
   /** V2: 主な規則の違反で、paths がすべてカードに載るものがあるか。 */
@@ -152,7 +224,7 @@ export interface ShapeCheck {
 const placeKey = (p: AnomalyPlace): string => (p.doc === 'card' ? `card.${p.shape}.${p.card}.${p.slot}` : 'itemKey' in p ? p.itemKey : `${p.doc}.${p.path}`);
 
 /** 異変の問題の、難易度の形ごとの V1・V2 (cardEdits の問題はテンプレートのカードで判定する)。 */
-export function shapeChecks(problem: Problem, company: Company, kinds: AnomalyKind[], result: VerifyResult = verifyProblem(problem, company)): ShapeCheck[] {
+export function shapeChecks(problem: Problem, company: Company, kinds: AnomalyKind[], result: VerifyResult = verifyProblem(problem, company), base?: Problem): ShapeCheck[] {
   const anomaly = problem.anomaly;
   const kind = kinds.find((k) => k.id === anomaly?.kind);
   if (anomaly === null || kind === undefined) return [];
@@ -160,24 +232,24 @@ export function shapeChecks(problem: Problem, company: Company, kinds: AnomalyKi
     const cells = cardCells(deriveCards(problem, company, shape, { applyEdits: false }));
     const missingPlaces = anomaly.places.filter((p) => !(p.doc === 'card' || 'itemKey' in p ? cells.has(placeKey(p)) : placeVisible(cells, placeKey(p)))).map(placeKey);
     const v2 = [...result.hard, ...result.soft].some((v) => kind.primaryRules.includes(v.rule) && v.paths.length > 0 && v.paths.every((path) => cells.has(path)));
-    return { shape, missingPlaces, v2 };
+    return { shape, missingPlaces, v2, v3: base === undefined ? null : displayChanges(problem, base, company, shape) };
   });
 }
 
 /** 異変の問題が見える形 (V1 かつ V2)。正常な問題は難易度の全形。種類が引けない異変は空。 */
-export function visibleShapes(problem: Problem, company: Company, kinds: AnomalyKind[], result?: VerifyResult): ShapeId[] {
+export function visibleShapes(problem: Problem, company: Company, kinds: AnomalyKind[], result?: VerifyResult, base?: Problem): ShapeId[] {
   if (problem.anomaly === null) return shapesOf(problem.difficulty);
-  return shapeChecks(problem, company, kinds, result)
-    .filter((c) => c.missingPlaces.length === 0 && c.v2)
+  return shapeChecks(problem, company, kinds, result, base)
+    .filter((c) => c.missingPlaces.length === 0 && c.v2 && c.v3 !== false)
     .map((c) => c.shape);
 }
 
 /** 二重の食い違い (§2.8 の検査 4): 見える形ごとに、paths がカードに収まる hard の違反のうち、種類の primaryRules の外の規則。 */
-export function doubleDiscrepancies(problem: Problem, company: Company, kinds: AnomalyKind[], result: VerifyResult = verifyProblem(problem, company)): { shape: ShapeId; rules: string[] }[] {
+export function doubleDiscrepancies(problem: Problem, company: Company, kinds: AnomalyKind[], result: VerifyResult = verifyProblem(problem, company), base?: Problem): { shape: ShapeId; rules: string[] }[] {
   const kind = kinds.find((k) => k.id === problem.anomaly?.kind);
   if (kind === undefined) return [];
   const out: { shape: ShapeId; rules: string[] }[] = [];
-  for (const shape of visibleShapes(problem, company, kinds, result)) {
+  for (const shape of visibleShapes(problem, company, kinds, result, base)) {
     const cells = cardCells(deriveCards(problem, company, shape, { applyEdits: false }));
     const onCard = result.hard.filter((v) => v.paths.length > 0 && v.paths.every((p) => cells.has(p)));
     const rules = [...new Set(onCard.map((v) => v.rule).filter((r) => !kind.primaryRules.includes(r)))].sort();
