@@ -12,7 +12,7 @@ Task #138 (受け入れ条件 6)。根拠: [design-v2.md](../design-v2.md) §1 (
 | --- | --- |
 | `SHAPE_IDS`・`shapesOf(difficulty)`・`difficultyOfShape(shape)` (`src/domain/cards.ts`) | 形の ID の一覧 `E1 E2 E3 H1 H2 H3` / やさしい → `[E1,E2,E3]`、むずかしい → `[H1,H2,H3]` / 形 → 難易度 |
 | `deriveCards(problem, company, shape, options?)` | 問題・会社・形 → `Card[]` (やさしい = 1 枚、むずかしい = [短信型, IR 型])。**純関数**。形の難易度が問題の難易度と違えば `RangeError`。`options.applyEdits` は既定 `true`。`false` なら `cardEdits` を無視して形のとおりのカード (**テンプレートのカード**) を返す。見える条件 (§4) と答え合わせの場所 (`placeSlots`) は、`cardEdits` を持つ問題ではこのテンプレートのカードで判定する (`drop` は欄が無くなるので、編集後のカードでは場所を示せない。遊び手にはテンプレートの位置の「欠け」を示す) |
-| `Card` | `{ doc: 'summary'｜'tanshin'｜'ir'; frame: { companyName, securitiesCode, periodLabel, periodEnd? }; headline?: { word, reads }; slots: CardSlot[]; bars?: { axisMin, items: [{ key: 'previous'｜'current', value, reads }] } }` |
+| `Card` | `{ doc: 'summary'｜'tanshin'｜'ir'; frame: { companyName, securitiesCode, periodLabel, periodEnd? }; headline?: { word, reads }; slots: CardSlot[]; bars?: { axisMin, axisReads, items: [{ key: 'previous'｜'current', value, reads }] }; aliases: { cell, of }[] }`。`aliases` = 別名 (§4。E2 だけが持つ: `ir.results.netSales.*` は短信の売上高の欄が見せているとみなす。正常では必ず等しいので) |
 | `CardSlot` | `{ key; kind: 'number'｜'text'; itemKey; label; text; unit; raw; reads }`。`text` = 画面に出す文字列 (数字は桁区切り・符号つき、文欄は文)。`raw` = 元のセルの値 (数字欄は number、文欄は string)。`unit` = 単位の語 (金額は `百万円`/`億円`、比率は `%`、文欄は空)。`reads` = その欄が読むセル `<doc>.<path>` |
 | `countNumbers(card)`・`countTexts(card)` | 枠の外を除いた数字の数 (棒 1 本も 1 つ)・文欄の数 |
 | `cardCells(cards)` | 見えるセルの集合 = 全欄の `reads` + 全欄の `itemKey` + 枠のセル (`<doc>.header.companyName・securitiesCode・periodLabel`、`tanshin.columnDates.<画面>.current`) + 棒の `reads` |
@@ -100,11 +100,11 @@ Task #138 (受け入れ条件 6)。根拠: [design-v2.md](../design-v2.md) §1 (
 | D30 | `[{shape:'E1',card:0,slot:'margin',op:'drop'}]` | E1 の欄の key が `netSales`・`opPrev`・`opCur` の 3 つ。**E2・E3 は編集に影響されない** (編集は `shape` が同じ形でだけ効く) |
 | D31 | `[{shape:'E1',card:0,op:'swap',slots:['netSales','margin']}]` | 欄の並びが `margin`・`opPrev`・`opCur`・`netSales` |
 | D32 | `[{shape:'E1',card:0,slot:'netSales',op:'format',style:'no-comma'}]` | `netSales` の `text` = `12400` (`raw` は 12400 のまま) |
-| D33 | 同じ `style:'comma-shift'` | `text` = `1,2400` (桁区切りを 1 桁ずらす。例: 96930 → `9,6930`) |
+| D33 | 同じ `style:'comma-shift'` | `text` = `1,2400` (最後の 4 桁を 1 組にして、その前を 3 桁区切りにする。例: 96930 → `9,6930`、1234567 → `123,4567`)。整数部が 5 桁未満の数 (1,234 など) には効かせられないので `RangeError` (**決めた**。実装で足した: 黙って無視すると、検証器が違反を見つけられない異変の問題ができる) |
 | D34 | `[{shape:'E1',card:0,slot:'netSales',op:'unit',unit:'億円'}]` | `netSales` の `unit` = `億円` (ほかの欄は `百万円`) |
 | D35 | `[{shape:'E1',card:0,slot:'margin',op:'dup'}]` | `margin` が 2 回並ぶ (key `margin` が 2 つ。`opCur` の直後) |
 | D36 | `[{shape:'E1',card:0,op:'headline',word:'増収'}]` | headline の `word` = `増収` (`reads` はそのまま) |
-| D37 | 編集の `slot` が形に無い key、`card` が範囲外 | `deriveCards` は `RangeError` (データの誤りを黙って通さない) |
+| D37 | 編集の `slot` が形に無い key、`card` が範囲外、見出し語の無い形 (E3・H1〜H3) への `headline` | `deriveCards` は `RangeError` (データの誤りを黙って通さない) |
 | D39 | `applyEdits: false` | D30〜D36 の問題でも、`cardEdits` の無い同じ問題の `deriveCards` と `toEqual`。`applyEdits` を省くと編集が効く (D30〜D36 の結果) |
 | D38 | むずかしい: `[{shape:'H2',card:1,...}]` の `card` = 1 は IR 型、0 は短信型 | `card` の番号どおりのカードの欄に効く |
 
