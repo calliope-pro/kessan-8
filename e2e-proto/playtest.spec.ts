@@ -1,12 +1,12 @@
 // 確かめの画面 (?mode=test。plans.md §8.1): 1 人 8 枚を最後まで通し、記録が出る。
 import { expect, test } from '@playwright/test';
 import { buildDeck } from '../src/proto/playtest';
-import { answer, NORMALS } from './support';
+import { answer, DECK_REF, NORMALS } from './support';
 
 for (const sample of ['on', 'off'] as const) {
   test(`確かめ (0 社目 ${sample}): 8 枚を通すと記録が出る`, async ({ page }) => {
     const seed = 5;
-    const deck = buildDeck(seed, 'E1', NORMALS);
+    const deck = buildDeck(seed, 'E1', NORMALS, DECK_REF);
     await page.goto(`/proto.html?mode=test&shape=E1&seed=${seed}&sample=${sample}&pid=T1`);
     await page.getByRole('button', { name: sample === 'on' ? '見本を見る' : '1 枚目へ' }).click();
     if (sample === 'on') {
@@ -29,7 +29,7 @@ for (const sample of ['on', 'off'] as const) {
 }
 
 test('確かめでは、間違えても 0 社目に戻らず、8 枚を最後まで見せる', async ({ page }) => {
-  const deck = buildDeck(7, 'E3', NORMALS);
+  const deck = buildDeck(7, 'E3', NORMALS, DECK_REF);
   await page.goto('/proto.html?mode=test&shape=E3&seed=7&sample=off');
   await page.getByRole('button', { name: '1 枚目へ' }).click();
   for (let i = 0; i < 8; i++) {

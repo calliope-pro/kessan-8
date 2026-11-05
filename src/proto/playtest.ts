@@ -1,9 +1,9 @@
 // 正常を覚えられるかの確かめ (docs/plans/redesign/plans.md §8.1 の「① の測り方」)。
 // 1 人 8 枚 = 異変 4 + 正常 4。異変は型のずれだけ (向きの逆・桁・比率の計算違いは、0 社目が無くても見つかるので使わない)。
 import { mulberry32 } from '../domain/rng';
-import type { Problem } from '../domain/types';
+import type { Company, Problem } from '../domain/types';
 import { buildAnomaly } from './anomalies';
-import type { ShapeId } from './cards';
+import { deriveCard, type ShapeId } from './cards';
 import type { Round } from './draw';
 
 /** 型のずれ: 欄の欠落・並びの入れ替え・単位の語・欄の重複。 */
@@ -19,10 +19,31 @@ function shuffle<T>(xs: readonly T[], rng: () => number): T[] {
   return a;
 }
 
-export function buildDeck(seed: number, shape: ShapeId, normals: readonly Problem[]): Round[] {
+/** 見本 (0 社目) と、会社の一覧。確かめの組は「見本と同じ見出し語」に絞るのに使う。 */
+export interface DeckRef {
+  sample: Problem;
+  companies: readonly Company[];
+}
+
+/**
+ * 確かめの組は、見本と同じ見出し語 (E1 なら【増益】) の正常だけから引く。
+ * 見出し語の違い (【減益】など) は型のずれではないのに、答えを動かす手がかりになるため (包括レビュー B1)。
+ * 見出し語のない形 (E3) は絞らない。
+ */
+function sameHeadline(normals: readonly Problem[], shape: ShapeId, ref: DeckRef): Problem[] {
+  const headOf = (p: Problem): string | null => {
+    const c = ref.companies.find((x) => x.id === p.companyId);
+    if (!c) throw new Error(`会社がありません: ${p.companyId}`);
+    return deriveCard(p, c, shape).headline?.text ?? null;
+  };
+  const want = headOf(ref.sample);
+  return want === null ? [...normals] : normals.filter((p) => headOf(p) === want);
+}
+
+export function buildDeck(seed: number, shape: ShapeId, normals: readonly Problem[], ref: DeckRef): Round[] {
   const rng = mulberry32((seed ^ 0x51ed270b) >>> 0);
   const byCompany = new Map<string, Problem[]>();
-  for (const p of shuffle(normals, rng)) byCompany.set(p.companyId, [...(byCompany.get(p.companyId) ?? []), p]);
+  for (const p of shuffle(sameHeadline(normals, shape, ref), rng)) byCompany.set(p.companyId, [...(byCompany.get(p.companyId) ?? []), p]);
   const picked = shuffle([...byCompany.keys()], rng).slice(0, DECK_SIZE).map((c) => byCompany.get(c)![0]!);
   if (picked.length < DECK_SIZE) throw new Error('確かめの 1 組を作れません: 会社が足りません');
   const anomalyAt = new Set(shuffle([0, 1, 2, 3, 4, 5, 6, 7], rng).slice(0, 4));

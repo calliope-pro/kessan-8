@@ -2,6 +2,14 @@
 import { aggregate, parseRecord, splitRecords, type ParsedRecord } from '../playtest';
 import { h, screenHeading } from './dom';
 
+/** 添え書きは判定 (playtest.ts の summarize) と同じ規則: 5 人未満は、2 人以上で全員合格のときだけ「弱い合図」 (plans.md Q17)。 */
+function footnote(n: number, passed: number): string {
+  if (n >= 5) return '(5 人は方向の確認で、統計的な結論ではない)';
+  if (n === 0) return '(0 社目ありの記録が無いので「未確認」)';
+  if (n === 1) return '(1 人: 5 人に満たない。2 人以上で全員合格なら「弱い合図」、1 人は「未確認」)';
+  return passed === n ? `(${n} 人: 5 人に満たないが、全員合格なので「弱い合図」)` : `(${n} 人: 5 人に満たず、不合格が混じるので「未確認」)`;
+}
+
 export function summaryText(text: string): string {
   const parsed = splitRecords(text).map(parseRecord);
   const records = parsed.filter((r): r is ParsedRecord => r !== null);
@@ -10,7 +18,7 @@ export function summaryText(text: string): string {
   const a = aggregate(records);
   const lines = [
     `判定: ${a.verdict} (合格 ${a.passed} / ${a.n} 人。基準: 0 社目ありの条件で、見つけ 3/4 以上かつ誤り 1/4 以下)`,
-    a.n >= 5 ? '(5 人は方向の確認で、統計的な結論ではない)' : `(${a.n} 人: 5 人に満たないので、全員合格なら「弱い合図」、それ以外は「未確認」)`,
+    footnote(a.n, a.passed),
     '',
     '人 | 0 社目 | 形 | 種 | 見つけ | 誤り | 合否',
     ...records.map((r) => `${r.pid || '(未記入)'} | ${r.withSample ? 'あり' : 'なし'} | ${r.shape} | ${r.seed} | ${r.found}/${r.anomalies} | ${r.falseAlarms}/${r.normals} | ${r.pass ? '合格' : '不合格'}`),

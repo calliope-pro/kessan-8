@@ -36,7 +36,7 @@ export function recordText(env: TestEnv, deck: ReturnType<typeof buildDeck>, rs:
 }
 
 export function mountPlaytest(root: HTMLElement, env: TestEnv): void {
-  const deck = buildDeck(env.seed, env.shape, env.normals);
+  const deck = buildDeck(env.seed, env.shape, env.normals, { sample: env.sample, companies: env.companies });
   const responses: Response[] = [];
   const times: number[] = [];
   let index = -1; // -1 = はじめの画面、0.. = n 枚目
