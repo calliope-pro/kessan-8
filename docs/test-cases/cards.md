@@ -19,11 +19,12 @@ Task #138 (受け入れ条件 6)。根拠: [design-v2.md](../design-v2.md) §1 (
 | `countNumbers(card)`・`countTexts(card)` | 枠の外を除いた数字の数 (棒 1 本も 1 つ)・文欄の数 |
 | `cardCells(cards)` | 見えるセルの集合 = 全欄の `reads` + 全欄の `itemKey` + 枠のセル (`<doc>.header.companyName・securitiesCode・periodLabel`、`tanshin.columnDates.<画面>.current`) + 棒の `reads` |
 | `placeSlots(cards, place)` | 異変の場所 (`AnomalyPlace`) → その場所を見せる欄 `{ card, key }[]` (R-D3。`cardEdits` の問題には `applyEdits: false` のカードを渡す)。パスの場所は `reads` が場所と同じか場所の親 (入れ物)、`itemKey` の場所は `Slot.itemKey` が同じ欄 |
-| `cardRelationIssues(cards, shape)` (`src/verifier/cards.ts`) | 導出したカード → 関係の食い違いの文の配列 (空 = 整合) |
+| `cardRelationIssues(cards, shape, { company, statements })` (`src/verifier/cards.ts`) | 導出したカード・会社 (IR の単位の換算)・IR の文章 (主張の向きを引く) → 関係の食い違いの文の配列 (空 = 整合)。R4・R5 が文の主張 (`claims`) を、R2・R4・R6 が `irUnit` を使うので、第 3 引数で渡す (**決めた**。ケース表の最初の版は引数 2 つだった) |
 | `cardStructureIssues(cards, shape)` | カード → 欄の並びが形の定義と違う、数字・文の数が上限 (やさしい 数字 4 / むずかしい 1 枚 数字 4 + 文 3) を超える、の文の配列 |
 | `cardTextLengthIssues(cards)` | 文欄の `text` が 40 字を超える欄の文の配列 |
+| `shapeChecks(problem, company, kinds)` | 異変の問題 → 難易度の形ごとの `{ shape, missingPlaces, v2 }` (V1 を満たさない場所・V2 を満たすか)。`card-invisible` のメッセージを作る |
 | `visibleShapes(problem, company, kinds)` | 異変の問題 → V1・V2 (R-S4) を満たす形の ID の配列 (`cardEdits` があれば、編集の `shape` の形だけを、テンプレートのカードで判定)。正常な問題 → 難易度の全形 |
-| `deviationIssues(problem, company, kinds)` (§2.7) | 異変の問題 → 種類ごとの「道具なしで気づける最小のずれ」(§8) を満たさない文の配列 (空 = 満たす、または検査の無い種類) |
+| `deviationIssues(problem, company)` (§2.7。種類は `problem.anomaly.kind` で引く) | 異変の問題 → 種類ごとの「道具なしで気づける最小のずれ」(§8) を満たさない文の配列 (空 = 満たす、または検査の無い種類) |
 | `verifyDataset` の追加 | 下の §5 |
 | 規則 (`HARD_RULE_IDS` に足す。`verifyProblem` は形の引数を持たないので、どの規則も形によらず問題だけを見る) | `card-slots`・`card-unit`・`card-format`・`card-headline`・`card-period`・`xdoc-seg-names` |
 | 型 (`types.ts` と docs/design.md §4.2 の写し) | `ShapeId`・`CardEdit`・`Problem.cardEdits?`・`ANOMALY_FAMILIES` に `card-form` (むずかしい) (#152 で済み)。**§2.8**: `Anomaly.base?: string`・`Anomaly.changed?: string[]` (**決めた**: 今のデータが持たないので任意。無い問題は shortfalls `card-anomaly-base` で、データの Task が足す)、`AnomalyPlace` に `{ doc: 'card'; shape: ShapeId; card: number; slot: string }` を足す。`Card` に `shape: ShapeId` を足す (カードのセル `card.<shape>.<card>.<slot>` を作るため) |
@@ -165,10 +166,10 @@ Task #138 (受け入れ条件 6)。根拠: [design-v2.md](../design-v2.md) §1 (
 | ID | 規則 | 入力 → 期待 |
 | --- | --- | --- |
 | K1 | `card-slots` | `drop`・`dup`・`swap` の編集 → その形・そのカードで違反 1 件 (`paths`: drop = 欠けた欄 `card.E1.0.margin` (欠けた位置は、テンプレートのカードのその key の位置)・dup = 重複した欄・swap = 入れ替えた 2 欄)。編集なし・`format`/`unit`/`headline` の編集 → 満たす |
-| K2 | `card-unit` | `unit` の編集 (E1 の売上高を `億円`) → 違反 1 件 (`paths` = `card.E1.0.netSales`)。正常 (A・B) → 満たす。IR 型の金額は `header.unit`、短信型は `百万円`、比率は `%` が標準 |
+| K2 | `card-unit` | `unit` の編集 (E1 の売上高を `億円`) → 違反 1 件 (`paths` = `card.E1.0.netSales`)。正常 (A・B) → 満たす。**標準の単位 = 比率は `%`、金額はその資料の `header.unit`** (`header.unit` そのものの誤りは `header-unit`、`unitOverrides` (第 1 版の画面ごとの単位の差し替え) は `unit-consistency` の仕事で、`card-unit` は `cardEdits` の `unit` だけを見る。第 1 版の E-03 が `card-unit` で二重に落ちて期待集合が変わらないようにする。実装で決めた) |
 | K3 | `card-format` | `format` の編集 (`12400`・`1,2400`) → 違反 1 件 (`paths` = `card.E1.0.netSales`)。標準の書式 (`12,400`・`△100`・`10.0`) → 満たす |
 | K4 | `card-headline` | `headline` の編集 (E1 に `増収`) → 違反 1 件 (`paths` = `card.E1.0.headline`)。E1 の語は営業利益の組 (増益・減益)、E2 は売上高の組 (増収・減収) 以外が出たら違反 |
-| K5 | `card-period` | 形によらず、3 画面 (`balanceSheet`・`incomeStatement`・`cashFlow`) の `columnDates.<画面>.current` が、`fiscalYear` と会社の決算月から作った期末日 (`2027-03-31`) と合うか。`columnDates.incomeStatement.current` を `2028-03-31` にする → 違反 1 件、`paths` = `tanshin.columnDates.incomeStatement.current` と `tanshin.header.periodLabel` (どちらも枠のセル)。3 画面とも直すと 3 件。正常 (A・B) → 満たす。**見える形は §4 の V 表** (incomeStatement の列を枠に持つ形だけ) |
+| K5 | `card-period` | 形によらず、3 画面 (`balanceSheet`・`incomeStatement`・`cashFlow`) の `columnDates.<画面>.current` が、**カードの枠の期 `header.periodLabel` (`2027年3月期`) から作った期末日** (`2027-03-31`) と合うか (**決めた**: 期の表記と列見出しの照合なので `periodLabel` から作る。`fiscalYear` から作ると、`fiscalYear` だけが違う問題で `header-period-label` と同時に落ち、第 1 版の N2・N5 の期待が変わる)。`columnDates.incomeStatement.current` を `2028-03-31` にする → 違反 1 件、`paths` = `tanshin.columnDates.incomeStatement.current` と `tanshin.header.periodLabel` (どちらも枠のセル)。3 画面とも直すと 3 件。正常 (A・B) → 満たす。**見える形は §4 の V 表** (incomeStatement の列を枠に持つ形だけ) |
 | K6 | `xdoc-seg-names` | IR のセグメントの名前の並びが短信の報告セグメントと違う (1 つ欠ける・並びが違う・綴りが違う) → 違反 1 件 (`paths` = 短信の名前のセル全部と IR の名前のセル全部)。正常 (A・B) → 満たす |
 | K7 | 既存規則との共存 | 既存の正常な問題 28 問 (`src/data`) が、新しい規則 6 つすべてで違反 0 件 |
 | K8 | 型 | `shapeErrors` が `cardEdits` の誤り (`op` が未知・`shape` が未知・`slots` が 2 要素でない・`style` が未知) を返す。正常な問題・`cardEdits` が 1 件の問題は誤りなし |
@@ -279,6 +280,8 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 `deviationIssues` は、問題の異変の種類 (`problem.anomaly.kind`) で表を引き、`kinds` が無い種類・表に無い種類は空。メッセージに、種類・実際のずれ・最小のずれを書く (データを直す人が読む)。
 
 ## 9. 設計 §2.8 を取り込んだ追加 (Sub-task #153。`changed`・`base`・カード上の場所・二重の食い違い)
+
+**実装で決めたこと (#153)**: (a) 「違反が `changed` のセルを読む」は、違反の path が `changed` の 1 つと**同じか、その下** (`changed` が要素のパスのとき。`ir.segments.items.2` なら `…items.2.name`) で判定する。(b) `changed` が要素の過不足 (`ir.segments.items` の要素が足りない) のときは、`changedCells` が**足りない・余った要素のパス 1 つ**を差とする (リーフに分けない)。(c) 今のデータとの整合のため、H-19 の `primaryRules` を `xdoc-seg-names` にし (設計 §2.3)、hard-003 の `expectedRules` に `xdoc-seg-names` を足し、`places` に欠けたセグメントの短信側の名前のセルを足した (入れ物 `ir.segments.items` も残す: `seg-count`・`segment-names` が読むため)。E-04 の `primaryRules`・`allowedRules` に `card-period` を足し (設計の一覧どおり)、easy-022 の `expectedRules` に `card-period` を足した。
 
 ### 9.1 `anomalyIssues`・`checkAnomaly` の許容集合 (**§2.8** の検査 1・2)
 

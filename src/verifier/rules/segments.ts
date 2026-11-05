@@ -61,6 +61,14 @@ export const SEGMENT_RULES: Rule[] = [
       return sameNames('IR のセグメント名', readNames(r, { doc: 'ir', base: 'segments.items', n: ctx.p.ir.segments.items.length, field: 'name' }), names);
     });
   }),
+  // 短信の当期の報告セグメントの名前の並びと、IR の並びを直接比べる (会社の設定を介さない。カードの文欄だけで見つかる。paths は名前のセルだけ。docs/design-v2.md §2.3)
+  rule('xdoc-seg-names', (each, ctx) => {
+    each((r) => {
+      const tanshin = ctx.p.tanshin.notes.segments.current.segments.map((_, i) => r.raw('tanshin', `notes.segments.current.segments.${i}.name`));
+      const ir = ctx.p.ir.segments.items.map((_, i) => r.raw('ir', `segments.items.${i}.name`));
+      return JSON.stringify(tanshin) === JSON.stringify(ir) ? null : `短信の報告セグメント (${tanshin.join('・')}) と IR のセグメント (${ir.join('・')}) の名前の並びが違う`;
+    });
+  }),
   rule('seg-count', (each, ctx) => {
     const n = ctx.c.segmentNames.length;
     for (const q of PERIODS) {

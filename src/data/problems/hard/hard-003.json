@@ -443,6 +443,10 @@
       },
       {
         "doc": "tanshin",
+        "path": "notes.segments.current.segments.2.name"
+      },
+      {
+        "doc": "tanshin",
         "path": "notes.segments.previous.adjustment"
       },
       {
@@ -454,7 +458,8 @@
     "expectedRules": [
       "seg-count",
       "segment-names",
-      "xdoc-seg-adjustment"
+      "xdoc-seg-adjustment",
+      "xdoc-seg-names"
     ]
   }
 }

@@ -476,7 +476,11 @@ export interface IrDeck {
  * 異変の場所。数字・文のセルは path (先頭が画面の ID か header。例: incomeStatement.current.ordinaryIncome、header.companyName)。
  * 項目名 (行の名前。科目名の誤字など) は itemKey (docs/design.md §4.1 の項目キー)。
  */
-export type AnomalyPlace = { doc: DocKind; path: string } | { doc: DocKind; itemKey: string };
+export type AnomalyPlace =
+  | { doc: DocKind; path: string }
+  | { doc: DocKind; itemKey: string }
+  /** 形のずれ (cardEdits) の場所: shape の形の card 番号のカードの slot の欄 (docs/design-v2.md §2.8)。欄の欠落 (drop) は、欠けた位置 (テンプレートのカードのその欄の位置)。 */
+  | { doc: 'card'; shape: ShapeId; card: number; slot: string };
 
 /** 異変の指定と答え合わせの文言。問題データのここが唯一の出所で、画面はこれを表示するだけ。 */
 export interface Anomaly {
@@ -491,6 +495,10 @@ export interface Anomaly {
    * 検証器は、実際に落ちた集合とこれが一致すること、kind の primaryRules を 1 つ以上含み allowedRules に収まることを確かめる。
    */
   expectedRules: string[];
+  /** 基の正常な問題の ID (同じ companyId・同じ header.periodLabel。docs/design-v2.md §2.8)。changed と一緒に持つ。 */
+  base?: string;
+  /** 基との差のセル `<doc>.<path>` (種類の作り方が決めたセルと、必然の再計算のセル。要素の過不足は要素のパス)。基との実際の差と一致させる。落ちた規則が変えたセルを読めば、許容集合に無くてもよい。 */
+  changed?: string[];
 }
 
 /** 1 問 = 架空の 1 社の資料束。src/data/problems/<難易度>/<id>.json の中身そのもの。 */

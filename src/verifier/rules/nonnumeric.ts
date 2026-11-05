@@ -10,7 +10,7 @@ export const NONE_TEXT = '該当事項はありません。';
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 const lastDay = (year: number, month: number): number => new Date(Date.UTC(year, month, 0)).getUTCDate();
-const iso = (year: number, month: number): string => `${year}-${String(month).padStart(2, '0')}-${String(lastDay(year, month)).padStart(2, '0')}`;
+export const isoDate = (year: number, month: number): string => `${year}-${String(month).padStart(2, '0')}-${String(lastDay(year, month)).padStart(2, '0')}`;
 const sign = (x: number): number => Math.sign(x);
 
 /** claims が見る数字の動き (増 = 1、減 = −1、同じ = 0)。zero は有利子負債が 0 のとき。 */
@@ -96,7 +96,7 @@ export const NONNUMERIC_RULES: Rule[] = [
   rule('dates-period-end', (each, ctx) => {
     for (const [field, year] of [['periodEnd', ctx.p.fiscalYear], ['previousPeriodEnd', ctx.p.fiscalYear - 1]] as const) {
       each((r) => {
-        const expected = iso(year, ctx.c.fiscalYearEndMonth);
+        const expected = isoDate(year, ctx.c.fiscalYearEndMonth);
         const actual = r.raw('tanshin', `dates.${field}`);
         return actual === expected ? null : `${field}: ${String(actual)} ≠ ${expected}`;
       });

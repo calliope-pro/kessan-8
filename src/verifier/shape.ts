@@ -115,7 +115,7 @@ const IR = obj<IrDeck>({
   }),
   statements: list(STATEMENT),
 });
-const ANOMALY = obj<Anomaly>({ kind: S, places: list('place', 1), explanation: S, expectedRules: list(S) });
+const ANOMALY = obj<Anomaly>({ kind: S, places: list('place', 1), explanation: S, expectedRules: list(S) }, { base: S, changed: list(S) });
 const PROBLEM = obj<Problem>(
   { id: S, difficulty: { enum: ['easy', 'hard'] }, companyId: S, fiscalYear: N, tanshin: TANSHIN, ir: IR, anomaly: 'anomalyOrNull' },
   { tier: { enum: [1, 2, 3] }, labelOverrides: { record: S }, unitOverrides: { record: S }, signOverrides: { record: S }, cardEdits: list('cardEdit') },
@@ -176,7 +176,14 @@ function checkObject(value: unknown, desc: { object: Record<string, Desc>; optio
 function checkPlace(value: unknown, where: string, out: string[]): void {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return void out.push(`${where}: 型が違う (期待 object、実際 ${typeName(value)})`);
   const r = value as Record<string, unknown>;
-  if (r.doc !== 'tanshin' && r.doc !== 'ir') out.push(`${where}.doc: ${JSON.stringify(r.doc)} は tanshin か ir`);
+  if (r.doc === 'card') {
+    if (!SHAPE_IDS.includes(r.shape as never)) out.push(`${where}.shape: ${JSON.stringify(r.shape)} は ${JSON.stringify(SHAPE_IDS)} のどれでもない`);
+    if (typeof r.card !== 'number' || !Number.isInteger(r.card) || r.card < 0) out.push(`${where}.card: 0 以上の整数でない`);
+    if (typeof r.slot !== 'string') out.push(`${where}.slot: 文字列でない`);
+    for (const k of Object.keys(r)) if (!['doc', 'shape', 'card', 'slot'].includes(k)) out.push(`${where}.${k}: 未知のキー`);
+    return;
+  }
+  if (r.doc !== 'tanshin' && r.doc !== 'ir') out.push(`${where}.doc: ${JSON.stringify(r.doc)} は tanshin・ir・card のどれか`);
   const hasPath = 'path' in r;
   const hasKey = 'itemKey' in r;
   if (hasPath === hasKey) out.push(`${where}: path か itemKey のどちらか 1 つだけ`);

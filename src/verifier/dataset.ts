@@ -1,8 +1,11 @@
 // データ全件の検証 (ケース表 §2.8)。errors = 致命、shortfalls = 数が足りない (完成の段階で効く)、soft = 参考の規則。
-import { ANOMALY_RATIO, ANOMALY_RATIO_TOLERANCE, FAMILY_SHARE_MIN, MIN_POOL_PER_DIFFICULTY, ROUNDS_TO_CLEAR } from '../domain/config.ts';
+import { FAMILY_SHARE_MIN, MIN_POOL_PER_DIFFICULTY, ROUNDS_TO_CLEAR } from '../domain/config.ts';
+import { deriveCards, shapesOf } from '../domain/cards.ts';
 import { FAMILY_DIFFICULTY, IR_SLIDES, TANSHIN_SCREENS } from '../domain/types.ts';
-import type { AnomalyKind, Company, Difficulty, Problem } from '../domain/types.ts';
+import type { AnomalyKind, Company, Difficulty, Problem, ShapeId } from '../domain/types.ts';
 import { anomalyIssues } from './anomaly.ts';
+import { cardRelationIssues, cardStructureIssues, cardTextLengthIssues, deviationIssues, doubleDiscrepancies, shapeChecks, visibleShapes } from './cards.ts';
+import { changedCells } from './path.ts';
 import { verifyIrDisplay, verifyProblem } from './index.ts';
 import type { VerifyResult } from './index.ts';
 import { HARD_RULE_IDS, SOFT_RULE_IDS } from './rules/index.ts';
@@ -76,6 +79,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
   // 問題
   let sampleCount = 0;
   const valid: Problem[] = [];
+  const judged: { p: Problem; company: Company; result: VerifyResult; file: string }[] = [];
   for (const { file, value } of input.problems) {
     const shape = shapeErrors(value);
     if (shape.length > 0) {
@@ -101,9 +105,16 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     if (p.anomaly === null) {
       for (const v of result.hard) add('hard-violation', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
       for (const v of verifyIrDisplay(p, company)) add('ir-display-mismatch', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
+      // 正常のカードはどの形でも整合する (R-D4。第 1 版のデータでも成り立つので errors)
+      for (const shape of shapesOf(p.difficulty)) {
+        const cards = deriveCards(p, company, shape);
+        for (const m of cardStructureIssues(cards, shape)) add('card-structure', m);
+        for (const m of cardRelationIssues(cards, shape, { company, statements: p.ir.statements })) add('card-relation', m);
+      }
     }
     for (const issue of anomalyIssues(p, kinds, result)) add(issue.code, issue.message);
     for (const v of result.soft) soft.push({ code: v.rule, problem: p.id, message: `${file}: ${v.message}` });
+    judged.push({ p, company, result, file });
   }
   duplicates(valid.map((p) => p.id)).forEach((id) => errors.push({ code: 'duplicate-id', problem: id, message: `問題の id が重複: ${id}` }));
 
@@ -152,9 +163,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
       (c) => pool.some((p) => p.companyId === c && p.anomaly !== null) && pool.some((p) => p.companyId === c && p.anomaly === null),
     ).length;
     if (bothCount < ROUNDS_TO_CLEAR) shortfalls.push({ code: 'both-sided-companies', difficulty: d, message: `${d}: 異変あり・なしの両方を持つ会社が ${bothCount} 社で、${ROUNDS_TO_CLEAR} 社未満` });
-    if (pool.length >= MIN_POOL_PER_DIFFICULTY && Math.abs(anomalies.length - ANOMALY_RATIO * pool.length) > ANOMALY_RATIO_TOLERANCE) {
-      shortfalls.push({ code: 'anomaly-ratio', difficulty: d, message: `${d}: 異変の問題 ${anomalies.length} 件が ${ANOMALY_RATIO} × ${pool.length} の ±${ANOMALY_RATIO_TOLERANCE} の外` });
-    }
+    // 異変の問題の割合 (anomaly-ratio) は検査しない: 出題の割合は、プールの比でなく draw の枠ごとの抽選が決める (docs/design-v2.md §1.5 R-S5 (e))
     if (anomalies.length > 0) {
       const primary = anomalies.filter((p) => {
         const kind = kinds.find((k) => k.id === p.anomaly?.kind);
@@ -165,5 +174,96 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
       }
     }
   }
+
+  cardChecks(judged, companies, kinds, valid, errors, shortfalls);
   return { errors, shortfalls, soft, stats, samples: sampleCount };
+}
+
+/** 異変の問題の基との差 (§2.8)。base・changed の誤りは errors、無いものは shortfalls (データの Task が足す)。 */
+function baseIssues(p: Problem, valid: Problem[], errors: Entry[], shortfalls: Entry[]): void {
+  const a = p.anomaly;
+  if (a === null) return;
+  const err = (code: string, message: string): void => {
+    errors.push({ code, problem: p.id, message: `${p.id}: ${message}` });
+  };
+  if (a.base === undefined || a.changed === undefined) {
+    shortfalls.push({ code: 'card-anomaly-base', problem: p.id, difficulty: p.difficulty, message: `${p.id}: 異変に base (基の正常な問題の ID) と changed (基との差のセル) が無い` });
+  }
+  if (a.base === undefined) return;
+  const base = valid.find((q) => q.id === a.base);
+  if (base === undefined) return err('anomaly-base', `base ${a.base} の問題が無い`);
+  if (base.id === p.id) return err('anomaly-base', 'base が自分自身');
+  if (base.anomaly !== null) return err('anomaly-base', `base ${a.base} は異変の問題 (正常な問題でなければならない)`);
+  if (base.companyId !== p.companyId) return err('anomaly-base', `base ${a.base} の会社 ${base.companyId} が違う (${p.companyId})`);
+  if (base.tanshin.header.periodLabel !== p.tanshin.header.periodLabel) return err('anomaly-base', `base ${a.base} の期 ${base.tanshin.header.periodLabel} が違う (${p.tanshin.header.periodLabel})`);
+  if (a.changed === undefined) return;
+  const actual = new Set(changedCells(base, p));
+  const claimed = new Set(a.changed);
+  const missing = [...actual].filter((c) => !claimed.has(c));
+  const extra = [...claimed].filter((c) => !actual.has(c));
+  if (missing.length > 0 || extra.length > 0) err('anomaly-changed-mismatch', `changed が基 ${a.base} との実際の差と違う (足りない: ${missing.join('、') || 'なし'}、余計: ${extra.join('、') || 'なし'})`);
+}
+
+/** カードの検査 (design-v2 §1.5 R-S5 (a)〜(d)・§2.7・§2.8)。数・作りの不足は shortfalls (コードは card- で始まる。anomaly-min-deviation も)。 */
+function cardChecks(judged: { p: Problem; company: Company; result: VerifyResult }[], companies: Company[], kinds: AnomalyKind[], valid: Problem[], errors: Entry[], shortfalls: Entry[]): void {
+  const short = (code: string, p: Problem | undefined, d: Difficulty, message: string) => shortfalls.push({ code, ...(p ? { problem: p.id } : {}), difficulty: d, message });
+  const visible = new Map<string, ShapeId[]>();
+  for (const { p, company, result } of judged) {
+    baseIssues(p, valid, errors, shortfalls);
+    if (p.anomaly === null) {
+      const long = shapesOf(p.difficulty).flatMap((shape) => cardTextLengthIssues(deriveCards(p, company, shape)));
+      if (long.length > 0) short('card-text-length', p, p.difficulty, `${p.id}: 文欄が 40 字を超える (${long.join('、')})`);
+      continue;
+    }
+    let shapes: ShapeId[] = [];
+    try {
+      shapes = visibleShapes(p, company, kinds, result);
+    } catch (error) {
+      if (!(error instanceof RangeError)) throw error;
+    }
+    visible.set(p.id, shapes);
+    if (shapes.length === 0 && kinds.some((k) => k.id === p.anomaly?.kind)) {
+      let why = '';
+      try {
+        why = shapeChecks(p, company, kinds, result).map((c) => `${c.shape}: ${c.missingPlaces.length > 0 ? `V1 カードに載らない場所 ${c.missingPlaces.join('・')}` : 'V2 主な規則の違反がカードに収まらない'}`).join(' / ');
+      } catch {
+        why = 'cardEdits が導けない';
+      }
+      short('card-invisible', p, p.difficulty, `${p.id}: どの形のカードにも、検出に要る数字か文が載らない (${why})`);
+    }
+    const dev = deviationIssues(p, company);
+    if (dev.length > 0) short('anomaly-min-deviation', p, p.difficulty, `${p.id}: ${dev.join('、')}`);
+    const doubles = shapes.length > 0 ? doubleDiscrepancies(p, company, kinds, result) : [];
+    if (doubles.length > 0) short('card-double-discrepancy', p, p.difficulty, `${p.id}: カードの上の食い違いが主な規則の外にもある (${doubles.map((x) => `${x.shape}: ${x.rules.join('・')}`).join(' / ')})`);
+  }
+  for (const d of DIFFICULTIES) {
+    const pool = judged.filter((j) => j.p.difficulty === d);
+    if (pool.length === 0) continue;
+    const anomalies = pool.filter((j) => j.p.anomaly !== null);
+    const normals = pool.filter((j) => j.p.anomaly === null);
+    const seenIn = (j: { p: Problem }, shape: ShapeId) => visible.get(j.p.id)?.includes(shape) === true;
+    for (const shape of shapesOf(d)) {
+      const sees = anomalies.filter((j) => seenIn(j, shape));
+      const companiesSeen = new Set(sees.map((j) => j.p.companyId));
+      if (companiesSeen.size < ROUNDS_TO_CLEAR) short('card-shape-companies', undefined, d, `${d}: 形 ${shape} で見える異変の問題を持つ会社が ${companiesSeen.size} 社で、${ROUNDS_TO_CLEAR} 社未満`);
+      const kindsSeen = new Set(sees.map((j) => j.p.anomaly?.kind));
+      if (kindsSeen.size < 4) short('card-shape-kinds', undefined, d, `${d}: 形 ${shape} で見える異変の種類が ${kindsSeen.size} 種類で、4 種類未満`);
+    }
+    const lacking: string[] = [];
+    for (const c of companies) {
+      for (const shape of shapesOf(d)) {
+        if (!normals.some((j) => j.p.companyId === c.id)) lacking.push(`${c.id}×${shape} (正常なし)`);
+        else if (!anomalies.some((j) => j.p.companyId === c.id && seenIn(j, shape))) lacking.push(`${c.id}×${shape} (異変なし)`);
+      }
+    }
+    if (lacking.length > 0) short('card-shape-both-sided', undefined, d, `${d}: 会社 × 形のうち、正常な問題か、その形で見える異変の問題が無い: ${lacking.join('、')}`);
+    const pairs = [...new Set(pool.map((j) => `${j.p.companyId}×${j.p.fiscalYear}`))];
+    const missing: string[] = [];
+    for (const pair of pairs) {
+      const members = pool.filter((j) => `${j.p.companyId}×${j.p.fiscalYear}` === pair);
+      if (!members.some((j) => j.p.anomaly === null)) missing.push(`${pair} (正常なし)`);
+      for (const shape of shapesOf(d)) if (!members.some((j) => j.p.anomaly !== null && seenIn(j, shape))) missing.push(`${pair}×${shape} (異変なし)`);
+    }
+    if (missing.length > 0) short('card-company-period', undefined, d, `${d}: (会社 × 期) に、正常な問題か、形ごとの見える異変の問題が無い: ${missing.join('、')}`);
+  }
 }

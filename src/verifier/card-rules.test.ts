@@ -53,9 +53,10 @@ describe('K2 card-unit・K3 card-format・K4 card-headline', () => {
     expect(run('card-unit', normalB(), companyB())).toEqual([]);
     expect(run('card-unit', hard(normalB()), companyB())).toEqual([]);
   });
-  it('K2: unitOverrides の問題も、その画面を読む欄がある形ごとに違反 (E1・E2 は incomeStatement)', () => {
-    const v = run('card-unit', { ...normalA(), unitOverrides: { 'tanshin.incomeStatement': '億円' } });
-    expect(v.map((x) => x.paths.join()).sort()).toEqual(['card.E1.0.netSales,card.E1.0.opCur,card.E1.0.opPrev', 'card.E2.0.salesCur,card.E2.0.salesPrev']);
+  it('K2: 画面ごとの単位の差し替え (unitOverrides。第 1 版) は card-unit でなく unit-consistency の仕事 → card-unit は満たす', () => {
+    const p = { ...normalA(), unitOverrides: { 'tanshin.incomeStatement': '億円' } };
+    expect(run('card-unit', p)).toEqual([]);
+    expect(run('unit-consistency', p).length).toBeGreaterThan(0);
   });
   it('K3: format の編集 → 違反 1 件。標準の書式 (△100 も) → 満たす', () => {
     for (const style of ['no-comma', 'comma-shift'] as const) {
@@ -132,7 +133,6 @@ describe('K9 anomalyIssues の cardEdits の検査・A1〜A6', () => {
   };
   const messages = (p: Problem, k = kinds) => checkAnomaly(p, k, verifyProblem(p, companyA()));
   const has = (ms: string[], w: string) => ms.some((m) => m.includes(w));
-  const dropMargin = (): Problem => withAnomaly(edit(hard(normalA()), { shape: 'H1', card: 0, slot: 'salesPrev', op: 'drop' }), 'k-slots', [{ doc: 'card', shape: 'H1', card: 0, slot: 'salesPrev' }]);
   const dropOnEasy = (): Problem => withAnomaly(edit(normalA(), { shape: 'E1', card: 0, slot: 'margin', op: 'drop' }), 'k-slots', [{ doc: 'card', shape: 'E1', card: 0, slot: 'margin' }]);
 
   it('A5: card の場所 (drop) は、card-slots の違反に触れる → 問題なし。難易度の違う family は family-difficulty の指摘だけ', () => {
@@ -158,7 +158,6 @@ describe('K9 anomalyIssues の cardEdits の検査・A1〜A6', () => {
     expect(has(messages({ ...base, cardEdits: [{ shape: 'H1', card: 0, slot: 'salesPrev', op: 'drop' }] } as Problem), '難易度の形でない')).toBe(true);
     expect(has(messages({ ...base, cardEdits: [{ shape: 'E1', card: 0, slot: 'nope', op: 'drop' }] } as Problem), '形に無い欄')).toBe(true);
     expect(has(messages({ ...base, cardEdits: [{ shape: 'E1', card: 5, slot: 'margin', op: 'drop' }] } as Problem), 'カード 5')).toBe(true);
-    expect(has(messages(dropMargin()), '難易度の形でない')).toBe(true); // easy の問題に H1
   });
 
   // §9.1: changed の許容集合

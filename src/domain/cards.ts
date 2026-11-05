@@ -2,7 +2,7 @@
 // 乱数・時刻・保存・DOM を見ない。異変のカードも、異変の問題データ (数字・文のセル・labelOverrides・unitOverrides・signOverrides・cardEdits) から同じ関数で作る (R-D2)。
 import { itemKey as itemKeyOf, LABELS, SECTION_OF_ITEM } from './labels.ts';
 import { SHAPE_IDS } from './types.ts';
-import type { CardEdit, ClaimMetric, Company, Difficulty, Problem, ShapeId } from './types.ts';
+import type { AnomalyPlace, CardEdit, ClaimMetric, Company, Difficulty, Problem, ShapeId } from './types.ts';
 
 export { SHAPE_IDS } from './types.ts';
 export type { ShapeId } from './types.ts';
@@ -21,6 +21,8 @@ export interface CardSlot {
   /** 欄の ID (形の中で一意)。 */
   key: string;
   kind: 'number' | 'text';
+  /** 数字の種類 (金額・比率)。文欄は text。標準の単位・書式を引くのに使う (検証器の card-unit・card-format)。 */
+  measure: 'money' | 'percent' | 'text';
   /** 科目名の項目キー (labels.ts)。科目名でない文欄は null。 */
   itemKey: string | null;
   label: string;
@@ -50,6 +52,8 @@ export interface CardFrame {
 }
 
 export interface Card {
+  /** 形の ID。cardCells が card.<shape>.<カードの番号>.<欄の key> のセルを作るのに使う。 */
+  shape: ShapeId;
   doc: 'summary' | 'tanshin' | 'ir';
   frame: CardFrame;
   headline?: { word: string; reads: string[] };
@@ -329,7 +333,7 @@ function build(def: SlotDef, ctx: Ctx): Built | null {
   const ref = v.reads[0] ?? '';
   const sign = ctx.p.signOverrides?.[ref] ?? '△';
   if (def.kind === 'text') {
-    return { slot: { key: def.key, kind: 'text', itemKey: def.itemKey, label, text: v.text ?? String(v.raw), unit: '', raw: v.raw, reads: v.reads }, fmt: { decimals: 0, neg: sign } };
+    return { slot: { key: def.key, kind: 'text', measure: 'text', itemKey: def.itemKey, label, text: v.text ?? String(v.raw), unit: '', raw: v.raw, reads: v.reads }, fmt: { decimals: 0, neg: sign } };
   }
   const isPct = def.unit === 'pct';
   const decimals = isPct || (docOf(ref) === 'ir' && ctx.c.irUnit === '億円') ? 1 : 0;
@@ -339,7 +343,7 @@ function build(def: SlotDef, ctx: Ctx): Built | null {
     const doc = docOf(ref);
     unit = ctx.p.unitOverrides?.[`${doc}.${ref.split('.')[1] ?? ''}`] ?? ctx.p[doc].header.unit;
   }
-  return { slot: { key: def.key, kind: 'number', itemKey: def.itemKey, label, text: formatNumber(v.raw as number, fmt), unit, raw: v.raw, reads: v.reads }, fmt };
+  return { slot: { key: def.key, kind: 'number', measure: isPct ? 'percent' : 'money', itemKey: def.itemKey, label, text: formatNumber(v.raw as number, fmt), unit, raw: v.raw, reads: v.reads }, fmt };
 }
 
 function headlineOf(def: CardDef, ctx: Ctx): Card['headline'] {
@@ -412,6 +416,7 @@ export function deriveCards(problem: Problem, company: Company, shape: ShapeId, 
   const defs = SHAPE_DEFS[shape];
   const builts: Built[][] = defs.map((def) => def.slots.flatMap((s) => build(s, ctx) ?? []));
   const cards: Card[] = defs.map((def) => ({
+    shape,
     doc: def.doc,
     frame: frameOf(ctx, def),
     headline: headlineOf(def, ctx),
@@ -447,6 +452,11 @@ export const countTexts = (card: Card): number => card.slots.filter((s) => s.kin
 /** カードが見せるセルの集合: 全欄の reads・itemKey・枠・見出し語・棒・別名。 */
 export function cardCells(cards: Card[]): Set<string> {
   const out = new Set<string>();
+  cards.forEach((card, ci) => {
+    // 形のずれの場所 (design-v2 §2.8): card.<形>.<カードの番号>.<欄の key>。見出し語は headline
+    for (const s of card.slots) out.add(`card.${card.shape}.${ci}.${s.key}`);
+    if (card.headline) out.add(`card.${card.shape}.${ci}.headline`);
+  });
   for (const card of cards) {
     card.frame.reads.forEach((r) => out.add(r));
     card.headline?.reads.forEach((r) => out.add(r));
@@ -468,8 +478,13 @@ const covers = (read: string, key: string): boolean => key === read || key.start
 export const placeVisible = (cells: Set<string>, key: string): boolean => cells.has(key) || [...cells].some((c) => covers(c, key));
 
 /** 異変の場所を見せる欄 (R-D3)。パスの場所は reads が同じ・場所の親・場所の入れ物の下 (covers)、itemKey の場所は欄の itemKey が同じ。cardEdits の問題には applyEdits: false のカードを渡す。 */
-export function placeSlots(cards: Card[], place: { doc: 'tanshin' | 'ir'; path: string } | { doc: 'tanshin' | 'ir'; itemKey: string }): { card: number; key: string }[] {
+export function placeSlots(cards: Card[], place: AnomalyPlace): { card: number; key: string }[] {
   const out: { card: number; key: string }[] = [];
+  if (place.doc === 'card') {
+    const card = cards[place.card];
+    if (card !== undefined && card.shape === place.shape && (card.slots.some((s) => s.key === place.slot) || (place.slot === 'headline' && card.headline !== undefined))) out.push({ card: place.card, key: place.slot });
+    return out;
+  }
   cards.forEach((card, ci) => {
     if ('itemKey' in place) {
       for (const s of card.slots) if (s.itemKey === place.itemKey) out.push({ card: ci, key: s.key });
@@ -485,4 +500,19 @@ export function placeSlots(cards: Card[], place: { doc: 'tanshin' | 'ir'; path: 
     if (card.frame.reads.some((r) => covers(r, key))) out.push({ card: ci, key: 'frame' });
   });
   return out;
+}
+
+// ---- 検証器が使う、形の定義と標準 ----
+
+/** 形・カードの見出し語の組 (増益・減益など)。見出し語の無い形は null。 */
+export function headlineWords(shape: ShapeId, card: number): [string, string] | null {
+  const h = SHAPE_DEFS[shape][card]?.headline;
+  return h === undefined ? null : [h.up, h.down];
+}
+
+/** 数字の欄の標準の書式 (3 桁区切り・小数の桁・比率は小数第一位)。負の記号は、欄に出ている記号をそのまま使う (記号の差し替えは sign-consistency の仕事)。 */
+export function standardText(slot: CardSlot, company: Company): string {
+  if (typeof slot.raw !== 'number') return slot.text;
+  const decimals = slot.measure === 'percent' || (slot.reads[0]?.startsWith('ir.') && company.irUnit === '億円') ? 1 : 0;
+  return formatNumber(slot.raw, { decimals, neg: slot.raw < 0 ? (slot.text[0] ?? '') : '' });
 }

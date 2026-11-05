@@ -1,4 +1,5 @@
 import { IR_DISPLAY_RULES } from './ir-display.ts';
+import { CARD_RULES } from './cards.ts';
 import { IR_RULES } from './ir.ts';
 import { LINK_RULES } from './links.ts';
 import { NONNUMERIC_RULES } from './nonnumeric.ts';
@@ -10,7 +11,7 @@ import type { Ctx, Rule, Violation } from './dsl.ts';
 
 export type { Ctx, Rule, Violation } from './dsl.ts';
 
-export const HARD_RULES: Rule[] = [...STATEMENT_RULES, ...LINK_RULES, ...SUMMARY_RULES, ...SEGMENT_RULES, ...IR_RULES, ...NONNUMERIC_RULES];
+export const HARD_RULES: Rule[] = [...STATEMENT_RULES, ...LINK_RULES, ...SUMMARY_RULES, ...SEGMENT_RULES, ...IR_RULES, ...NONNUMERIC_RULES, ...CARD_RULES];
 export { SOFT_RULES, IR_DISPLAY_RULES };
 
 export const HARD_RULE_IDS: string[] = HARD_RULES.map((r) => r.id);

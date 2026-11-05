@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AnomalyKind, Company, Difficulty, Problem, ShapeId } from '../domain/types.ts';
 import { verifyDataset, verifyProblem } from './index.ts';
+import { changedCells } from './path.ts';
 import { inYear, kindOf, normalVariant, set, shapeAnomaly, anomalyVariant, type DatasetInput } from './test-utils.ts';
 import { companyA } from './test-utils.ts';
 
@@ -14,6 +15,8 @@ interface PoolOptions {
   companies?: number;
   /** 形ごとの種類の数 (同じ作りで種類の ID だけ変える) */
   kindsPerShape?: number;
+  /** 異変に base・changed を持たせる (既定 true) */
+  withBase?: boolean;
   /** 異変の問題を作らない (会社 index, 形) */
   skip?: (company: number, shape: ShapeId) => boolean;
 }
@@ -27,14 +30,16 @@ function cardPool(opts: PoolOptions = {}): DatasetInput {
   let n = 0;
   const id = () => `${d}-${String(++n).padStart(3, '0')}`;
   companies.forEach((c, ci) => {
-    problems.push(normalVariant(id(), d, c.id));
+    const normal = normalVariant(id(), d, c.id);
+    problems.push(normal);
     SHAPES[d].forEach((shape, si) => {
       if (opts.skip?.(ci, shape)) return;
       const k = ((ci + si) % (opts.kindsPerShape ?? 4)) + 1;
       const { problem, kind } = shapeAnomaly(shape, id(), c.id);
       const named: AnomalyKind = { ...kind, id: `${kind.id}-${k}` };
       if (!kinds.some((x) => x.id === named.id)) kinds.push(named);
-      problems.push(set(problem, 'anomaly.kind', named.id));
+      const renamed = set(problem, 'anomaly.kind', named.id);
+      problems.push(opts.withBase === false ? renamed : set(set(renamed, 'anomaly.base', normal.id), 'anomaly.changed', changedCells(normal, renamed)));
     });
   });
   return { companies, kinds, problems: problems.map((p) => ({ file: file(p), value: p })) };
@@ -48,7 +53,7 @@ describe('S: 満たすデータ', () => {
     for (const difficulty of ['easy', 'hard'] as const) {
       const r = verifyDataset(cardPool({ difficulty }));
       expect(r.errors, difficulty).toEqual([]);
-      expect(r.shortfalls.map((s) => s.code), difficulty).toEqual([]);
+      expect(r.shortfalls.filter((s) => s.difficulty === difficulty).map((s) => s.code), difficulty).toEqual([]);
     }
   });
 });
@@ -71,7 +76,7 @@ describe('S1・S2 構造・関係 (errors)', () => {
 
 describe('S3 card-text-length', () => {
   const longHard = (text: string) => {
-    const input = cardPool({ difficulty: 'hard' });
+    const input = cardPool({ difficulty: 'hard', withBase: false });
     const normal = input.problems.find((p) => (p.value as Problem).anomaly === null)!.value as Problem;
     let p = set(normal, 'tanshin.notes.subsequentEvents', text);
     p = set(p, 'ir.outlook.subsequentEvent', '期末後の出来事 (300 百万円)。');
@@ -207,7 +212,7 @@ describe('9.2 base・changed (S12〜S14・B1〜B6)', () => {
     expect(errCodes(run(set(p, 'tanshin.summary.roe', 99)))).toContain('anomaly-changed-mismatch');
   });
   it('B5: base・changed が無い異変の問題 → shortfalls card-anomaly-base (問題ごと)', () => {
-    const { input } = setup();
+    const input = cardPool({ withBase: false });
     const r = verifyDataset(input);
     const missing = r.shortfalls.filter((s) => s.code === 'card-anomaly-base');
     expect(missing).toHaveLength(input.problems.filter((p) => (p.value as Problem).anomaly !== null).length);
