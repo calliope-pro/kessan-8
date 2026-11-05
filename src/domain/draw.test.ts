@@ -227,14 +227,19 @@ describe('出題できないとき・canDraw', () => {
     for (const d of BOTH) expect(canDraw(standard(d).pool, d, standard(d).visible)).toBe(true);
   });
 
-  it('DW23: canDraw は、E1 で見える異変を持つ会社が 7 社なら false (同じプールのむずかしいは true)', () => {
-    const e = buildPool('easy', range(1, 10), (c) => [
-      { tag: 'n' },
-      ...shapesOf('easy').map((s) => ({ tag: s, kind: 'kA', shapes: s === 'E1' && c > 7 ? ['E2' as const] : [s] })),
-    ]);
-    const t = mergePools(e, hard);
-    expect(canDraw(t.pool, 'easy', t.visible)).toBe(false);
-    expect(canDraw(t.pool, 'hard', t.visible)).toBe(true);
+  it('DW23: canDraw は、どれか 1 つの形で見える異変を持つ会社が 7 社なら false (形ごとに確かめる。ほかの難易度は影響を受けない)', () => {
+    for (const d of BOTH) {
+      const other: Difficulty = d === 'easy' ? 'hard' : 'easy';
+      for (const lacking of shapesOf(d)) {
+        const part = buildPool(d, range(1, 10), (c) => [
+          { tag: 'n' },
+          ...shapesOf(d).map((s) => ({ tag: s, kind: 'kA', shapes: s === lacking && c > 7 ? [shapesOf(d).find((x) => x !== lacking)!] : [s] })),
+        ]);
+        const t = mergePools(part, makePoolV2({ difficulty: other }));
+        expect(canDraw(t.pool, d, t.visible), `${lacking} が 7 社`).toBe(false);
+        expect(canDraw(t.pool, other, t.visible)).toBe(true);
+      }
+    }
   });
 
   it('DW24: canDraw は、正常な問題を持つ会社が 7 社・その難易度の問題が無いとき false', () => {
