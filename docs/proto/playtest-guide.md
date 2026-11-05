@@ -16,27 +16,27 @@ Task #137 / Sub-task #150。根拠: [plans.md](../plans/redesign/plans.md) §8.1
 
 | もの | 中身 |
 | --- | --- |
-| 試作の URL | `<URL>` = 責任者が一時的な公開 (tmp.now) で置いた `proto.html` の URL。**公開のたびに URL が変わる**ので、進行は責任者から最新の URL を受け取る (公開の記録は下の「公開の記録」)。ローカルなら `npm run dev:proto` の `http://localhost:5173/proto.html` |
+| 試作の URL | `<URL>` = 責任者が Vercel の一時的な公開 (`*.tmp.now`) で置いた `proto.html` の URL。**出し直すと変わりうる**ので、進行は責任者から最新の URL を受け取る (下の「公開の記録」)。ローカルなら `npm run dev:proto` の `http://localhost:5173/proto.html` |
 | 遊び手 | **初めて遊ぶ人間 5 人** (**文書**: NN/g「How Many Test Users in a Usability Study?」2012-06-03。質的な確認は 5 人。**5 人は方向の確認で、統計的な結論ではない**)。集められる人数でよい (2 人以上。**要件**・Q17 の既定 1)。足りない分は「未確認」と記録する |
 | 端末 | スマホ (縦) か PC。1 人は 1 台で通す。画面の幅は 320〜414 px のスマホが 1 人は入るとよい |
 | 時間 | 1 人 約 15 分 (**仮定**: 1 周 = 8 枚 × 約 30 秒 ≈ 4 分 × 2 条件 + 説明・感想 約 7 分) |
 | 係 | 進行 1 人 (人間か責任者が頼む人)。**ヒントを出さない** |
 
-### 公開の記録 (責任者が実際に出したもの。包括レビュー N3・#161)
+### 公開の記録 (責任者が実際に出したもの。包括レビュー N3・#161。#161 のレビュー 1 回目 B1 で直した)
 
-本書は最初、Vercel の `--temporary` を前提に書いた (下の「公開の手順」)。**実際の公開は別で、tmp.now に出した**。記録 (#137 のコメント。責任者、2026-11-05 12:02 JST):
+実際の公開は、**Vercel のアカウントなしの一時的な公開** (ドメインは `*.tmp.now`)。応答ヘッダが示す (2026-11-05 12:2x JST に `curl -sI https://nimble-pavo-ke78ke0.tmp.now/proto.html` で確認): `server: Vercel`・`x-vercel-id: hnd1::…`。`https://tmp.now/` は 307 で `vercel.com` へ飛ぶ。#137 のコメントの「引き取り」は、Vercel の claim (https://vercel.com/docs/deployments/claim-deployments「When you deploy without an account, with Vercel Drop or `vercel deploy --temporary`, you get a claim URL」) のこと。したがって、下の「Vercel で出す場合の手順」と未確認 1・2 は、**そのまま今回の公開に当てはまる**。記録 (#137 のコメント。責任者、2026-11-05 12:02 JST):
 
 | 項目 | 内容 |
 | --- | --- |
-| 公開先・URL | tmp.now。`https://nimble-pavo-ke78ke0.tmp.now` (期限 13:02 JST。**B1 の直し (#161) の前の組なので、遊び手に渡さない**。直したあとの版は、責任者が出し直した URL で上書きする) |
+| 公開先・URL | `https://nimble-pavo-ke78ke0.tmp.now` (期限 13:02 JST。**B1 の直し (#161) の前の組なので、遊び手に渡さない**。直したあとの版は、出し直した URL を責任者から受け取る) |
 | 中身 | proto-v2 `7b30125` の `dist-proto` を、きれいな書き出し (clean export) からビルドしたもの。出し直しは、直した commit から同じ手順で作る |
-| 確かめたこと | `curl` で 200。ヘッダに CSP・`X-Content-Type-Options: nosniff`・`Referrer-Policy: no-referrer` が付く。**→ 下の「未確認 1」は tmp.now では解消** |
-| ログインなしで開けるか | `curl` (資格情報なし) で 200 が返り、ログインなしで開けた。**→ 「未確認 2」は tmp.now では解消**。遊び手に渡す前の確認は、出し直すたびに私用ウィンドウで 1 回 |
-| 出したコマンド | #137 のコメントには書かれていない (**未確認**)。出し直す責任者が、使ったコマンドをここに 1 行足す |
+| 確かめたこと | `curl` で 200。CSP・`X-Content-Type-Options: nosniff`・`Referrer-Policy: no-referrer` が付く。返った値は `dist-proto/vercel.json` の `headers` と同じ。**→ 下の「未確認 1」(`dist-proto/vercel.json` のヘッダが効くか) は解消: 効いた** |
+| ログインなしで開けるか | 資格情報なしの `curl`、スマホ (iPhone Safari) の User-Agent の `curl` の両方で 200 と本物の `proto.html` が返り、間に挟まるページは無い (#161 のレビューで確認)。**→ 「未確認 2」は解消: 開けた**。遊び手に渡す前の確認は、出し直すたびに私用ウィンドウで 1 回 |
+| 出した道具 | CLI の `vercel deploy --temporary dist-proto` か Vercel Drop か、#137 のコメントには書かれていない (**未確認**)。出し直す責任者が、使ったものをここに 1 行足す |
 
-出し直すとき (期限切れ・直したあと): 台本どおり Vercel で出し直さず、**上の記録の公開先と同じ方法**で出す。Vercel を使うときだけ、次の「公開の手順」と未確認 1・2 が当てはまる。
+出し直すとき (期限切れ・直したあと): 下の手順で `dist-proto` を出す。URL は、出し直すと**変わりうる** (cli/deploy は「`vercel deploy --temporary` を再び実行すると再デプロイできる」とあるだけで、URL が変わるかは書いていない)。進行は、出し直したら責任者から最新の URL を受け取る。
 
-### Vercel で出す場合の手順 (tmp.now を使うなら不要。本書の元の前提。**実行していない**: Vercel の認証が要る)
+### 公開の手順 (責任者。Vercel のアカウントなしの一時的な公開。出し方の記録は上)
 
 `dist-proto/` が、そのまま 1 つの静的サイトとして出せる形になっている (`npm run build:proto` が作る。`e2e-proto/site.spec.ts` が中身を確かめる): `index.html`・`proto.html` (どちらも同じ。根の URL でも開ける)・`assets/`・`vercel.json` (**ヘッダだけ**。本体の `vercel.json` の `headers` と同じ。`buildCommand` などは入れない = 公開側でビルドを走らせない)。むずかしいの問題は束に入れていない (JS 約 200 KB)。
 
@@ -50,8 +50,8 @@ curl -sI "<URL>/proto.html" | grep -i -E "content-security-policy|x-content-type
 
 - **出典 (2026-11-05 に本文を取得して確認)**: Vercel CLI の deploy (https://vercel.com/docs/cli/deploy。最終更新 2026-09-18): 「To deploy other files without logging in, run `vercel deploy --temporary` on a directory, which works for any project.」。deployments の概要 (https://vercel.com/docs/deployments/overview): 「To deploy without an account, run `vercel deploy --temporary`. You get a temporary production deployment that you can claim to keep.」(**production の deployment**)。Deployment Protection (https://vercel.com/docs/deployment-protection。最終更新 2026-09-15): 「Standard Protection … protects all domains except [production domains]」。
 - **ログイン済みなら `--temporary` は効かない**: 「The `--temporary` option creates a temporary deployment without logging in. It applies only when the CLI has no credentials. If you are logged in, the CLI creates a normal deployment instead.」(同じ cli/deploy。2026-11-05 に再取得して確認)。責任者の端末が Vercel にログイン済みなら、通常の deployment (既定は preview) になり、Standard Protection で遊び手に Vercel のログインが求められうる (「When you enable Standard Protection, the production generated deployment URL becomes restricted.」: deployment-protection)。その場合は、**ログアウトした状態で `--temporary` を使う**か、共有リンク・Deployment Protection の例外を使う (下の未確認 2)。`--temporary` の deployment には期限があり、CLI が claim の URL と期限までの時間を表示する (期限の長さは文書で未確認)。
-- **未確認 1 (Vercel の場合。tmp.now では上の記録のとおり確認済み): `dist-proto/vercel.json` のヘッダが効くか**。公式文書は、`vercel deploy <ディレクトリ>` のとき `vercel.json` をどのディレクトリから読むかを書いていない (cli/deploy・project-configuration・vercel-json の 3 ページで確認)。`vercel.json` は「プロジェクトの根に置く」(https://vercel.com/docs/project-configuration/vercel-json) と書いてあり、渡したディレクトリがその根になる、というのが本書の読み。**上の `curl` で確かめる**。付いていなくても、試作は外部へ通信せず、動く (CSP は守りの二重化)。
-- **未確認 2 (Vercel の場合。tmp.now では上の記録のとおり確認済み): ログインなしの人が URL を開けるか**。一時的な公開は production の deployment で、Standard Protection は production のドメインを保護しない、と文書から読めるが、「一時的な公開は保護されない」とは書いていない。**遊び手に渡す前に、ログインしていないブラウザ (私用ウィンドウ) で開いて確かめる**。開けなければ、Vercel の Deployment Protection の例外・共有リンク (どちらも Hobby で使える: https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection) を使う。
+- **未確認 1 → 解消 (上の記録: 効いた。出し直すたびに下の `curl` で確かめる): `dist-proto/vercel.json` のヘッダが効くか**。公式文書は、`vercel deploy <ディレクトリ>` のとき `vercel.json` をどのディレクトリから読むかを書いていない (cli/deploy・project-configuration・vercel-json の 3 ページで確認)。`vercel.json` は「プロジェクトの根に置く」(https://vercel.com/docs/project-configuration/vercel-json) と書いてあり、渡したディレクトリがその根になる、というのが本書の読み。**上の `curl` で確かめる**。付いていなくても、試作は外部へ通信せず、動く (CSP は守りの二重化)。
+- **未確認 2 → 解消 (上の記録: 開けた。出し直すたびに私用ウィンドウで 1 回確かめる): ログインなしの人が URL を開けるか**。一時的な公開は production の deployment で、Standard Protection は production のドメインを保護しない、と文書から読めるが、「一時的な公開は保護されない」とは書いていない。**遊び手に渡す前に、ログインしていないブラウザ (私用ウィンドウ) で開いて確かめる**。開けなければ、Vercel の Deployment Protection の例外・共有リンク (どちらも Hobby で使える: https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection) を使う。
 - 本体の公開 (`npm run build` → `dist`) には、試作を入れない (`vite.config.ts` は `index.html` だけを入力にしている)。リポジトリの根から `vercel` を実行すると、出るのは**捨てる予定の今の画面**で、`proto.html` は出ない (404)。必ず `dist-proto` を指定する。
 - ローカルで確かめるだけなら `npm run dev:proto` (`http://localhost:5173/proto.html`)。
 
@@ -65,7 +65,7 @@ curl -sI "<URL>/proto.html" | grep -i -E "content-security-policy|x-content-type
 | B 見本なし | 見本を見せず、型 E3 (持ち物。別の語・並び) の 8 枚 | `<URL>?mode=test&shape=E3&sample=off&pid=<P>&seed=<S>` |
 
 - **順序は全員 A → B** (入れ替えない)。B は毎枚の答え合わせで異変の場所と説明を見せ、使う異変の種類も A と同じ (欠落・並び・単位・重複) なので、B を先に遊ぶと、「何が異変か」を覚えてから A に入り、**合否を数える A が膨らむ** (#150 レビュー 1 回目 B1)。A は初見で測る。B は補助の比較だけに使い、B を先に遊ぶ人は作らない。
-- **A の 8 枚は、見本と同じ【増益】の会社だけから引く** (包括レビュー B1・#161)。前の版は、【減益】(もうけが減った) の正常が混じり、見本の【増益】と見出しの語が違うだけで「ずれた」と読まれたり、逆に「減益なら異変」と答えるだけで合格に要る 3 つの見つけのうち 2 つが取れたりした (型のずれと関係のない手がかり。台本の種 5 つとも減益の正常を含んでいた)。直したあとは、正常も異変も見出しは【増益】で、**使う会社は c01・c02・c03・c05・c06・c07・c08・c10 の 8 社が毎回全部出て、種で変わるのは並びと、どの枚が異変かだけ**。テスト: `src/proto/playtest.test.ts` の P12〜P14。B (E3) は見出し語が無いので絞らない。
+- **A の 8 枚は、見本と同じ【増益】の会社だけから引く** (包括レビュー B1・#161)。前の版は、【減益】(もうけが減った) の正常が混じり、見本の【増益】と見出しの語が違うだけで「ずれた」と読まれたり、逆に「減益なら異変」と答えるだけで合格に要る 3 つの見つけのうち 2 つが取れたりした (型のずれと関係のない手がかり。台本の種 5 つとも減益のカードを含んでいた (3 つは正常 = 1021・1041・1051、2 つは異変の側だけ = 1011・1031))。直したあとは、正常も異変も見出しは【増益】で、**使う会社は c01・c02・c03・c05・c06・c07・c08・c10 の 8 社が毎回全部出て、種で変わるのは並びと、どの枚が異変かだけ**。テスト: `src/proto/playtest.test.ts` の P12〜P14。B (E3) は見出し語が無いので絞らない。
 - **種は人と条件ごとに変える** (同じ会社の並びを覚えさせない。同じ種は同じ 8 枚を出す)。**この表は直した組で書き直したもの** (上の B1 の絞りで、同じ種でも前の版と枚の中身が変わる。前の版の表の「種」の数字は同じだが、前の版の控えは使えない):
 
 | 参加者 | 記号 `<P>` | A の種 | B の種 | 順序 |
