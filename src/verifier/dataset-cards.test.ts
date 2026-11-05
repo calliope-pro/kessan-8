@@ -320,4 +320,49 @@ describe('10.2 設計 #156 の取り込み (S16〜S19)', () => {
       expect(e?.message, shape).toContain('上限');
     }
   });
+
+  it('S16 (N4): 問題 × metric ごとに 1 件 (operatingIncome と operatingCashFlow が両方 0 個なら 2 件)', () => {
+    const input = cardPool();
+    const normal = normalsOf(input)[0]!.value as Problem;
+    const bare = set(normal, 'ir.statements', [{ slide: 'highlights', text: 'x', claims: [{ metric: 'netSales', direction: 'up' }] }]);
+    const found = verifyDataset(replace(input, normal.id, bare)).errors.filter((e) => e.code === 'claims-count' && e.problem === normal.id);
+    expect(found).toHaveLength(2);
+    expect(found.some((e) => e.message.includes('operatingIncome の主張が 0 個'))).toBe(true);
+    expect(found.some((e) => e.message.includes('operatingCashFlow の主張が 0 個'))).toBe(true);
+  });
+
+  it('S20 (N2): places が ir.statements.<N>.text (text の下) を指す異変は card-place-text (カードは claims から作る。場所は ir.statements.<N>)', () => {
+    const input = cardPool({ difficulty: 'hard', withBase: false });
+    const target = input.problems.find((p) => (p.value as Problem).anomaly?.kind.startsWith('k-H1'))!.value as Problem;
+    const ok = verifyDataset(input);
+    expect(ok.shortfalls.some((s) => s.code === 'card-place-text')).toBe(false);
+    const bad = set(target, 'anomaly.places', [{ doc: 'ir', path: 'statements.0.text' }]);
+    const r = verifyDataset(replace(input, target.id, bad));
+    expect(r.shortfalls.filter((s) => s.code === 'card-place-text').map((s) => s.problem)).toEqual([target.id]);
+  });
+
+  describe('S21 (N3): 見本にも同じ検査 (claims-count・card-structure・card-relation・card-text-length)', () => {
+    const withSample = (problem: Problem) => ({ ...cardPool(), companies: [...cardPool().companies, { ...companyA(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem, notes: {} } }] });
+    const sample = () => normalVariant('sample', 'easy', 'c-sample');
+    it('基準の見本は errors も card-* の shortfalls も出ない', () => {
+      const r = verifyDataset(withSample(sample()));
+      expect(r.errors.filter((e) => e.problem === 'sample')).toEqual([]);
+      expect(r.shortfalls.filter((s) => s.problem === 'sample')).toEqual([]);
+    });
+    it('主張が 2 つ → claims-count (errors)', () => {
+      const p = set(sample(), 'ir.statements', [...sample().ir.statements, { slide: 'highlights', text: 'x', claims: [{ metric: 'netSales', direction: 'down' }] }]);
+      expect(verifyDataset(withSample(p)).errors.some((e) => e.code === 'claims-count' && e.problem === 'sample')).toBe(true);
+    });
+    it('見出し語が引けない・関係が破れる → card-structure・card-relation (errors)', () => {
+      const none = verifyDataset(withSample(set(sample(), 'ir.statements', [])));
+      expect(none.errors.some((e) => e.code === 'card-structure' && e.problem === 'sample')).toBe(true);
+      const margin = verifyDataset(withSample(set(sample(), 'tanshin.summary.operatingMargin', 20)));
+      expect(margin.errors.some((e) => e.code === 'card-relation' && e.problem === 'sample')).toBe(true);
+    });
+    it('文欄が 41 字 → card-text-length (shortfalls。見本はどちらの難易度の形でも見せるので、両方の形で数える)', () => {
+      let p = set(sample(), 'tanshin.notes.subsequentEvents', 'あ'.repeat(41));
+      p = set(p, 'ir.outlook.subsequentEvent', '期末後の出来事 (300 百万円)。');
+      expect(verifyDataset(withSample(p)).shortfalls.filter((s) => s.code === 'card-text-length' && s.problem === 'sample')).toHaveLength(1);
+    });
+  });
 });

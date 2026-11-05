@@ -188,14 +188,18 @@ describe('10.1 文欄を claims から型で作る (R-D5。D44〜D49)', () => {
     expect(claimText(down, 'H1').text).toBe('売上高は前期より減った');
     expect(claimText(hardB(), 'H1', companyB()).text).toBe('売上高は前期より増えた');
   });
-  it('D45: H2 は営業 CF の符号 (主語は labels.ts の営業 CF の名前。labelOverrides があればその名前)', () => {
+  it('D45: H2 は営業 CF の符号 (主語は labels.ts の標準の名前。labelOverrides は読まない。欄の名前も同じ呼び名)', () => {
     expect(claimText(hardA(), 'H2')).toMatchObject({ text: '営業活動によるキャッシュ・フローはプラス', reads: ['ir.statements.2'] });
     const down = set(hardA(), 'ir.statements.2.claims.0.direction', 'down');
     expect(claimText(down, 'H2').text).toBe('営業活動によるキャッシュ・フローはマイナス');
+    // H-30 (科目名の誤字): 短信の ④ だけが誤字になる。IR の文は別の資料なので、短信の表の差し替えを写さない
     const typo = { ...down, labelOverrides: { 'tanshin.cashFlow.operatingCashFlow': '営業活動によるキャッシュ・フロ' } };
-    expect(claimText(typo, 'H2').text).toBe('営業活動によるキャッシュ・フロはマイナス');
+    expect(claimText(typo, 'H2').text).toBe('営業活動によるキャッシュ・フローはマイナス');
     const tan = deriveCards(typo, companyA(), 'H2')[0] as Card;
-    expect(slot(tan, 'operatingCf').label).toBe('営業活動によるキャッシュ・フロ'); // ④ の科目名と同じ言い方
+    expect(slot(tan, 'operatingCf').label).toBe('営業活動によるキャッシュ・フロ');
+    // 同じ科目の呼び名が正常なカードの組に 2 つ出ない: 欄の名前も、主語と同じ「営業活動によるキャッシュ・フロー」
+    expect(claimText(hardA(), 'H2').label).toBe('営業活動によるキャッシュ・フローの説明');
+    expect(slot(deriveCards(hardA(), companyA(), 'H2')[0], 'operatingCf').label).toBe('営業活動によるキャッシュ・フロー');
   });
   it('D46: ir.statements の text を書き換えても、カードは変わらない。同じ metric の主張が 2 つの文にあれば最初の文だけを読む', () => {
     const changed = set(set(set(hardA(), 'ir.statements.0.text', '全然違う文。'), 'ir.statements.1.text', 'x'), 'ir.statements.2.text', 'y');

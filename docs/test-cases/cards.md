@@ -333,7 +333,7 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 | ID | 入力 → 期待 |
 | --- | --- |
 | D44 | H1 IR の `claim` 欄: `netSales` の主張が `up` → `売上高は前期より増えた`、`down` → `売上高は前期より減った`。`text` が何であっても (`ir.statements.<N>.text` は使わない)、`raw` もこの文。`reads` = `['ir.statements.<N>']` (型が使った 1 つの文だけ。`ir.statements` 全体を読まない)。基準問題 A・B で `売上高は前期より増えた` (D14 の `売上高・営業利益ともに前期を上回った。` を置き換える) |
-| D45 | H2 IR の `claim` 欄: `operatingCashFlow` の主張が `up` → `営業活動によるキャッシュ・フローはプラス`、`down` → `…マイナス`。**主語は `labels.ts` の `tanshin.cashFlow.operatingCashFlow` の名前** (`labelOverrides` があればその名前。同じカードの組の ④ 営業 CF の科目名と同じ言い方)。基準問題 A・B で `営業活動によるキャッシュ・フローはプラス` (D16 を置き換える) |
+| D45 | H2 IR の `claim` 欄: `operatingCashFlow` の主張が `up` → `営業活動によるキャッシュ・フローはプラス`、`down` → `…マイナス`。**主語は `labels.ts` の `tanshin.cashFlow.operatingCashFlow` の標準の名前だけ** (**`labelOverrides` は読まない**。H-30 の誤字は短信の ④ だけに出る。IR の文は別の資料で、短信の表の差し替えが写ると、誤字が 2 か所に出るのに答え合わせの場所が ④ だけになる。#158 レビュー B1)。欄の名前も同じ呼び名の `営業活動によるキャッシュ・フローの説明` (同じ科目の呼び名が正常なカードの組に 2 つ出ない。N1)。基準問題 A・B で `営業活動によるキャッシュ・フローはプラス` (D16 を置き換える) |
 | D46 | `ir.statements` の `text` を別の文に書き換えても、カードは変わらない (単一の出所)。同じ metric の主張を持つ文が 2 つある問題は、最初の文を使い、`reads` はその 1 つの添字だけ |
 | D47 | 主張の `direction` が `zero` (型の文を作れない)・主張が無い → その欄は出ない (例外にしない。構造の検査 C1・§10.2 が拾う) |
 | D48 | 型の文はどの向きでも **40 字以内**。最長は H2 の `営業活動によるキャッシュ・フローはマイナス` の **21 字** (**導いた**: 科目名 16 字 + `は` + `マイナス` 4 字。設計書 R-D5 の「最長 20 字」は 1 字少ないが、40 字には収まる。設計書は直さず PR に書く) |
@@ -345,9 +345,11 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 | --- | --- |
 | C7 | `cardTextLengthIssues` の対象は **`deriveCards` が作る文欄の `text` すべて** (監査の注意書き・会計方針の注記・後発事象・「期末後の出来事: なし」・セグメントの名前の並び・型の文)。今の C5 と同じ数え方 (40 字ちょうどは可・41 字は 1 件) |
 | C8 | **今の正常な問題**で 40 字を超える欄 (**測った**。型の文は 21 字以内なので、H1 の IR 主張 4 欄は対象から外れる): hard-023 (方針注記 56)・hard-024 (後発事象 47・IR 後発 47)・hard-031 (方針注記 56)・hard-032 (後発事象 49・IR 後発 49) の **4 問・6 欄**。やさしいは 0 件 |
-| S16 | `claims-count` (errors): 1 問の中で `netSales`・`operatingIncome`・`operatingCashFlow` の主張がちょうど 1 つでない (0 個・2 個以上) → 問題ごとに 1 件 (メッセージに metric と個数)。**異変の問題・正常な問題の全問**に当てる。今の 57 問は満たす (**測った**) |
+| S16 | `claims-count` (errors): 1 問の中で `netSales`・`operatingIncome`・`operatingCashFlow` の主張がちょうど 1 つでない (0 個・2 個以上) → **問題 × metric ごとに 1 件** (メッセージの頭に metric と個数。#158 レビュー N4)。**異変の問題・正常な問題の全問**に当てる。今の 57 問は満たす (**測った**) |
 | S17 | `card-claim-directions` (shortfalls。R-S5 (f)): **カードに出る語の向きが、正常な問題に両方出る**。難易度ごとに、正常な問題のうち、**その難易度のカードに出る主張** (やさしい = `netSales`・`operatingIncome` の見出し語、むずかしい = `netSales` (H1 の文)・`operatingCashFlow` (H2 の文)) の `direction: 'down'` を持つ会社の数が、`netSales` 3 社・`operatingIncome` 3 社・`operatingCashFlow` 1 社に足りない → 1 件にまとめる (**仮定**: 設計書 R-S5 (f) の数。減益は今の 3/28 に合わせた水準)。今のデータは 減収 0 社・営業 CF マイナス 0 社なので出る (**測った**: 28/28 が増収・営業 CF プラス) |
 | S18 | `card-text-length` は**異変の問題にも**当てる (S3 を広げる。異変の問題の文欄だけが長いと、行の数で答えが分かる。設計 §1.1)。cardEdits の問題はテンプレートのカードで見る。**実データ (測った)**: 異変の問題も含めて、hard-018 (方針注記 56)・hard-019 (IR 後発 69)・hard-023・hard-024・hard-031・hard-032 の 6 問 (やさしいは 0) |
 | S19 | 異変の問題の `cardEdits` を当てたカードも、数字 ≤ 4 (やさしい)・文 ≤ 3 (むずかしい) を守る → 守らないと `card-structure` (errors。メッセージに形・カード・上限)。**E-22 (欄の重複) は E3 だけ**: E3 (数字 3 つ) の `dup` は 4 つで可、E1・E2 (数字 4 つ) の `dup` は 5 つで errors |
 | R7 | 関係 R4・R5 の文の向きは、**カードが読んだ文 (`ir.statements.<N>`) の claims の向き**と数字を照らす (今のまま。文の `text` は照らさない) |
+| S20 | `card-place-text` (shortfalls。#158 レビュー N2) | 異変の `places` が `ir.statements.<N>.text` (text の下) を指す問題 (問題ごとに 1 件)。カードの文は claims から作り、`text` は読まないので、場所は `ir.statements.<N>` (claims の入れ物) で書く。今の easy-024 (E-17)・hard-007 (H-21) が当たる (データの Task が直す) |
+| S21 | 見本にも同じ検査 (N3) | `samples/*.json` の問題にも、`claims-count`・`card-structure`・`card-relation` (errors)・`card-text-length` (shortfalls。見本は両方の難易度で共有するので、問題の難易度を easy・hard に替えて両方の形で数える) を当てる。基準の見本は出ない |
 
