@@ -353,3 +353,27 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 | S20 | `card-place-text` (shortfalls。#158 レビュー N2): 異変の `places` が `ir.statements.<N>.text` (text の下) を指す問題 (問題ごとに 1 件)。カードの文は claims から作り、`text` は読まないので、場所は `ir.statements.<N>` (claims の入れ物) で書く。今の easy-024 (E-17)・hard-007 (H-21) が当たる (データの Task が直す) |
 | S21 | 見本にも同じ検査 (N3・B2): `samples/*.json` の問題にも、`claims-count`・`card-structure`・`card-relation` (errors)・`card-text-length` (shortfalls) を当てる。見本は両方の難易度で共有するので、問題の難易度を easy・hard に替えて両方の形で数え、**超えた形の難易度ごとに `difficulty` を付けて 1 件** (文欄はむずかしいの形にしか無いので実際は `hard` の 1 件。`--require-cards=hard` が数える。難易度が無いと `=easy`・`=hard` のどちらでも致命にならない)。基準の見本は出ない |
 
+## 11. 設計 #160 の取り込み (Sub-task #162。calliope/design-v2 18be4ff)
+
+設計 v2 の 3 回目の包括レビュー (#160) の直し。H3 ④ の科目名に資金の範囲・検査 5 (表示が実際に変わる。見えるものだけ)・cashScope の検査・H2 ③ の名前・`Slot.column`・§1.6 の「op ごとに当ててよい欄」。E-02 の作り方・H-05 の再計算は問題データの作り方 (#139・#140) で、検証器に新しい規則は要らない。
+
+### 11.1 カードの導出 (`deriveCards`)
+
+| ID | 入力 → 期待 |
+| --- | --- |
+| D60 | H3 短信 ④ (`cfEnd`) のラベルは `現金及び現金同等物の期末残高 (資金の範囲 = 現金及び預金)`。範囲の語は `tanshin.notes.cashScope` から作る (枠の外の語。数字の数・文の数に入らない)。`cashScope` を書き換えるとラベルが変わる。`labelOverrides` の科目名の差し替えは、範囲の語の前の名前に効く (`営業和益` のように誤字にした名前 + ` (資金の範囲 = …)`)。`reads` は [`tanshin.cashFlow.cashEnding`, `tanshin.notes.cashScope`] (数字のセルが先。`cardCells` に `cashScope` が入る) |
+| D61 | H2 ③ (`recvChange`) の科目名は `売上債権 (売掛金) の増減額` (`labels.ts` の `tanshin.cashFlow.receivablesChange` の標準の名前を直した)。売上債権の行 (`receivables`) の `labelOverrides` は読まない (`買掛金` に差し替えても ③ の名前は変わらない) |
+| D62 | `CardSlot.column`: 前期・当期の列を持つ欄は `'previous'` / `'current'`、それ以外は `undefined`。E1 の `opPrev`・`opCur`、E2・H1 の `salesPrev`・`salesCur`、H2 の `recvPrev`・`recvCur`、H3 IR の `cashPrev`・`cashCur`。科目名の添え字 (`(前期)`・`(当期)`・`(前期末)`・`(当期末)`) は `column` に対応し、`swap` で欄を動かすと添え字も一緒に動く |
+
+### 11.2 検証器
+
+| ID | 入力 → 期待 |
+| --- | --- |
+| S22 | `cash-scope` (errors。問題・異変の問題・見本の全部): `tanshin.notes.cashScope` が `labels.ts` の `tanshin.balanceSheet.cash` の標準の名前 (`現金及び預金`) と違う → 問題ごとに 1 件 (定期預金などを書くと、H-04 の 2 つの金額の差が説明できて、正しく読んだ遊び手が不正解になる)。今の 58 問 (問題 57・見本 1) は全部 `現金及び預金` (**測った**) |
+| K11 | `cardEditIssues(problem, company)` (`card-edit-op` errors。§1.6): 編集が、当ててよい欄に当たっているか。`unit` = 単位を表示する金額の欄 (`measure` が金額) だけ (% の欄・文欄は不可。E2 の棒は欄でないので指せない)。`format` = 金額の欄で、テンプレートのカードの表示の整数部が `no-comma` は 4 桁以上・`comma-shift` は 5 桁以上 (% の欄・文欄は不可)。`swap` = `itemKey` が違う欄どうしだけ (E1 の `opPrev`・`opCur` のような同じ科目の前期・当期は不可)。`headline` = 元の語の組の外の語だけ (E1 → 増収・減収、E2 → 増益・減益)。`dup` = E3 だけ。`drop` = どの欄でもよい。当ててよい例と、ダメな例を op ごとに 1 つ以上 (E1 `opPrev`↔`opCur` の swap・H2 `recvChange` (△100) の format・E1 `margin` の unit・E1 の dup・E1 に `増益` の headline など) |
+| V28 | **検査 5 = 表示が実際に変わる** (`visibleShapes` に `base` を渡したとき。`displayChanges`): 形 s ごとに、`places` の欄の表示 (出す文字列 = 科目名 (添え字・資金の範囲を含む)・数字の文字列・単位の語・見える順の位置・欄の有無・見出し語・棒の値) が、基 (`Anomaly.base` の正常な問題) の同じ形のカードと**違う**。編集の印 (`op`・`style`)・欄の `key`・`itemKey` は表示に入れない。`places` の欄のどれか 1 つでも違えばよい。違わない形は見える形から外す |
+| V29 | 例 (A を基にする): 営業利益率 10.0 → 20.0 は E1 で表示が変わる (見える)。E1 の売上高 12,400 に `no-comma` は `12400` で変わる (見える)。**H2 の売上債権の増減額 (△100) に `no-comma` は `△100` のまま変わらない** → H2 では見えない (K11 も別に弾く)。E1 の `unit` 編集は単位が変わる。`drop` は欄が消える・`swap` は位置が変わる・`dup` は欄が 2 回出る (どれも変わる)。`headline` は語が変わる |
+| V30 | **別名だけを変えた異変** (`ir.results.netSales.current` だけを変える。V1 は別名で通り、V2 の `xdoc-results-net-sales` も別名で通る): E2 のカードに見える数字・棒は何も変わらないので、表示が変わらず E2 では見えない (別名は『同じ値とみなす』だけで、変えても見えない) |
+| V31 | `base` を渡さない・基が引けない問題は、検査 5 を当てない (今のデータとの互換。`card-anomaly-base` が別に拾う) |
+| S23 | データ全件: 検査 5 で見える形が 0 になる問題は `card-invisible` (メッセージに『V3 表示が基と変わらない』)。`card-edit-op` (K11) は errors |
+
