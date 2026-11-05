@@ -120,6 +120,7 @@ describe('anomaly-kinds.json (docs/plans/anomalies.md の 42 種類)', () => {
       'cross-document': 9,
       notes: 3,
       tactics: 0,
+      'card-form': 0,
     });
   });
 

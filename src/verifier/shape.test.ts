@@ -108,4 +108,36 @@ describe('shapeErrors', () => {
     expect(e.some((m) => m.includes('longTermBorrowings'))).toBe(true);
     expect(e.some((m) => m.includes('longTermDebtChange'))).toBe(true);
   });
+
+  // K8 (docs/test-cases/cards.md §3): cardEdits の形
+  describe('SH20: cardEdits (K8)', () => {
+    const withEdits = (edits: unknown) => set(normalA(), 'cardEdits', edits);
+    const good = [
+      { shape: 'E1', card: 0, slot: 'margin', op: 'drop' },
+      { shape: 'E1', card: 0, op: 'swap', slots: ['netSales', 'margin'] },
+      { shape: 'E1', card: 0, slot: 'netSales', op: 'format', style: 'no-comma' },
+      { shape: 'E1', card: 0, slot: 'netSales', op: 'format', style: 'comma-shift' },
+      { shape: 'E1', card: 0, slot: 'netSales', op: 'unit', unit: '億円' },
+      { shape: 'E1', card: 0, slot: 'margin', op: 'dup' },
+      { shape: 'E1', card: 0, op: 'headline', word: '増収' },
+    ];
+    it.each(good)('正しい編集は誤りなし (%j)', (edit) => expect(errs(withEdits([edit]))).toEqual([]));
+    it('編集なし・空の配列は誤りなし', () => {
+      expect(errs(normalA())).toEqual([]);
+      expect(errs(withEdits([]))).toEqual([]);
+    });
+    const bad: [string, unknown][] = [
+      ['op が未知', { shape: 'E1', card: 0, slot: 'margin', op: 'erase' }],
+      ['shape が未知', { shape: 'E9', card: 0, slot: 'margin', op: 'drop' }],
+      ['swap の slots が 2 要素でない', { shape: 'E1', card: 0, op: 'swap', slots: ['netSales'] }],
+      ['format の style が未知', { shape: 'E1', card: 0, slot: 'netSales', op: 'format', style: 'rounded' }],
+      ['card が数でない', { shape: 'E1', card: '0', slot: 'margin', op: 'drop' }],
+      ['drop に slot が無い', { shape: 'E1', card: 0, op: 'drop' }],
+      ['未知のキー', { shape: 'E1', card: 0, slot: 'margin', op: 'drop', extra: 1 }],
+      ['unit に unit が無い', { shape: 'E1', card: 0, slot: 'netSales', op: 'unit' }],
+      ['headline に word が無い', { shape: 'E1', card: 0, op: 'headline' }],
+    ];
+    it.each(bad)('誤り: %s', (_name, edit) => expect(errs(withEdits([edit])).length).toBeGreaterThan(0));
+    it('cardEdits が配列でない', () => expect(errs(withEdits({ op: 'drop' })).length).toBeGreaterThan(0));
+  });
 });
