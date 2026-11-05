@@ -24,7 +24,7 @@ Task #137 / Sub-task #150。根拠: [plans.md](../plans/redesign/plans.md) §8.1
 
 ### 公開の記録 (責任者が実際に出したもの。包括レビュー N3・#161。#161 のレビュー 1 回目 B1 で直した)
 
-実際の公開は、**Vercel のアカウントなしの一時的な公開** (ドメインは `*.tmp.now`)。応答ヘッダが示す (2026-11-05 12:2x JST に `curl -sI https://nimble-pavo-ke78ke0.tmp.now/proto.html` で確認): `server: Vercel`・`x-vercel-id: hnd1::…`。`https://tmp.now/` は 307 で `vercel.com` へ飛ぶ。#137 のコメントの「引き取り」は、Vercel の claim (https://vercel.com/docs/deployments/claim-deployments「When you deploy without an account, with Vercel Drop or `vercel deploy --temporary`, you get a claim URL」) のこと。したがって、下の「Vercel で出す場合の手順」と未確認 1・2 は、**そのまま今回の公開に当てはまる**。記録 (#137 のコメント。責任者、2026-11-05 12:02 JST):
+実際の公開は、**Vercel のアカウントなしの一時的な公開** (ドメインは `*.tmp.now`)。応答ヘッダが示す (2026-11-05 12:2x JST に `curl -sI https://nimble-pavo-ke78ke0.tmp.now/proto.html` で確認): `server: Vercel`・`x-vercel-id: hnd1::…`。`https://tmp.now/` は 307 で `vercel.com` へ飛ぶ。#137 のコメントの「引き取り」は、Vercel の claim (https://vercel.com/docs/deployments/claim-deployments「When you deploy without an account, with Vercel Drop or `vercel deploy --temporary`, you get a claim URL」) のこと。したがって、下の「公開の手順」と未確認 1・2 は、**そのまま今回の公開に当てはまる**。記録 (#137 のコメント。責任者、2026-11-05 12:02 JST):
 
 | 項目 | 内容 |
 | --- | --- |
