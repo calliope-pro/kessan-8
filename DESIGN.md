@@ -4,7 +4,7 @@ description: 決算の要約カードを、桁マスと朱の印のある仕訳�
 ---
 
 <!-- SEED: established with the user before implementation; re-run /impeccable document once there's code to capture the actual tokens and components. -->
-<!-- 補足 (暫定): この方向は **仮定**。人間は選択を責任者に任せた (requirements.md Q15)。impeccable の抽選 (seed:c296a2149d79abdf) の割り当てと、挑戦者の評価 (.impeccable/surfaces/index-html.md の Direction round) を、進める役が責任者に送り、**責任者の決定を待つ** (#146 のレビュー 1 回目 B10)。決まったら、決めた人と日時をここに書く。決まるまで、後続の作業はこの方向を確定として受け継がない。 -->
+<!-- 決定: この方向は、**責任者が決めた (2026-11-05 11:1x。UI/UX は人間に任された。requirements.md Q15)**。進める役が、impeccable の抽選 (seed:c296a2149d79abdf) の割り当てと挑戦者の評価 (.impeccable/surfaces/index-html.md の Direction round) を責任者に送り、A 仕訳伝票 (割り当て) を選んだ。理由: 判定を「印を押す」動作にでき、手ごたえと離脱しにくさ (成功の定義) に合う。桁マスで桁のずれが一目で見える。不正解の差し戻しが「一瞬で 0 社目に戻る」と合う。**条件**: 320 px で 7 桁の金額を 18 px 以上で収められるかを縦の試作 (#137) で必ず確かめ、収まらなければ桁マスの見せ方 (桁区切り・単位の表記など) を直す。 -->
 
 # Design System: ８期連続
 
