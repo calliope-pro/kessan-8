@@ -20,7 +20,7 @@ Task #136。作成: 2026-11-05。根拠: [requirements.md](requirements.md) (第
 
 数え方の決まり (**設計**。要件の「数字 4 つまで」「各 数字 4 + 文 3」を数えられる形にする):
 - 数字の数 = カードに載る**数値のセルの数**。棒グラフの棒 1 本も数字 1 つに数える (棒は元のセルから描く)。比率 (営業利益率など) も数字 1 つ。
-- 文の数 = 文の欄の数。文欄は **1 文・40 字以内**。40 字は 1 行の幅の上限で (**文書にある**: research.md §4.3 の 176 行目。出典 Xbox Accessibility Guideline 101「Line width ≤ 80 characters (40 for CJK)」(https://devdocs.xbox.com/gaming/accessibility/xbox-accessibility-guidelines/101)。2026-11-05 に本文を取得して確認)、スマホ (320 px) では折り返してよい。文欄に載る文 (`accountingPolicyNote`・`subsequentEvents`・`ir.outlook.subsequentEvent`・選んだ `ir.statements` の文) は、検証器が **40 字以内**を正常な問題に当てる (今のデータには超えるものがある。監視役が測った: highlights の文は 79 件中 9 件、`accountingPolicyNote` は 57 問中 5 問、`subsequentEvents` は 4 問、`ir.outlook.subsequentEvent` は 5 件中 4 件。データの Task が 40 字以内に直す)。
+- 文の数 = 文の欄の数。文欄は **1 文・40 字以内**。40 字は 1 行の幅の上限で (**文書にある**: research.md §4.3 の 176 行目。出典 Xbox Accessibility Guideline 101「Line width ≤ 80 characters (40 for CJK)」(https://devdocs.xbox.com/gaming/accessibility/xbox-accessibility-guidelines/101)。2026-11-05 に本文を取得して確認)、スマホ (320 px) では折り返してよい。文欄に載る文 (`accountingPolicyNote`・`subsequentEvents`・`ir.outlook.subsequentEvent`) は、検証器が **40 字以内**を、**異変の問題を含む全問**に当てる (異変の問題の文だけが長いと、行の数で答えが分かる。要件 6。例: 今の「会計方針の変更あり」の注記は 59 字で、H-23 の問題に流用してはいけない)。むずかしいの IR 型の業績・営業 CF の文は、`ir.statements` の `text` でなく、claims から型で作る (R-D5) ので、40 字の対象ではない。今の文の長さ (今のデータには超えるものがある。監視役が測った: highlights の文は 79 件中 9 件、`accountingPolicyNote` は 57 問中 5 問、`subsequentEvents` は 4 問、`ir.outlook.subsequentEvent` は 5 件中 4 件。データの Task が 40 字以内に直す)。
 - **枠の外** (数えない): 社章・社名・期・期末日の行 (閲覧票の中身。全形・全社で同じ位置)、見出し語 (【増益】など 1 語)、欄の科目名と単位の語。
 - やさしいは 文欄を持たない (見出し語だけ)。むずかしいは 1 枚あたり 数字 4 + 文 3 まで。
 
@@ -45,9 +45,9 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
 規則:
 1. **R-D1 純関数**: `deriveCards(problem, company, shape)` は、問題データと形の定義だけから、表示する文字列を作る。乱数・時刻・保存を見ない。同じ入力は同じカード。
 2. **R-D2 異変は問題データの変更で表す**: 異変のカードは、異変の問題データ (数字・文のセルを 1 つ変えたもの、`labelOverrides`・`unitOverrides`、§1.6 の `cardEdits`) から `deriveCards` で導く。**カードを手で書き換えない**。正常と異変で同じ関数を使う。
-3. **R-D3 答え合わせも同じ出所**: 答え合わせは `anomaly.places` (異変の場所) を、`Slot.reads` に当てて、カード上の欄を示す。パスでない場所は、科目名の異変 (`itemKey`。台帳 H-28) = `Slot.itemKey` が同じ欄、文章の異変 (`ir.statements.<N>.text`。台帳 E-17) = 見出し語の欄 (`Derived` が `ir.statements.<N>` を読む) に当てる。文言は `anomaly.explanation` (今のまま)。パスでない場所のうち、`cardEdits` の種類の場所 `{ doc: 'card', shape, card, slot }` は、その欄に当てる (swap = 2 つの場所を並べる、headline = 見出し語の欄の key、drop = 欠けた位置 (前後の欄のあいだ)。§2.8)。**`places` は、カードの上で食い違いが見えるセルだけ**を書く (R-S4 の V1。二次の症状でカードの外にあるセルは書かない)。
+3. **R-D3 答え合わせも同じ出所**: 答え合わせは `anomaly.places` (異変の場所) を、`Slot.reads` に当てて、カード上の欄を示す。パスでない場所は、科目名の異変 (`itemKey`。台帳 H-28) = `Slot.itemKey` が同じ欄、文章の異変 (`ir.statements.<N>`。台帳 E-17・H-21) = 見出し語・IR 型の文の欄 (`Derived` が `ir.statements.<N>` の claims を読む) に当てる。文言は `anomaly.explanation` (今のまま)。パスでない場所のうち、`cardEdits` の種類の場所 `{ doc: 'card', shape, card, slot }` は、その欄に当てる (swap = 2 つの場所を並べる、headline = 見出し語の欄の key、drop = 欠けた位置 (前後の欄のあいだ)。§2.8)。**`places` は、カードの上で食い違いが見えるセルだけ**を書く (R-S4 の V1。二次の症状でカードの外にあるセルは書かない)。
 4. **R-D4 正常の整合**: 異変の無い問題は、今の検証器の全規則を満たす (今の 28 問の正常な問題はすべて満たす。**測った**: §1.7)。カードは正常な問題から導くので、正常のカードの数字は必ず整合する。
-5. **R-D5 見出し語**: 【増益】【減益】【増収】【減収】は、`ir.statements` の主張 (`claims` の `metric` と `direction`) から作る (`up` → 増、`down` → 減。語の組は metric で決まる: `netSales` = 増収・減収、`operatingIncome` = 増益・減益。**今のデータでは、1 問の中で同じ metric の主張は重ならない** (57 問。監視役が確かめた) ので、metric で引けば 1 つに決まる)。主張は問題データの文なので、見出し語が数字と逆なら、今の検証器の規則 `claims-direction` が落ちる (向きの逆の異変 = 台帳の E-17 型)。
+5. **R-D5 見出し語**: 【増益】【減益】【増収】【減収】は、`ir.statements` の主張 (`claims` の `metric` と `direction`) から作る (`up` → 増、`down` → 減。語の組は metric で決まる: `netSales` = 増収・減収、`operatingIncome` = 増益・減益。**今のデータでは、1 問の中で同じ metric の主張は重ならない** (57 問。監視役が確かめた) ので、metric で引けば 1 つに決まる)。主張は問題データなので、見出し語が数字と逆なら、今の検証器の規則 `claims-direction` が落ちる (向きの逆の異変 = 台帳の E-17 型)。**むずかしいの IR 型の文欄 (H1 = `netSales` の主張、H2 = `operatingCashFlow` の主張) も同じ出所 (claims) から型で作り、`ir.statements` の `text` は使わない** (**single source of truth**。charter の原則)。型 (**設計**): H1 = `up` →「売上高は前期より増えた」、`down` →「売上高は前期より減った」。H2 = `up` →「営業活動のキャッシュ・フローはプラス」、`down` →「営業活動のキャッシュ・フローはマイナス」 (`operatingCashFlow` の `up` は符号が正の意味。検証器の `actualDirection`)。文は 1 文・40 字以内で、型なので text と claims がずれない。答え合わせの場所の当て方: 文章の異変は `ir.statements.<N>` (claims の入れ物。`text` は読まない) を文の欄の `reads` に当てる。
 
 ### 1.3 やさしいの 3 形 (カード 1 枚。数字 4 つまで)
 
@@ -73,7 +73,7 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
 
 | 形 | 名前 | 短信型の欄 (数字 4 + 文 3 まで) | IR 型の欄 (数字 4 + 文 3 まで) |
 | --- | --- | --- | --- |
-| **H1** | 成績の見比べ | 数字: ① 売上高 (前期) ② 売上高 (当期) ③ 総資産 ④ 負債・純資産合計 | 数字: ① 売上高 (当期。IR の単位)。文: ① 業績の主張 (`ir.statements` のうち、slide = highlights で、`netSales` の主張を持つ文) |
+| **H1** | 成績の見比べ | 数字: ① 売上高 (前期) ② 売上高 (当期) ③ 総資産 ④ 負債・純資産合計 | 数字: ① 売上高 (当期。IR の単位)。文: ① 業績の主張 (`netSales` の主張から型で作る。R-D5) |
 | **H2** | 運転資金のつながり | 数字: ① 売上債権 (前期末) ② 売上債権 (当期末) ③ CF の売上債権の増減 ④ 営業 CF。文: ① 資産の科目名の行 (売上債権の行の名前と区分) ② 会計方針の変更の有無 ③ 会計方針の注記 | 文: ① 営業 CF の主張 (`ir.statements` のうち、`operatingCashFlow` の主張を持つ文) |
 | **H3** | 現金・注記・借入 | 数字: ① CF の起点 (税金等調整前当期純利益) ② 損益の税金等調整前当期純利益 ③ 貸借の現金 ④ CF の期末残高。文: ① 監査の注意書き ② 後発事象 ③ 報告セグメントの名前の並び | 数字: ① 現金 (当期) ② 現金 (前期) ③ 有利子負債 (前期) ④ 純有利子負債 (前期。科目名に式を入れて「純有利子負債 (有利子負債 − 現金)」と出す。§2.3 の H-20)。文: ① 期末後の出来事 ② セグメントの名前の並び |
 
@@ -82,10 +82,10 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
 | 形・欄 | セル |
 | --- | --- |
 | H1 短信 ①② ③④ | `tanshin.incomeStatement.previous.netSales`・`…current.netSales`・`tanshin.balanceSheet.current.totalAssets`・`…totalLiabilitiesAndNetAssets` |
-| H1 IR ① 数字・文 | `ir.highlights.netSales.amount`・`ir.statements[claims に netSales を持つ highlights の文]` (配当の文ではない) |
+| H1 IR ① 数字・文 | `ir.highlights.netSales.amount`・`ir.statements[claims に netSales を持つ文].claims` (text でなく claims から型で作る。R-D5) |
 | H2 短信 数字 ①〜④ | `…balanceSheet.previous.receivables`・`…current.receivables`・`tanshin.cashFlow.receivablesChange`・`tanshin.cashFlow.operatingCashFlow` |
 | H2 短信 文 ①②③ | 売上債権の行の科目名 (`labels`・`labelOverrides` の `receivables`) と区分 (資産の部)・`tanshin.summary.accountingPolicyChange` (あり/なし)・`tanshin.notes.accountingPolicyNote` |
-| H2 IR 文 ① | `ir.statements[claims に operatingCashFlow を持つ文]` |
+| H2 IR 文 ① | `ir.statements[claims に operatingCashFlow を持つ文].claims` (型で作る。R-D5) |
 | H3 短信 数字 | `tanshin.cashFlow.incomeBeforeTax`・`tanshin.incomeStatement.current.incomeBeforeTax`・`tanshin.balanceSheet.current.cash`・`tanshin.cashFlow.cashEnding` |
 | H3 短信 文 | `tanshin.summary.auditNote`・`tanshin.notes.subsequentEvents`・`tanshin.notes.segments.current.segments[].name` の並び |
 | H3 IR 数字 | `ir.supplement.cash.current`・`…cash.previous`・`…interestBearingDebt.previous`・`…netDebt.previous` |
@@ -152,7 +152,7 @@ type CardEdit =
 | むずかしいの 3 形 (§1.4) の上限 (数字 4・文 3) と、収まる見え方の分類 | 上限超えなし。分類は **14 / 候補 14**: H1 = C06・C07・C08・C14、H2 = C02・C03・C11・C18、H3 = C01・C04・C05・C07・C09・C10・C12 (C07 は H1 と H3 の両方) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/shape-fit.ts`。分類と台帳の対応は `shape-fit.ts` の `CLASSES`。**C02・C05 は疑似セル (科目名・名前の並びを 1 セルに置いた)。C14・C18 も文のセルを疑似セルで置いた** |
 | 今のデータの `places` に V1 を文字どおり当てたときに見えるむずかしいの種類 | 16 種類のうち 7 (H-03・H-13・H-17・H-22・H-23・H-24・H-28)。**カードに合わせて `places` を書き直す前提**で §1.4 の 14 分類を数えた (V2 の数) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/places-fit.ts` |
 | やさしいの E-02・E-09・E-18 の作り方 (向きを変えない倍率) を正常 12 問すべてに注入したときの二重の食い違い (カードに収まる違反が `primaryRules` の外にもある問題) | 0 件 (E-02/E1・E-02/E2・E-09/E3 は 12/12、E-18/E1 は増益の 10 問に適用) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy-all.ts` |
-| むずかしいの作り方を正常 16 問すべてに注入したときの二重の食い違い (検査 4) | H-01・H-03 (再計算しない)・H-04・H-05・H-13・H-17・H-20・H-21・H-22・H-23 は 0/16。H-03 を再計算する旧案は 16/16 (`link-cf-cash-end`)。H-24 は基 14 問に適用 | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-hard.ts` |
+| むずかしいの作り方を正常 16 問すべてに注入したときの二重の食い違い (検査 4) | H-01・H-03 (再計算しない)・H-04・H-05・H-13・H-17・H-20・H-21・H-22・H-23 は 0/16。H-21 はカードの文が変わる 16/16。H-03 を再計算する旧案は 16/16 (`link-cf-cash-end`)。H-24 は基 14 問に適用 | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-hard.ts` |
 | やさしいの E-02・E-09・E-18 を 1 問に注入したときに落ちる規則と、カードに収まる規則 | §2.8 の表 (基 easy-017。easy-004・013・025 でも、カードに収まる hard の規則は同じ。ソフトの規則は基で違う)。採るのは E-09 = 流動資産の小計をずらす (落ちる 2 規則とも許容集合内)・E-02 = E1・E2 (E3 は外す)・E-18 = E1 | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy.ts <正常な問題の ID>` |
 | 3 形を選ぶ探索 | 18 の候補から、14 分類を収める 3 形が見つかる (90 秒のランダムな貪欲法を 2 回。どちらも 14) | `spike-design/hard-search.mjs` (入力は `rule-cells.ts` が出す JSON) |
 
@@ -181,14 +181,14 @@ type CardEdit =
 | E-19 | 欄が 1 つ足りない (営業利益率の行が無い) | 全形 | `cardEdits` の `drop` | カードの型 (正常は全欄がそろう。`card-slots`) | **新規** (plans.md §3.4 の「項目の欠落」) | 1〜2 |
 | E-20 | 欄の並びが違う (売上高と営業利益率の位置が入れ替わっている) | 全形 | `cardEdits` の `swap` | カードの型 (`card-slots`) | **新規** (plans.md §3.4 の「並びの入れ替え」) | 2 |
 | E-21 | 数字の書式が違う (96,930 → 96930 や 9,6930) | 全形 | `cardEdits` の `format` | カードの型 (`card-format`) | **新規** (書式の崩れ。原作の「見た目のずれ」) | 1 |
-| E-22 | 同じ欄が 2 回出る (営業利益率の行が 2 つ) | 全形 | `cardEdits` の `dup` | カードの型 (`card-slots`) | **新規** (欄の欠落 E-19 の逆。見る対象は「欄の有無」でなく「同じ行の繰り返し」) | 1 |
+| E-22 | 同じ欄が 2 回出る (総資産の行が 2 つ) | **E3 だけ** (E1・E2 は数字の欄が 4 つで、重複すると画面に 5 つ出て受け入れ条件 7 に反する。E3 は 3 + 1 = 4) | `cardEdits` の `dup` | カードの型 (`card-slots`) | **新規** (欄の欠落 E-19 の逆。見る対象は「欄の有無」でなく「同じ行の繰り返し」) | 1 |
 | E-23 | 見出し語が別の型の語 (営業利益を見せるもうけのカードに【増収】) | E1・E2 | `cardEdits` の `headline` (E1 = 増収・減収、E2 = 増益・減益にする) | カードの型 (`card-headline`: 見出し語の組は、形が見せる量 (営業利益 = 増益・減益、売上高 = 増収・減収) で決まる) | **新規** (向きの逆 E-17 とは別。向きは合っていて、語の種類が合わない) | 2 |
 | E-04 | 期と期末日が合わない (2024 年 3 月期なのに、期末日が 2023 年 3 月 31 日) | 全形 | `columnDates` の当期の日付を 1 年ずらす | 今の `dates-column-headings` の考え方を、カードの枠 (期と期末日) に当てた新しい規則 `card-period` | 今の E-04 の列見出し。作成要領 p.22 の様式 (期と日付) | 2 |
 | E-07 | 棒の高さが数字と逆 (当期 969.3 > 前期 906.6 なのに、当期の棒が前期の 2/3 以下) | E2 | **数字で大きいほうの棒を、小さいほうの棒の 2/3 以下に描く (向きを逆にする)**。増収の (会社, 期) は `ir.results.chart.netSales.current`、減収の (会社, 期) は `…previous` を下げる (入れ替えではない。今のやさしいの正常 12 問は、前期と当期の棒の比が 0.935〜0.990 で、入れ替えても高さの差が 1〜6.5% しか変わらず、見えない。§2.7) | `chart-bars` (棒のセルと、別名 `ir.results.netSales.*` = 短信の数字。§1.5 V2) | 今の E-07 | 1 |
 | E-06 | 棒の高さの比が数字の比と合わない (軸が 0 から始まらず、差が大きく見える。遊び手に軸の下端は見えない) | E2 | `ir.results.chart.netSales.axisMin` を、描いた長い棒 ÷ 短い棒が 1.5 以上になる値にする (§2.7) | `chart-axis-zero` (今の問題 easy-018 が V2 を満たす) | 今の E-06。軸を 0 から始める作法は事業者の記事 (anomalies.md の S5。目安) で、ゲームの中では正常を必ず 0 起点にして一意にする (設計) | 2 |
 | E-09 | 足し算が合わない (流動資産 49,200 + 固定資産 14,720 = 63,920 ≠ 総資産 58,080。上から 2 桁の概算 49 + 15 = 64 と合わない) | E3 | **流動資産の小計 `balanceSheet.current.totalCurrentAssets` を、総資産の 10% 以上ずらす。総資産は元のまま** (§2.7・§2.8。総資産を変えると `bs-balance`・`sum-total-assets`・`ratio-equity-ratio` も落ち、`bs-balance` は E-09 の許容集合に無い。測った) | `bs-total-assets` (3 セルがすべて E3 に載る。`primaryRules` に足す) | 今の E-09。**財務諸表等規則 第 14 条「資産は、流動資産、固定資産及び繰延資産に分類」(原文を確認。2026-11-05)**。繰延資産はこのゲームの資料に置かない (anomalies.md G5。設計) ので、総資産 = 流動資産 + 固定資産が正常で成り立つ | 2 |
 
-形ごとの種類の数 (R-S5 (c): 4 つ以上。形のずれ = E-03・E-05・E-19・E-20・E-21・E-22・E-04 の 7 つ): **E1 = E-17・E-12・E-02・E-18・E-23 + 7 = 12**、**E2 = E-17・E-02・E-07・E-06・E-23 + 7 = 12**、**E3 = E-09 + 7 = 8** (E3 は 4 つ以上を満たすが、数字の種類は 1 つ (E-09 だけ)。単調にならないかは作り始めの確認で見る。**未確認**)。
+形ごとの種類の数 (R-S5 (c): 4 つ以上。形のずれ = E-03・E-05・E-19・E-20・E-21・E-04 の 6 つ。E-22 は E3 だけ): **E1 = E-17・E-12・E-02・E-18・E-23 + 6 = 11**、**E2 = E-17・E-02・E-07・E-06・E-23 + 6 = 11**、**E3 = E-09・E-22 + 6 = 8** (E3 は 4 つ以上を満たすが、数字の種類は 1 つ (E-09 だけ)。単調にならないかは作り始めの確認で見る。**未確認**)。
 
 ### 2.3 むずかしい: 17 種類 (会計・資料間 13 + 形のずれ 4)
 
@@ -206,7 +206,7 @@ type CardEdit =
 | H-01 | 資産の合計と、負債・純資産の合計が一致しない | H1 短信 | 買掛金などを 1 つずらし、合計を再計算 (anomalies.md G1) | `bs-balance` | 貸借の等式 (導いた。複式簿記) (B) | 2 |
 | H-13 | 同じ数字が、短信と IR で少し違う (売上高 96,930 と IR の 969.3 億円が合わない。現金も同じ) | H1・H3 | IR の 1 つの金額 | `xdoc-hl-net-sales`・`xdoc-supp-cash` など | 同じ数字は同じ値 (導いた)。anomalies.md H-13 (B) | 2 |
 | H-17 | IR の金額の桁が 1 つずれている (億円と百万円の換算の誤り。124.0 億円のところ 1,240 億円) | H1 | IR の売上高を 10 倍か 1/10 (今の hard-006 と同じ。anomalies.md H-17 のとおり) | `xdoc-hl-net-sales` | 1 億円 = 100 百万円 (導いた) (B) | 1〜2 |
-| H-21 | IR の文と数字の向きが逆 (「増収」の文なのに売上高は減っている。「営業 CF は黒字」の文なのに赤字) | H1 (売上高)・H2 (営業 CF) | `ir.statements` の主張 | `claims-direction` (売上高は前期比、営業 CF は符号。検証器の `actualDirection`) | 今の H-21・E-17 の資料間の型 (B) | 1〜2 |
+| H-21 | IR の文と数字の向きが逆 (「増収」の文なのに売上高は減っている。「営業 CF は黒字」の文なのに赤字) | H1 (売上高)・H2 (営業 CF) | `ir.statements` の主張 (claims の direction を逆にする。カードの文は claims から型で作る (R-D5) ので、文も同時に逆になる) | `claims-direction` (売上高は前期比、営業 CF は符号。検証器の `actualDirection`) | 今の H-21・E-17 の資料間の型 (B) | 1〜2 |
 | H-03 | CF の最初の行が、損益の税金等調整前当期純利益と違う | H3 短信 | `cashFlow.incomeBeforeTax` だけを当期純利益の値にする。**再計算しない** (期末残高まで再計算すると、H-04 の見え方が同時にカードの上に出る。**anomalies.md H-03 の作り方を上書きする**。§2.8) | `link-cf-start` | **連結 CF 作成基準 第三 一 2「税金等調整前当期純利益に非資金項目、営業活動に係る資産及び負債の増減…を加減して」(原文を確認)** (A) | 2〜3 |
 | H-04 | CF の期末残高が、貸借の現金と合わない | H3 短信 | `cashFlow.cashEnding` | `link-cf-cash-end` | **連結 CF 作成基準 第二 一 (資金の範囲 = 現金及び現金同等物)・第四 1 (期末残高の連結貸借対照表科目別の内訳の注記)を確認** (A)。今の問題には無い (新しく作る) | 2〜3 |
 | H-05 | CF の売上債権の増減が、貸借の差と合わない | H2 短信 | `cashFlow.receivablesChange` | `link-cf-receivables` | 間接法の調整 (導いた。同基準の「営業活動に係る資産及び負債の増減」)。anomalies.md H-05 (B) | 3 |
@@ -334,7 +334,7 @@ anomalies.md の G3 (「端数で説明できない最小のずれ」。金額�
 
 **`card-*` の種類の場所と V2 (N1)**: `cardEdits` の種類 (E-03・E-19〜E-23・H-29〜H-32) は、数字のセルの変更でないので、`places` の代わりに**場所を (shape, card, slot) で持つ** (`AnomalyPlace` に `{ doc: 'card', shape, card, slot }` を足す)。`card-*` の規則 (`card-unit`・`card-slots`・`card-format`・`card-period`・`card-headline`) は、違反の場所をこの形で返す。V1 は「編集の shape = 枠の形」(カードに欄がある形でだけ出る)、V2 は「規則の違反の場所がその形のカードの欄」。**欄の欠落 (E-19・H-31)**: 欠けたセルはカードに載らないので、答え合わせは**欠けた位置 (前後の欄のあいだ)** を示す。
 
-**むずかしいの作り方を正常 16 問に注入した検査 4** (**測った**: `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-hard.ts`): H-03 (再計算しない)・H-04 (期末残高 +5%)・H-13 (IR の売上高 +5%・IR の現金 +5%)・H-17 (IR の売上高 ×10)・H-20 (純有利子負債 (前期) +20%)・H-21 (売上高の主張の向きを逆)・H-22・H-23・H-05 (増減の符号を逆)・H-01 (買掛金 +10% で負債・純資産の合計を再計算。総資産は元のまま) は、**16/16 で二重の食い違い 0・カードに収まる主な規則が無い問題 0**。**H-03 を期末残高まで再計算する旧案は 16/16 で `link-cf-cash-end` がカードの上で落ちる** (H-04 の見え方が同時に出る) ので採らない。H-24 は、基の短信の後発事象が「該当事項はありません」の 14 問に適用する (残り 2 問は短信に出来事があり、IR に書いても食い違わない)。H-19 の主な規則 `xdoc-seg-names` は検証器に無い (新しい規則) ので測れない。入れ物を含めない `Slot.reads` で、`seg-count`・`segment-names` はカードに収まらない (カードの外の二次の違反。`changed` を読むので許される)。
+**むずかしいの作り方を正常 16 問に注入した検査 4** (**測った**: `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-hard.ts`): H-03 (再計算しない)・H-04 (期末残高 +5%)・H-13 (IR の売上高 +5%・IR の現金 +5%)・H-17 (IR の売上高 ×10)・H-20 (純有利子負債 (前期) +20%)・H-21 (売上高の主張の向きを逆)・H-22・H-23・H-05 (増減の符号を逆)・H-01 (買掛金 +10% で負債・純資産の合計を再計算。総資産は元のまま) は、**16/16 で二重の食い違い 0・カードに収まる主な規則が無い問題 0**。**H-03 を期末残高まで再計算する旧案は 16/16 で `link-cf-cash-end` がカードの上で落ちる** (H-04 の見え方が同時に出る) ので採らない。H-21 は、**カードの文を claims から型で作る (R-D5) ので、claims の向きを逆にすると 16/16 でカードの文も同時に逆になる** (text と claims がずれる経路が無い。包括レビュー 2 回目 B1)。H-24 は、基の短信の後発事象が「該当事項はありません」の 14 問に適用する (残り 2 問は短信に出来事があり、IR に書いても食い違わない)。H-19 の主な規則 `xdoc-seg-names` は検証器に無い (新しい規則) ので測れない。入れ物を含めない `Slot.reads` で、`seg-count`・`segment-names` はカードに収まらない (カードの外の二次の違反。`changed` を読むので許される)。
 
 **種類の定義の変更の一覧** (申し送り。検証器 #138・データ #139・#140 が使う):
 
@@ -350,6 +350,7 @@ anomalies.md の G3 (「端数で説明できない最小のずれ」。金額�
 | H-03 | 作り方を「`cashFlow.incomeBeforeTax` だけを変え、再計算しない」に (anomalies.md H-03 を上書き) |
 | H-19 | 主な規則を `xdoc-seg-names` に (§2.3)。名前の並びの欄の `Slot.reads` は名前のセルだけ |
 | H-24 | 基は短信の後発事象が「該当事項はありません」の問題 |
+| H-21 | 主張は `netSales` (H1)・`operatingCashFlow` (H2)。カードの文は claims から型で作る (R-D5)。**配当・有利子負債の文 (anomalies.md の H-21) はどの形にも載らないので作らない**。適する会社は全社 (`src/data/problems-hard.test.ts` の 122 行目の c04・c07 の制限は、売上高・営業 CF の主張には当てない) |
 | 系統 | `card-form` (むずかしい専用。§2.3) |
 
 

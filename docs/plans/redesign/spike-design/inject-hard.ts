@@ -36,6 +36,12 @@ const RECIPES: { kind: string; shape: string; label: string; make: (q: any) => v
   { kind: 'H-05', shape: 'H2', label: 'cashFlow.receivablesChange の符号を逆に', make: (q) => sv(q.tanshin, 'cashFlow.receivablesChange', -q.tanshin.cashFlow.receivablesChange) },
   { kind: 'H-01', shape: 'H1', label: '買掛金を +10% ずらし、負債・純資産の合計を再計算 (総資産は元のまま)', make: (q) => { const b = q.tanshin.balanceSheet.current; const d = Math.round(b.payables * 0.1); b.payables += d; b.totalCurrentLiabilities += d; b.totalLiabilities += d; b.totalLiabilitiesAndNetAssets += d; } },
 ];
+// H1・H2 の IR 型の文は claims から型で作る (設計 v2 §1.2 R-D5)。text は使わない
+const sentence = (q: any, metric: 'netSales' | 'operatingCashFlow'): string | null => {
+  const c = q.ir.statements.flatMap((x: any) => x.claims).find((x: any) => x.metric === metric);
+  if (!c) return null;
+  return metric === 'netSales' ? (c.direction === 'up' ? '売上高は前期より増えた' : '売上高は前期より減った') : c.direction === 'up' ? '営業活動のキャッシュ・フローはプラス' : '営業活動のキャッシュ・フローはマイナス';
+};
 const bases = readdirSync(resolve(root, 'src/data/problems/hard')).sort().map((f) => read(`src/data/problems/hard/${f}`)).filter((p) => !p.anomaly);
 console.log(`基: むずかしいの正常な問題 ${bases.length} 問`);
 for (const r of RECIPES) {
@@ -50,5 +56,8 @@ for (const r of RECIPES) {
     if (extra.length) { doubled++; extra.forEach((x) => extras.add(x)); }
     if (!onCard.some((v: any) => primary.includes(v.rule))) noPrimary++;
   }
-  console.log(`${r.kind} [${r.shape}] ${r.label}: 二重の食い違い ${doubled}/${bases.length}${extras.size ? ` (${[...extras].join(', ')})` : ''}・カードに収まる主な規則が無い ${noPrimary}/${bases.length}`);
+  let changed = 0;
+  if (r.kind === 'H-21') for (const b of bases) { const q = JSON.parse(JSON.stringify(b)); r.make(q); if (sentence(q, 'netSales') !== sentence(b, 'netSales')) changed++; }
+  const sentenceNote = r.kind === 'H-21' ? ` (カードの文が変わる ${changed}/${bases.length}。claims から型で作るので text はずれない)` : '';
+  console.log(`${r.kind} [${r.shape}] ${r.label}: 二重の食い違い ${doubled}/${bases.length}${extras.size ? ` (${[...extras].join(', ')})` : ''}・カードに収まる主な規則が無い ${noPrimary}/${bases.length}${sentenceNote}`);
 }
