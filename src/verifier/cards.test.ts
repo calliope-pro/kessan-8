@@ -479,6 +479,17 @@ describe('11.2 V28〜V31 検査 5 (表示が実際に変わる)', () => {
     const head = kindOf2(['card-headline']);
     expect(vis(e({ shape: 'E1', card: 0, op: 'headline', word: '増収' }, head, 'headline'), head)).toEqual(['E1']);
   });
+  it('V29 (レビュー B1): 科目名だけが変わる異変 (labelOverrides の誤字。itemKey の場所) は表示が変わる → 見える。科目名は表示モデルに入る', () => {
+    const typo = kindOf2(['label-spelling']);
+    const e1 = make({ ...easy(), labelOverrides: { 'tanshin.incomeStatement.operatingIncome': '営業和益' } }, typo, [{ doc: 'tanshin', itemKey: 'tanshin.incomeStatement.operatingIncome' }]);
+    expect(vis(e1, typo)).toEqual(['E1']);
+    const h30 = make({ ...hard(), labelOverrides: { 'tanshin.cashFlow.operatingCashFlow': '営業活動によるキャッシュ・フロ' } }, typo, [{ doc: 'tanshin', itemKey: 'tanshin.cashFlow.operatingCashFlow' }]);
+    expect(vis(h30, typo)).toEqual(['H2']);
+    // 資金の範囲の語も科目名の一部 (H3 ④)。cashScope を変えるとラベルが変わる
+    const scope = kindOf2(['label-spelling']);
+    const h04 = make({ ...hard(), labelOverrides: { 'tanshin.cashFlow.cashEnding': '現金及び現金同等物の期末残' } }, scope, [{ doc: 'tanshin', itemKey: 'tanshin.cashFlow.cashEnding' }]);
+    expect(vis(h04, scope)).toEqual(['H3']);
+  });
   it('V29: H2 の売上債権の増減額 (△100) の no-comma は表示が変わらない (card-format も落ちない) → 見えない。K11 も別に弾く', () => {
     const fmt = kindOf2(['card-format']);
     const p = make({ ...hard(), cardEdits: [{ shape: 'H2', card: 0, slot: 'recvChange', op: 'format', style: 'no-comma' }] }, fmt, [{ doc: 'card', shape: 'H2', card: 0, slot: 'recvChange' }]);
