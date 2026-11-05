@@ -20,7 +20,7 @@ Task #136。作成: 2026-11-05。根拠: [requirements.md](requirements.md) (第
 
 数え方の決まり (**設計**。要件の「数字 4 つまで」「各 数字 4 + 文 3」を数えられる形にする):
 - 数字の数 = カードに載る**数値のセルの数**。棒グラフの棒 1 本も数字 1 つに数える (棒は元のセルから描く)。比率 (営業利益率など) も数字 1 つ。
-- 文の数 = 1 行の文の欄の数。1 行は 40 字以内 (**仮定**。plans.md §3.2 の見本の水準)。
+- 文の数 = 文の欄の数。文欄は **1 文・40 字以内**。40 字は 1 行の幅の上限で (**文書にある**: research.md §4.3 の 176 行目。出典 Xbox Accessibility Guideline 101「Line width ≤ 80 characters (40 for CJK)」(https://devdocs.xbox.com/gaming/accessibility/xbox-accessibility-guidelines/101)。2026-11-05 に本文を取得して確認)、スマホ (320 px) では折り返してよい。文欄に載る文 (`accountingPolicyNote`・`subsequentEvents`・`ir.outlook.subsequentEvent`・選んだ `ir.statements` の文) は、検証器が **40 字以内**を正常な問題に当てる (今のデータには超えるものがある。監視役が測った: highlights の文は 79 件中 9 件、`accountingPolicyNote` は 57 問中 5 問、`subsequentEvents` は 4 問、`ir.outlook.subsequentEvent` は 5 件中 4 件。データの Task が 40 字以内に直す)。
 - **枠の外** (数えない): 社章・社名・期・期末日の行 (閲覧票の中身。全形・全社で同じ位置)、見出し語 (【増益】など 1 語)、欄の科目名と単位の語。
 - やさしいは 文欄を持たない (見出し語だけ)。むずかしいは 1 枚あたり 数字 4 + 文 3 まで。
 
@@ -34,6 +34,7 @@ interface Slot {
   key: string;              // 欄の ID (形の中で一意)
   itemKey: string;          // 科目名の項目キー (src/domain/labels.ts。正常の名前は 1 つ)
   source: CellPath | CellPath[] | Derived; // 見せるセル。Derived は下の導出関数 (増益/減益 など)
+  reads: CellPath[];        // この欄が読むセルの全部 (Derived が読むセルを宣言する。例: 見出し語 = ir.statements.<N> の claims と前期・当期の数字)
   kind: 'number' | 'text';
 }
 interface CardTemplate { doc: 'tanshin' | 'ir' | 'summary'; slots: Slot[]; headline?: Slot; graphic?: 'bars'; }
@@ -44,9 +45,9 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
 規則:
 1. **R-D1 純関数**: `deriveCards(problem, company, shape)` は、問題データと形の定義だけから、表示する文字列を作る。乱数・時刻・保存を見ない。同じ入力は同じカード。
 2. **R-D2 異変は問題データの変更で表す**: 異変のカードは、異変の問題データ (数字・文のセルを 1 つ変えたもの、`labelOverrides`・`unitOverrides`、§1.6 の `cardEdits`) から `deriveCards` で導く。**カードを手で書き換えない**。正常と異変で同じ関数を使う。
-3. **R-D3 答え合わせも同じ出所**: 答え合わせは `anomaly.places` (異変の場所) を、`Slot.source` に当てて、カード上の欄を示す。文言は `anomaly.explanation` (今のまま)。カードに無い場所は示さない (§1.5 の見える条件で、全部の場所が載る問題だけを出すので、起きない)。
+3. **R-D3 答え合わせも同じ出所**: 答え合わせは `anomaly.places` (異変の場所) を、`Slot.reads` に当てて、カード上の欄を示す。パスでない場所は、科目名の異変 (`itemKey`。台帳 H-28) = `Slot.itemKey` が同じ欄、文章の異変 (`ir.statements.<N>.text`。台帳 E-17) = 見出し語の欄 (`Derived` が `ir.statements.<N>` を読む) に当てる。文言は `anomaly.explanation` (今のまま)。**`places` は、カードの上で食い違いが見えるセルだけ**を書く (R-S4 の V1。二次の症状でカードの外にあるセルは書かない)。
 4. **R-D4 正常の整合**: 異変の無い問題は、今の検証器の全規則を満たす (今の 28 問の正常な問題はすべて満たす。**測った**: §1.7)。カードは正常な問題から導くので、正常のカードの数字は必ず整合する。
-5. **R-D5 見出し語**: 【増益】【減益】【増収】【減収】は、`ir.statements` の主張 (`claims` の `metric` と `direction`) から作る (`up` → 増、`down` → 減。語の組は metric で決まる: `netSales` = 増収・減収、`operatingIncome` = 増益・減益)。主張は問題データの文なので、見出し語が数字と逆なら、今の検証器の規則 `claims-direction` が落ちる (向きの逆の異変 = 台帳の E-17 型)。
+5. **R-D5 見出し語**: 【増益】【減益】【増収】【減収】は、`ir.statements` の主張 (`claims` の `metric` と `direction`) から作る (`up` → 増、`down` → 減。語の組は metric で決まる: `netSales` = 増収・減収、`operatingIncome` = 増益・減益。**今のデータでは、1 問の中で同じ metric の主張は重ならない** (57 問。監視役が確かめた) ので、metric で引けば 1 つに決まる)。主張は問題データの文なので、見出し語が数字と逆なら、今の検証器の規則 `claims-direction` が落ちる (向きの逆の異変 = 台帳の E-17 型)。
 
 ### 1.3 やさしいの 3 形 (カード 1 枚。数字 4 つまで)
 
@@ -64,7 +65,7 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
   - E2: (a) 見出し語の向き = 売上高の前期→当期の向き (b) 棒の高さの比 = 数字の比、軸の下端は 0 (c) ① ② の大きさが釣り合う
   - E3: (a) 総資産 = 流動資産 + 固定資産 (b) 大きさが釣り合う (総資産はその和)
 - E3 の数字は 3 つ (上限 4 つの内)。自己資本比率を載せると、規則 `ratio-equity-ratio` が読む純資産と非支配株主持分が要り 5 つになるので載せない。規則 `bs-total-assets` が読む 3 つのセル (総資産・流動資産・固定資産) だけで、足し算の異変が完全に見える。
-- E2 の棒は、元のセル `ir.results.chart.netSales` から描く。IR の金額の単位 (億円) は棒の高さの比にしか効かないので、カードには数字を出さない。数字の欄 ①② は短信の百万円。正常では、IR の金額と短信の金額は検証器の規則 (`xdoc-results-net-sales`・`chart-bars`) で一致している。
+- E2 の棒は、軸の目盛りの数字を**出さない** (`axisMin` は棒の描き方だけに効く。目盛りの数字を出すと、数字が 4 つを超えて要件 7 に反する)。E2 の棒は、元のセル `ir.results.chart.netSales` から描く。IR の金額の単位 (億円) は棒の高さの比にしか効かないので、カードには数字を出さない。数字の欄 ①② は短信の百万円。正常では、IR の金額と短信の金額は検証器の規則 (`xdoc-results-net-sales`・`chart-bars`) で一致している。
 
 ### 1.4 むずかしいの 3 形 (カード 2 枚 = 短信型 + IR 型。各 数字 4 + 文 3 まで)
 
@@ -72,8 +73,8 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
 
 | 形 | 名前 | 短信型の欄 (数字 4 + 文 3 まで) | IR 型の欄 (数字 4 + 文 3 まで) |
 | --- | --- | --- | --- |
-| **H1** | 成績の見比べ | 数字: ① 売上高 (前期) ② 売上高 (当期) ③ 総資産 ④ 負債・純資産合計 | 数字: ① 売上高 (当期。IR の単位)。文: ① 業績の主張 (`ir.statements` の highlights の 1 文) |
-| **H2** | 運転資金のつながり | 数字: ① 売上債権 (前期末) ② 売上債権 (当期末) ③ CF の売上債権の増減 ④ 営業 CF。文: ① 資産の科目名の行 (売上債権の行の名前と区分) ② 会計方針の変更の有無 ③ 会計方針の注記 | 文: ① 営業 CF の主張 (`ir.statements` の supplement の 1 文) |
+| **H1** | 成績の見比べ | 数字: ① 売上高 (前期) ② 売上高 (当期) ③ 総資産 ④ 負債・純資産合計 | 数字: ① 売上高 (当期。IR の単位)。文: ① 業績の主張 (`ir.statements` のうち、slide = highlights で、`netSales` の主張を持つ文) |
+| **H2** | 運転資金のつながり | 数字: ① 売上債権 (前期末) ② 売上債権 (当期末) ③ CF の売上債権の増減 ④ 営業 CF。文: ① 資産の科目名の行 (売上債権の行の名前と区分) ② 会計方針の変更の有無 ③ 会計方針の注記 | 文: ① 営業 CF の主張 (`ir.statements` のうち、`operatingCashFlow` の主張を持つ文) |
 | **H3** | 現金・注記・借入 | 数字: ① CF の起点 (税金等調整前当期純利益) ② 損益の税金等調整前当期純利益 ③ 貸借の現金 ④ CF の期末残高。文: ① 監査の注意書き ② 後発事象 ③ 報告セグメントの名前の並び | 数字: ① 現金 (当期) ② 現金 (前期) ③ 有利子負債 (前期) ④ 純有利子負債 (前期)。文: ① 期末後の出来事 ② セグメントの名前の並び |
 
 見せるセル (正本。`deriveCards` が使う):
@@ -81,10 +82,10 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
 | 形・欄 | セル |
 | --- | --- |
 | H1 短信 ①② ③④ | `tanshin.incomeStatement.previous.netSales`・`…current.netSales`・`tanshin.balanceSheet.current.totalAssets`・`…totalLiabilitiesAndNetAssets` |
-| H1 IR ① 数字・文 | `ir.highlights.netSales.amount`・`ir.statements[slide=highlights]` |
+| H1 IR ① 数字・文 | `ir.highlights.netSales.amount`・`ir.statements[claims に netSales を持つ highlights の文]` (配当の文ではない) |
 | H2 短信 数字 ①〜④ | `…balanceSheet.previous.receivables`・`…current.receivables`・`tanshin.cashFlow.receivablesChange`・`tanshin.cashFlow.operatingCashFlow` |
 | H2 短信 文 ①②③ | 売上債権の行の科目名 (`labels`・`labelOverrides` の `receivables`) と区分 (資産の部)・`tanshin.summary.accountingPolicyChange` (あり/なし)・`tanshin.notes.accountingPolicyNote` |
-| H2 IR 文 ① | `ir.statements[slide=supplement]` |
+| H2 IR 文 ① | `ir.statements[claims に operatingCashFlow を持つ文]` |
 | H3 短信 数字 | `tanshin.cashFlow.incomeBeforeTax`・`tanshin.incomeStatement.current.incomeBeforeTax`・`tanshin.balanceSheet.current.cash`・`tanshin.cashFlow.cashEnding` |
 | H3 短信 文 | `tanshin.summary.auditNote`・`tanshin.notes.subsequentEvents`・`tanshin.notes.segments.current.segments[].name` の並び |
 | H3 IR 数字 | `ir.supplement.cash.current`・`…cash.previous`・`…interestBearingDebt.previous`・`…netDebt.previous` |
@@ -104,12 +105,16 @@ function deriveCards(p: Problem, c: Company, shape: ShapeId): Card[]; // 純関�
    - 正常な問題: 全部 (正常な問題は、どの形のカードも、検証器の規則を満たす数字で作れる。R-D4)。
    - 異変の問題: s で**見える** (R-S4) もの。
    そのうえで、今の `draw` の決まり (会社の重複なし・段・履歴) を、同じ増加路で当てる。
-4. **R-S4 見える条件** (検証器に足す。**カードの検出可能性の検査**): 異変の問題 p が形 s で見えるとは、次の 3 つをすべて満たすこと。
-   - (V1) `anomaly.places` のセルが、すべて s のカードの欄に載っている (科目名・単位・書式・欄の欠落・並びの異変は、その行が s に載っている)。
-   - (V2) `anomaly.expectedRules` のうち種類の主な規則 (`primaryRules`) の 1 つが落とした違反の `paths` が、**s のカードに載るセル**だけで足りる。ただし、正常では必ず等しい別のセル (別名) で足りるものは載っているとみなす: `ir.results.netSales.*` = `tanshin.incomeStatement.*.netSales` (単位換算後)。別名は、検証器の `xdoc-*`・`sum-*` の規則 (正常では 2 つのセルが必ず等しい) から選ぶ。今の形で要るのは E2 の棒の 1 組だけ: `ir.results.netSales.{previous,current}` (棒の規則 `chart-bars` が読む) = `tanshin.incomeStatement.{previous,current}.netSales` (規則 `xdoc-results-net-sales`)。台帳 §2 が、種類ごとに別名の要不要を表にする。
-   - (V3) 短信と IR のあいだの食い違いは、両側の型を持つ形 (むずかしいの組) でだけ見える。
-5. **R-S5 形ごとに、出せる異変がそろっている** (データの検査): 難易度のどの形にも、見える異変の問題が**種類を 4 つ以上**含んで存在する (**仮定**: 1 周 8 枠で 1 形に当たるのは約 2〜3 枠、異変の枠は半分で約 1〜1.5 枠。見つけた異変は次から出にくい (要件) ので、1 形が持つ種類が少ないと、数周で同じ種類に当たる)。足りなければ出題を作らない (起動時の検査で落とす。今の `canDraw` と同じ作法)。
-6. **R-S6 そろっていることの確かめ** (テスト): 種つきの乱数で 1 万周を出題し、形ごとの出現率が、異変の枠でも正常の枠でも 1/3 から ±3 ポイント以内 (**仮定**: 二項分布の標準誤差は約 0.5 ポイントなので、3 ポイントは約 6 倍の余裕) に収まること。形の分布が異変の有無に依らないことの確かめ。
+4. **R-S4 見える条件** (検証器に足す。**カードの検出可能性の検査**): 異変の問題 p が形 s で見えるとは、次の 2 つを満たすこと。
+   - (V1) `anomaly.places` の全セルが、s のカードに載っている。`places` は「カードの上で食い違いが見えるセル」で、二次の症状 (カードの外のセル) は書かない (R-D3)。**今のデータの `places` は二次の症状も持つ** (台帳 H-05 = `receivablesChange` + `cashEnding` など) ので、V1 を今のデータにそのまま当てると、むずかしい 16 種類のうち見えるのは 7 種類 (H-03・H-13・H-17・H-22・H-23・H-24・H-28) だけになる (**測った**: `places-fit.ts`)。**カードのために異変の問題を作り直すとき、`places` を書き直す** (カードの外のセルを外し、欠けるときは V2 を満たすカード上のセルを入れる)。今の問題をそのまま使えるかは台帳 §2 が数える。
+   - (V2) `anomaly.expectedRules` のうち種類の主な規則 (`primaryRules`) の 1 つが落とした違反の `paths` が、**s のカードに載るセル**だけで足りる。ただし、正常では必ず等しい別のセル (別名) で足りるものは載っているとみなす。別名は、検証器の `xdoc-*`・`sum-*` の規則 (正常では 2 つのセルが必ず等しい) から選ぶ。今の形で要るのは E2 の棒の 1 組だけ: `ir.results.netSales.{previous,current}` (棒の規則 `chart-bars` が読む) = `tanshin.incomeStatement.{previous,current}.netSales` (規則 `xdoc-results-net-sales`)。台帳 §2 が、種類ごとに別名の要不要を表にする。
+   - 短信と IR のあいだの食い違い (台帳の資料間) は、V1・V2 の帰結として、両側のセルを載せる形でだけ見える (別に条件は足さない)。E2 のように、やさしいの形が IR のセル (`ir.results.chart`) を持つのは、同じ理由で許す。
+5. **R-S5 形ごとの異変の候補** (データの検査。起動時に落とす。今の `canDraw` と同じ作法):
+   - (a) **出題が必ず作れること**: 難易度のどの形にも、**その形で見える異変の問題を持つ会社が 8 社以上**ある。**導いた**: 8 枠が同じ形の異変になっても、別々の会社を割り当てられる (8 社以上あれば、先の枠が埋めた会社は多くて 7 社なので、次の枠に使える会社が残る)。8 社に満たないと、1 周に同じ形の異変の枠が 4 つ以上になる周 (二項分布 n = 8・p = 1/3 × 1/2 = 1/6 で 3.1%・形 3 つで約 9%) が、会社が尽きて「出題できません」で落ちる。
+   - (b) **会社から答えが漏れないこと**: 難易度の**全 10 社**が、どの形についても、異変の問題と正常な問題の**両方**を持つ (形ごとの `bothSided`。今の `draw` が会社ごとにすでに当てている条件を、形ごとに広げる)。正常な問題はどの形にも使えるので、実際に足すのは**異変の問題**で、**会社 10 社 × 形 3 つ = 30 問以上**が要る。満たさないと、「この会社のこの形は、異変の問題が無い (いつも正常)」を覚えた遊び手が、その枠だけ答えを知る。
+   - (c) 1 形が見せる異変の**種類は 4 つ以上** (**仮定**: 1 周 8 枠で 1 形に当たるのは約 2〜3 枠、異変の枠は半分で約 1〜1.5 枠。見つけた異変は次から出にくい (要件) ので、1 形が持つ種類が少ないと、数周で同じ種類に当たる)。
+   - 帰結: 難易度ごとの問題は、異変の問題 30 問以上 + 正常な問題 10 問以上 = **40 問以上** (要件の 25 問以上より多い。**導いた**: 30 + 10)。むずかしいは、各形に全社で起こせる種類 (H1 = H-01、H2 = H-23・H-28、H3 = H-22・H-24。anomalies.md §5 の「適する会社」が全社) があるので、会社 × 形が埋まる。やさしいは、形のずれの種類 (誤字・単位・欠落・並び・書式・期末日。台帳 §2) がどの形でも見えるので、会社ごとに 1 問ずつ作れば 3 形すべてで見える。
+6. **R-S6 そろっていることの確かめ** (テスト): 種つきの乱数で 1 万周 (= 8 万枠) を出題し、**枠の位置を区別せず**、異変の枠 (約 4 万) と正常の枠 (約 4 万) のそれぞれで、各形の出現率が 1/3 から ±1.5 ポイント以内に収まること。**導いた**: 4 万枠での標準誤差は √((1/3)(2/3) ÷ 40,000) = 0.24 ポイントなので、1.5 ポイントは約 6 倍の余裕。外れたら、形の分布が異変の有無で偏っている (R-S3 の候補の偏り) ので、出題を直す。
 
 **見本 (0 社目)**: 毎周の最初に、見本の問題 (正常。出題のプールに入れない `sample.json`) から、**難易度の 3 形すべての正常なカード**を 1 枚ずつ (むずかしいは 3 組) 見せる。見本は 1 つの問題から `deriveCards` で作る (出所は 1 つ)。「正常は 3 通り」と一目で分かる掲示は §3 (画面の流れ) で決める。
 
@@ -141,6 +146,7 @@ type CardEdit =
 | 配当が 0 の正常な問題 | 6/28 | 同上 (配当を見せる形を作らなかった理由: 配当の無い会社に出せない) |
 | 1 つの規則が 1 回の評価で読むセル (検証器の規則 128 件) | 規則ごとの組を取り出せた | `shape-fit.ts` の前半 (`Reader` の `get`・`raw` を差し替えて記録) |
 | むずかしいの 3 形 (§1.4) の上限 (数字 4・文 3) と、収まる見え方の分類 | 上限超えなし。分類は **14 / 候補 14**: H1 = C06・C07・C08・C14、H2 = C02・C03・C11・C18、H3 = C01・C04・C05・C07・C09・C10・C12 (C07 は H1 と H3 の両方) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/shape-fit.ts`。分類と台帳の対応は `shape-fit.ts` の `CLASSES`。**C02・C05 は疑似セル (科目名・名前の並びを 1 セルに置いた)。C14・C18 も文のセルを疑似セルで置いた** |
+| 今のデータの `places` に V1 を文字どおり当てたときに見えるむずかしいの種類 | 16 種類のうち 7 (H-03・H-13・H-17・H-22・H-23・H-24・H-28)。**カードに合わせて `places` を書き直す前提**で §1.4 の 14 分類を数えた (V2 の数) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/places-fit.ts` |
 | 3 形を選ぶ探索 | 18 の候補から、14 分類を収める 3 形が見つかる (90 秒のランダムな貪欲法を 2 回。どちらも 14) | `spike-design/hard-search.mjs` (入力は `rule-cells.ts` が出す JSON) |
 
 ---

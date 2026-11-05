@@ -64,7 +64,7 @@ const CLASSES: Record<string, string[][]> = {
   'C08 IR の単位換算 (H-17。同じセルで 100 倍)': [...rc['xdoc-hl-net-sales'], ...rc['xdoc-hl-operating-income']],
   'C09 CF の起点が税引前利益と違う (H-03)': rc['link-cf-start'],
   'C10 CF の期末残高が貸借の現金と違う (H-04)': rc['link-cf-cash-end'],
-  'C11 CF の増減が貸借の差と違う (H-05・H-06・H-08)': [...rc['link-cf-receivables'], ...rc['link-cf-inventories'], ...rc['link-cf-short-debt']],
+  'C11 売上債権の増減が貸借の差と違う (H-05。H2 に載るのは売上債権だけ)': rc['link-cf-receivables'],
   'C12 IR の純有利子負債 (H-20)': rc['ir-supp-net-debt'],
   'C14 IR の説明と数字の向き (H-21 型)': [['tanshin.incomeStatement.current.netSales', 'tanshin.incomeStatement.previous.netSales', 'ir.statement.highlights']],
   'C18 営業 CF の黒字と文 (H-21 型)': [['tanshin.cashFlow.operatingCashFlow', 'ir.statement.supplement']],
