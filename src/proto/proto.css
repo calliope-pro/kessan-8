@@ -18,7 +18,7 @@
   --font-num: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', Menlo, Consolas, monospace;
 
   /* 桁マス: 数字の大きさが格子の単位 (The Grid Rule)。320 px でも 18 px 以上 */
-  --num: clamp(22px, 1.1rem + 1.6vw, 32px);
+  --num: clamp(1.375rem, 1.1rem + 1.6vw, 2rem);
   --cell: 1.12em;
   --step: 8px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -55,6 +55,10 @@ button { font: inherit; color: inherit; }
 .desk > * { width: 100%; max-width: 38em; }
 .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 19em)); justify-content: center; gap: var(--step); padding: var(--step) var(--step) calc(var(--step) + env(safe-area-inset-bottom)); border-top: 2px solid var(--ink); background: var(--paper-sunk); position: sticky; bottom: 0; }
 .actions.single { grid-template-columns: minmax(0, 38em); }
+.feedback { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--step); }
+.feedback .verdict { padding: 0; }
+.feedback .note { flex: 1 1 14em; padding: 2px var(--step); border-width: 2px; max-height: 8.5em; overflow-y: auto; }
+.feedback .lead { flex: 1 1 10em; }
 
 /* ---- 伝票 ---- */
 .sheet { position: relative; isolation: isolate; margin: 0 6px 6px 0; }
@@ -69,7 +73,7 @@ button { font: inherit; color: inherit; }
 .co-type { font-weight: 700; margin-left: 0.25em; }
 .period { margin: calc(var(--step) * 0.5) 0 0; font-weight: 800; }
 .period-end { margin: 0; color: var(--ink-soft); }
-.headline { margin: calc(var(--step) * 0.5) 0 0; font-size: clamp(26px, 1.4rem + 2vw, 44px); font-weight: 900; letter-spacing: 0.1em; line-height: 1.2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--step); }
+.headline { margin: calc(var(--step) * 0.5) 0 0; font-size: clamp(1.625rem, 1.4rem + 2vw, 2.75rem); font-weight: 900; letter-spacing: 0.1em; line-height: 1.2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--step); }
 .headline .gloss { font-size: 1.125rem; font-weight: 700; letter-spacing: 0; }
 .rows { display: grid; gap: 0; }
 .row { padding: calc(var(--step) * 0.5) 0; border-bottom: 1px solid var(--rule-soft); }
@@ -124,8 +128,9 @@ button { font: inherit; color: inherit; }
 .seal.primary:hover { background: var(--ink-soft); }
 
 /* ---- 押印 (The One Press Rule: 強い動きは押印の 1 回だけ) ---- */
-.stamp { position: absolute; z-index: 2; top: 0.5em; right: 0.5em; display: grid; place-items: center; width: 3.6em; height: 3.6em; border: 4px solid var(--stamp); border-radius: 50%; outline: 2px solid var(--stamp); outline-offset: -8px; color: var(--stamp); font-weight: 900; letter-spacing: 0.1em; line-height: 1.1; text-align: center; transform: rotate(-9deg); background: transparent; pointer-events: none; animation: press 160ms var(--ease) both; }
-.stamp-back { top: 4em; right: 12%; width: 5.4em; height: 5.4em; font-size: 1.3em; background: var(--stamp-wash); border-width: 5px; }
+.stamp { position: absolute; z-index: 2; top: 0.5em; right: 0.5em; display: grid; place-items: center; width: 3.6em; height: 3.6em; border: 4px solid var(--stamp); border-radius: 50%; outline: 2px solid var(--stamp); outline-offset: -8px; color: var(--stamp); font-weight: 900; letter-spacing: 0.1em; line-height: 1.1; text-align: center; transform: rotate(-9deg); background: transparent; mix-blend-mode: multiply; pointer-events: none; animation: press 160ms var(--ease) both; }
+@media (max-width: 439px) { .stamp:not(.stamp-back):not(.big-stamp) { width: 3em; height: 3em; top: 0.3em; right: 0.3em; outline-offset: -5px; border-width: 3px; letter-spacing: 0.02em; } }
+.stamp-back { top: 0.3em; right: 0.3em; width: 4.4em; height: 4.4em; font-size: 1.1em; background: var(--stamp-wash); border-width: 5px; }
 .slip.sink { animation: sink 160ms var(--ease) both; }
 @keyframes press { from { opacity: 0; transform: translateY(-70px) scale(1.7) rotate(-9deg); } to { opacity: 1; transform: translateY(0) scale(1) rotate(-9deg); } }
 @keyframes sink { 0% { transform: translateY(0); } 55% { transform: translateY(3px); } 100% { transform: translateY(0); } }
@@ -148,7 +153,7 @@ button { font: inherit; color: inherit; }
 
 /* ---- 広い画面: 行を 1 行にする ---- */
 @media (min-width: 900px) {
-  :root { --num: 40px; }
+  :root { --num: 2.5rem; }
   body { font-size: 1.25rem; }
 }
 @media (min-width: 560px) {

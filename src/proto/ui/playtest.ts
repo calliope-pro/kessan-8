@@ -4,7 +4,7 @@ import type { Company, Problem } from '../../domain/types';
 import { deriveCard, locate, type ShapeId } from '../cards';
 import { isCorrect, type Answer } from '../flow';
 import { buildDeck, scoreSession, type Response } from '../playtest';
-import { cardOf, checks } from './game';
+import { cardOf, checks, feedback } from './game';
 import { arm, h, scrollMarksIntoView, seal } from './dom';
 import { renderSlip, slipOf } from './slip';
 
@@ -98,9 +98,8 @@ export function mountPlaytest(root: HTMLElement, env: TestEnv): void {
         );
       } else {
         const ok = isCorrect(r, pressed!);
-        desk.prepend(h('p', { class: `verdict ${ok ? 'ok' : 'ng'}` }, ok ? '正解' : '不正解'), r.anomaly ? h('p', { class: 'note' }, h('span', { class: 'note-head' }, '異変'), r.anomaly.explanation) : h('p', { class: 'lead' }, '異変はありませんでした。'));
-        actions.classList.add('single');
-        actions.append(seal(index + 1 >= deck.length ? '記録を見る' : '次へ', null, 'primary', next));
+        actions.classList.add('single', 'with-feedback');
+        actions.append(feedback(ok, r.anomaly ? r.anomaly.explanation : null), seal(index + 1 >= deck.length ? '記録を見る' : '次へ', null, 'primary', next));
       }
     } else {
       head = checks('記録', -1, 8);

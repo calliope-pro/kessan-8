@@ -27,6 +27,13 @@ export function cardOf(env: Pick<GameEnv, 'companies'>, r: Round) {
   return deriveCard(r.problem, companyOf(env, r.problem), r.shape, r.edits);
 }
 
+/** 答え合わせの文 (正解・不正解と、異変の内容)。下端の帯に置く: 朱書きを画面に出すために伝票を送っても、内容の文は常に見える。 */
+export function feedback(ok: boolean, explanation: string | null): HTMLElement {
+  return h('div', { class: 'feedback' },
+    h('p', { class: `verdict ${ok ? 'ok' : 'ng'}` }, ok ? '正解' : '不正解'),
+    explanation !== null ? h('p', { class: 'note' }, h('span', { class: 'note-head' }, '異変'), explanation) : h('p', { class: 'lead' }, '異変はありませんでした。'));
+}
+
 export function checks(label: string, index: number, doneCount: number): HTMLElement {
   const boxes = h('ol', { class: 'boxes', 'aria-hidden': 'true' });
   for (let i = 0; i < ROUNDS_TO_CLEAR; i++) boxes.append(h('li', { class: i < doneCount ? 'done' : i === index ? 'now-box' : '' }));
@@ -98,13 +105,9 @@ export function mountGame(root: HTMLElement, env: GameEnv): void {
           seal('異変あり', '訂正印を押す', '', () => dispatch({ type: 'ANSWER', answer: 'anomaly' }), '訂'),
         );
       } else if (state.lastCorrect) {
-        desk.prepend(
-          h('p', { class: 'verdict ok' }, '正解'),
-          r.anomaly ? h('p', { class: 'note' }, h('span', { class: 'note-head' }, '異変'), r.anomaly.explanation) : h('p', { class: 'lead' }, '異変はありませんでした。'),
-        );
-        actions.classList.add('single');
+        actions.classList.add('single', 'with-feedback');
         const last = state.index === ROUNDS_TO_CLEAR - 1;
-        actions.append(seal(last ? '完了票へ' : '次へ', null, 'primary', () => dispatch({ type: 'NEXT' })));
+        actions.append(feedback(true, r.anomaly ? r.anomaly.explanation : null), seal(last ? '完了票へ' : '次へ', null, 'primary', () => dispatch({ type: 'NEXT' })));
       } else {
         desk.prepend(h('p', { class: 'verdict ng' }, '不正解'), h('p', { class: 'sentback' }, '差し戻し'));
         actions.classList.add('single');
