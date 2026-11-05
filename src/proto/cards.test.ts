@@ -1,9 +1,9 @@
 // ケース表 docs/proto/test-cases.md の C (カードの導出)。
 import { describe, expect, it } from 'vitest';
-import { deriveCard, fmtAmount, locate, SHAPES, type CardEdit, type ShapeId } from './cards';
+import { deriveCard, fmtAmount, locate, SHAPES, type CardEdit, type EditBody, type ShapeId } from './cards';
 import { companyOf, NORMALS } from './testing';
 
-const edit = (shape: ShapeId, e: Omit<CardEdit, 'shape' | 'card'>): CardEdit => ({ shape, card: 0, ...e }) as CardEdit;
+const edit = (shape: ShapeId, e: EditBody): CardEdit => ({ shape, card: 0, ...e });
 const sample = NORMALS.find((p) => p.id === 'easy-017')!;
 const card = (shape: ShapeId, edits: CardEdit[] = [], p = sample) => deriveCard(p, companyOf(p), shape, edits);
 const get = (obj: unknown, path: string): number => path.split('.').reduce<any>((o, k) => o[k], obj);
@@ -137,10 +137,10 @@ describe('C9〜C14 cardEdits', () => {
 });
 
 describe('C15 labelOverrides', () => {
-  it('指定した項目キーの科目名だけが変わる', () => {
+  it('指定した項目キーの科目名だけが変わる (同じ項目キーの前期・当期の行は両方変わる)', () => {
     const p = { ...sample, labelOverrides: { 'tanshin.incomeStatement.operatingIncome': '営業和益' } };
     const c = card('E1', [], p);
-    expect(c.slots.map((s) => s.label)).toEqual(['売上高', '営業利益 (前期)', '営業和益 (当期)', '営業利益率']);
+    expect(c.slots.map((s) => s.label)).toEqual(['売上高', '営業和益 (前期)', '営業和益 (当期)', '営業利益率']);
   });
 });
 
