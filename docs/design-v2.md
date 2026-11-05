@@ -152,6 +152,7 @@ type CardEdit =
 | むずかしいの 3 形 (§1.4) の上限 (数字 4・文 3) と、収まる見え方の分類 | 上限超えなし。分類は **14 / 候補 14**: H1 = C06・C07・C08・C14、H2 = C02・C03・C11・C18、H3 = C01・C04・C05・C07・C09・C10・C12 (C07 は H1 と H3 の両方) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/shape-fit.ts`。分類と台帳の対応は `shape-fit.ts` の `CLASSES`。**C02・C05 は疑似セル (科目名・名前の並びを 1 セルに置いた)。C14・C18 も文のセルを疑似セルで置いた** |
 | 今のデータの `places` に V1 を文字どおり当てたときに見えるむずかしいの種類 | 16 種類のうち 7 (H-03・H-13・H-17・H-22・H-23・H-24・H-28)。**カードに合わせて `places` を書き直す前提**で §1.4 の 14 分類を数えた (V2 の数) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/places-fit.ts` |
 | やさしいの E-02・E-09・E-18 の作り方 (向きを変えない倍率) を正常 12 問すべてに注入したときの二重の食い違い (カードに収まる違反が `primaryRules` の外にもある問題) | 0 件 (E-02/E1・E-02/E2・E-09/E3 は 12/12、E-18/E1 は増益の 10 問に適用) | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy-all.ts` |
+| むずかしいの作り方を正常 16 問すべてに注入したときの二重の食い違い (検査 4) | H-01・H-03 (再計算しない)・H-04・H-05・H-13・H-17・H-20・H-21・H-22・H-23 は 0/16。H-03 を再計算する旧案は 16/16 (`link-cf-cash-end`)。H-24 は基 14 問に適用 | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-hard.ts` |
 | やさしいの E-02・E-09・E-18 を 1 問に注入したときに落ちる規則と、カードに収まる規則 | §2.8 の表 (基 easy-017。easy-004・013・025 でも、カードに収まる hard の規則は同じ。ソフトの規則は基で違う)。採るのは E-09 = 流動資産の小計をずらす (落ちる 2 規則とも許容集合内)・E-02 = E1・E2 (E3 は外す)・E-18 = E1 | `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-easy.ts <正常な問題の ID>` |
 | 3 形を選ぶ探索 | 18 の候補から、14 分類を収める 3 形が見つかる (90 秒のランダムな貪欲法を 2 回。どちらも 14) | `spike-design/hard-search.mjs` (入力は `rule-cells.ts` が出す JSON) |
 
@@ -201,12 +202,12 @@ type CardEdit =
 | H-28 | 資産の科目が負債の科目になっている (売掛金 → 買掛金) | H2 短信 | 売上債権の行の科目名 (`labelOverrides`) | `account-section` | **財務諸表等規則 第 15 条 (流動資産の範囲。売掛金を含む)・第 47 条第 2 号 (流動負債の範囲。買掛金)。原文を e-Gov の条文で確認 (2026-11-05)**・anomalies.md H-28 (B) | 2 |
 | H-23 | 会計方針の変更の「有・無」と注記が合わない | H2 短信 | `summary.accountingPolicyChange` または `notes.accountingPolicyNote` | `accounting-policy-match` | **JPX 作成要領 p.23 (「会計基準等の改正に伴う会計方針の変更: 有・無」)・p.34 (「有」とした場合は内容を記載)を確認** (A) | 2 |
 | H-24 | 後発事象が「該当なし」なのに、IR に期末後の出来事がある | H3 短信 + IR | `ir.outlook.subsequentEvent` (金額つき) | `subsequent-event-match` | JPX 作成要領 p.33〜34 (重要な後発事象を注記に挙げる。原文を確認)。重要性は金額の閾値で決める (設計。anomalies.md H-24) (B) | 2〜3 |
-| H-19 | セグメントが IR から 1 つ欠けている (短信 3 つ・IR 2 つ) | H3 短信 + IR | IR のセグメントの名前の並び | **新しい規則 `xdoc-seg-names`** (短信の報告セグメントの名前の並びと、IR の並びを直接比べる。今の `seg-count`・`segment-names` は会社の設定 (`companies.json`) と比べるので、カードの文欄だけでは見つけられない)。H-19 の `primaryRules` を `xdoc-seg-names` に直す (検証器の Task) | anomalies.md H-19 (B) | 2 |
+| H-19 | セグメントが IR から 1 つ欠けている (短信 3 つ・IR 2 つ) | H3 短信 + IR | IR のセグメントの名前の並び | **新しい規則 `xdoc-seg-names`** (短信の報告セグメントの名前の並びと、IR の並びを直接比べる。名前の並びの欄の `Slot.reads` は**名前のセル (`…segments.*.name`) だけで、入れ物 (`ir.segments.items`) を含まない**: 入れ物を含めると `seg-count`・`segment-names` もカードに収まり、検査 4 が落ちる。測った: 16/16 でこの 2 規則の paths は入れ物を含む。今の `seg-count`・`segment-names` は会社の設定 (`companies.json`) と比べるので、カードの文欄だけでは見つけられない)。H-19 の `primaryRules` を `xdoc-seg-names` に直す (検証器の Task) | anomalies.md H-19 (B) | 2 |
 | H-01 | 資産の合計と、負債・純資産の合計が一致しない | H1 短信 | 買掛金などを 1 つずらし、合計を再計算 (anomalies.md G1) | `bs-balance` | 貸借の等式 (導いた。複式簿記) (B) | 2 |
 | H-13 | 同じ数字が、短信と IR で少し違う (売上高 96,930 と IR の 969.3 億円が合わない。現金も同じ) | H1・H3 | IR の 1 つの金額 | `xdoc-hl-net-sales`・`xdoc-supp-cash` など | 同じ数字は同じ値 (導いた)。anomalies.md H-13 (B) | 2 |
 | H-17 | IR の金額の桁が 1 つずれている (億円と百万円の換算の誤り。124.0 億円のところ 1,240 億円) | H1 | IR の売上高を 10 倍か 1/10 (今の hard-006 と同じ。anomalies.md H-17 のとおり) | `xdoc-hl-net-sales` | 1 億円 = 100 百万円 (導いた) (B) | 1〜2 |
 | H-21 | IR の文と数字の向きが逆 (「増収」の文なのに売上高は減っている。「営業 CF は黒字」の文なのに赤字) | H1 (売上高)・H2 (営業 CF) | `ir.statements` の主張 | `claims-direction` (売上高は前期比、営業 CF は符号。検証器の `actualDirection`) | 今の H-21・E-17 の資料間の型 (B) | 1〜2 |
-| H-03 | CF の最初の行が、損益の税金等調整前当期純利益と違う | H3 短信 | `cashFlow.incomeBeforeTax` (当期純利益の値にする。合計を再計算) | `link-cf-start` | **連結 CF 作成基準 第三 一 2「税金等調整前当期純利益に非資金項目、営業活動に係る資産及び負債の増減…を加減して」(原文を確認)** (A) | 2〜3 |
+| H-03 | CF の最初の行が、損益の税金等調整前当期純利益と違う | H3 短信 | `cashFlow.incomeBeforeTax` だけを当期純利益の値にする。**再計算しない** (期末残高まで再計算すると、H-04 の見え方が同時にカードの上に出る。**anomalies.md H-03 の作り方を上書きする**。§2.8) | `link-cf-start` | **連結 CF 作成基準 第三 一 2「税金等調整前当期純利益に非資金項目、営業活動に係る資産及び負債の増減…を加減して」(原文を確認)** (A) | 2〜3 |
 | H-04 | CF の期末残高が、貸借の現金と合わない | H3 短信 | `cashFlow.cashEnding` | `link-cf-cash-end` | **連結 CF 作成基準 第二 一 (資金の範囲 = 現金及び現金同等物)・第四 1 (期末残高の連結貸借対照表科目別の内訳の注記)を確認** (A)。今の問題には無い (新しく作る) | 2〜3 |
 | H-05 | CF の売上債権の増減が、貸借の差と合わない | H2 短信 | `cashFlow.receivablesChange` | `link-cf-receivables` | 間接法の調整 (導いた。同基準の「営業活動に係る資産及び負債の増減」)。anomalies.md H-05 (B) | 3 |
 | H-29 | 金額の単位の語が 1 つだけ違う (短信型の「百万円」の中に「億円」) | H1〜H3 | `cardEdits` の `unit` | カードの型 (`card-unit`) | **新規** (E-03 のむずかしい版。系統は新しい `card-form`) | 1 |
@@ -333,6 +334,8 @@ anomalies.md の G3 (「端数で説明できない最小のずれ」。金額�
 
 **`card-*` の種類の場所と V2 (N1)**: `cardEdits` の種類 (E-03・E-19〜E-23・H-29〜H-32) は、数字のセルの変更でないので、`places` の代わりに**場所を (shape, card, slot) で持つ** (`AnomalyPlace` に `{ doc: 'card', shape, card, slot }` を足す)。`card-*` の規則 (`card-unit`・`card-slots`・`card-format`・`card-period`・`card-headline`) は、違反の場所をこの形で返す。V1 は「編集の shape = 枠の形」(カードに欄がある形でだけ出る)、V2 は「規則の違反の場所がその形のカードの欄」。**欄の欠落 (E-19・H-31)**: 欠けたセルはカードに載らないので、答え合わせは**欠けた位置 (前後の欄のあいだ)** を示す。
 
+**むずかしいの作り方を正常 16 問に注入した検査 4** (**測った**: `node --experimental-strip-types --no-warnings docs/plans/redesign/spike-design/inject-hard.ts`): H-03 (再計算しない)・H-04 (期末残高 +5%)・H-13 (IR の売上高 +5%・IR の現金 +5%)・H-17 (IR の売上高 ×10)・H-20 (純有利子負債 (前期) +20%)・H-21 (売上高の主張の向きを逆)・H-22・H-23・H-05 (増減の符号を逆)・H-01 (買掛金 +10% で負債・純資産の合計を再計算。総資産は元のまま) は、**16/16 で二重の食い違い 0・カードに収まる主な規則が無い問題 0**。**H-03 を期末残高まで再計算する旧案は 16/16 で `link-cf-cash-end` がカードの上で落ちる** (H-04 の見え方が同時に出る) ので採らない。H-24 は、基の短信の後発事象が「該当事項はありません」の 14 問に適用する (残り 2 問は短信に出来事があり、IR に書いても食い違わない)。H-19 の主な規則 `xdoc-seg-names` は検証器に無い (新しい規則) ので測れない。入れ物を含めない `Slot.reads` で、`seg-count`・`segment-names` はカードに収まらない (カードの外の二次の違反。`changed` を読むので許される)。
+
 **種類の定義の変更の一覧** (申し送り。検証器 #138・データ #139・#140 が使う):
 
 | 種類 | 変更 |
@@ -344,7 +347,9 @@ anomalies.md の G3 (「端数で説明できない最小のずれ」。金額�
 | E-04 | `card-period` (カードの枠の期と期末日) を主な規則にする |
 | E-05・H-30 | 今の `label-spelling` のまま (カードの科目名に当てる) |
 | E-19・E-20・E-21・E-22・E-23・H-29・H-31・H-32 | 新しい種類。`card-slots`・`card-format`・`card-headline`・`card-unit` |
-| H-19 | 主な規則を `xdoc-seg-names` に (§2.3) |
+| H-03 | 作り方を「`cashFlow.incomeBeforeTax` だけを変え、再計算しない」に (anomalies.md H-03 を上書き) |
+| H-19 | 主な規則を `xdoc-seg-names` に (§2.3)。名前の並びの欄の `Slot.reads` は名前のセルだけ |
+| H-24 | 基は短信の後発事象が「該当事項はありません」の問題 |
 | 系統 | `card-form` (むずかしい専用。§2.3) |
 
 
