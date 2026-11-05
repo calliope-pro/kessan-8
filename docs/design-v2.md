@@ -305,9 +305,9 @@ anomalies.md の G3 (「端数で説明できない最小のずれ」。金額�
                                                              │                      答え合わせ
                                                              │              正解 ────────┴──── 不正解
                                                              │               │                   │
-                                                             │        (n < 8) n+1 社目     ひと呼吸の演出
-                                                             │        (n = 8) クリア            │
-                                                             └────────────── 0 社目へ戻る ◀─────┘ (1 タップ)
+                                                             │        (n < 8) n+1 社目     ひと呼吸の演出 (約 1 秒。
+                                                             │        (n = 8) クリア       異変の場所を強調)
+                                                             └──── 0 社目へ自動で戻る ◀────────┘
  クリア ──もう一度──▶ 0 社目 (同じ難易度。新しい出題)      クリア ──別の難易度──▶ 難易度
 ```
 
@@ -315,13 +315,13 @@ anomalies.md の G3 (「端数で説明できない最小のずれ」。金額�
 - **n 社目 (n = 1〜8)**: 枠 n のカード (形と問題は §3.4 の出題が決める) を見て、札 2 つ (いつも通り / 異変あり) のどちらかを **1 回押す**。確認の窓・取り消し・道具は無い (Q14 の 4)。むずかしいは、短信型と IR 型の 2 枚を同じ画面で見る (切り替えは画面だけの状態で、`reduce` の action ではない)。
 - **答え合わせ**: 押した直後に出る。異変があった問題 (正解でも不正解でも) は、カード上の異変の場所を強調し、内容の文 (`anomaly.explanation`) を出す (受け入れ条件 4。場所は `anomaly.places` を `Slot.reads` に当てる。§1.2 R-D3)。異変の無い問題は「異変はありませんでした」だけ。
   - 正解: 「次へ」(1 タップ) で次の枠へ。8 社目なら、クリア。
-  - 不正解: **ひと呼吸の演出** (約 1 秒。**文書にある**: plans.md §1.3「間違えたら 1 秒ほどの演出のあと」) のあと、「0 社目へ」(1 タップ) で 0 社目に戻る。戻るたびに新しく出題する (同じ並びを覚えさせない。今のまま)。
+  - 不正解: **ひと呼吸の演出** (約 1 秒。**文書にある**: plans.md §1.3「間違えたら 1 秒ほどの演出のあと、0 社目 (見本) に戻り、1 タップで始まる」) の中で、カード上の異変の場所だけを強調し (内容の文は出さない)、**自動で 0 社目に戻る**。戻るたびに新しく出題する (同じ並びを覚えさせない。今のまま)。**内容の文は、0 社目の画面の上に「さっきの異変: …」として残す** (受け入れ条件 4。異変の無い問題を間違えたときは「さっきは異変がありませんでした」)。遊び手は、読み終えたら 1 タップで 1 社目へ進む。
 - **クリア**: 8 社連続で正しく判定した完了票 (8 社の社章・社名)。「もう一度」(同じ難易度の新しい出題で 0 社目へ)・「別の難易度」。
-- 受け入れ条件 3「間違えると、ひと呼吸の演出のあと 0 社目に戻り、1 タップで再開できる」は、「0 社目へ」の 1 タップ + 0 社目からの 1 タップ (1 社目へ) で満たす。今の「最初へ戻る → もう一度 → 資料を開く」の 3 操作 3 画面は無くなる。
+- 受け入れ条件 3「間違えると、ひと呼吸の演出のあと 0 社目に戻り、1 タップで再開できる」は、演出のあと**自動で** 0 社目に戻り、0 社目の 1 タップで 1 社目へ進む形で、文字どおり満たす (承認した「一瞬で最初に戻る」を保つ)。受け入れ条件 4 (場所と内容を示す) は、演出の中の場所の強調と、0 社目の「さっきの異変」で満たす。今の「最初へ戻る → もう一度 → 資料を開く」の 3 操作 3 画面は無くなる。
 
 ### 3.2 状態と action (v2)
 
-phase: `title`・`difficulty`・**`sample` (0 社目。新しい)**・`reading` (n 社目)・`revealed`・`cleared`。`round` は 0〜7 (= 1〜8 社目)。
+phase: `title`・`difficulty`・**`sample` (0 社目。新しい。`missed?: Round` を持つ。不正解のあとだけ)**・`reading` (n 社目)・`revealed`・`cleared`。`round` は 0〜7 (= 1〜8 社目)。
 
 | action | 受け付ける phase | 遷移先 |
 | --- | --- | --- |
@@ -330,12 +330,12 @@ phase: `title`・`difficulty`・**`sample` (0 社目。新しい)**・`reading` 
 | **`BEGIN`** (新しい) | `sample` | `reading` (round 0) |
 | `ANSWER(あり/なし)` | `reading` | `revealed` (`view` は持たない。異変の場所は画面が `places` から出す) |
 | `NEXT` | `revealed` (正解のときだけ) | `reading` (次の枠)。8 社目なら `cleared` |
-| `RESTART(出題)` | `revealed` (不正解のときだけ) | **`sample`** (今は `reading`。`draws` + 1) |
+| `RESTART(出題)` | `revealed` (不正解のときだけ) | **`sample`** (今は `reading`。`draws` + 1)。**画面が、演出 (約 1 秒) のあとに自動で送る** (演出を飛ばす操作も同じ action)。`sample` は、間違えた枠 (`missed`: 問題 + 形) を持つ。0 社目が「さっきの異変」を出すため |
 | `TO_DIFFICULTY` | `revealed` (不正解のときだけ)・`cleared` | `difficulty` |
 | `TO_TITLE` | `difficulty`・`sample`・`reading`・`revealed`・`cleared` | `title` (走行は捨てる。`draws` は残る) |
 
 - **消す action**: `VIEW` (10 画面を行き来する操作は無い)・`TOGGLE_MARK` (印は無い)。`ANSWER` の `view` と `Run.marks`・`Run.view` も消える。
-- 受け付けない組み合わせは、状態を変えずに返す (`reduce` は全域。今のまま)。`revealed` で `ANSWER` は受け付けない。不正解の `revealed` から先へ進めるのは `RESTART` と `TO_DIFFICULTY` と `TO_TITLE` だけで、再読み込みしても同じ問題を判定し直せない (今の `session.ts` の保存と読み出しで保たれる)。
+- 受け付けない組み合わせは、状態を変えずに返す (`reduce` は全域。今のまま)。`revealed` で `ANSWER` は受け付けない。不正解の `revealed` から先へ進めるのは `RESTART` と `TO_DIFFICULTY` と `TO_TITLE` だけで、**再読み込み**しても同じ問題を判定し直せない (今の `session.ts` が `revealed` を保存して読み出す。再読み込みしたあとの `revealed` (不正解) でも、画面は演出から `RESTART` を送る)。**タブの複製は扱わない**: 複製した側は手元の `reading` のまま判定し直せるが、害は自分の記録 (最高到達・クリア回数) だけで、ランキングも共有も無い (今の docs/design.md §5.4 が許容している)。
 - すべてのボタンは、この表の action のどれかに結ぶ。画面の側で action をつなげて、表に無い遷移を作らない。
 - **画面だけの状態 (保存しない)**: 0 社目の掲示の開閉・むずかしいの短信型と IR 型の切り替え・答え合わせの演出。再読み込みすると、保存した phase の画面に戻る (`sample` なら 0 社目、`reading` なら同じ n 社目、`revealed` なら答え合わせ)。
 
@@ -346,12 +346,16 @@ phase: `title`・`difficulty`・**`sample` (0 社目。新しい)**・`reading` 
 | **そのまま使う** | `answer.ts` (29)・`rng.ts` (13)・`storage.ts` (32)・`pool.ts` (18)・`labels.ts` (187)・`cell.ts` (7)・`config.ts` (20、値は今のまま。`ROUNDS_TO_CLEAR` = 8 など) | 判定 (`problem.anomaly` だけを見る)・種つきの乱数・保存先・プール・項目キーと標準の名前 (カードの科目名)・セルの種別 (書式)・設定値 |
 | **直す** | `game.ts` (113) | `sample` phase と `BEGIN` を足し、`Run` の `problems: Problem[]` を `rounds: Round[]` (`Round` = 問題 + 形。§3.4) に、`view`・`marks`・`VIEW`・`TOGGLE_MARK`・`FIRST_VIEW`・`isScreen` を消す |
 |  | `draw.ts` (110) | 枠ごとに形を先に引く (§1.5 R-S1〜S5)、返り値を `Round[]` に、履歴に種類 (kind) を足す |
-|  | `session.ts` (96) | 保存する出題を「問題 ID 8 つ」から「(問題 ID, 形) 8 つ」に。`SESSION_VERSION` を 2 に上げる (版違いは捨てる。今の読み出しの決まり) |
+|  | `session.ts` (96) | ① `sample` phase (出題 = (問題 ID, 形) 8 つと `missed` を持つ) を保存し、読み出す (今の `hydrate` は phase を列挙で受けるので、足さないと 0 社目での再読み込みがタイトルに戻る) ② `view`・`marks` の保存と検査を消す ③ `game.ts` の `isScreen` の読み込みと再輸出を消す ④ `SESSION_VERSION` を 2 に上げる (版違いは捨てる。今の読み出しの決まり) |
 |  | `records.ts` (104) | 見本の済 (`sampleSeen`) を消す (見本は毎周出る)。最高到達社数・クリア回数・見つけた異変の種類 ID・答えた問題 ID の履歴は残す。`RECORDS_VERSION` を 2 に |
 |  | `types.ts` (375) | `ShapeId`・`Round`・`CardEdit`・`Problem.cardEdits`・系統 `card-form` (§2.3)・`IrStatement` などの変更。`IrDeck`・`Tanshin` は今のまま (カードは問題データから導く。§1.2) |
 |  | `sample.ts` (9) | `notes` (画面ごとの注釈) を消す。見本 = 正常な問題 1 つ |
 | **捨てる** | `marks.ts` (34)・`calc.ts` (62)・`screen.ts` (5) | 印・検算・資料の画面の参照 (道具と 10 画面は無い。Q14 の 4) |
 | **足す** | `src/domain/cards.ts` (新規)・検証器の `card-*` の規則 (§1.5・§2) | `deriveCards`・見える条件・形のずれの規則 |
+| **`src/domain` の外** | `src/ui/` 全体 | 今の UI は捨てる (Q14 の 2)。`viewer-port.ts`・`context.ts`・`screens-*.ts`・`viewer/*` は `ScreenRef`・`marks`・`TOGGLE_MARK` を使う。作り直しは impeccable の仕事 (#146 以降) |
+|  | `e2e/` (`flow`・`viewer`・`viewer-in-app`・`smoke` ほか) | 今の UI 向け。受け入れ条件 1〜4・9 の E2E を新しい流れで作り直す |
+|  | `src/verifier/dataset.ts` | 見本の `notes` を画面の ID で検査する所 (112〜123 行目) を消す (`sample.ts` の `notes` を消すため)。`anomaly-ratio` の検査は R-S5 (e) で置き換える (§1.5) |
+|  | `src/data/samples/sample.json`・`src/data/data.test.ts` | 見本の `notes` と、その検査 (76 行目) を消す |
 
 - **使える**: `reduce` の骨格 (今の 5 つの phase と、9 つの action のうち 7 つ (`VIEW`・`TOGGLE_MARK` を除く) は残り、`sample` phase と `BEGIN` が増える)・出題の枠先決めの手順 (`draw` の増加路)・保存と記録の仕組み (`session`・`records`)・判定 (`answer`) は、考え方も形もそのまま使える。**捨てるのは、10 画面の資料と道具に結んだ部分** (印・検算・画面の参照) だけ。
 - 保存の版を上げるので、今の保存データ (`kessan8.run`・`kessan8.records`) は読み出しで捨てる。**公開前なので、遊び手の記録は失われない** (公開は全部できてから。要件)。
