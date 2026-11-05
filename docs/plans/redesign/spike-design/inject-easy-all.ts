@@ -21,6 +21,9 @@ const PRIMARY: Record<string, string[]> = {
   'E-02/E1': [...SUM, 'ratio-operating-margin'], 'E-02/E2': [...SUM, 'xdoc-results-net-sales'],
   'E-09/E3': ['bs-current-assets', 'bs-fixed-assets', 'bs-current-liabilities', 'bs-total-assets'], 'E-18/E1': ['ratio-operating-margin'],
 };
+// 検査 5 の最小の表示モデル: 載るセルを整数 (カンマ区切り)・% は小数第 1 位にして、基と注入後で 1 つでも違えば「表示が変わる」。見出し語は claims
+const showCell = (p: any, c: string): string => { const v = g(p, c.replace(/^tanshin\./, '')); return typeof v === 'number' ? (c.includes('Margin') ? v.toFixed(1) : Math.round(v).toLocaleString('en-US')) : String(v); };
+const displayChanged = (b: any, q: any, shape: string): boolean => SHOWN[shape]!.filter((x) => x.startsWith('tanshin.')).some((c) => showCell(b, c) !== showCell(q, c)) || JSON.stringify(b.ir.statements) !== JSON.stringify(q.ir.statements);
 const g = (p: any, path: string) => path.split('.').reduce((o: any, k) => o[k], p.tanshin);
 const s = (p: any, path: string, v: number) => { const ks = path.split('.'); ks.slice(0, -1).reduce((o: any, k) => o[k], p.tanshin)[ks.at(-1)!] = v; };
 const up = (p: any, a: string, b: string) => g(p, a) > g(p, b); // 当期 > 前期 (増)
@@ -33,12 +36,13 @@ const RECIPES: Record<string, { shape: string; make: Recipe }> = {
 };
 const bases = readdirSync(resolve(root, 'src/data/problems/easy')).sort().map((f) => read(`src/data/problems/easy/${f}`)).filter((p) => !p.anomaly);
 for (const [name, rc] of Object.entries(RECIPES)) {
-  let applied = 0, skipped = 0, doubled = 0, noPrimary = 0;
+  let applied = 0, skipped = 0, doubled = 0, noPrimary = 0, same = 0;
   const bad: string[] = [];
   for (const b of bases) {
     const q = rc.make(b);
     if (q === null) { skipped++; continue; }
     applied++;
+    if (!displayChanged(b, q, rc.shape)) same++;
     const co = companies.find((c: any) => c.id === b.companyId);
     const vs = verifyProblem(q, co).hard;
     const shown = new Set([...SHOWN[rc.shape]!, ...FRAME]);
@@ -47,5 +51,5 @@ for (const [name, rc] of Object.entries(RECIPES)) {
     if (extra.length) { doubled++; bad.push(`${b.id}: ${extra.join(',')}`); }
     if (!onCard.some((v: any) => PRIMARY[name]!.includes(v.rule))) noPrimary++;
   }
-  console.log(`${name}: 基 ${bases.length} 問のうち適用 ${applied}・適用できない ${skipped} / カードに収まる違反が primaryRules の外にもある (二重の食い違い) ${doubled} / カードに収まる主な規則が無い ${noPrimary}${bad.length ? '\n   ' + bad.join('\n   ') : ''}`);
+  console.log(`${name}: 基 ${bases.length} 問のうち適用 ${applied}・適用できない ${skipped} / カードに収まる違反が primaryRules の外にもある (二重の食い違い) ${doubled} / カードに収まる主な規則が無い ${noPrimary} / 表示が変わらない ${same}${bad.length ? '\n   ' + bad.join('\n   ') : ''}`);
 }
