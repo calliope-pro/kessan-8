@@ -1,0 +1,16 @@
+{
+  "sample": { "company": "c09", "fiscalYear": 2023 },
+  "pairs": [
+    { "company": "c01", "fiscalYear": 2024, "sales": "up",   "op": "up",   "anomalies": { "E1": { "kind": "E-18", "tier": 2 }, "E2": { "kind": "E-06", "tier": 2 }, "E3": { "kind": "E-09", "tier": 2 } } },
+    { "company": "c01", "fiscalYear": 2025, "sales": "up",   "op": "down", "anomalies": { "E1": { "kind": "E-17", "tier": 1 }, "E2": { "kind": "E-23", "tier": 2 }, "E3": { "kind": "E-22", "tier": 1 } } },
+    { "company": "c02", "fiscalYear": 2025, "sales": "down", "op": "down", "anomalies": { "E1": { "kind": "E-02", "tier": 1 }, "E2": { "kind": "E-07", "tier": 1 }, "E3": { "kind": "E-21", "tier": 1 } } },
+    { "company": "c03", "fiscalYear": 2025, "sales": "down", "op": "up",   "anomalies": { "E1": { "kind": "E-12", "tier": 3 }, "E2": { "kind": "E-03", "tier": 1 }, "E3": { "kind": "E-05", "tier": 1 } } },
+    { "company": "c04", "fiscalYear": 2025, "sales": "up",   "op": "up",   "anomalies": { "E1": { "kind": "E-23", "tier": 2 }, "E2": { "kind": "E-17", "tier": 1 }, "E3": { "kind": "E-20", "tier": 2 } } },
+    { "company": "c05", "fiscalYear": 2025, "sales": "up",   "op": "down", "anomalies": { "E1": { "kind": "E-05", "tier": 1 }, "E2": { "kind": "E-21", "tier": 1 }, "E3": { "kind": "E-03", "tier": 1 } } },
+    { "company": "c06", "fiscalYear": 2025, "sales": "down", "op": "down", "anomalies": { "E1": { "kind": "E-03", "tier": 1 }, "E2": { "kind": "E-05", "tier": 1 }, "E3": { "kind": "E-19", "tier": 2 } } },
+    { "company": "c07", "fiscalYear": 2025, "sales": "up",   "op": "up",   "anomalies": { "E1": { "kind": "E-19", "tier": 1 }, "E2": { "kind": "E-02", "tier": 1 }, "E3": { "kind": "E-04", "tier": 2 } } },
+    { "company": "c08", "fiscalYear": 2025, "sales": "down", "op": "down", "anomalies": { "E1": { "kind": "E-20", "tier": 2 }, "E2": { "kind": "E-19", "tier": 2 }, "E3": { "kind": "E-09", "tier": 2 } } },
+    { "company": "c09", "fiscalYear": 2025, "sales": "up",   "op": "up",   "anomalies": { "E1": { "kind": "E-21", "tier": 1 }, "E2": { "kind": "E-04", "tier": 2 }, "E3": { "kind": "E-22", "tier": 1 } } },
+    { "company": "c10", "fiscalYear": 2025, "sales": "up",   "op": "up",   "anomalies": { "E1": { "kind": "E-04", "tier": 2 }, "E2": { "kind": "E-07", "tier": 1 }, "E3": { "kind": "E-09", "tier": 2 } } }
+  ]
+}
