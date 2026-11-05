@@ -376,6 +376,12 @@ export interface Anomaly {
   changed?: string[];
 }
 
+/** 出題の 1 枠 = 問題 + その枠の形 (docs/design-v2.md §3.4)。形は異変の有無を見ずに先に引く (R-S1)。 */
+export interface Round {
+  problem: Problem;
+  shape: ShapeId;
+}
+
 /** 1 問 = 架空の 1 社の資料束。src/data/problems/<難易度>/<id>.json の中身そのもの。 */
 export interface Problem {
   /** 例: easy-001。ファイル名と同じ。 */
