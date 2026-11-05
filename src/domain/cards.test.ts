@@ -130,7 +130,7 @@ describe('1.2 値 (基準問題 A・B)', () => {
   it('D14・D15: H1 (A は百万円、B は億円で IR の数字が 124.0)', () => {
     const [tan, ir] = deriveCards(hardA(), companyA(), 'H1') as [Card, Card];
     expect(texts(tan)).toEqual(['11,800', '12,400', '15,200', '15,200']);
-    expect(texts(ir)).toEqual(['12,400', '売上高・営業利益ともに前期を上回った。']);
+    expect(texts(ir)).toEqual(['12,400', '売上高は前期より増えた']);
     expect(slot(ir, 'claim').reads).toEqual(['ir.statements.0']);
     const [, irB] = deriveCards(hardB(), companyB(), 'H1') as [Card, Card];
     expect(slot(irB, 'netSales')).toMatchObject({ text: '124.0', unit: '億円', raw: 124 });
@@ -141,7 +141,7 @@ describe('1.2 値 (基準問題 A・B)', () => {
     const [tan, ir] = deriveCards(hardA(), companyA(), 'H2') as [Card, Card];
     expect(texts(tan)).toEqual(['2,900', '3,000', '△100', '1,500', '売掛金 (資産の部)', 'なし', '該当事項はありません。']);
     expect(tan.slots.map((s) => s.kind)).toEqual(['number', 'number', 'number', 'number', 'text', 'text', 'text']);
-    expect(texts(ir)).toEqual(['営業キャッシュ・フローは堅調であった。']);
+    expect(texts(ir)).toEqual(['営業活動によるキャッシュ・フローはプラス']);
     expect(slot(ir, 'claim').reads).toEqual(['ir.statements.2']);
   });
 
@@ -177,6 +177,48 @@ describe('1.2 値 (基準問題 A・B)', () => {
     p = set(p, 'ir.statements.0.claims', [{ metric: 'netSales', direction: 'down' }, { metric: 'operatingIncome', direction: 'down' }]);
     expect(E1(p).headline?.word).toBe('減益');
     expect((deriveCards(p, companyA(), 'E2')[0] as Card).headline?.word).toBe('減収');
+  });
+});
+
+describe('10.1 文欄を claims から型で作る (R-D5。D44〜D49)', () => {
+  const claimText = (p: Problem, shape: 'H1' | 'H2', c: Company = companyA()) => slot(deriveCards(p, c, shape)[1], 'claim');
+  it('D44: H1 は売上高の向き (up → 増えた・down → 減った)。text は使わない。reads は型が使った 1 つの文', () => {
+    expect(claimText(hardA(), 'H1')).toMatchObject({ text: '売上高は前期より増えた', raw: '売上高は前期より増えた', reads: ['ir.statements.0'] });
+    const down = set(hardA(), 'ir.statements.0.claims.0.direction', 'down');
+    expect(claimText(down, 'H1').text).toBe('売上高は前期より減った');
+    expect(claimText(hardB(), 'H1', companyB()).text).toBe('売上高は前期より増えた');
+  });
+  it('D45: H2 は営業 CF の符号 (主語は labels.ts の営業 CF の名前。labelOverrides があればその名前)', () => {
+    expect(claimText(hardA(), 'H2')).toMatchObject({ text: '営業活動によるキャッシュ・フローはプラス', reads: ['ir.statements.2'] });
+    const down = set(hardA(), 'ir.statements.2.claims.0.direction', 'down');
+    expect(claimText(down, 'H2').text).toBe('営業活動によるキャッシュ・フローはマイナス');
+    const typo = { ...down, labelOverrides: { 'tanshin.cashFlow.operatingCashFlow': '営業活動によるキャッシュ・フロ' } };
+    expect(claimText(typo, 'H2').text).toBe('営業活動によるキャッシュ・フロはマイナス');
+    const tan = deriveCards(typo, companyA(), 'H2')[0] as Card;
+    expect(slot(tan, 'operatingCf').label).toBe('営業活動によるキャッシュ・フロ'); // ④ の科目名と同じ言い方
+  });
+  it('D46: ir.statements の text を書き換えても、カードは変わらない。同じ metric の主張が 2 つの文にあれば最初の文だけを読む', () => {
+    const changed = set(set(set(hardA(), 'ir.statements.0.text', '全然違う文。'), 'ir.statements.1.text', 'x'), 'ir.statements.2.text', 'y');
+    for (const shape of ['H1', 'H2'] as const) expect(deriveCards(changed, companyA(), shape)).toEqual(deriveCards(hardA(), companyA(), shape));
+    const twice = set(hardA(), 'ir.statements', [...hardA().ir.statements, { slide: 'highlights', text: '2 つ目', claims: [{ metric: 'netSales', direction: 'down' }] }]);
+    expect(claimText(twice, 'H1')).toMatchObject({ text: '売上高は前期より増えた', reads: ['ir.statements.0'] });
+  });
+  it('D47: direction が zero・主張が無い → 欄が出ない (例外にしない)', () => {
+    const zero = set(hardA(), 'ir.statements.0.claims.0.direction', 'zero');
+    expect(keys(deriveCards(zero, companyA(), 'H1')[1])).toEqual(['netSales']);
+    const none = set(hardA(), 'ir.statements', []);
+    expect(keys(deriveCards(none, companyA(), 'H1')[1])).toEqual(['netSales']);
+    expect(keys(deriveCards(none, companyA(), 'H2')[1])).toEqual([]);
+  });
+  it('D48: 型の文は 20 字以内', () => {
+    for (const direction of ['up', 'down']) {
+      expect([...claimText(set(hardA(), 'ir.statements.0.claims.0.direction', direction), 'H1').text].length).toBeLessThanOrEqual(20);
+      expect([...claimText(set(hardA(), 'ir.statements.2.claims.0.direction', direction), 'H2').text].length).toBeLessThanOrEqual(20);
+    }
+  });
+  it('D49: 売上高と営業利益の主張が同じ 1 つの文にあっても、H1 の欄はその文の添字を読む', () => {
+    expect(hardA().ir.statements[0]?.claims.map((c) => c.metric)).toEqual(['netSales', 'operatingIncome']);
+    expect(claimText(hardA(), 'H1').reads).toEqual(['ir.statements.0']);
   });
 });
 

@@ -53,7 +53,8 @@ describe('S: 満たすデータ', () => {
     for (const difficulty of ['easy', 'hard'] as const) {
       const r = verifyDataset(cardPool({ difficulty }));
       expect(r.errors, difficulty).toEqual([]);
-      expect(r.shortfalls.filter((s) => s.difficulty === difficulty).map((s) => s.code), difficulty).toEqual([]);
+      // card-claim-directions (R-S5 (f)) は、正常な問題の向きが全部同じ (基準問題 A) ので、別のテスト (S17) で確かめる
+      expect(r.shortfalls.filter((s) => s.difficulty === difficulty && s.code !== 'card-claim-directions').map((s) => s.code), difficulty).toEqual([]);
     }
   });
 });
@@ -245,5 +246,78 @@ describe('S15 card-double-discrepancy', () => {
     expect(e?.message).toContain('E1');
     expect(e?.message).toContain('claims-direction');
     expect(r.shortfalls.filter((s) => s.code === 'card-double-discrepancy')).toHaveLength(1);
+  });
+});
+
+describe('10.2 設計 #156 の取り込み (S16〜S19)', () => {
+  const normalsOf = (input: DatasetInput) => input.problems.filter((p) => (p.value as Problem).anomaly === null);
+  const withClaim = (input: DatasetInput, nth: number, path: string, direction: string): DatasetInput => {
+    const target = normalsOf(input)[nth]!.value as Problem;
+    return replace(input, target.id, set(target, path, direction));
+  };
+
+  it('S16: 主張がちょうど 1 つでない (0 個・2 個以上) → claims-count (問題ごと。異変の問題にも)。基準のデータは出ない', () => {
+    const input = cardPool();
+    expect(errCodes(verifyDataset(input))).not.toContain('claims-count');
+    const normal = normalsOf(input)[0]!.value as Problem;
+    const none = set(normal, 'ir.statements.0.claims', [{ metric: 'netSales', direction: 'up' }]); // operatingIncome が 0 個
+    const r0 = verifyDataset(replace(input, normal.id, none));
+    expect(r0.errors.filter((e) => e.code === 'claims-count').map((e) => `${e.problem}:${e.message}`).join()).toContain('operatingIncome');
+    const twice = set(normal, 'ir.statements', [...normal.ir.statements, { slide: 'highlights', text: 'x', claims: [{ metric: 'operatingCashFlow', direction: 'up' }] }]); // operatingCashFlow が 2 個
+    expect(verifyDataset(replace(input, normal.id, twice)).errors.some((e) => e.code === 'claims-count' && e.message.includes('operatingCashFlow'))).toBe(true);
+    const anomaly = input.problems.find((p) => (p.value as Problem).anomaly !== null)!.value as Problem;
+    const noCf = set(anomaly, 'ir.statements', anomaly.ir.statements.slice(0, 2));
+    expect(verifyDataset(replace(input, anomaly.id, noCf)).errors.some((e) => e.code === 'claims-count' && e.problem === anomaly.id)).toBe(true);
+  });
+
+  it('S17: 正常な問題に減収が 3 社・営業 CF マイナスが 1 社・減益が 3 社そろう → 出ない。足りなければ出る (やさしい = 減収・減益、むずかしい = 減収・営業 CF)', () => {
+    const msg = (r: ReturnType<typeof verifyDataset>, d: Difficulty) => r.shortfalls.find((s) => s.code === 'card-claim-directions' && s.difficulty === d)?.message ?? '';
+    const easy = cardPool();
+    expect(msg(verifyDataset(easy), 'easy')).toContain('netSales');
+    expect(msg(verifyDataset(easy), 'easy')).toContain('operatingIncome');
+    expect(msg(verifyDataset(easy), 'easy')).not.toContain('operatingCashFlow');
+    // 向きのメタデータだけ変える (数字は変えない。hard-violation は出るが、ここは shortfall だけを見る)
+    let ok = easy;
+    for (const n of [0, 1, 2]) {
+      ok = withClaim(ok, n, 'ir.statements.0.claims.0.direction', 'down'); // netSales
+      ok = withClaim(ok, n, 'ir.statements.0.claims.1.direction', 'down'); // operatingIncome
+    }
+    expect(msg(verifyDataset(ok), 'easy')).toBe('');
+    let two = easy;
+    for (const n of [0, 1]) two = withClaim(two, n, 'ir.statements.0.claims.0.direction', 'down');
+    expect(msg(verifyDataset(two), 'easy')).toContain('netSales');
+    const hard = cardPool({ difficulty: 'hard' });
+    expect(msg(verifyDataset(hard), 'hard')).toContain('operatingCashFlow');
+    expect(msg(verifyDataset(hard), 'hard')).not.toContain('operatingIncome');
+    let hardOk = hard;
+    for (const n of [0, 1, 2]) hardOk = withClaim(hardOk, n, 'ir.statements.0.claims.0.direction', 'down');
+    hardOk = withClaim(hardOk, 0, 'ir.statements.2.claims.0.direction', 'down');
+    expect(msg(verifyDataset(hardOk), 'hard')).toBe('');
+  });
+
+  it('S18: card-text-length は異変の問題にも当てる', () => {
+    const input = cardPool({ difficulty: 'hard', withBase: false });
+    const anomaly = input.problems.find((p) => (p.value as Problem).anomaly !== null && (p.value as Problem).anomaly!.kind.startsWith('k-H3'))!.value as Problem;
+    let long = set(anomaly, 'tanshin.notes.subsequentEvents', 'あ'.repeat(41));
+    long = set(long, 'ir.outlook.subsequentEvent', '期末後の出来事 (300 百万円)。');
+    const r = verifyDataset(replace(input, anomaly.id, long));
+    expect(r.shortfalls.filter((s) => s.code === 'card-text-length').map((s) => s.problem)).toEqual([anomaly.id]);
+  });
+
+  it('S19: cardEdits を当てたカードも上限を守る。E-22 (dup) は E3 だけ (数字 3 → 4)。E1・E2 (数字 4 → 5) は card-structure', () => {
+    const kind = kindOf('k-slots', 'card-form', ['card-slots'], ['card-slots']);
+    const dupOn = (shape: ShapeId, slot: string) => {
+      const input = cardPool({ withBase: false });
+      const p0 = normalVariant('easy-950', 'easy', 'c1');
+      const p1 = { ...p0, cardEdits: [{ shape, card: 0, slot, op: 'dup' as const }] } as Problem;
+      const actual = [...new Set(verifyProblem(p1, companyA()).hard.map((v) => v.rule))].sort();
+      const p = set(p1, 'anomaly', { kind: 'k-slots', places: [{ doc: 'card', shape, card: 0, slot }], explanation: 'x', expectedRules: actual });
+      return verifyDataset({ ...input, kinds: [...input.kinds, { ...kind, family: 'appearance' } as AnomalyKind], problems: [...input.problems, { file: file(p), value: p }] });
+    };
+    expect(dupOn('E3', 'totalAssets').errors.filter((e) => e.problem === 'easy-950' && e.code === 'card-structure')).toEqual([]);
+    for (const [shape, slot] of [['E1', 'margin'], ['E2', 'salesCur']] as const) {
+      const e = dupOn(shape, slot).errors.find((x) => x.problem === 'easy-950' && x.code === 'card-structure');
+      expect(e?.message, shape).toContain('上限');
+    }
   });
 });

@@ -146,7 +146,7 @@ describe('2.2 構造・文字数 (C1〜C6)', () => {
     num[0]!.slots[0]!.text = '9'.repeat(60);
     expect(cardTextLengthIssues(num)).toEqual([]);
   });
-  it('C6・D53: 今の正常な問題で構造の誤りは 0 件、40 字超は S3 の 7 問・10 欄だけ', () => {
+  it('C6・C8・D53: 今の正常な問題で構造の誤りは 0 件、40 字超は hard-023・024・031・032 の 4 問・6 欄だけ (型の文は 20 字以内)', () => {
     const over: string[] = [];
     for (const p of problems.filter((q) => q.anomaly === null)) {
       const company = companies.find((c) => c.id === p.companyId) as Company;
@@ -156,8 +156,17 @@ describe('2.2 構造・文字数 (C1〜C6)', () => {
         over.push(...cardTextLengthIssues(cards).map((m) => `${p.id} ${m.split(':')[0]}`));
       }
     }
-    expect(new Set(over.map((s) => s.split(' ')[0]))).toEqual(new Set(['hard-009', 'hard-023', 'hard-024', 'hard-026', 'hard-030', 'hard-031', 'hard-032']));
-    expect(over).toHaveLength(10);
+    expect(new Set(over.map((s) => s.split(' ')[0]))).toEqual(new Set(['hard-023', 'hard-024', 'hard-031', 'hard-032']));
+    expect(over).toHaveLength(6);
+  });
+  it('C7: 40 字の対象は deriveCards が作る文欄すべて (型の文・セグメントの名前の並び・「なし」も)', () => {
+    const cards = structuredClone(cardsOf(hard(), 'H3'));
+    cards[1]!.slots.find((s) => s.key === 'segments')!.text = 'あ'.repeat(41);
+    cards[1]!.slots.find((s) => s.key === 'subsequent')!.text = 'い'.repeat(41);
+    expect(cardTextLengthIssues(cards)).toHaveLength(2);
+    const claim = structuredClone(cardsOf(hard(), 'H1'));
+    claim[1]!.slots.find((s) => s.key === 'claim')!.text = 'う'.repeat(41);
+    expect(cardTextLengthIssues(claim)).toHaveLength(1);
   });
   it('R-C: 今の正常な問題の関係はすべて成り立つ (S2 の前提)', () => {
     for (const p of problems.filter((q) => q.anomaly === null)) {
