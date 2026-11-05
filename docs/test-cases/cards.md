@@ -4,6 +4,8 @@ Task #138 (受け入れ条件 6)。根拠: [design-v2.md](../design-v2.md) §1 (
 
 印: **仕様** (design-v2.md にある) / **決めた** (この表で決めた。設計書の細部を埋めたもの。監視役のレビューで変えてよい) / **測った** (コマンドの結果)。
 
+**追記 (#153 着手時。設計 v2 の #154 の直しを取り込んだ)**: design-v2.md §2.8 (`Anomaly.base`・`changed`・カード上の場所・許容集合・二重の食い違いの禁止) が #151 の合意のあとに入った (責任者の知らせ「E-02・E-09・E-18 の定義が変わる。決め打ちせず、直った設計に合わせる」)。**§9 を新設**し、§0・§3 (K1〜K4 の `paths`)・§4 (V18〜)・§8 (M1・M2)・§5 (S12〜S14) を直した。直した所は「**§2.8**」と書く。E-02・E-09・E-18・E-03・E-04 の種類ごとの `primaryRules` の変更は決め打ちせず (データの Task が `anomaly-kinds.json` に書く)、検証器は**種類によらない仕組み** (`changed`・`card-*` の規則・場所の形) だけを持つ。
+
 ## 0. 公開する入口 (テストが外から呼ぶもの)
 
 内部の関数名には依らず、次の入口の入力と出力だけでテストする。
@@ -24,7 +26,8 @@ Task #138 (受け入れ条件 6)。根拠: [design-v2.md](../design-v2.md) §1 (
 | `deviationIssues(problem, company, kinds)` (§2.7) | 異変の問題 → 種類ごとの「道具なしで気づける最小のずれ」(§8) を満たさない文の配列 (空 = 満たす、または検査の無い種類) |
 | `verifyDataset` の追加 | 下の §5 |
 | 規則 (`HARD_RULE_IDS` に足す。`verifyProblem` は形の引数を持たないので、どの規則も形によらず問題だけを見る) | `card-slots`・`card-unit`・`card-format`・`card-headline`・`card-period`・`xdoc-seg-names` |
-| 型 (`types.ts` と docs/design.md §4.2 の写し) | `ShapeId`・`CardEdit`・`Problem.cardEdits?`・`ANOMALY_FAMILIES` に `card-form` (むずかしい) |
+| 型 (`types.ts` と docs/design.md §4.2 の写し) | `ShapeId`・`CardEdit`・`Problem.cardEdits?`・`ANOMALY_FAMILIES` に `card-form` (むずかしい) (#152 で済み)。**§2.8**: `Anomaly.base?: string`・`Anomaly.changed?: string[]` (**決めた**: 今のデータが持たないので任意。無い問題は shortfalls `card-anomaly-base` で、データの Task が足す)、`AnomalyPlace` に `{ doc: 'card'; shape: ShapeId; card: number; slot: string }` を足す。`Card` に `shape: ShapeId` を足す (カードのセル `card.<shape>.<card>.<slot>` を作るため) |
+| `doubleDiscrepancies(problem, company, kinds)` | **§2.8** 異変の問題 → 見える形ごとの、種類の `primaryRules` の外で「カードに収まる」違反の規則の一覧 `{ shape, rules }[]` (空 = カードの上の食い違いは 1 つだけ) |
 
 **基準問題** (`src/verifier/fixtures/`): A = `normal.problem.json` (百万円の会社)、B = `normal-b.problem.json` (億円・セグメント 3)。どちらも `difficulty: 'easy'` で入っているので、むずかしいの形のテストは `{ ...A, difficulty: 'hard' }` にして使う。以下の値は **測った** (fixture を読んだ値)。
 
@@ -157,14 +160,14 @@ Task #138 (受け入れ条件 6)。根拠: [design-v2.md](../design-v2.md) §1 (
 
 ## 3. 検証器の規則 (形のずれ。問題に `cardEdits` が付くと落ちる)
 
-規則は `verifyProblem` が全問に当てる (`cardEdits` が無い問題では常に満たす)。落ちたときの `paths` は、食い違った欄の `reads` (と `itemKey`)。1 つの異変は 1 つの編集 (G6)。
+規則は `verifyProblem` が全問に当てる (`cardEdits` が無い問題では常に満たす)。**§2.8**: 落ちたときの `paths` は、食い違った欄の場所を **`card.<shape>.<card>.<slot>`** の形で返す (例 `card.E1.0.margin`。見出し語は slot = `headline`)。`AnomalyPlace` の `{ doc: 'card', shape, card, slot }` の場所の key も同じ文字列で、`touches`・V1・V2 は今のパスの照合に乗る。`cardCells` は全カードの全欄の `card.<shape>.<card>.<slot>` (と見出し語の `…headline`) を含む。1 つの異変は 1 つの編集 (G6)。
 
 | ID | 規則 | 入力 → 期待 |
 | --- | --- | --- |
-| K1 | `card-slots` | `drop`・`dup`・`swap` の編集 → その形・そのカードで違反 1 件 (`paths` = 食い違った欄の `reads`。`swap` は入れ替えた 2 欄の `reads` を合わせる)。編集なし・`format`/`unit`/`headline` の編集 → 満たす |
-| K2 | `card-unit` | `unit` の編集 (E1 の売上高を `億円`) → 違反 1 件 (`paths` = その欄の `reads`)。正常 (A・B) → 満たす。IR 型の金額は `header.unit`、短信型は `百万円`、比率は `%` が標準 |
-| K3 | `card-format` | `format` の編集 (`12400`・`1,2400`) → 違反 1 件。標準の書式 (`12,400`・`△100`・`10.0`) → 満たす |
-| K4 | `card-headline` | `headline` の編集 (E1 に `増収`) → 違反 1 件。E1 の語は営業利益の組 (増益・減益)、E2 は売上高の組 (増収・減収) 以外が出たら違反 |
+| K1 | `card-slots` | `drop`・`dup`・`swap` の編集 → その形・そのカードで違反 1 件 (`paths`: drop = 欠けた欄 `card.E1.0.margin` (欠けた位置は、テンプレートのカードのその key の位置)・dup = 重複した欄・swap = 入れ替えた 2 欄)。編集なし・`format`/`unit`/`headline` の編集 → 満たす |
+| K2 | `card-unit` | `unit` の編集 (E1 の売上高を `億円`) → 違反 1 件 (`paths` = `card.E1.0.netSales`)。正常 (A・B) → 満たす。IR 型の金額は `header.unit`、短信型は `百万円`、比率は `%` が標準 |
+| K3 | `card-format` | `format` の編集 (`12400`・`1,2400`) → 違反 1 件 (`paths` = `card.E1.0.netSales`)。標準の書式 (`12,400`・`△100`・`10.0`) → 満たす |
+| K4 | `card-headline` | `headline` の編集 (E1 に `増収`) → 違反 1 件 (`paths` = `card.E1.0.headline`)。E1 の語は営業利益の組 (増益・減益)、E2 は売上高の組 (増収・減収) 以外が出たら違反 |
 | K5 | `card-period` | 形によらず、3 画面 (`balanceSheet`・`incomeStatement`・`cashFlow`) の `columnDates.<画面>.current` が、`fiscalYear` と会社の決算月から作った期末日 (`2027-03-31`) と合うか。`columnDates.incomeStatement.current` を `2028-03-31` にする → 違反 1 件、`paths` = `tanshin.columnDates.incomeStatement.current` と `tanshin.header.periodLabel` (どちらも枠のセル)。3 画面とも直すと 3 件。正常 (A・B) → 満たす。**見える形は §4 の V 表** (incomeStatement の列を枠に持つ形だけ) |
 | K6 | `xdoc-seg-names` | IR のセグメントの名前の並びが短信の報告セグメントと違う (1 つ欠ける・並びが違う・綴りが違う) → 違反 1 件 (`paths` = 短信の名前のセル全部と IR の名前のセル全部)。正常 (A・B) → 満たす |
 | K7 | 既存規則との共存 | 既存の正常な問題 28 問 (`src/data`) が、新しい規則 6 つすべてで違反 0 件 |
@@ -198,8 +201,9 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 | V15 | むずかしい: IR のセグメントが 1 つ欠ける (`xdoc-seg-names`) | `H3` だけ |
 | V16 | **places が二次の症状を含む** (例: V14 で places に `cashEnding` も入れる。`cashEnding` は H2 のカードに載らない) | どの形でも見えない (空)。V1 が落ちる |
 | V17 | places が 1 つも落ちた違反に触れない | 空 |
-| V18 | `cardEdits` (E1 で `drop` の `margin`。`primaryRules` = `card-slots`。places = `summary.operatingMargin`) | `E1` だけ。判定は**テンプレートのカード**で行う (編集後のカードには `margin` が無いので、編集後で判定すると V1・V2 とも落ちて E-19・H-31 がすべて見えなくなる。B1)。`placeSlots(テンプレートのカード, place)` = `[{card:0,key:'margin'}]` |
-| V18b | `cardEdits` の `shape: 'E2'`・`slot: 'margin'` (E2 に無い欄) | `visibleShapes` は空 (K9 の `anomaly-mismatch` も別に出る) |
+| V18 | `cardEdits` (E1 で `drop` の `margin`。`primaryRules` = `card-slots`。**§2.8**: places = `{doc:'card',shape:'E1',card:0,slot:'margin'}`) | `E1` だけ。判定は**テンプレートのカード**で行う (編集後のカードには `margin` が無いので、編集後で判定すると V1・V2 とも落ちて E-19・H-31 がすべて見えなくなる。B1)。`placeSlots(テンプレートのカード, place)` = `[{card:0,key:'margin'}]` (card の場所は欄の key で引く。drop は欠けた位置) |
+| V18b | `cardEdits` の `shape: 'E2'`・`slot: 'margin'` (E2 に無い欄) | `visibleShapes` は空 (K9 の `anomaly-mismatch` も別に出る)。V1 は「編集の shape = 枠の形」かつ場所の欄が形にあること |
+| V18e | **§2.8** `itemKey` の場所 (E-05・H-28・H-30): 営業利益の誤字 (`labelOverrides`。places = `{itemKey:'tanshin.incomeStatement.operatingIncome'}`) | `E1` だけ (同じ itemKey の欄がある形。E3 には営業利益の欄が無いので出さない) |
 | V18c | `cardEdits` の `swap` (E1 の `netSales`・`margin`。`card-slots`。places = 売上高 当期・営業利益率) | `E1` だけ。`dup`・`unit`・`format`・`headline` の編集も、それぞれの形のテンプレートで同じ (`card-unit` の paths = その欄の `reads`) |
 | V18d | `columnDates.incomeStatement.current` をずらす (`card-period`。paths = `tanshin.columnDates.incomeStatement.current`・`tanshin.header.periodLabel`。places = 同じ 2 セル) | `E1`・`E2` (incomeStatement の列を枠に持つ形)。E3 は balanceSheet の列なので載らず見えない |
 | V19 | 正常な問題 | 難易度の全形 (`[E1,E2,E3]` または `[H1,H2,H3]`) |
@@ -229,6 +233,10 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 | S7 | `card-shape-kinds` (R-S5 (c)) | ある形で見える異変の種類が 4 種類未満 |
 | S8 | `card-company-period` (R-S5 (d)) | プールにある (会社, 期) に、正常な問題か、ある形で見える異変の問題が無い (組と形を列挙して 1 件にまとめる) |
 | S9 | `anomaly-ratio` の廃止 (R-S5 (e)) | 既存の `anomaly-ratio` の shortfall は出さない (問題数の比が 0.5 から離れても、`shortfalls` に入らない) |
+| S12 | **§2.8** `changed` が基との差と違う (errors) | `anomaly.changed` と、`anomaly.base` の正常な問題との実際の差 (`tanshin`・`ir` の全セルの違い。`<doc>.<path>` の集合) が一致しない。`anomaly-changed-mismatch`。`labelOverrides`・`unitOverrides`・`signOverrides`・`cardEdits` の異変は、セルの差が無いので `changed: []` |
+| S13 | **§2.8** `base` の誤り (errors) | `base` の問題が無い・正常でない・`companyId` か `header.periodLabel` が違う・自分自身。`anomaly-base` |
+| S14 | **§2.8** `base`・`changed` が無い異変の問題 (shortfalls) | `card-anomaly-base` (問題ごと。データの Task が足す) |
+| S15 | **§2.8** `card-double-discrepancy` (shortfalls) | `doubleDiscrepancies` が空でない異変の問題 (問題ごとに 1 件。形と規則を書く) |
 | S11 | `anomaly-min-deviation` (§2.7) | 異変の問題で `deviationIssues` ≠ 空 (問題ごとに 1 件。§8) |
 | S10 | 既存の維持 | `pool-size`・`both-sided-companies`・`family-balance` は今のまま。`stats` の形も変えない |
 
@@ -259,8 +267,8 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 
 | ID | 種類 | 検査 (対象の違反が起きた所だけに当てる) | 通る例 | 通らない例 |
 | --- | --- | --- | --- | --- |
-| M1 | E-09 | `totalAssets` と (流動資産合計 + 固定資産合計) の差 ≥ 後者の 10% (`10 × 差 ≥ 後者`)。当期・前期のどちらか、足し算が合わない期に | 後者 58,080 に対し 63,900 (差 5,820。`10×5,820 ≥ 58,080`) | 63,800 (差 5,720 < 5,808)。**設計書の例「52,300 以下」は端数の丸めが違う**: 58,080 × 0.9 = 52,272 なので、下側は 52,272 以下が正しい (導いた)。52,272 → 通る (差 5,808 ちょうど)、52,300 → 通らない (差 5,780) |
-| M2 | E-12 | 営業利益率の表示値 m と、売上高・営業利益から出る値 c (`roundHalfAway(営業利益×1000, 売上高)` ÷ 10) で、m ≥ 2c または m ≤ c/2 (10 倍した整数で比べる) | c = 5.1 に対し m = 10.2・2.5 (c/2 = 2.55) | m = 10.1・2.6 |
+| M1 | E-09 | **§2.8**: (流動資産合計 + 固定資産合計) と `totalAssets` の差 ≥ `totalAssets` の 10% (`10 × \|差\| ≥ totalAssets`。総資産は元のまま、流動資産の小計をずらす作り方なので、割る数は総資産)。足し算が合わない期に | 総資産 58,080 に対し 流動資産合計 + 固定資産合計 = 63,900 (差 5,820。`10×5,820 ≥ 58,080`)・52,200 (差 5,880) | 63,800 (差 5,720)・52,300 (差 5,780)。境界は 5,808 ちょうど (= 52,272・63,888) は通る (設計書が §2.8 で 52,200 に直した。52,300 は通らない) |
+| M2 | E-12 | 営業利益率の表示値 m (10 倍した整数 M) と、売上高 S・営業利益 O から出る**正確な**値 c = O ÷ S × 100 で、m ≥ 2c (`M × S ≥ 2 × O × 1000`) または m ≤ c/2 (`2 × M × S ≤ O × 1000`)。**§2.8**: 丸めた表示値でなく正確な値 | 売上高 96,930・営業利益 4,920 (c = 5.076) に対し m = 10.2 (102×96,930 = 9,886,860 ≥ 9,840,000)・m = 2.5 (2×25×96,930 = 4,846,500 ≤ 4,920,000) | m = 10.1 (9,789,930 < 9,840,000)・m = 2.6 (5,040,360 > 4,920,000)・正しい値 5.1 |
 | M3 | E-06 | `ir.results.chart.netSales` の `axisMin` a について、短い棒の数字 s・長い棒の数字 l (`previous`・`current` の小さい方・大きい方) で `s > a` かつ `l − a ≥ 1.5 × (s − a)` | s = 906.6・l = 969.3 に対し a = 782 (187.3 ≥ 1.5×124.6 = 186.9) | a = 781 (188.3 < 1.5×125.6 = 188.4)・a ≥ s (棒が見えない。別の異変なので通らない扱い) |
 | M4 | E-07 | `ir.results.netSales` の `previous`・`current` で数字の大きい側の棒 (`chart.netSales` の同じ側) が、小さい側の棒の 2/3 以下 (`3 × 大きい側の棒 ≤ 2 × 小さい側の棒`)。数字が等しいときは通らない (向きが決まらない) | 数字 906.6 → 969.3、棒 前期 906.6・当期 604.0 (増収の期。当期の棒を下げた) / 減収の期 (数字 969.3 → 906.6) で前期の棒を下げた場合も同じ | 当期の棒 605.0 (3×605.0 = 1815 > 2×906.6 = 1813.2)・棒を入れ替えただけ (969.3・906.6。差 6.5%) |
 | M5 | H-05 | 売上債権の増減 x と真の値 t = −(当期末 − 前期末) について、x と t の符号が逆、または \|x − t\| ≥ 0.2 × \|t\| (`5 × \|x − t\| ≥ \|t\|`)。t = 0 のときは通らない (比が決まらない) | 前期末 2,900・当期末 3,000 (t = −100) に対し x = +100 (符号逆)・x = −80 (差 20 = 20%)・x = −120 | x = −81 (差 19)・x = −100 (ずれ無し。この種類の異変ではない) |
@@ -269,3 +277,45 @@ V1 = `anomaly.places` の全セルが形のカードに載る (`cardCells`。文
 | M8 | 今のデータ | 今の異変の問題に当てた結果 (`src/data`。やさしい 13・むずかしい 16 のうち、検査のある種類) を **測って** PR に書く。検査のある種類の第 1 版の異変は 1% 程度 (G3) なので、通らないものが出る (shortfalls `anomaly-min-deviation` に入る。データの Task が作り直す) |
 
 `deviationIssues` は、問題の異変の種類 (`problem.anomaly.kind`) で表を引き、`kinds` が無い種類・表に無い種類は空。メッセージに、種類・実際のずれ・最小のずれを書く (データを直す人が読む)。
+
+## 9. 設計 §2.8 を取り込んだ追加 (Sub-task #153。`changed`・`base`・カード上の場所・二重の食い違い)
+
+### 9.1 `anomalyIssues`・`checkAnomaly` の許容集合 (**§2.8** の検査 1・2)
+
+`anomaly.changed` (基との差のセル `<doc>.<path>`) を持つ問題だけに、新しい決まりを当てる (`changed` が無い問題は今のまま = #139・#140 が足すまで)。**`expectedRules` = 実際に落ちた集合** の検査と、主な規則が 1 つ以上落ちる検査は今のまま。
+
+| ID | 入力 (A から。種類のダミーは `primaryRules` = `allowedRules` = `['ratio-operating-margin']`) | 期待 |
+| --- | --- | --- |
+| A1 | 営業利益 当期を 10 倍 (再計算しない)、`changed = ['tanshin.incomeStatement.current.operatingIncome']`、`expectedRules` = 実際に落ちた規則 | 問題なし (落ちた規則は `allowedRules` の外 (`pl-operating-income` など) でも、変えたセルを読むので許す) |
+| A2 | A1 と同じで `changed` を省く、または `[]` | 「許容集合の外の規則が落ちている」「期待集合が許容集合を越えている」 (今のまま) |
+| A3 | A1 で `changed` に別のセル (`tanshin.summary.eps`) を入れる | 変えたセルを読まない規則が落ちる → 許容集合の外の指摘 |
+| A4 | A1 で `places` = `summary.operatingMargin` だけ。`pl-operating-income` は `places` に触れない | **§2.8 検査 2**: `changed` を読む違反なので「場所に触れない違反」は出ない。`changed` を読まない違反が `places` に触れないなら今のまま出る (`anomaly-mismatch`) |
+| A5 | 場所 `{doc:'card',shape:'E1',card:0,slot:'margin'}` の問題 (`cardEdits` の drop) | 場所の key = `card.E1.0.margin` が `card-slots` の違反の `paths` に触れる。形・欄が形に無い (`slot: 'nope'`・`shape: 'H1'` で難易度が違う・`card` が範囲外) と `anomaly-mismatch` (場所が実在しない) |
+| A6 | `shapeErrors`: `{doc:'card',shape,card,slot}` | 正しければ誤りなし。`shape` が未知・`card` が整数でない・`slot` が無い・`path` か `itemKey` を持つ・未知のキー → 誤り |
+
+### 9.2 データ全件の `base`・`changed` (**§2.8**。S12〜S14)
+
+| ID | 入力 | 期待 |
+| --- | --- | --- |
+| B1 | 異変の問題に `base` = 同じ会社・同じ期の正常な問題の ID、`changed` = 実際の差 | errors に `anomaly-changed-mismatch`・`anomaly-base` が出ない |
+| B2 | `changed` が差より少ない・多い・順序だけ違う | 少ない・多いは `anomaly-changed-mismatch` (メッセージに足りない・余計なセル)。順序だけは出ない (集合で比べる) |
+| B3 | `base` が存在しない ID・異変の問題・別の会社・別の期・自分自身 | `anomaly-base` |
+| B4 | `labelOverrides` だけの異変 (基からセルの差なし)・`changed: []` | 出ない。`changed` が空で差があれば `anomaly-changed-mismatch` |
+| B5 | `base`・`changed` が無い異変の問題 | shortfalls `card-anomaly-base` (問題ごと) |
+| B6 | 差の取り方: セルは `tanshin`・`ir` の全リーフ (数・文・真偽・null)。配列 (`statements`・`segments.items`) は添字つきのパス `ir.statements.0.text`。要素の数が違えば、足りない・余った添字のパスが差 | `changed` はそのパスで書く |
+
+### 9.3 二重の食い違いの禁止 (**§2.8** 検査 4。`doubleDiscrepancies`)
+
+見える形 s ごとに、その問題の hard の違反のうち「`paths` がすべて s のカードのセル (別名・見出し語の文を含む) に収まる」ものが、すべて種類の `primaryRules` に入る。入らない違反があれば、その形・規則を返す。
+
+| ID | 入力 (A から) | 期待 |
+| --- | --- | --- |
+| X1 | 営業利益 当期を 10 倍 (増益の期なので向きは変わらない。`primaryRules` = `ratio-operating-margin`) | E1 は空 (`ratio-operating-margin` だけがカードに収まる。`pl-operating-income` は粗利・販管費がカードに無く収まらない) |
+| X2 | 営業利益を 1/10 (増益の期なので向きが逆になる) | E1 に `claims-direction` (営業利益の主張の向き) も収まるので `[{shape:'E1', rules:['claims-direction']}]` |
+| X3 | 正常な問題 | 空 (異変が無い) |
+| X4 | 見える形が無い問題 | 空 (「その問題を出す形」が無い) |
+| X5 | S15 | データ全件では `card-double-discrepancy` の shortfall |
+
+### 9.4 CI の受け渡し (L4 に足す)
+
+責任者が決めたとおり (#139・#140 に `--require-cards` を入れる) で、`card-anomaly-base`・`card-double-discrepancy` も `--require-cards` の対象に入る (L3)。
