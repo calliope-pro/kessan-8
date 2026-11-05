@@ -93,11 +93,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     const dir = /problems\/([^/]+)\//.exec(file)?.[1];
     if (dir !== p.difficulty) add('difficulty-mismatch', `置き場 ${dir} と difficulty ${p.difficulty} が違う`);
     valid.push(p);
-    // 1 問の中で、カードの語を作る主張 (売上高・営業利益・営業 CF) はちょうど 1 つ (正常・異変の全問。docs/design-v2.md §1.2 R-D5)
-    for (const metric of ['netSales', 'operatingIncome', 'operatingCashFlow'] as const) {
-      const n = p.ir.statements.reduce((sum, s) => sum + s.claims.filter((c) => c.metric === metric).length, 0);
-      if (n !== 1) add('claims-count', `${metric} の主張が ${n} 個 (ちょうど 1 つでなければならない)`);
-    }
+    for (const m of claimsCountIssues(p)) add('claims-count', m);
     stats[p.difficulty].total++;
     stats[p.difficulty][p.anomaly ? 'anomaly' : 'normal']++;
 
@@ -156,6 +152,19 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     for (const v of result.hard) add('hard-violation', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
     for (const v of verifyIrDisplay(p, company)) add('ir-display-mismatch', `${v.rule}: ${v.message} (${v.paths.join('、')})`);
     for (const issue of anomalyIssues(p, kinds, result)) add(issue.code, issue.message);
+    // 見本は毎周の 0 社目にカードで出る (両方の難易度で共有)。問題・異変の問題と同じ検査 (主張・構造・関係・文欄の長さ) を、両方の難易度の形で当てる
+    for (const m of claimsCountIssues(p)) add('claims-count', m);
+    const long: string[] = [];
+    for (const difficulty of DIFFICULTIES) {
+      const q = { ...p, difficulty };
+      for (const shape of shapesOf(difficulty)) {
+        const cards = deriveCards(q, company, shape);
+        for (const m of cardStructureIssues(cards, shape)) add('card-structure', m);
+        for (const m of cardRelationIssues(cards, shape, { company, statements: p.ir.statements })) add('card-relation', m);
+        long.push(...cardTextLengthIssues(cards));
+      }
+    }
+    if (long.length > 0) shortfalls.push({ code: 'card-text-length', problem: p.id, message: `${file}: 見本の文欄が 40 字を超える (${[...new Set(long)].join('、')})` });
     sampleCount++;
   }
 
@@ -182,6 +191,16 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
 
   cardChecks(judged, companies, kinds, valid, errors, shortfalls);
   return { errors, shortfalls, soft, stats, samples: sampleCount };
+}
+
+/** 1 問の中で、カードの語を作る主張 (売上高・営業利益・営業 CF) はちょうど 1 つ (正常・異変の全問・見本。docs/design-v2.md §1.2 R-D5)。metric ごとの文。 */
+function claimsCountIssues(p: Problem): string[] {
+  const out: string[] = [];
+  for (const metric of ['netSales', 'operatingIncome', 'operatingCashFlow'] as const) {
+    const n = p.ir.statements.reduce((sum, s) => sum + s.claims.filter((c) => c.metric === metric).length, 0);
+    if (n !== 1) out.push(`${metric} の主張が ${n} 個 (ちょうど 1 つでなければならない)`);
+  }
+  return out;
 }
 
 /** 異変の問題の基との差 (§2.8)。base・changed の誤りは errors、無いものは shortfalls (データの Task が足す)。 */
@@ -244,6 +263,8 @@ function cardChecks(judged: { p: Problem; company: Company; result: VerifyResult
       }
       short('card-invisible', p, p.difficulty, `${p.id}: どの形のカードにも、検出に要る数字か文が載らない (${why})`);
     }
+    const textPlaces = p.anomaly.places.filter((pl) => pl.doc === 'ir' && 'path' in pl && /^statements\.\d+\.text$/.test(pl.path));
+    if (textPlaces.length > 0) short('card-place-text', p, p.difficulty, `${p.id}: 異変の場所が ir.statements.<N>.text を指す (カードの文は claims から作り、text は読まない。場所は ir.statements.<N> で書く)`);
     const dev = deviationIssues(p, company);
     if (dev.length > 0) short('anomaly-min-deviation', p, p.difficulty, `${p.id}: ${dev.join('、')}`);
     const doubles = shapes.length > 0 ? doubleDiscrepancies(p, company, kinds, result) : [];

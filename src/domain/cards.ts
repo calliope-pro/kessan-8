@@ -269,8 +269,8 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
     {
       doc: 'ir',
       slots: [
-        // 主語は、同じカードの組の ④ (営業 CF) の科目名と同じ言い方 (labels.ts の名前。labelOverrides があればその名前)
-        claimSentenceSlot('claim', '営業キャッシュ・フローの説明', 'operatingCashFlow', (ctx, d) => `${ctx.p.labelOverrides?.[OPERATING_CF] ?? LABELS[OPERATING_CF] ?? OPERATING_CF}は${d === 'up' ? 'プラス' : 'マイナス'}`),
+        // 主語は labels.ts の標準の名前だけ (labelOverrides は読まない: H-30 の誤字は短信の ④ だけに出し、IR の文には写さない)。欄の名前も同じ呼び名にする
+        claimSentenceSlot('claim', `${LABELS[OPERATING_CF]}の説明`, 'operatingCashFlow', (_ctx, d) => `${LABELS[OPERATING_CF]}は${d === 'up' ? 'プラス' : 'マイナス'}`),
       ],
     },
   ],
