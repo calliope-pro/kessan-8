@@ -210,11 +210,13 @@ describe('10.1 文欄を claims から型で作る (R-D5。D44〜D49)', () => {
     expect(keys(deriveCards(none, companyA(), 'H1')[1])).toEqual(['netSales']);
     expect(keys(deriveCards(none, companyA(), 'H2')[1])).toEqual([]);
   });
-  it('D48: 型の文は 20 字以内', () => {
-    for (const direction of ['up', 'down']) {
-      expect([...claimText(set(hardA(), 'ir.statements.0.claims.0.direction', direction), 'H1').text].length).toBeLessThanOrEqual(20);
-      expect([...claimText(set(hardA(), 'ir.statements.2.claims.0.direction', direction), 'H2').text].length).toBeLessThanOrEqual(20);
-    }
+  it('D48: 型の文は 40 字以内。最長は H2 の「…はマイナス」の 21 字 (設計書の「最長 20 字」は 1 字少ない。40 字には収まる)', () => {
+    const lengths = ['up', 'down'].flatMap((direction) => [
+      [...claimText(set(hardA(), 'ir.statements.0.claims.0.direction', direction), 'H1').text].length,
+      [...claimText(set(hardA(), 'ir.statements.2.claims.0.direction', direction), 'H2').text].length,
+    ]);
+    expect(Math.max(...lengths)).toBeLessThanOrEqual(40);
+    expect(Math.max(...lengths)).toBe(21);
   });
   it('D49: 売上高と営業利益の主張が同じ 1 つの文にあっても、H1 の欄はその文の添字を読む', () => {
     expect(hardA().ir.statements[0]?.claims.map((c) => c.metric)).toEqual(['netSales', 'operatingIncome']);

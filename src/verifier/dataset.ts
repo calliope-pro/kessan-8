@@ -1,10 +1,10 @@
 // データ全件の検証 (ケース表 §2.8)。errors = 致命、shortfalls = 数が足りない (完成の段階で効く)、soft = 参考の規則。
-import { FAMILY_SHARE_MIN, MIN_POOL_PER_DIFFICULTY, ROUNDS_TO_CLEAR } from '../domain/config.ts';
+import { CLAIMS_SHOWN, CLAIM_DOWN_MIN_COMPANIES, FAMILY_SHARE_MIN, MIN_POOL_PER_DIFFICULTY, ROUNDS_TO_CLEAR } from '../domain/config.ts';
 import { deriveCards, shapesOf } from '../domain/cards.ts';
 import { FAMILY_DIFFICULTY, IR_SLIDES, TANSHIN_SCREENS } from '../domain/types.ts';
 import type { AnomalyKind, Company, Difficulty, Problem, ShapeId } from '../domain/types.ts';
 import { anomalyIssues } from './anomaly.ts';
-import { cardRelationIssues, cardStructureIssues, cardTextLengthIssues, deviationIssues, doubleDiscrepancies, shapeChecks, visibleShapes } from './cards.ts';
+import { cardLimitIssues, cardRelationIssues, cardStructureIssues, cardTextLengthIssues, deviationIssues, doubleDiscrepancies, shapeChecks, visibleShapes } from './cards.ts';
 import { changedCells } from './path.ts';
 import { verifyIrDisplay, verifyProblem } from './index.ts';
 import type { VerifyResult } from './index.ts';
@@ -93,6 +93,11 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     const dir = /problems\/([^/]+)\//.exec(file)?.[1];
     if (dir !== p.difficulty) add('difficulty-mismatch', `置き場 ${dir} と difficulty ${p.difficulty} が違う`);
     valid.push(p);
+    // 1 問の中で、カードの語を作る主張 (売上高・営業利益・営業 CF) はちょうど 1 つ (正常・異変の全問。docs/design-v2.md §1.2 R-D5)
+    for (const metric of ['netSales', 'operatingIncome', 'operatingCashFlow'] as const) {
+      const n = p.ir.statements.reduce((sum, s) => sum + s.claims.filter((c) => c.metric === metric).length, 0);
+      if (n !== 1) add('claims-count', `${metric} の主張が ${n} 個 (ちょうど 1 つでなければならない)`);
+    }
     stats[p.difficulty].total++;
     stats[p.difficulty][p.anomaly ? 'anomaly' : 'normal']++;
 
@@ -210,10 +215,18 @@ function cardChecks(judged: { p: Problem; company: Company; result: VerifyResult
   const visible = new Map<string, ShapeId[]>();
   for (const { p, company, result } of judged) {
     baseIssues(p, valid, errors, shortfalls);
-    if (p.anomaly === null) {
-      const long = shapesOf(p.difficulty).flatMap((shape) => cardTextLengthIssues(deriveCards(p, company, shape)));
-      if (long.length > 0) short('card-text-length', p, p.difficulty, `${p.id}: 文欄が 40 字を超える (${long.join('、')})`);
-      continue;
+    // 文欄は 40 字以内。異変の問題にも当てる (異変の問題の文だけが長いと、行の数で答えが分かる。設計 §1.1)。cardEdits の問題はテンプレートのカードで見る
+    const long = shapesOf(p.difficulty).flatMap((shape) => cardTextLengthIssues(deriveCards(p, company, shape, { applyEdits: false })));
+    if (long.length > 0) short('card-text-length', p, p.difficulty, `${p.id}: 文欄が 40 字を超える (${long.join('、')})`);
+    if (p.anomaly === null) continue;
+    // cardEdits を当てたカードも、数字・文の数の上限を守る (E-22 の欄の重複は E3 だけ)
+    for (const shape of new Set((p.cardEdits ?? []).map((e) => e.shape))) {
+      if (!shapesOf(p.difficulty).includes(shape)) continue;
+      try {
+        for (const m of cardLimitIssues(deriveCards(p, company, shape), shape)) errors.push({ code: 'card-structure', problem: p.id, message: `${p.id}: cardEdits を当てたカード: ${m}` });
+      } catch (error) {
+        if (!(error instanceof RangeError)) throw error;
+      }
     }
     let shapes: ShapeId[] = [];
     try {
@@ -249,6 +262,12 @@ function cardChecks(judged: { p: Problem; company: Company; result: VerifyResult
       const kindsSeen = new Set(sees.map((j) => j.p.anomaly?.kind));
       if (kindsSeen.size < 4) short('card-shape-kinds', undefined, d, `${d}: 形 ${shape} で見える異変の種類が ${kindsSeen.size} 種類で、4 種類未満`);
     }
+    // R-S5 (f): カードに出る語の向きが、正常な問題に両方出る (claims から作る語は型で 2 通り。一方の向きしか無いと、もう一方の語が出たとき必ず異変とわかる)
+    const down = CLAIMS_SHOWN[d].flatMap((metric) => {
+      const n = new Set(normals.filter((j) => j.p.ir.statements.some((s) => s.claims.some((c) => c.metric === metric && c.direction === 'down'))).map((j) => j.p.companyId)).size;
+      return n < CLAIM_DOWN_MIN_COMPANIES[metric] ? [`${metric}: down の正常な問題を持つ会社が ${n} 社 (${CLAIM_DOWN_MIN_COMPANIES[metric]} 社以上)`] : [];
+    });
+    if (down.length > 0) short('card-claim-directions', undefined, d, `${d}: 正常な問題に、カードに出る語の両方の向きがそろわない (${down.join('、')})`);
     const lacking: string[] = [];
     for (const c of companies) {
       for (const shape of shapesOf(d)) {

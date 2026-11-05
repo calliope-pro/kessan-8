@@ -11,23 +11,31 @@ import { AUDIT_NOTE, NONE_TEXT } from './rules/nonnumeric.ts';
 
 // ---- 構造・文字数 ----
 
+/** 数字・文の数が上限 (やさしい 数字 4 / むずかしい 1 枚 数字 4 + 文 3) を超える、の文。cardEdits を当てたカードにも当てる (E-22 の欄の重複は E3 だけ)。 */
+export function cardLimitIssues(cards: Card[], shape: ShapeId): string[] {
+  const out: string[] = [];
+  const limits = CARD_LIMITS[difficultyOfShape(shape)];
+  cards.forEach((card, ci) => {
+    const numbers = card.slots.filter((s) => s.kind === 'number').length + (card.bars?.items.length ?? 0);
+    const texts = card.slots.filter((s) => s.kind === 'text').length;
+    if (numbers > limits.numbers) out.push(`${shape} のカード ${ci}: 数字が ${numbers} 個 (上限 ${limits.numbers})`);
+    if (texts > limits.texts) out.push(`${shape} のカード ${ci}: 文欄が ${texts} 個 (上限 ${limits.texts})`);
+  });
+  return out;
+}
+
 /** 欄の並びが形の定義と違う・数字や文の数が上限を超える・見出し語が出ていない、の文 (空 = 構造は正しい)。 */
 export function cardStructureIssues(cards: Card[], shape: ShapeId): string[] {
   const out: string[] = [];
   const template = templateKeys(shape);
   if (cards.length !== template.length) out.push(`${shape}: カードが ${cards.length} 枚 (形は ${template.length} 枚)`);
-  const limits = CARD_LIMITS[difficultyOfShape(shape)];
   cards.forEach((card, ci) => {
     const keys = card.slots.map((s) => s.key);
     const want = template[ci] ?? [];
     if (keys.join() !== want.join()) out.push(`${shape} のカード ${ci}: 欄の並びが形と違う (形: ${want.join('・')}、実際: ${keys.join('・')})`);
-    const numbers = card.slots.filter((s) => s.kind === 'number').length + (card.bars?.items.length ?? 0);
-    const texts = card.slots.filter((s) => s.kind === 'text').length;
-    if (numbers > limits.numbers) out.push(`${shape} のカード ${ci}: 数字が ${numbers} 個 (上限 ${limits.numbers})`);
-    if (texts > limits.texts) out.push(`${shape} のカード ${ci}: 文欄が ${texts} 個 (上限 ${limits.texts})`);
     if (headlineWords(shape, ci) !== null && card.headline === undefined) out.push(`${shape} のカード ${ci}: 見出し語が出ていない (IR の文章に主張が無い)`);
   });
-  return out;
+  return [...out, ...cardLimitIssues(cards, shape)];
 }
 
 /** 文欄の text が 40 字 (CARD_TEXT_MAX) を超える欄の文。文字数は [...text].length (サロゲート対を 1 字)。 */

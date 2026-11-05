@@ -142,25 +142,36 @@ function namesSlot(key: string, doc: 'tanshin' | 'ir'): SlotDef {
   };
 }
 
-/** 主張を持つ文 (IR の文章)。 */
-function statementSlot(key: string, label: string, find: (s: Problem['ir']['statements'][number]) => boolean): SlotDef {
+/** metric の主張 (向きが up・down のもの) を持つ最初の文の添字と向き。無ければ null。見出し語と IR 型の文の欄は、同じこの文を使う (reads は 1 つの文だけ)。 */
+function findClaim(p: Problem, metric: ClaimMetric): { index: number; direction: 'up' | 'down' } | null {
+  for (const [index, s] of p.ir.statements.entries()) {
+    const c = s.claims.find((x) => x.metric === metric && (x.direction === 'up' || x.direction === 'down'));
+    if (c !== undefined) return { index, direction: c.direction as 'up' | 'down' };
+  }
+  return null;
+}
+
+/** IR 型の文の欄。claims (metric の主張の向き) から型で作り、ir.statements の text は使わない (docs/design-v2.md §1.2 R-D5。text と claims がずれる経路を無くす)。 */
+function claimSentenceSlot(key: string, label: string, metric: ClaimMetric, sentence: (ctx: Ctx, direction: 'up' | 'down') => string): SlotDef {
   return {
     key,
     kind: 'text',
     itemKey: null,
     label,
     read: (ctx) => {
-      const i = ctx.p.ir.statements.findIndex(find);
-      const s = ctx.p.ir.statements[i];
-      return s === undefined ? null : { raw: s.text, reads: [`ir.statements.${i}`] };
+      const found = findClaim(ctx.p, metric);
+      if (found === null) return null;
+      const text = sentence(ctx, found.direction);
+      return { raw: text, reads: [`ir.statements.${found.index}`] };
     },
   };
 }
 
+const OPERATING_CF = 'tanshin.cashFlow.operatingCashFlow';
+
 const IS = 'tanshin.incomeStatement';
 const BS = 'tanshin.balanceSheet';
 const CF = 'tanshin.cashFlow';
-const hasClaim = (metric: ClaimMetric) => (s: Problem['ir']['statements'][number]) => s.claims.some((c) => c.metric === metric);
 
 const SECTION_WORD = { asset: '資産の部', liability: '負債の部', equity: '純資産の部', total: '' } as const;
 const RECEIVABLES = 'tanshin.balanceSheet.receivables';
@@ -218,7 +229,7 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
       doc: 'ir',
       slots: [
         numberSlot('netSales', 'ir.highlights.netSales.amount'),
-        statementSlot('claim', '業績の説明', (s) => s.slide === 'highlights' && hasClaim('netSales')(s)),
+        claimSentenceSlot('claim', '業績の説明', 'netSales', (_ctx, d) => `売上高は前期より${d === 'up' ? '増えた' : '減った'}`),
       ],
     },
   ],
@@ -255,7 +266,13 @@ const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
         textCell('policyNote', 'tanshin.notes.accountingPolicyNote'),
       ],
     },
-    { doc: 'ir', slots: [statementSlot('claim', '営業キャッシュ・フローの説明', hasClaim('operatingCashFlow'))] },
+    {
+      doc: 'ir',
+      slots: [
+        // 主語は、同じカードの組の ④ (営業 CF) の科目名と同じ言い方 (labels.ts の名前。labelOverrides があればその名前)
+        claimSentenceSlot('claim', '営業キャッシュ・フローの説明', 'operatingCashFlow', (ctx, d) => `${ctx.p.labelOverrides?.[OPERATING_CF] ?? LABELS[OPERATING_CF] ?? OPERATING_CF}は${d === 'up' ? 'プラス' : 'マイナス'}`),
+      ],
+    },
   ],
   H3: [
     {
@@ -349,9 +366,8 @@ function build(def: SlotDef, ctx: Ctx): Built | null {
 function headlineOf(def: CardDef, ctx: Ctx): Card['headline'] {
   if (def.headline === undefined) return undefined;
   const { metric, up, down } = def.headline;
-  const i = ctx.p.ir.statements.findIndex((s) => s.claims.some((c) => c.metric === metric && (c.direction === 'up' || c.direction === 'down')));
-  const claim = ctx.p.ir.statements[i]?.claims.find((c) => c.metric === metric && (c.direction === 'up' || c.direction === 'down'));
-  return claim === undefined ? undefined : { word: claim.direction === 'up' ? up : down, reads: [`ir.statements.${i}`] };
+  const found = findClaim(ctx.p, metric);
+  return found === null ? undefined : { word: found.direction === 'up' ? up : down, reads: [`ir.statements.${found.index}`] };
 }
 
 function barsOf(ctx: Ctx): CardBars | undefined {
