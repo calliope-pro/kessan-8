@@ -173,3 +173,69 @@ export function roundedSalesNormal(): Problem {
   p = set(p, 'ir.results.netSales.previous', 117.5);
   return set(p, 'ir.highlights.netSales.changeRate', 5.9);
 }
+
+// ---- カードのテスト (docs/test-cases/cards.md §4・§5・§9) 用 ----
+import { verifyProblem } from './index.ts';
+import type { ShapeId } from '../domain/types.ts';
+
+/** 形 shape の V1・V2 を満たす異変の問題 (基準問題 A から作る)。種類は primaryRules = 主な規則・allowedRules = 実際に落ちた規則。期待集合は実際に落ちた規則。 */
+export function shapeAnomaly(shape: ShapeId, id: string, companyId: string): { problem: Problem; kind: AnomalyKind } {
+  const difficulty: Difficulty = shape.startsWith('E') ? 'easy' : 'hard';
+  let p = normalVariant(id, difficulty, companyId);
+  let places: Problem['anomaly'] extends infer A ? (A extends { places: infer P } ? P : never) : never = [];
+  let primary: string[] = [];
+  switch (shape) {
+    case 'E1':
+      p = set(p, 'tanshin.summary.operatingMargin', 20);
+      places = [{ doc: 'tanshin', path: 'summary.operatingMargin' }];
+      primary = ['ratio-operating-margin'];
+      break;
+    case 'E2':
+      p = set(p, 'ir.results.chart.netSales.current', 8000);
+      places = [{ doc: 'ir', path: 'results.chart.netSales.current' }];
+      primary = ['chart-bars'];
+      break;
+    case 'E3':
+      p = set(p, 'tanshin.balanceSheet.current.totalCurrentAssets', 9220);
+      places = [{ doc: 'tanshin', path: 'balanceSheet.current.totalCurrentAssets' }];
+      primary = ['bs-total-assets'];
+      break;
+    case 'H1':
+      p = set(p, 'ir.statements.0.claims.0.direction', 'down');
+      places = [{ doc: 'ir', path: 'statements.0' }];
+      primary = ['claims-direction'];
+      break;
+    case 'H2':
+      p = set(p, 'ir.statements.2.claims.0.direction', 'down');
+      places = [{ doc: 'ir', path: 'statements.2' }];
+      primary = ['claims-direction'];
+      break;
+    case 'H3':
+      p = set(p, 'tanshin.summary.auditNote', '決算短信は監査済みです');
+      places = [{ doc: 'tanshin', path: 'summary.auditNote' }];
+      primary = ['audit-note'];
+      break;
+  }
+  const actual = [...new Set(verifyProblem(p, companyA()).hard.map((v) => v.rule))].sort();
+  const kind = kindOf(`k-${shape}`, difficulty === 'easy' ? 'calculation' : 'accounting', primary, actual);
+  return { problem: set(p, 'anomaly', { kind: kind.id, places, explanation: '説明', expectedRules: actual }), kind };
+}
+
+/** 問題を別の決算期 (年) にする: 年・期の表記・日付をそろえる (正常な問題のまま)。 */
+export function inYear(p: Problem, year: number): Problem {
+  let q: Problem = { ...clone(p), fiscalYear: year };
+  const label = `${year}年3月期`;
+  q = set(q, 'tanshin.header.periodLabel', label);
+  q = set(q, 'ir.header.periodLabel', label);
+  const end = `${year}-03-31`;
+  const prev = `${year - 1}-03-31`;
+  q = set(q, 'tanshin.dates.periodEnd', end);
+  q = set(q, 'tanshin.dates.previousPeriodEnd', prev);
+  q = set(q, 'tanshin.dates.disclosure', `${year}-05-10`);
+  q = set(q, 'tanshin.dates.shareholdersMeeting', `${year}-06-25`);
+  for (const screen of ['balanceSheet', 'incomeStatement', 'cashFlow']) {
+    q = set(q, `tanshin.columnDates.${screen}.current`, end);
+    q = set(q, `tanshin.columnDates.${screen}.previous`, prev);
+  }
+  return q;
+}
