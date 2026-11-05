@@ -15,7 +15,11 @@
     "test": "vitest run",
     "verify:data": "node --experimental-strip-types --no-warnings scripts/verify-data.ts",
     "test:e2e": "playwright test",
-    "check:size": "node scripts/check-dist-size.mjs dist"
+    "check:size": "node scripts/check-dist-size.mjs dist",
+    "dev:proto": "vite --config vite.proto.config.ts --open /proto.html",
+    "build:proto": "tsc --noEmit && vite build --config vite.proto.config.ts",
+    "preview:proto": "vite preview --config vite.proto.config.ts --outDir dist-proto",
+    "test:proto": "playwright test --config playwright.proto.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

@@ -79,16 +79,16 @@ const SHAPE_SLOTS: Record<ShapeId, SlotDef[]> = {
     { key: 'sales', itemKey: 'tanshin.incomeStatement.netSales', kind: 'amount', path: `${IS}.current.netSales` },
     { key: 'opPrev', itemKey: 'tanshin.incomeStatement.operatingIncome', suffix: ' (前期)', kind: 'amount', path: `${IS}.previous.operatingIncome` },
     { key: 'opCurr', itemKey: 'tanshin.incomeStatement.operatingIncome', suffix: ' (当期)', kind: 'amount', path: `${IS}.current.operatingIncome` },
-    { key: 'margin', itemKey: 'tanshin.summary.operatingMargin', gloss: '売上のうち、本業のもうけの割合', kind: 'ratio', path: 'tanshin.summary.operatingMargin' },
+    { key: 'margin', itemKey: 'tanshin.summary.operatingMargin', gloss: 'もうけの割合', kind: 'ratio', path: 'tanshin.summary.operatingMargin' },
   ],
   E2: [
     { key: 'salesPrev', itemKey: 'tanshin.incomeStatement.netSales', suffix: ' (前期)', kind: 'amount', path: `${IS}.previous.netSales` },
-    { key: 'salesCurr', itemKey: 'tanshin.incomeStatement.netSales', suffix: ' (当期)', gloss: '売れた金額の合計', kind: 'amount', path: `${IS}.current.netSales` },
+    { key: 'salesCurr', itemKey: 'tanshin.incomeStatement.netSales', suffix: ' (当期)', gloss: '売れた金額', kind: 'amount', path: `${IS}.current.netSales` },
   ],
   E3: [
     { key: 'current', itemKey: 'tanshin.balanceSheet.totalCurrentAssets', kind: 'amount', path: `${BS}.totalCurrentAssets` },
     { key: 'fixed', itemKey: 'tanshin.balanceSheet.totalFixedAssets', kind: 'amount', path: `${BS}.totalFixedAssets` },
-    { key: 'total', itemKey: 'tanshin.balanceSheet.totalAssets', gloss: '持っているものの合計', kind: 'amount', path: `${BS}.totalAssets` },
+    { key: 'total', itemKey: 'tanshin.balanceSheet.totalAssets', gloss: '持ち物の合計', kind: 'amount', path: `${BS}.totalAssets` },
   ],
 };
 /** 見出し語の組は、形が見せる量 (営業利益 = 益、売上高 = 収) で決まる (設計 R-D5・台帳 E-23)。 */

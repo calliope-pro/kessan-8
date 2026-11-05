@@ -1,0 +1,169 @@
+/* ８期連続 縦の試作 — 仕訳伝票 (DESIGN.md)。値は試作で決めた (DESIGN.md は seed。実装後に /impeccable document で取り直す)。
+   CSP は style-src 'self' (vercel.json): style 属性は使わず、動的な値は JS が CSSOM のカスタムプロパティで渡す。 */
+
+:root {
+  /* 台紙・紙・罫・インク・朱 (The One Red Rule: 朱は印影・間違い・「いま」だけ) */
+  --ground: #dfe3dc;
+  --paper: #f8f7f0;
+  --paper-sunk: #efeee4;
+  --rule: #1b7a76;
+  --rule-soft: #8fbdb9;
+  --ink: #151918;
+  --ink-soft: #384341;
+  --stamp: #c4301a;
+  --stamp-wash: #f4dcd5;
+
+  --font-body: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'BIZ UDPGothic', 'Yu Gothic UI', 'Noto Sans JP', Meiryo, sans-serif;
+  --font-num: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', Menlo, Consolas, monospace;
+
+  /* 桁マス: 数字の大きさが格子の単位 (The Grid Rule)。320 px でも 18 px 以上 */
+  --num: clamp(22px, 1.1rem + 1.6vw, 32px);
+  --cell: 1.12em;
+  --step: 8px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  overflow-x: hidden;
+  scrollbar-color: var(--rule) var(--ground);
+}
+::selection { background: var(--rule); color: var(--paper); }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button { font: inherit; color: inherit; }
+
+/* ---- 画面の骨 ---- */
+.stage { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto; max-width: 100vw; }
+.checks { display: flex; align-items: center; justify-content: space-between; gap: var(--step); padding: calc(var(--step) * 0.75) calc(var(--step) * 2); border-bottom: 2px solid var(--ink); background: var(--paper-sunk); }
+.checks .now { margin: 0; font-weight: 900; letter-spacing: 0.06em; white-space: nowrap; }
+.boxes { display: flex; gap: clamp(3px, 1vw, 6px); margin: 0; padding: 0; list-style: none; }
+.boxes li { width: clamp(14px, 4.2vw, 20px); height: clamp(14px, 4.2vw, 20px); border: 2px solid var(--ink); background: transparent; }
+.boxes li.done { background: var(--ink); }
+.boxes li.now-box { background: var(--stamp); border: 3px solid var(--stamp); outline: 2px solid var(--ink); outline-offset: 1px; }
+.desk { padding: var(--step); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--step) * 2); outline: none; }
+.desk > * { width: 100%; max-width: 38em; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 19em)); justify-content: center; gap: var(--step); padding: var(--step) var(--step) calc(var(--step) + env(safe-area-inset-bottom)); border-top: 2px solid var(--ink); background: var(--paper-sunk); position: sticky; bottom: 0; }
+.actions.single { grid-template-columns: minmax(0, 38em); }
+
+/* ---- 伝票 ---- */
+.sheet { position: relative; isolation: isolate; margin: 0 6px 6px 0; }
+.slip { position: relative; background: var(--paper); border: 1px solid var(--rule); border-top: 10px solid var(--rule); padding: calc(var(--step) * 1.25) calc(var(--step) * 1.25) calc(var(--step) * 1.5); }
+/* 複写の 2 枚目が少しずれて見える (深さは影でなく紙の重なり。The Flat Paper Rule) */
+.sheet::before { content: ''; position: absolute; z-index: -1; inset: 6px -6px -6px 6px; background: var(--paper-sunk); border: 1px solid var(--rule-soft); border-top: 10px solid var(--rule-soft); }
+.slip-head { display: flex; align-items: center; gap: calc(var(--step) * 1.5); padding-bottom: var(--step); border-bottom: 3px solid var(--rule); }
+.kakuin { flex: none; display: grid; place-items: center; width: 2.4em; height: 2.4em; border: 3px solid var(--company); color: var(--company); background: var(--company-light); font-weight: 900; font-size: 1em; line-height: 1; }
+.who { min-width: 0; }
+.company { margin: 0; font-size: 1.1em; font-weight: 900; line-height: 1.3; }
+.co-name, .co-type { display: inline-block; white-space: nowrap; border-bottom: 3px solid var(--company); }
+.co-type { font-weight: 700; margin-left: 0.25em; }
+.period { margin: calc(var(--step) * 0.5) 0 0; font-weight: 800; }
+.period-end { margin: 0; color: var(--ink-soft); }
+.headline { margin: calc(var(--step) * 0.5) 0 0; font-size: clamp(28px, 1.5rem + 2vw, 44px); font-weight: 900; letter-spacing: 0.1em; line-height: 1.2; }
+.rows { display: grid; gap: 0; }
+.row { padding: calc(var(--step) * 0.5) 0; border-bottom: 1px solid var(--rule-soft); }
+.row-label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--step); line-height: 1.35; }
+.label { font-weight: 800; }
+.gloss { color: var(--ink-soft); }
+.amount { display: flex; align-items: flex-end; gap: var(--step); margin-top: 2px; }
+.field { display: inline-flex; border: 1px solid var(--rule); font-family: var(--font-num); font-size: var(--num); font-weight: 700; line-height: 1; background: var(--paper); }
+.cell { display: grid; place-items: center; width: var(--cell); height: 1.3em; border-left: 1px solid var(--rule-soft); }
+.cell:first-child { border-left: 0; }
+.sep { flex: none; width: 3px; align-self: stretch; background: var(--rule); }
+.sep + .cell { border-left: 0; }
+.cell.point { width: 0.6em; border-left: 0; }
+.field-ratio .cell { }
+.unit { font-size: 1em; font-weight: 700; padding-bottom: 0.15em; white-space: nowrap; }
+
+/* 棒グラフ (E2)。目盛りの数字は出さない (数字 4 つまで) */
+.bars { display: flex; gap: calc(var(--step) * 3); justify-content: center; padding: calc(var(--step) * 2) 0 var(--step); border-bottom: 1px solid var(--rule-soft); position: relative; }
+.bar-col { display: grid; justify-items: center; gap: 4px; }
+.bar-track { display: flex; align-items: flex-end; width: 4.5em; height: 130px; border-bottom: 3px solid var(--rule); }
+.bar { display: block; width: 100%; height: var(--h, 0%); background: var(--rule); }
+.bar-label { font-weight: 800; }
+
+.slip-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--step); margin-top: calc(var(--step) * 0.5); }
+.slot { position: relative; display: grid; place-items: center; width: 4em; height: 2.6em; border: 1px dashed var(--rule-soft); }
+.example-stamp { display: inline-block; transform: rotate(-7deg); padding: 1px 8px; border: 3px double var(--stamp); color: var(--stamp); font-weight: 900; letter-spacing: 0.15em; line-height: 1.3; }
+
+/* ---- 答え合わせ: 紙の上に朱書き (The Ink On Paper Rule) ---- */
+.marked { outline: 3px double var(--stamp); outline-offset: 4px; }
+.row.marked, .headline.marked, .bars.marked, .period.marked { position: relative; }
+.tag { display: inline-block; padding: 0 0.5em; border: 2px solid var(--stamp); color: var(--stamp); font-weight: 900; line-height: 1.35; margin-left: var(--step); }
+.row.ghost { border: 3px dashed var(--stamp); color: var(--stamp); font-weight: 800; padding: var(--step) calc(var(--step) * 1.5); margin: var(--step) 0; }
+.note { margin: 0; padding: calc(var(--step) * 1.5) calc(var(--step) * 2); border: 3px solid var(--stamp); background: var(--paper); color: var(--ink); font-weight: 700; }
+.note .note-head { color: var(--stamp); font-weight: 900; margin-right: var(--step); }
+.verdict { margin: 0; font-weight: 900; font-size: 1.15em; padding: 0 calc(var(--step) * 0.5); }
+.verdict.ok::before { content: '○ '; }
+.verdict.ng::before { content: '× '; color: var(--stamp); }
+
+/* ---- 札 (印を押す欄) ---- */
+.seal { display: flex; align-items: center; justify-content: center; gap: var(--step); min-height: 64px; padding: var(--step) calc(var(--step) * 1.5); border: 3px solid var(--ink); background: var(--paper); font-weight: 900; font-size: 1.05em; cursor: pointer; touch-action: manipulation; }
+.seal small { display: block; font-size: 1em; font-weight: 700; color: var(--ink-soft); }
+.seal .mini { flex: none; display: inline-grid; place-items: center; width: 2em; height: 2em; border: 3px solid var(--stamp); border-radius: 50%; color: var(--stamp); font-size: 1em; line-height: 1; }
+.seal:hover { background: var(--paper-sunk); }
+@media (max-width: 439px) {
+  .seal { flex-direction: column; gap: 0; text-align: center; padding: var(--step) 4px; }
+  .seal .mini { display: none; }
+  .seal span { white-space: nowrap; }
+}
+.seal:active { transform: translateY(2px); }
+.seal:disabled { opacity: 0.55; cursor: default; }
+.seal.primary { background: var(--ink); color: var(--paper); }
+.seal.primary small { color: var(--paper); }
+.seal.primary:hover { background: var(--ink-soft); }
+
+/* ---- 押印 (The One Press Rule: 強い動きは押印の 1 回だけ) ---- */
+.stamp { position: absolute; z-index: 2; inset: auto; display: grid; place-items: center; width: 3.5em; height: 3.5em; border: 4px solid var(--stamp); border-radius: 50%; outline: 2px solid var(--stamp); outline-offset: -8px; color: var(--stamp); font-weight: 900; font-size: 1em; letter-spacing: 0.1em; line-height: 1.1; text-align: center; transform: rotate(-9deg); background: transparent; pointer-events: none; animation: press 160ms var(--ease) both; }
+.slip.sink { animation: sink 160ms var(--ease) both; }
+@keyframes press { from { opacity: 0; transform: translateY(-70px) scale(1.7) rotate(-9deg); } to { opacity: 1; transform: translateY(0) scale(1) rotate(-9deg); } }
+@keyframes sink { 0% { transform: translateY(0); } 55% { transform: translateY(3px); } 100% { transform: translateY(0); } }
+.slip.rejected { animation: sent-back 1000ms var(--ease) both; }
+@keyframes sent-back { 0%, 30% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(40px) rotate(2.5deg); opacity: 0.35; } }
+.sentback { margin: 0; text-align: center; font-weight: 900; letter-spacing: 0.3em; color: var(--stamp); border: 4px solid var(--stamp); padding: var(--step); }
+
+.title-slip { text-align: center; }
+.lead { margin: 0; }
+.lead strong { font-weight: 900; }
+
+/* 完了票 */
+.done-list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--step); }
+.done-list li { display: flex; align-items: center; gap: var(--step); padding: var(--step) 0; border-bottom: 1px solid var(--rule-soft); font-weight: 800; }
+.done-list .kakuin { width: 2em; height: 2em; font-size: 1em; }
+.big-stamp { position: relative; top: auto; right: auto; width: 6em; height: 6em; }
+.big-stamp { justify-self: center; }
+
+/* 確かめ */
+.record { width: 100%; min-height: 12em; padding: var(--step); border: 2px solid var(--ink); background: var(--paper); font-family: var(--font-num); font-size: 1em; color: var(--ink); }
+
+/* ---- 広い画面: 行を 1 行にする ---- */
+@media (min-width: 900px) {
+  :root { --num: 40px; }
+  body { font-size: 20px; }
+}
+@media (min-width: 560px) {
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: calc(var(--step) * 2); }
+  .amount { margin-top: 0; }
+  .desk { padding-top: calc(var(--step) * 3); }
+}
+
+/* 背の低い画面 (640 px 以下): 札の添え書きをやめて、伝票が全部見えるようにする */
+@media (max-height: 680px) and (max-width: 439px) {
+  .seal { min-height: 52px; }
+  .seal small { display: none; }
+}
+
+/* ---- 動きを減らす設定: 色の変化だけ ---- */
+@media (prefers-reduced-motion: reduce) {
+  .stamp, .slip.sink, .slip.rejected { animation: none; }
+  .slip.rejected { background: var(--stamp-wash); border-color: var(--stamp); border-top-color: var(--stamp); }
+}
