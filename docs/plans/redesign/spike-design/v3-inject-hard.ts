@@ -80,3 +80,24 @@ for (const r of RECIPES) {
   }
   console.log(`${r.kind} ${r.label}: 二重の食い違い ${doubled}/${bases.length}${extras.size ? ` (${[...extras].join(', ')})` : ''}・形に載る主な規則が無い ${noPrimary}/${bases.length}・表示が変わらない ${same}/${bases.length}`);
 }
+
+// 読む量 (設計 v3 §1.3): 形の全部の文字数。科目名・見出し・単位は設計の表のとおりの定数、数字・文は正常 16 問のデータから。製品のコードではない。
+const LABELS = [
+  '売上高', '営業利益 (前期)', '営業利益 (当期)', '営業利益率', '百万円', '百万円', '百万円', '%', '【増益】', '期末', // カード
+  '決算短信のまとめ', '税金等調整前当期純利益', '資産', '現金及び預金', '売上債権 (売掛金) (前期末)', '売上債権 (売掛金) (当期末)', '総資産', '負債及び純資産合計',
+  '税金等調整前当期純利益 (CF の最初の行)', '売上債権 (売掛金) の増減額', '営業活動によるキャッシュ・フロー', '現金及び現金同等物の期末残高 (資金の範囲 = 現金及び預金)',
+  '監査', '会計方針の変更', '会計方針の注記', '後発事象', 'セグメント', ...Array(10).fill('百万円'),
+  'IR のひとこと', '売上高', '現金 (当期)', '現金 (前期)', '有利子負債 (前期)', '純有利子負債 (前期・有利子負債 − 現金)', '営業 CF', '期末後の出来事', 'セグメント', ...Array(5).fill('億円'),
+];
+const chars: number[] = [];
+for (const b of bases) {
+  const t = b.tanshin, r = b.ir, c = companies.find((x: any) => x.id === b.companyId);
+  const nums = [t.incomeStatement.current.netSales, t.incomeStatement.previous.operatingIncome, t.incomeStatement.current.operatingIncome, t.summary.operatingMargin, t.incomeStatement.current.incomeBeforeTax, t.balanceSheet.current.cash, t.balanceSheet.previous.receivables, t.balanceSheet.current.receivables, t.balanceSheet.current.totalAssets, t.balanceSheet.current.totalLiabilitiesAndNetAssets, t.cashFlow.incomeBeforeTax, t.cashFlow.receivablesChange, t.cashFlow.operatingCashFlow, t.cashFlow.cashEnding, r.highlights.netSales.amount, r.supplement.cash.current, r.supplement.cash.previous, r.supplement.interestBearingDebt.previous, r.supplement.netDebt.previous].map((v: number) => (Number.isInteger(v) ? Math.round(v).toLocaleString('en-US') : String(v)));
+  const texts = [t.header.companyName, t.header.periodLabel, t.summary.auditNote, t.summary.accountingPolicyChange ? 'あり' : 'なし', t.notes.accountingPolicyNote ?? '', t.notes.subsequentEvents ?? '', t.notes.segments.current.segments.map((x: any) => x.name).join('・'), '営業活動によるキャッシュ・フローはプラス', r.outlook.subsequentEvent ?? '期末後の出来事: なし', r.segments.items.map((x: any) => x.name).join('・'), c.name];
+  chars.push([...LABELS, ...nums, ...texts].join('').length);
+}
+const avg = chars.reduce((a, x) => a + x, 0) / chars.length;
+console.log(`読む量: むずかしいの形の全部の文字数 (科目名・単位・数字・文。正常 ${bases.length} 問): 平均 ${avg.toFixed(0)} 字・最大 ${Math.max(...chars)} 字・最小 ${Math.min(...chars)} 字。欄の数: 数字 19・文 8`);
+// カードだけの文字数 (やさしいの形。LABELS の先頭 10 件 + 数字 4 つ + 社名・期・期末日)
+const cardChars = bases.map((b: any) => { const t = b.tanshin; const nums = [t.incomeStatement.current.netSales, t.incomeStatement.previous.operatingIncome, t.incomeStatement.current.operatingIncome].map((v: number) => Math.round(v).toLocaleString('en-US')).concat(String(t.summary.operatingMargin)); return [...LABELS.slice(0, 10), ...nums, t.header.companyName, t.header.periodLabel, String(t.columnDates.incomeStatement.current)].join('').length; });
+console.log(`読む量: カードだけ (やさしいの形): 平均 ${(cardChars.reduce((a: number, x: number) => a + x, 0) / cardChars.length).toFixed(0)} 字・最大 ${Math.max(...cardChars)} 字。黙読 653 字/分 (小林・川嶋 2018) なら、むずかしいの形の全部を読む時間 = ${(avg / 653 * 60).toFixed(0)} 秒/社 (最大 ${(Math.max(...chars) / 653 * 60).toFixed(0)} 秒)・8 社で ${(avg * 8 / 653).toFixed(1)} 分、カードだけなら ${(cardChars.reduce((a: number, x: number) => a + x, 0) / cardChars.length / 653 * 60).toFixed(0)} 秒/社`);

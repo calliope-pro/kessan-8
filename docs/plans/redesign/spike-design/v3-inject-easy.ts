@@ -28,20 +28,28 @@ const bases = readdirSync(resolve(root, 'src/data/problems/easy')).sort().map((f
 const co = (p: any) => companies.find((c: any) => c.id === p.companyId);
 console.log(`基: やさしいの正常な問題 ${bases.length} 問`);
 
-// (1) 正常な問題が形の上で食い違わない
-{
-  let violations = 0, maxGap = 0, down = 0, minChange = Infinity, negatives = 0;
-  for (const p of bases) {
+// (1) 正常な問題が形の上で食い違わない (カードはやさしいもむずかしいも同じなので、正常 28 問 = やさしい 12 + むずかしい 16 のそれぞれで測る)
+for (const dir of ['easy', 'hard']) {
+  const ps = readdirSync(resolve(root, `src/data/problems/${dir}`)).sort().map((f) => read(`src/data/problems/${dir}/${f}`)).filter((p) => !p.anomaly);
+  let violations = 0, maxGap = 0, minChange = Infinity, minRatio = Infinity, maxRatio = 0, minShare = Infinity, negatives = 0, ocfNeg = 0, periodBad = 0;
+  const down: string[] = [];
+  for (const p of ps) {
     const shownAll = new Set([...SHOWN, ...FRAME, `ir.statements.${stmtIndex(p, 'operatingIncome')}`]);
     const vs = verifyProblem(p, co(p)).hard.filter((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x: string) => shownAll.has(norm(x))));
     violations += vs.length;
     const s1 = gv(p, `${IS}.current.netSales`), o0 = gv(p, `${IS}.previous.operatingIncome`), o1 = gv(p, `${IS}.current.operatingIncome`), m = gv(p, 'summary.operatingMargin');
     maxGap = Math.max(maxGap, Math.abs(m - (o1 / s1) * 100));
-    if (o1 < o0) down++;
+    if (o1 < o0) down.push(`${p.id}(${p.companyId})`);
     minChange = Math.min(minChange, Math.abs(o1 - o0) / o0);
+    minRatio = Math.min(minRatio, o1 / o0); maxRatio = Math.max(maxRatio, o1 / o0); minShare = Math.min(minShare, s1 > o1 ? s1 / o1 : -1);
     if ([s1, o0, o1, m].some((v) => v < 0)) negatives++;
+    if (gv(p, 'cashFlow.operatingCashFlow') < 0) ocfNeg++;
+    // 期末日が期の末日と合う (期 = 「2024年3月期」→ 2024-03-31)
+    const mm = /^(\d{4})年(\d{1,2})月期$/.exec(gv(p, 'header.periodLabel'));
+    const end = String(gv(p, 'columnDates.incomeStatement.current'));
+    if (!mm || end !== new Date(Date.UTC(Number(mm[1]), Number(mm[2]), 0)).toISOString().slice(0, 10)) periodBad++;
   }
-  console.log(`(1) 正常 ${bases.length} 問の、形に載るセルだけで落ちる hard の違反: ${violations} 件 / 営業利益率と (営業利益 ÷ 売上高 × 100) の差の最大: ${maxGap.toFixed(3)} ポイント / 減益 ${down} 問 / 前期比の変化の最小: ${(minChange * 100).toFixed(1)}% / 負の数を持つ問題: ${negatives}`);
+  console.log(`(1) ${dir} 正常 ${ps.length} 問: 形に載るセルだけで落ちる hard の違反 ${violations} 件 / 営業利益率と (③ ÷ ① × 100) の差の最大 ${maxGap.toFixed(3)} ポイント / ③ ÷ ② の範囲 ${minRatio.toFixed(2)}〜${maxRatio.toFixed(2)} / 前期比の変化の最小 ${(minChange * 100).toFixed(1)}% / ① ÷ ③ の最小 ${minShare.toFixed(1)} (負なら ① ≦ ③ の問題あり) / 負の数を持つ問題 ${negatives} / 期末日が期の末日と合わない ${periodBad} / 減益 ${down.length} 問: ${down.join(' ')} / 営業 CF がマイナス ${ocfNeg} 問`);
 }
 
 // (2) 数字・文を変える種類の注入
