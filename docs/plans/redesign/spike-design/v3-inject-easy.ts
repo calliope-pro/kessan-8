@@ -107,3 +107,14 @@ for (const r of RECIPES) {
   const inRange = rs.filter((r) => r >= 0.5 && r <= 2).length;
   console.log(`(4) E-02 の作り方を正常 ${rs.length} 問に当てた ③ ÷ ② = 最小 ${Math.min(...rs).toFixed(2)}・最大 ${Math.max(...rs).toFixed(1)}。正常の範囲 [0.5, 2] に入る (= 異変にならない) もの ${inRange} 問。10 以上のもの ${rs.filter((r) => r >= 10).length} 問・0.1 以下のもの ${rs.filter((r) => r <= 0.1).length} 問`);
 }
+
+// (5) 責任者の決定 (問 3 = (b)) で足した種類の当てられる数: E-26 添え字 (opPrev・opCurr の 2 欄に必ず当てられる)・E-27 数字の字 (数字 1 字が 0・1・5・8 のどれかである金額の欄)・E-28 存在しない日付 (期末日の日を 32 にする。検証器が落ちず、期末日のセルを読む規則だけが落ちる)
+{
+  const FIELDS: [string, string][] = [['① 売上高', `${IS}.current.netSales`], ['② 営業利益 (前期)', `${IS}.previous.operatingIncome`], ['③ 営業利益 (当期)', `${IS}.current.operatingIncome`]];
+  for (const [name, path] of FIELDS) {
+    const n = bases.filter((p) => /[0158]/.test(fmt(Math.abs(gv(p, path))))).length;
+    console.log(`(5) E-27 数字の字 ${name}: 0・1・5・8 のどれかを含む (当てられる) ${n}/${bases.length}`);
+  }
+  const bad = bases.filter((p) => { const q = clone(p); const d = String(gv(q, 'columnDates.incomeStatement.current')); q.tanshin.columnDates.incomeStatement.current = d.slice(0, 8) + '32'; try { verifyProblem(q, co(p)); return false; } catch { return true; } }).length;
+  console.log(`(5) E-28 期末日の日を 32 にして検証器に通す: 例外 ${bad}/${bases.length} (0 なら検証器が落ちずに違反を返す)`);
+}
