@@ -19,3 +19,9 @@ const patch = (ps: any[]) => ps.map((p) => (p.anomaly ? { id: p.id, base: p.anom
 console.log(`(2) 見積もり (完全な問題を複製): やさしい 85 問 raw ${raw(easy85)} B・gzip ${gz(easy85)} B / むずかしい 132 問 raw ${raw(hard132)} B・gzip ${gz(hard132)} B / 合計 gzip ${gz([...easy85, ...hard132])} B`);
 console.log(`(3) 異変を「基の ID + 変更」で持つ形: 正常 ${normalsOnly(easy85).length + normalsOnly(hard132).length} 問 + 異変の記述だけ。合計 gzip ${gz([...patch(easy85), ...patch(hard132)])} B`);
 console.log(`    正常な問題だけの gzip: ${gz([...normalsOnly(easy85), ...normalsOnly(hard132)])} B (異変の問題の分は含まない)`);
+// (4) 問題を 1 問 1 ファイルで配ると、各ファイルを別々に gzip する予算の数え方 (scripts/check-dist-size.mjs) では、重複の圧縮が効かない
+{
+  let t = 0, n = 0;
+  for (const d of ['easy', 'hard']) for (const f of readdirSync(resolve(root, `src/data/problems/${d}`))) { t += gzipSync(readFileSync(resolve(root, `src/data/problems/${d}/${f}`)), { level: 9 }).length; n++; }
+  console.log(`(4) 今の問題を 1 問ずつ別々に gzip した合計: ${n} 問 ${t} B (1 問平均 ${Math.round(t / n)} B)。217 問を 1 問 1 ファイルで配ると約 ${Math.round((t / n) * 217)} B。1 つの JS に入れた gzip (上の (2)) の約 ${(((t / n) * 217) / gz([...grow(easy, 85, 'e'), ...grow(hard, 132, 'h')])).toFixed(1)} 倍`);
+}
