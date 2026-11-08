@@ -42,11 +42,14 @@ const show = (q: any, cell: string): string => {
 const claimOf = (q: any, m: string) => JSON.stringify(q.ir.statements[stmtIndex(q, m)]?.claims);
 const segNames = (p: any) => p.tanshin.notes.segments.current.segments.map((x: any) => x.name).join('|') + '/' + p.ir.segments.items.map((x: any) => x.name).join('|');
 const displayChanged = (b: any, q: any): boolean =>
+  JSON.stringify(b.labelOverrides ?? {}) !== JSON.stringify(q.labelOverrides ?? {}) || b.ir.header.companyName !== q.ir.header.companyName ||
   SHOWN.filter((x) => !x.startsWith('@') && !x.includes('*')).some((c) => show(b, c) !== show(q, c)) ||
   segNames(b) !== segNames(q) || claimOf(b, 'operatingIncome') !== claimOf(q, 'operatingIncome') || claimOf(b, 'operatingCashFlow') !== claimOf(q, 'operatingCashFlow');
 const mul = (doc: 'tanshin' | 'ir', path: string, m: number) => (q: any) => { const v = gv(q[doc], path); sv(q[doc], path, Math.round(v * m * 10) / 10); };
 const flip = (metric: string) => (q: any) => { for (const s of q.ir.statements) for (const c of s.claims) if (c.metric === metric) c.direction = c.direction === 'up' ? 'down' : 'up'; };
-const RECIPES: { kind: string; label: string; make: (q: any) => void }[] = [
+// 科目名の規則 (label-spelling・account-section) の違反の paths は、セルでなく項目キー。形にその項目キーの欄があれば形に載る (設計 v2 §1.5 V2)
+const SHOWN_KEYS = [T('balanceSheet.receivables'), T('cashFlow.operatingCashFlow'), T('cashFlow.receivablesChange'), T('incomeStatement.netSales'), T('incomeStatement.operatingIncome'), T('summary.operatingMargin')];
+const RECIPES: { kind: string; label: string; make: (q: any) => void; primary?: string[] }[] = [
   { kind: 'H-01', label: '買掛金を +10% ずらし、負債・純資産の合計を再計算 (総資産は元のまま)', make: (q) => { const b = q.tanshin.balanceSheet.current; const d = Math.round(b.payables * 0.1); b.payables += d; b.totalCurrentLiabilities += d; b.totalLiabilities += d; b.totalLiabilitiesAndNetAssets += d; } },
   { kind: 'H-03', label: '再計算しない (cashFlow.incomeBeforeTax だけ。税引前利益 → 当期純利益の値)', make: (q) => sv(q.tanshin, 'cashFlow.incomeBeforeTax', q.tanshin.incomeStatement.current.netIncome) },
   { kind: 'H-04', label: 'cashFlow.cashEnding を 5% ずらす', make: mul('tanshin', 'cashFlow.cashEnding', 1.05) },
@@ -54,6 +57,9 @@ const RECIPES: { kind: string; label: string; make: (q: any) => void }[] = [
   { kind: 'H-05', label: '再計算しない (receivablesChange を 20% ずらす)', make: (q) => { const c = q.tanshin.cashFlow; sv(q.tanshin, 'cashFlow.receivablesChange', c.receivablesChange + (Math.round(c.receivablesChange * 0.2) || 1)); } },
   { kind: 'H-05', label: '(旧 v2) 符号を逆に + 小計以降を再計算 = 期末残高まで動く', make: (q) => { const c = q.tanshin.cashFlow; const d = -2 * c.receivablesChange; c.receivablesChange += d; c.subtotal += d; c.operatingCashFlow += d; c.netChangeInCash += d; c.cashEnding += d; } },
   { kind: 'H-13', label: 'IR の売上高を 5% ずらす', make: mul('ir', 'highlights.netSales.amount', 1.05) },
+  { kind: 'H-28', label: '売上債権の行の科目名を「買掛金」にする (labelOverrides)', make: (q) => { q.labelOverrides = { ...(q.labelOverrides ?? {}), [T('balanceSheet.receivables')]: '買掛金' }; } },
+  { kind: 'H-30', label: '営業 CF の科目名を「営業活動によるキャッシュ・フロ」にする (誤字)', primary: ['label-spelling'], make: (q) => { q.labelOverrides = { ...(q.labelOverrides ?? {}), [T('cashFlow.operatingCashFlow')]: '営業活動によるキャッシュ・フロ' }; } },
+  { kind: 'H-35', label: 'IR の表題の社名を、別の会社の名にする', primary: ['header-company-name'], make: (q) => { const other = companies.find((c: any) => c.id !== q.companyId); sv(q.ir, 'header.companyName', other.name); } },
   { kind: 'H-13', label: 'IR の現金 (当期) を 5% ずらす', make: mul('ir', 'supplement.cash.current', 1.05) },
   { kind: 'H-17', label: 'IR の売上高を 10 倍', make: mul('ir', 'highlights.netSales.amount', 10) },
   { kind: 'H-19', label: 'IR のセグメントを 1 つ消す (主な規則は新しい xdoc-seg-names。今の規則では測れない)', make: (q) => { q.ir.segments.items.pop(); } },
@@ -66,13 +72,13 @@ const RECIPES: { kind: string; label: string; make: (q: any) => void }[] = [
 const bases = readdirSync(resolve(root, 'src/data/problems/hard')).sort().map((f) => read(`src/data/problems/hard/${f}`)).filter((p) => !p.anomaly);
 console.log(`基: むずかしいの正常な問題 ${bases.length} 問。形に載るセル ${SHOWN.length} 欄 (カード 4 欄 + 見出し語・資料)`);
 for (const r of RECIPES) {
-  const primary: string[] = kinds.find((k: any) => k.id === r.kind).primaryRules;
+  const primary: string[] = r.primary ?? kinds.find((k: any) => k.id === r.kind).primaryRules;
   let doubled = 0, noPrimary = 0, same = 0; const extras = new Set<string>();
   for (const b of bases) {
     const q = JSON.parse(JSON.stringify(b)); r.make(q);
     const vs = verifyProblem(q, companies.find((c: any) => c.id === b.companyId)).hard;
     if (!displayChanged(b, q)) same++;
-    const shown = new Set([...SHOWN.filter((x) => !x.startsWith('@')), ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`, `ir.statements.${stmtIndex(b, 'operatingCashFlow')}`]);
+    const shown = new Set([...SHOWN.filter((x) => !x.startsWith('@')), ...SHOWN_KEYS, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`, `ir.statements.${stmtIndex(b, 'operatingCashFlow')}`]);
     const onCard = vs.filter((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x) => shown.has(norm(x))));
     const extra = [...new Set<string>(onCard.map((v: any) => v.rule))].filter((x) => !primary.includes(x));
     if (extra.length) { doubled++; extra.forEach((x) => extras.add(x)); }

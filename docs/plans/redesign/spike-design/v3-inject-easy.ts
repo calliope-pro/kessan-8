@@ -23,7 +23,7 @@ const clone = (p: any) => JSON.parse(JSON.stringify(p));
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const show = (p: any, c: string): string => { const v = gv(p, c.replace(/^tanshin\./, '')); return c.includes('Margin') ? v.toFixed(1) : fmt(v); };
 const headline = (p: any) => JSON.stringify(p.ir.statements[stmtIndex(p, 'operatingIncome')].claims.filter((c: any) => c.metric === 'operatingIncome'));
-const displayChanged = (b: any, q: any) => SHOWN.some((c) => show(b, c) !== show(q, c)) || headline(b) !== headline(q);
+const displayChanged = (b: any, q: any) => JSON.stringify(b.labelOverrides ?? {}) !== JSON.stringify(q.labelOverrides ?? {}) || SHOWN.some((c) => show(b, c) !== show(q, c)) || headline(b) !== headline(q);
 const bases = readdirSync(resolve(root, 'src/data/problems/easy')).sort().map((f) => read(`src/data/problems/easy/${f}`)).filter((p) => !p.anomaly);
 const co = (p: any) => companies.find((c: any) => c.id === p.companyId);
 console.log(`基: やさしいの正常な問題 ${bases.length} 問`);
@@ -54,11 +54,14 @@ for (const dir of ['easy', 'hard']) {
 
 // (2) 数字・文を変える種類の注入
 type Recipe = { kind: string; label: string; primary: string[]; make: (q: any) => any | null; min?: (b: any, q: any) => string };
+// 科目名の規則 (label-spelling) の違反の paths は項目キー。形にその項目キーの欄があれば形に載る
+const SHOWN_KEYS = [T('incomeStatement.netSales'), T('incomeStatement.operatingIncome'), T('summary.operatingMargin')];
 const flip = (q: any) => { for (const s of q.ir.statements) for (const c of s.claims) if (c.metric === 'operatingIncome') c.direction = c.direction === 'up' ? 'down' : 'up'; return q; };
 const RECIPES: Recipe[] = [
   { kind: 'E-17', label: '営業利益の主張の向きを逆にする (見出し語が数字と逆)', primary: ['claims-direction'], make: (b) => flip(clone(b)) },
   { kind: 'E-12', label: '営業利益率を 2.2 倍にする (道具なしで気づける 2 倍以上)', primary: ['ratio-operating-margin'], make: (b) => { const q = clone(b); sv(q, 'summary.operatingMargin', Math.round(gv(b, 'summary.operatingMargin') * 2.2 * 10) / 10); return q; } },
   { kind: 'E-02', label: '当期の営業利益を 10 倍 (増益) か 1/10 (減益) にする。再計算しない', primary: ['ratio-operating-margin'], make: (b) => { const q = clone(b); const k = `${IS}.current.operatingIncome`; const up = gv(b, k) > gv(b, `${IS}.previous.operatingIncome`); sv(q, k, up ? gv(b, k) * 10 : Math.round(gv(b, k) / 10)); return q; } },
+  { kind: 'E-05', label: '営業利益の科目名を「営業和益」にする (labelOverrides。営業利益は 2 欄に出る)', primary: ['label-spelling'], make: (b) => { const q = clone(b); q.labelOverrides = { ...(q.labelOverrides ?? {}), [T('incomeStatement.operatingIncome')]: '営業和益' }; return q; } },
   { kind: 'E-24', label: '当期の売上高を、営業利益の 0.6 倍にする (売上高が営業利益より小さい)。再計算しない', primary: ['ratio-operating-margin'], make: (b) => { const q = clone(b); sv(q, `${IS}.current.netSales`, Math.round(gv(b, `${IS}.current.operatingIncome`) * 0.6)); return q; } },
 ];
 for (const r of RECIPES) {
@@ -68,7 +71,7 @@ for (const r of RECIPES) {
     if (q === null) { skipped++; continue; }
     applied++;
     if (!displayChanged(b, q)) same++;
-    const shown = new Set([...SHOWN, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`]);
+    const shown = new Set([...SHOWN, ...SHOWN_KEYS, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`]);
     const onCard = verifyProblem(q, co(b)).hard.filter((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x: string) => shown.has(norm(x))));
     const extra = [...new Set<string>(onCard.map((v: any) => v.rule))].filter((x) => !r.primary.includes(x));
     if (extra.length) { doubled++; extra.forEach((x) => extras.add(x)); }
@@ -91,4 +94,16 @@ for (const r of RECIPES) {
   const naive = (d: string) => { const [y, m, dd] = d.split('-').map(Number); const t = new Date(Date.UTC(y! + 1, m! - 1, dd!)); return t.getUTCMonth() !== m! - 1 ? '存在しない日付' : 'ok'; };
   console.log(`(3) E-04 期末日: 当期の期末日が 2 月 29 日の正常な問題 ${feb29}/${bases.length} (1 年そのままずらすと存在しない日付になる: ${ends.filter((d) => naive(d) !== 'ok').length} 問)。月末日にそろえる直しで ${ends.length} 問すべてに当てられる`);
   console.log('(3) 決算月の内訳 (期末日の月): ' + JSON.stringify(ends.reduce((a: Record<string, number>, d) => ((a[d.slice(5, 7)] = (a[d.slice(5, 7)] ?? 0) + 1), a), {})));
+}
+
+// (4) E-02 が作る ③ ÷ ② の比が、正常の範囲 [0.5, 2] (設計 v3 §1.2 の関係 3) の外にあること。増益の問題 = 10 倍で 10 以上・減益の問題 = 1/10 で 0.1 以下 (導いた) を、正常 28 問で数える
+{
+  const rc = RECIPES.find((r) => r.kind === 'E-02')!;
+  const rs: number[] = [];
+  for (const dir of ['easy', 'hard']) for (const f of readdirSync(resolve(root, `src/data/problems/${dir}`)).sort()) {
+    const p = read(`src/data/problems/${dir}/${f}`); if (p.anomaly) continue;
+    const q = rc.make(p)!; rs.push(gv(q, `${IS}.current.operatingIncome`) / gv(q, `${IS}.previous.operatingIncome`));
+  }
+  const inRange = rs.filter((r) => r >= 0.5 && r <= 2).length;
+  console.log(`(4) E-02 の作り方を正常 ${rs.length} 問に当てた ③ ÷ ② = 最小 ${Math.min(...rs).toFixed(2)}・最大 ${Math.max(...rs).toFixed(1)}。正常の範囲 [0.5, 2] に入る (= 異変にならない) もの ${inRange} 問。10 以上のもの ${rs.filter((r) => r >= 10).length} 問・0.1 以下のもの ${rs.filter((r) => r <= 0.1).length} 問`);
 }
