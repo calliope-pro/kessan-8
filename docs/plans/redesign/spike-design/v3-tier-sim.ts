@@ -70,3 +70,52 @@ for (const [name, kinds, count] of [['やさしい', EASY, () => 5], ['むずか
 }
 
 if (DEBUG) { const pl = pool([...EASY], () => 5); const c = new Map<string, number>(); let tot = 0; for (let seed = 1; seed <= 10000; seed++) { const ps = draw(pl, mulberry32(seed), true); [2, 3, 4].forEach((sl) => { const p = ps[sl]!; if (p.kind) { c.set(p.kind, (c.get(p.kind) ?? 0) + 1); tot++; } }); } console.log([...c.entries()].sort().map(([k, v]) => `${k} ${(v / tot * 100).toFixed(1)}%`).join(' / ')); }
+
+// ---- 別の道 (§3.2 #155・§3.4 の問 4 (ii)): draw を「種類を先に選ぶ」に変えて、種類ごとに 2 問・2 社 (やさしい 34 問・むずかしい 61 問) にしたとき ----
+// 手順 (単純な版): 枠ごとに異変の有無を引く → 異変の枠は、段が狙い以下の種類のうち、まだ使っていない会社の問題を持つ種類を一様に選び、その種類の問題 (会社が未使用のもの) を一様に選ぶ
+// → 正常の枠は、未使用の会社を一様に選ぶ。選べなければ「出題できない」。測るもの: (a) 枠の群ごとの種類の出方 (b) 出題できない率 (c) 会社ごとの「異変の問題が出る割合」(R-S5 (b) の保証: 会社から答えが漏れない)
+function drawKindFirst(pool: P[], rng: () => number): P[] | null {
+  const flags = Array.from({ length: ROUNDS }, () => rng() < 0.5);
+  const used = new Set<string>(); const out: P[] = [];
+  const pick = <T>(xs: T[]) => xs[Math.floor(rng() * xs.length)]!;
+  for (let slot = 0; slot < ROUNDS; slot++) {
+    const target = TIER_BY_ROUND[slot]!;
+    if (flags[slot]) {
+      const ps = pool.filter((p) => p.kind !== null && (p.tier ?? 1) <= target && !used.has(p.companyId));
+      const kinds = [...new Set(ps.map((p) => p.kind!))];
+      if (kinds.length === 0) return null;
+      const k = pick(kinds); const p = pick(ps.filter((x) => x.kind === k)); used.add(p.companyId); out.push(p);
+    } else {
+      const ps = pool.filter((p) => p.kind === null && !used.has(p.companyId));
+      if (ps.length === 0) return null;
+      const p = pick(ps); used.add(p.companyId); out.push(p);
+    }
+  }
+  return out;
+}
+for (const [name, kinds, count, obj] of [['やさしい', EASY, 2, new Map(EASY.map(([k, , o]) => [k, o]))], ['むずかしい', HARD, 2, new Map(HARD.map(([k, , o]) => [k, o]))]] as const) {
+  const pl = pool([...kinds], () => count);
+  let fails = 0; const runs = 10000;
+  const counts = GROUPS.map(() => new Map<string, number>()); const tot = GROUPS.map(() => 0);
+  const appear = new Map<string, number>(), anom = new Map<string, number>();
+  for (let seed = 1; seed <= runs; seed++) {
+    const ps = drawKindFirst(pl, mulberry32(seed));
+    if (ps === null) { fails++; continue; }
+    ps.forEach((p, slot) => {
+      appear.set(p.companyId, (appear.get(p.companyId) ?? 0) + 1);
+      if (p.kind === null) return;
+      anom.set(p.companyId, (anom.get(p.companyId) ?? 0) + 1);
+      const gi = GROUPS.findIndex(([, ss]) => ss.includes(slot)); const o = obj.get(p.kind)!; counts[gi]!.set(o, (counts[gi]!.get(o) ?? 0) + 1); tot[gi]!++;
+    });
+  }
+  const lines = GROUPS.map(([g], gi) => { const c = [...counts[gi]!.entries()].sort((a, b) => b[1] - a[1]); return `${g}: ${c.length} 種類・最多 ${c[0]![0]} ${(c[0]![1] / tot[gi]! * 100).toFixed(1)}%`; });
+  const ratios = CO.map((c) => (anom.get(c) ?? 0) / (appear.get(c) ?? 1));
+  console.log(`${name} 種類先 (種類ごとに 2 問・2 社): 出題できない ${fails}/${runs} (${(fails / runs * 100).toFixed(2)}%)\n   ${lines.join('\n   ')}\n   会社ごとの「出たとき異変の問題だった割合」 最小 ${(Math.min(...ratios) * 100).toFixed(1)}%・最大 ${(Math.max(...ratios) * 100).toFixed(1)}% (会社を先に選ぶ今の draw は、枠の異変の有無を先に引くので 50% のまま)`);
+}
+// 比べる: 会社を先に選ぶ今の draw (累積・5/7 問の推奨のプール) の会社ごとの割合
+for (const [name, kinds, count] of [['やさしい', EASY, () => 5], ['むずかしい', HARD, (k: string) => (HARD_PRIMARY.has(k) ? 7 : 5)]] as const) {
+  const pl = pool([...kinds], count); const appear = new Map<string, number>(), anom = new Map<string, number>();
+  for (let seed = 1; seed <= 10000; seed++) for (const p of draw(pl, mulberry32(seed), true)) { appear.set(p.companyId, (appear.get(p.companyId) ?? 0) + 1); if (p.kind !== null) anom.set(p.companyId, (anom.get(p.companyId) ?? 0) + 1); }
+  const ratios = CO.map((c) => (anom.get(c) ?? 0) / (appear.get(c) ?? 1));
+  console.log(`${name} 会社先 (累積・推奨のプール): 会社ごとの「出たとき異変の問題だった割合」 最小 ${(Math.min(...ratios) * 100).toFixed(1)}%・最大 ${(Math.max(...ratios) * 100).toFixed(1)}%`);
+}
