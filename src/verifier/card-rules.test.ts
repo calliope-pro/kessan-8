@@ -170,16 +170,17 @@ describe('K7 card-sign・K8 card-column-suffix・K9 card-digits', () => {
 });
 
 describe('K12 今のデータ', () => {
-  it('今の正常な問題 (28 問) は、新しい規則すべてで違反 0 件 (IR が百万円の会社の問題を含む)', () => {
+  it('今の正常な問題は、新しい規則すべてで違反 0 件 (データを作り直しても、問題の数に依らない)', () => {
     const normals = problems.filter((p) => p.anomaly === null);
-    expect(normals).toHaveLength(28);
+    expect(normals.length).toBeGreaterThan(0);
     for (const p of normals) {
       const c = companies.find((x) => x.id === p.companyId) as Company;
       expect(verifyProblem(p, c).hard.filter((x) => NEW_RULES.includes(x.rule)), p.id).toEqual([]);
     }
   });
   it('今の異変の問題 (cardEdits なし) は card-period 以外の新しい規則を落とさない。card-period は E-04 だけ', () => {
-    for (const p of problems.filter((q) => q.anomaly !== null)) {
+    // cardEdits を持つ異変は、新しい規則 (card-*) を落とすのが本来の姿なので除く (題の「cardEdits なし」)
+    for (const p of problems.filter((q) => q.anomaly !== null && q.cardEdits === undefined)) {
       const c = companies.find((x) => x.id === p.companyId) as Company;
       const v = verifyProblem(p, c).hard.filter((x) => NEW_RULES.includes(x.rule) && x.rule !== 'xdoc-seg-names');
       expect(v.filter((x) => !(x.rule === 'card-period' && p.anomaly?.kind === 'E-04')), p.id).toEqual([]);

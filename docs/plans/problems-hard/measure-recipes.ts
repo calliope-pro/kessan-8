@@ -1,21 +1,25 @@
-// @ts-nocheck — 測定 (Sub-task #170 レビュー 1 回目 B1): 今の注入 (scripts/gen-hard/inject.ts) の 11 recipe を、今の正常 16 問に当て、v3 の検証器で見える・二重の食い違いが無いかを数える。
+// @ts-nocheck — 測定 (Sub-task #170 レビュー 1 回目 B1): v2 の注入 (legacy-inject.ts) の 11 recipe を、v2 の正常 16 問 (git の 35d6c9d の src/data) に当て、v3 の検証器で見える・二重の食い違いが無いかを数える。
+// v2 のデータは、#171 で src/data/problems/hard/ を作り直したので、git の版 (LEGACY_REV) から読む (会社も同じ版 = IR の単位が会社ごとに違う v2 の companies.json)。
 // 再現: node --experimental-strip-types --no-warnings docs/plans/problems-hard/measure-recipes.ts [--filter-places | --v3]
 //   --v3: 設計表 §5 の作り方で直した試作 recipe (H-01・H-03・H-05・H-13・H-19・H-21・H-23。この中の DRAFT)
 //   --filter-places: 場所を『カードに載るセル (cardCells) だけ』に絞った版 (§5 の場所の決まり)。
-import { readFileSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { deriveCards, cardCells } from '../../../src/domain/cards.ts';
 import { anomalyIssues } from '../../../src/verifier/anomaly.ts';
 import { cardVisibility, doubleDiscrepancies, deviationIssues, cardRelationIssues } from '../../../src/verifier/cards.ts';
 import { verifyProblem } from '../../../src/verifier/index.ts';
 import { changedCells } from '../../../src/verifier/path.ts';
-import { inject } from '../../../scripts/gen-hard/inject.ts';
+import { inject } from './legacy-inject.ts';
 
-const root = new URL('../../../', import.meta.url);
-const companies = JSON.parse(readFileSync(new URL('src/data/companies.json', root), 'utf-8'));
-const kinds = JSON.parse(readFileSync(new URL('src/data/anomaly-kinds.json', root), 'utf-8'));
-const normals = readdirSync(new URL('src/data/problems/hard/', root))
+const LEGACY_REV = '35d6c9d';
+const git = (...args) => execFileSync('git', args, { encoding: 'utf-8', cwd: new URL('../../../', import.meta.url), maxBuffer: 1 << 26 });
+const companies = JSON.parse(git('show', `${LEGACY_REV}:src/data/companies.json`));
+const kinds = JSON.parse(git('show', `HEAD:src/data/anomaly-kinds.json`));
+const normals = git('ls-tree', '--name-only', LEGACY_REV, 'src/data/problems/hard/')
+  .trim()
+  .split('\n')
   .sort()
-  .map((f) => JSON.parse(readFileSync(new URL(`src/data/problems/hard/${f}`, root), 'utf-8')))
+  .map((f) => JSON.parse(git('show', `${LEGACY_REV}:${f}`)))
   .filter((p) => p.anomaly === null);
 const filterPlaces = process.argv.includes('--filter-places');
 const useDraft = process.argv.includes('--v3');

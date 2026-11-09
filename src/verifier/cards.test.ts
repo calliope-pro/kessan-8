@@ -272,13 +272,11 @@ describe('3 構造・文字数 (ST1〜ST6)', () => {
     claim.slots.find((s) => s.key === 'irOcf')!.text = 'う'.repeat(41);
     expect(cardTextLengthIssues(claim)).toHaveLength(1);
   });
-  it('ST6: 今の全問の構造は空。40 字超は正常 4 問・6 欄、異変込み 6 問、見本は 0 (測った)', () => {
+  it('ST6: 今の全問の構造は空。文欄が 40 字を超える問題は、正常にも異変にも見本にも無い (v3 のデータは 40 字以内で作る。データを作り直しても、問題の数に依らない)', () => {
     const over = (ps: Problem[]) => ps.flatMap((p) => cardTextLengthIssues(deriveCards(p, companyOf(p), p.difficulty, { applyEdits: false })).map((m) => `${p.id} ${m.split(':')[0]}`));
     for (const p of problems.filter((q) => q.anomaly === null)) expect(cardStructureIssues(deriveCards(p, companyOf(p), p.difficulty)), p.id).toEqual([]);
-    const normals = over(problems.filter((q) => q.anomaly === null));
-    expect(new Set(normals.map((s) => s.split(' ')[0]))).toEqual(new Set(['hard-023', 'hard-024', 'hard-031', 'hard-032']));
-    expect(normals).toHaveLength(6);
-    expect(new Set(over(problems).map((s) => s.split(' ')[0]))).toEqual(new Set(['hard-018', 'hard-019', 'hard-023', 'hard-024', 'hard-031', 'hard-032']));
+    expect(over(problems.filter((q) => q.anomaly === null))).toEqual([]);
+    expect(over(problems)).toEqual([]);
     expect(problems.filter((q) => q.difficulty === 'easy').flatMap((p) => over([p]))).toEqual([]);
     const s = (sample as unknown as { problem: Problem }).problem ?? (sample as unknown as Problem);
     expect(over([{ ...s, difficulty: 'hard' }])).toEqual([]);

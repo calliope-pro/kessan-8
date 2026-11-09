@@ -32,7 +32,7 @@ export interface KindPlan {
   count: 5 | 7;
 }
 
-/** 台帳 v3 のむずかしい 20 種類 (設計 v3 §2.3) を、段ごとに並べた順 (この順に会社へ散らす)。 */
+/** 台帳 v3 のむずかしい 20 種類 (設計 v3 §2.3) を、段ごとに並べた順 (ID の順。ASSIGN と同じ順)。 */
 export const KINDS: KindPlan[] = [
   { id: 'H-17', tier: 1, count: 7 },
   { id: 'H-35', tier: 1, count: 7 },
@@ -56,11 +56,40 @@ export const KINDS: KindPlan[] = [
   { id: 'H-20', tier: 3, count: 7 },
 ];
 
-/** 全異変の問題を、段 → 種類の順に並べて会社へ順に (巡回で) 散らす最初の会社の位置。H-24 が、後発事象のある正常 (c10) の会社に当たらない位置 (H-24 の土台は短信も IR も「該当なし」のものだけ。設計 v3 §2.3)。 */
-export const CYCLE_START = 3;
+/**
+ * 異変の問題を、種類ごとに会社へ散らす割り当て (種類ごとに、会社の id の昇順。H-19 だけ同じ会社が 2 回出る)。`python3 docs/plans/problems-hard/assign.py` が探した (種 51)。
+ * 条件 (src/data/problems-hard-table.test.ts が数える): 種類ごとに別の会社 (H-19 を除く)・H-19 は 3 セグメントの会社 5 社に 7 問
+ * (2 セグメントの会社では IR のセグメントが 1 つになり、データ全件の形の検査 (ir.segments.items は 2〜3) で致命になる)・H-24 は後発事象のある c10 に当てない・
+ * H-21 は営業 CF がマイナスの c06 に当てない (主張を up にすると参考の規則が出る)・段ごとに会社どうしの数の差が 1 以内・会社ごとの異変の合計が 12 か 13。
+ */
+export const ASSIGN: Record<string, CompanyId[]> = {
+  'H-17': ['c02', 'c03', 'c04', 'c05', 'c08', 'c09', 'c10'],
+  'H-35': ['c01', 'c02', 'c03', 'c04', 'c06', 'c07', 'c09'],
+  'H-22': ['c01', 'c02', 'c06', 'c08', 'c10'],
+  'H-29': ['c03', 'c04', 'c05', 'c07', 'c09'],
+  'H-30': ['c02', 'c03', 'c05', 'c08', 'c09'],
+  'H-32': ['c01', 'c04', 'c06', 'c07', 'c10'],
+  'H-33': ['c01', 'c06', 'c07', 'c08', 'c10'],
+  'H-34': ['c02', 'c03', 'c04', 'c05', 'c09'],
+  'H-13': ['c03', 'c04', 'c05', 'c07', 'c08', 'c09', 'c10'],
+  'H-19': ['c01', 'c01', 'c03', 'c06', 'c06', 'c08', 'c10'],
+  'H-21': ['c02', 'c03', 'c04', 'c05', 'c07', 'c08', 'c10'],
+  'H-28': ['c01', 'c02', 'c05', 'c06', 'c07', 'c09', 'c10'],
+  'H-23': ['c01', 'c02', 'c03', 'c05', 'c06'],
+  'H-24': ['c02', 'c04', 'c05', 'c08', 'c09'],
+  'H-31': ['c04', 'c07', 'c08', 'c09', 'c10'],
+  'H-01': ['c01', 'c02', 'c04', 'c05', 'c06', 'c07', 'c08'],
+  'H-03': ['c01', 'c02', 'c03', 'c06', 'c07', 'c09', 'c10'],
+  'H-04': ['c02', 'c03', 'c04', 'c05', 'c06', 'c07', 'c09'],
+  'H-05': ['c01', 'c02', 'c04', 'c05', 'c08', 'c09', 'c10'],
+  'H-20': ['c01', 'c03', 'c04', 'c06', 'c07', 'c08', 'c10'],
+};
 
-/** 種類ごとの「形」(欄・作り方)。i = その種類の何問目か (0 始まり)。 */
-const FORMS: Record<string, (i: number, company: CompanyId) => string> = {
+/** 売上債権の増減 (前期末 → 当期末) が小さく、20% が G3 の 5 百万円に届かない正常の会社。作り直した正常 10 問の実測: c02 = −12・c08 = −13・c09 = −5 (src/data/problems-hard.test.ts の K5 が実際の数字で確かめる)。 */
+export const SMALL_RECEIVABLES: readonly string[] = ['c02', 'c08', 'c09'];
+
+/** 種類ごとの「形」(欄・作り方)。i = その種類の何問目か (0 始まり)。occurrence = その会社がこの種類で何回目か (H-19 だけ 2 回が出る)。 */
+const FORMS: Record<string, (i: number, company: CompanyId, occurrence: number) => string> = {
   'H-17': (i) => `倍率=${['×10', '÷10'][i % 2]}`,
   'H-35': (_i, company) => `社名=${COMPANY_IDS[(COMPANY_IDS.indexOf(company) + 1) % COMPANY_IDS.length]}`,
   'H-22': (i) => `文言=${(i % 3) + 1}`,
@@ -75,11 +104,17 @@ const FORMS: Record<string, (i: number, company: CompanyId) => string> = {
   'H-33': (i) => `欄=${['headline', 'sales', 'cash', 'audit', 'irSales'][i]}`,
   'H-34': (i) => `欄=${['sales', 'ta', 'cash', 'irSales', 'cfEnd'][i]}`,
   'H-13': (i) => `欄=${['irSales', 'irCashCur'][i % 2]}`,
+  // 欠けるセグメント: 1 回目 = 最後 (3)、同じ会社の 2 回目 = 真ん中 (2)。同じ問題が 2 つにならない
+  'H-19': (_i, _company, occurrence) => `欠け=${occurrence === 0 ? 3 : 2}`,
   'H-28': (i) => `科目名=${['買掛金', '買掛金', '短期借入金', '買掛金', '短期借入金', '買掛金', '短期借入金'][i]}`,
   'H-23': (i) => `反転=${['flag', 'note'][i % 2]}`,
   'H-31': (i) => `欄=${['margin', 'cash', 'ocf', 'audit', 'irOcf'][i]}`,
-  // 20% ずらすは G3 (5 百万円以上) を満たす基だけ。売上債権の増減が小さい会社 (c03・c08。今の正常で −4〜−34・−20) は符号を逆に (#170 レビュー B2)
-  'H-05': (i, company) => `作り方=${company === 'c03' || company === 'c08' || i % 2 === 0 ? '符号を逆に' : '20% ずらす'}`,
+  // 20% ずらすは G3 (5 百万円以上) を満たす基だけ。売上債権の増減が小さい会社 (SMALL_RECEIVABLES) は符号を逆に (#170 レビュー B2)。ほかの会社は、符号を逆に・20% ずらすを交互に
+  'H-05': (i, company) => {
+    if (SMALL_RECEIVABLES.includes(company)) return '作り方=符号を逆に';
+    const eligibleBefore = (ASSIGN['H-05'] as CompanyId[]).slice(0, i).filter((c) => !SMALL_RECEIVABLES.includes(c)).length;
+    return `作り方=${eligibleBefore % 2 === 0 ? '符号を逆に' : '20% ずらす'}`;
+  },
 };
 
 export interface PlanRow {
@@ -109,15 +144,15 @@ export function plan(): PlanRow[] {
     elements: NORMAL_ELEMENTS[company],
     form: '',
   }));
-  let cursor = CYCLE_START;
   let n = rows.length;
   for (const k of KINDS) {
-    for (let i = 0; i < k.count; i++) {
-      const company = COMPANY_IDS[cursor % COMPANY_IDS.length] as CompanyId;
-      cursor++;
+    const companiesOfKind = ASSIGN[k.id] as CompanyId[];
+    if (companiesOfKind.length !== k.count) throw new Error(`${k.id}: 割り当てが ${companiesOfKind.length} 社で ${k.count} 問と違う`);
+    companiesOfKind.forEach((company, i) => {
       n++;
-      rows.push({ id: pad(n), company, fiscalYear: FISCAL_YEAR, tier: k.tier, kind: k.id, elements: [], form: (FORMS[k.id]?.(i, company)) ?? '定型' });
-    }
+      const occurrence = companiesOfKind.slice(0, i).filter((c) => c === company).length;
+      rows.push({ id: pad(n), company, fiscalYear: FISCAL_YEAR, tier: k.tier, kind: k.id, elements: [], form: FORMS[k.id]?.(i, company, occurrence) ?? '定型' });
+    });
   }
   return rows;
 }

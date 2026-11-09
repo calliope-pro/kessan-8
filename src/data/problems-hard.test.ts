@@ -264,14 +264,15 @@ describe('K: 異変の問題 122 問', () => {
         case 'H-17': {
           expect(chg, id).toEqual(['ir.highlights.netSales.amount']);
           const k = f === '倍率=×10' ? 10 : 0.1;
-          expect(Math.abs(p.ir.highlights.netSales.amount / base.ir.highlights.netSales.amount - k), id).toBeLessThanOrEqual(0.05 / base.ir.highlights.netSales.amount * k + 1e-9);
+          // IR の値は小数第 1 位に丸める (誤差 0.05) ので、基との比は k から 0.05 ÷ 基 以内
+          expect(Math.abs(p.ir.highlights.netSales.amount / base.ir.highlights.netSales.amount - k), id).toBeLessThanOrEqual(0.05 / base.ir.highlights.netSales.amount + 1e-9);
           break;
         }
         case 'H-19': {
-          const n = base.ir.segments.items.length;
-          expect(p.ir.segments.items.length, id).toBe(n - 1);
-          expect(p.ir.segments.items.map((x) => x.name), id).toEqual(base.ir.segments.items.slice(0, n - 1).map((x) => x.name));
-          expect(chg.every((c) => c === `ir.segments.items.${n - 1}` || c.startsWith('ir.segments.adjustment.')), `${id} ${chg}`).toBe(true);
+          const missing = Number(/欠け=(\d)/.exec(f)?.[1]) - 1; // 欠けるセグメントの添字 (最後 = 3・真ん中 = 2)
+          expect(p.ir.segments.items.length, id).toBe(base.ir.segments.items.length - 1);
+          expect(p.ir.segments.items.map((x) => x.name), id).toEqual(base.ir.segments.items.filter((_, k) => k !== missing).map((x) => x.name));
+          expect(chg.every((c) => c.startsWith('ir.segments.items.') || c.startsWith('ir.segments.adjustment.')), `${id} ${chg}`).toBe(true);
           break;
         }
         case 'H-20': {
@@ -404,10 +405,10 @@ describe('A: 全体', () => {
     }
   });
 
-  it('A3: 転送量 — 132 問の JSON を 1 つにして gzip した長さが 250,000 B 未満', () => {
+  it('A3: 転送量 — 132 問の JSON を 1 つにして gzip した長さが 150,000 B 未満 (測った: 127,737 B。charter の初回 1 MB 未満・設計 v3 §3.2 の見積もり 217 問で 206〜220 KB のむずかしいの分)', () => {
     const joined = JSON.stringify(all().map(({ p }) => p));
     expect(all().length).toBe(132);
-    expect(gzipSync(joined, { level: 9 }).length).toBeLessThan(250_000);
+    expect(gzipSync(joined, { level: 9 }).length).toBeLessThan(150_000);
   });
 
   it('A4: JSON は生成器の出力と同じ。同じ入力で生成器を 2 回回すと同じ', async () => {

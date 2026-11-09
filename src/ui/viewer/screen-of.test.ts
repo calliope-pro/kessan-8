@@ -121,6 +121,8 @@ describe('screenOfPlace: 全部の場所で、選んだ画面に強調される�
       const p = JSON.parse(readFileSync(f, 'utf-8')) as Problem;
       for (const place of p.anomaly?.places ?? []) {
         places++;
+        // 形のずれ (cardEdits) の場所は、新しい画面 (#141) の持ち物。今のビューアにはカードの画面が無い
+        if (place.doc === 'card') continue;
         if (hitsOn(p, place, screenOfPlace(p, place)) === 0) bad.push(`${f}: ${JSON.stringify(place)}`);
       }
     }

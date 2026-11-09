@@ -158,7 +158,7 @@ Task #23。型は #52 で広げたもの ([design.md](../design.md) §4.2・§4.
 
 ### 1.7 参考の規則 (soft。遊び手に正常と見えるための範囲。破れても異変ではないので、報告するが既定では失敗にしない)
 
-soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・soft-current-ratio (流動比率 0.8〜4)・soft-equity-ratio-range (自己資本比率 20〜80%)・soft-operating-margin-range (営業利益率 −5〜25%)・soft-sales-growth-range (売上高増減率 ±20%)・soft-operating-profit-positive (営業利益 > 0)・soft-tax-rate-range (実効税率 25〜40%。税引前利益が 0 以下なら当たらない)・soft-ocf-vs-operating-income (営業 CF ÷ 営業利益 0.3〜3)・soft-cash-vs-sales (現金 ÷ 売上高 3〜40%)・soft-payout-max (配当性向 100% 以下)・soft-rates-expressible (増減率の分母になる前期の値が正、eps が正)・soft-payout-cross-path (配当性向 = 配当金総額 ÷ 純利益 を小数第一位まで)。範囲の数字は試作 (gen-measure.md) の仮定で、会計の分かる人の確認は未実施。
+soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・soft-current-ratio (流動比率 0.8〜4)・soft-equity-ratio-range (自己資本比率 20〜80%)・soft-operating-margin-range (営業利益率 −5〜25%)・soft-sales-growth-range (売上高増減率 ±20%)・soft-operating-profit-positive (営業利益 > 0)・soft-tax-rate-range (実効税率 25〜40%。税引前利益が 0 以下なら当たらない)・soft-ocf-vs-operating-income (営業 CF ÷ 営業利益 0.3〜3。**営業 CF の主張が down (マイナス) の問題は下限を外す** = 3 以下。R-S5 (f) が正常に営業 CF がマイナスの会社を求めるため。#171 で直した。docs/test-cases/problems-hard.md §2.4・rules.test.ts の S14〜S16)・soft-cash-vs-sales (現金 ÷ 売上高 3〜40%)・soft-payout-max (配当性向 100% 以下)・soft-rates-expressible (増減率の分母になる前期の値が正、eps が正)・soft-payout-cross-path (配当性向 = 配当金総額 ÷ 純利益 を小数第一位まで)。範囲の数字は試作 (gen-measure.md) の仮定で、会計の分かる人の確認は未実施。
 
 ## 2. ケース
 
@@ -282,6 +282,7 @@ soft-nonnegative-bs (BS の全項目が 0 以上、利益剰余金を除く)・s
 | S6 | incomeStatement.current.operatingIncome を −1 に | soft-operating-profit-positive |
 | S7 | incomeStatement.current.incomeTaxes を 100 に | soft-tax-rate-range |
 | S8 | cashFlow.operatingCashFlow を 100 に | soft-ocf-vs-operating-income |
+| S14 | cashFlow.operatingCashFlow を −300 に、営業 CF の主張 (ir.statements.2) を down に | soft-ocf-vs-operating-income が**出ない** (S15: 主張が up のままなら出る・S16: 主張が down でも営業利益が 0 なら出る) |
 | S9 | balanceSheet.current.cash を 100 に | soft-cash-vs-sales |
 | S10 | summary.payoutRatio を 120.0 に | soft-payout-max |
 | S11 | summary.netSales.previous を 0 に | soft-rates-expressible |

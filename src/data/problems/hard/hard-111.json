@@ -1,0 +1,473 @@
+{
+  "id": "hard-111",
+  "difficulty": "hard",
+  "companyId": "c10",
+  "fiscalYear": 2022,
+  "tier": 3,
+  "tanshin": {
+    "header": {
+      "companyName": "ヨクトス商事株式会社",
+      "securitiesCode": "0810",
+      "periodLabel": "2022年3月期",
+      "unit": "百万円"
+    },
+    "summary": {
+      "netSales": {
+        "current": 178210,
+        "previous": 165400,
+        "changeRate": 7.7
+      },
+      "operatingIncome": {
+        "current": 3520,
+        "previous": 3340,
+        "changeRate": 5.4
+      },
+      "ordinaryIncome": {
+        "current": 3792,
+        "previous": 3562,
+        "changeRate": 6.5
+      },
+      "netIncomeParent": {
+        "current": 2577,
+        "previous": 2421,
+        "changeRate": 6.4
+      },
+      "operatingMargin": 2,
+      "roe": 15.6,
+      "eps": 64.43,
+      "totalAssets": 60126,
+      "netAssets": 17447,
+      "equity": 17447,
+      "equityRatio": 29,
+      "bps": 436.18,
+      "annualDividend": 19,
+      "interimDividend": 8,
+      "annualDividendPrevious": 18,
+      "interimDividendPrevious": 7,
+      "dividendTotal": 760,
+      "payoutRatio": 29.5,
+      "accountingPolicyChange": false,
+      "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+    },
+    "dates": {
+      "periodEnd": "2022-03-31",
+      "previousPeriodEnd": "2021-03-31",
+      "disclosure": "2022-05-16",
+      "shareholdersMeeting": "2022-06-27"
+    },
+    "columnDates": {
+      "balanceSheet": {
+        "previous": "2021-03-31",
+        "current": "2022-03-31"
+      },
+      "incomeStatement": {
+        "previous": "2021-03-31",
+        "current": "2022-03-31"
+      },
+      "cashFlow": {
+        "previous": "2021-03-31",
+        "current": "2022-03-31"
+      }
+    },
+    "balanceSheet": {
+      "previous": {
+        "cash": 6947,
+        "receivables": 20261,
+        "inventories": 11578,
+        "otherCurrentAssets": 1158,
+        "totalCurrentAssets": 39944,
+        "tangibleAssets": 12736,
+        "investments": 5210,
+        "totalFixedAssets": 17946,
+        "totalAssets": 57890,
+        "payables": 17367,
+        "shortTermDebt": 6947,
+        "incomeTaxesPayable": 289,
+        "otherCurrentLiabilities": 1737,
+        "totalCurrentLiabilities": 26340,
+        "longTermDebt": 15920,
+        "totalLiabilities": 42260,
+        "capitalStock": 3908,
+        "capitalSurplus": 2345,
+        "retainedEarnings": 9377,
+        "totalShareholdersEquity": 15630,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 15630,
+        "totalLiabilitiesAndNetAssets": 57890
+      },
+      "current": {
+        "cash": 5871,
+        "receivables": 22347,
+        "inventories": 12728,
+        "otherCurrentAssets": 1158,
+        "totalCurrentAssets": 42104,
+        "tangibleAssets": 12708,
+        "investments": 5314,
+        "totalFixedAssets": 18022,
+        "totalAssets": 60126,
+        "payables": 18546,
+        "shortTermDebt": 6668,
+        "incomeTaxesPayable": 308,
+        "otherCurrentLiabilities": 1872,
+        "totalCurrentLiabilities": 27394,
+        "longTermDebt": 15285,
+        "totalLiabilities": 42679,
+        "capitalStock": 3908,
+        "capitalSurplus": 2345,
+        "retainedEarnings": 11194,
+        "totalShareholdersEquity": 17447,
+        "nonControllingInterests": 0,
+        "totalNetAssets": 17447,
+        "totalLiabilitiesAndNetAssets": 60126
+      }
+    },
+    "incomeStatement": {
+      "previous": {
+        "netSales": 165400,
+        "costOfSales": 150710,
+        "grossProfit": 14690,
+        "sga": 11350,
+        "operatingIncome": 3340,
+        "nonOperatingIncome": 496,
+        "nonOperatingExpenses": 274,
+        "ordinaryIncome": 3562,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 53,
+        "incomeBeforeTax": 3509,
+        "incomeTaxes": 1088,
+        "netIncome": 2421,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 2421
+      },
+      "current": {
+        "netSales": 178210,
+        "costOfSales": 162540,
+        "grossProfit": 15670,
+        "sga": 12150,
+        "operatingIncome": 3520,
+        "nonOperatingIncome": 535,
+        "nonOperatingExpenses": 263,
+        "ordinaryIncome": 3792,
+        "extraordinaryGain": 0,
+        "extraordinaryLoss": 57,
+        "incomeBeforeTax": 3735,
+        "incomeTaxes": 1158,
+        "netIncome": 2577,
+        "netIncomeNonControlling": 0,
+        "netIncomeParent": 2577
+      }
+    },
+    "cashFlow": {
+      "incomeBeforeTax": 2577,
+      "depreciation": 892,
+      "interestDividendIncome": -535,
+      "interestExpense": 263,
+      "receivablesChange": -2086,
+      "inventoriesChange": -1150,
+      "payablesChange": 1179,
+      "otherAssetsChange": 0,
+      "otherLiabilitiesChange": 135,
+      "subtotal": 2433,
+      "interestDividendReceived": 535,
+      "interestPaid": -263,
+      "incomeTaxesPaid": -1139,
+      "operatingCashFlow": 1566,
+      "capex": -864,
+      "otherInvestingChange": -104,
+      "investingCashFlow": -968,
+      "shortTermDebtChange": -279,
+      "longTermBorrowings": 955,
+      "longTermRepayments": -1590,
+      "dividendsPaid": -760,
+      "financingCashFlow": -1674,
+      "fxEffect": 0,
+      "netChangeInCash": -1076,
+      "cashBeginning": 6947,
+      "cashEnding": 5871
+    },
+    "notes": {
+      "goingConcern": "該当事項はありません。",
+      "cashScope": "現金及び預金",
+      "segments": {
+        "previous": {
+          "segments": [
+            {
+              "name": "機械・資材事業",
+              "netSales": 82900,
+              "profit": 1630
+            },
+            {
+              "name": "食品原料事業",
+              "netSales": 49150,
+              "profit": 1080
+            },
+            {
+              "name": "化成品事業",
+              "netSales": 33350,
+              "profit": 900
+            }
+          ],
+          "adjustment": -270,
+          "consolidatedNetSales": 165400,
+          "consolidatedOperatingIncome": 3340
+        },
+        "current": {
+          "segments": [
+            {
+              "name": "機械・資材事業",
+              "netSales": 89390,
+              "profit": 1710
+            },
+            {
+              "name": "食品原料事業",
+              "netSales": 53090,
+              "profit": 1140
+            },
+            {
+              "name": "化成品事業",
+              "netSales": 35730,
+              "profit": 950
+            }
+          ],
+          "adjustment": -280,
+          "consolidatedNetSales": 178210,
+          "consolidatedOperatingIncome": 3520
+        }
+      },
+      "averageSharesThousand": 40000,
+      "bps": 436.18,
+      "eps": 64.43,
+      "subsequentEvents": "期末後に子会社の一部を譲渡。譲渡益は約 1,290 百万円の見込み。",
+      "accountingPolicyNote": "該当事項はありません。"
+    }
+  },
+  "ir": {
+    "header": {
+      "companyName": "ヨクトス商事株式会社",
+      "securitiesCode": "0810",
+      "periodLabel": "2022年3月期",
+      "unit": "億円"
+    },
+    "highlights": {
+      "netSales": {
+        "amount": 1782.1,
+        "changeRate": 7.7
+      },
+      "operatingIncome": {
+        "amount": 35.2,
+        "changeRate": 5.4
+      },
+      "ordinaryIncome": {
+        "amount": 37.9,
+        "changeRate": 6.5
+      },
+      "netIncomeParent": {
+        "amount": 25.8,
+        "changeRate": 6.4
+      },
+      "annualDividend": 19,
+      "payoutRatio": 29.5
+    },
+    "results": {
+      "netSales": {
+        "previous": 1654,
+        "current": 1782.1
+      },
+      "grossProfit": {
+        "previous": 146.9,
+        "current": 156.7
+      },
+      "grossMargin": {
+        "previous": 8.9,
+        "current": 8.8
+      },
+      "operatingIncome": {
+        "previous": 33.4,
+        "current": 35.2
+      },
+      "operatingMargin": {
+        "previous": 2,
+        "current": 2
+      },
+      "chart": {
+        "netSales": {
+          "axisMin": 0,
+          "previous": 1654,
+          "current": 1782.1
+        },
+        "operatingIncome": {
+          "axisMin": 0,
+          "previous": 33.4,
+          "current": 35.2
+        }
+      }
+    },
+    "segments": {
+      "items": [
+        {
+          "name": "機械・資材事業",
+          "netSales": {
+            "previous": 829,
+            "current": 893.9,
+            "changeRate": 7.8
+          },
+          "profit": {
+            "previous": 16.3,
+            "current": 17.1,
+            "changeRate": 4.9
+          },
+          "salesShare": 50.2
+        },
+        {
+          "name": "食品原料事業",
+          "netSales": {
+            "previous": 491.5,
+            "current": 530.9,
+            "changeRate": 8
+          },
+          "profit": {
+            "previous": 10.8,
+            "current": 11.4,
+            "changeRate": 5.6
+          },
+          "salesShare": 29.8
+        },
+        {
+          "name": "化成品事業",
+          "netSales": {
+            "previous": 333.5,
+            "current": 357.3,
+            "changeRate": 7.1
+          },
+          "profit": {
+            "previous": 9,
+            "current": 9.5,
+            "changeRate": 5.6
+          },
+          "salesShare": 20
+        }
+      ],
+      "adjustment": {
+        "previous": -2.7,
+        "current": -2.8
+      },
+      "consolidatedOperatingIncome": {
+        "previous": 33.4,
+        "current": 35.2
+      }
+    },
+    "outlook": {
+      "forecast": {
+        "netSales": 1885,
+        "netSalesChangeRate": 5.8,
+        "operatingIncome": 37.8,
+        "operatingIncomeChangeRate": 7.4,
+        "capex": 9.1,
+        "depreciation": 9.3,
+        "annualDividend": 19
+      },
+      "actual": {
+        "netSales": 1782.1,
+        "operatingIncome": 35.2,
+        "capex": 8.6,
+        "depreciation": 8.9
+      },
+      "subsequentEvent": "期末後に子会社の一部を譲渡。譲渡益は約 1,290 百万円の見込み。"
+    },
+    "supplement": {
+      "capex": {
+        "previous": null,
+        "current": 8.6
+      },
+      "depreciation": {
+        "previous": null,
+        "current": 8.9
+      },
+      "interestBearingDebt": {
+        "previous": 228.7,
+        "current": 219.5
+      },
+      "cash": {
+        "previous": 69.5,
+        "current": 58.7
+      },
+      "netDebt": {
+        "previous": 159.2,
+        "current": 160.8
+      },
+      "equityRatio": 29
+    },
+    "statements": [
+      {
+        "slide": "highlights",
+        "text": "当期は増収増益。取扱高は各セグメントの動向を反映した。",
+        "claims": [
+          {
+            "metric": "netSales",
+            "direction": "up"
+          },
+          {
+            "metric": "operatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "outlook",
+        "text": "次期は増収増益を見込む。",
+        "claims": [
+          {
+            "metric": "forecastNetSales",
+            "direction": "up"
+          },
+          {
+            "metric": "forecastOperatingIncome",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "supplement",
+        "text": "営業活動によるキャッシュ・フローはプラスであった。",
+        "claims": [
+          {
+            "metric": "operatingCashFlow",
+            "direction": "up"
+          }
+        ]
+      },
+      {
+        "slide": "highlights",
+        "text": "年間配当は増配とした。",
+        "claims": [
+          {
+            "metric": "dividend",
+            "direction": "up"
+          }
+        ]
+      }
+    ]
+  },
+  "anomaly": {
+    "kind": "H-03",
+    "places": [
+      {
+        "doc": "tanshin",
+        "path": "cashFlow.incomeBeforeTax"
+      },
+      {
+        "doc": "tanshin",
+        "path": "incomeStatement.current.incomeBeforeTax"
+      }
+    ],
+    "explanation": "キャッシュ・フロー計算書の最初の行 (税金等調整前当期純利益) が 2,577 百万円で、損益計算書の当期純利益と同じ値です。日本の基準 (間接法) では、営業活動は損益計算書の税金等調整前当期純利益 3,735 百万円から始めます。このため、キャッシュ・フロー計算書の最初の行が損益計算書の税金等調整前当期純利益 3,735 百万円と合いません。",
+    "expectedRules": [
+      "cf-subtotal",
+      "link-cf-start"
+    ],
+    "base": "hard-010",
+    "changed": [
+      "tanshin.cashFlow.incomeBeforeTax"
+    ]
+  }
+}

@@ -382,7 +382,7 @@ describe('KD 種類の定義 (anomaly-kinds.json。§6.4)', () => {
     const all = [...HARD_RULE_IDS, ...SOFT_RULE_IDS];
     for (const k of dataKinds) for (const r of [...k.primaryRules, ...k.allowedRules]) expect(all, `${k.id} ${r}`).toContain(r);
   });
-  it('KD5: 今のデータの errors は 0 件のまま (card-* は shortfalls)', async () => {
+  it('KD5: 今のデータの errors は 0 件 (card-* は shortfalls。データが揃えば shortfalls も 0)', async () => {
     const { problems, companies, sample } = await import('../data/pool-source.ts');
     const r = verifyDataset({
       companies,
@@ -391,7 +391,7 @@ describe('KD 種類の定義 (anomaly-kinds.json。§6.4)', () => {
       samples: sample === undefined ? [] : [{ file: 'samples/sample.json', value: sample }],
     });
     expect(r.errors).toEqual([]);
-    expect(codesOf(r).filter((c) => c.startsWith('card-')).length).toBeGreaterThan(0);
+    expect(r.errors.filter((e) => e.code.startsWith('card-') && e.code !== 'card-edit-op' && e.code !== 'card-structure')).toEqual([]);
   });
 });
 

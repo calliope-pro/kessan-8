@@ -1,4 +1,4 @@
-// むずかしい 132 問の設計表 (docs/plans/problems-hard.md §4) が、ケース表 docs/test-cases/problems-hard.md §1 (P1〜P19) を満たすことの確かめ (Sub-task #170)。
+// むずかしい 132 問の設計表 (docs/plans/problems-hard.md §4) が、ケース表 docs/test-cases/problems-hard.md §1 (P1〜P21) を満たすことの確かめ (Sub-task #170)。
 // 問題の JSON の確かめ (表との一致・検証器) は、#171 のテスト (problems-hard.test.ts) に足す。
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -89,11 +89,15 @@ describe('むずかしいの設計表 v3 (problems-hard.md §4) — 数と構成
     expect(total).toBe(122);
   });
 
-  it('P5: 同じ種類は、すべて別の会社 (7 問は 7 社・5 問は 5 社)。種類ごとに 5 社以上', () => {
+  it('P5: 同じ種類は、H-19 を除きすべて別の会社 (7 問は 7 社・5 問は 5 社)。種類ごとに 5 社以上。H-19 は 3 セグメントの会社 5 社に 7 問 (2 社が 2 問ずつ。IR のセグメントが 1 つになる 2 セグメントの会社には当てない。データ全件の形の検査 `ir.segments.items` は 2〜3)', () => {
     for (const id of kindIds) {
       const mine = anomalies.filter((r) => r.kind === id).map((r) => r.company);
-      expect(new Set(mine).size, id).toBe(mine.length);
       expect(new Set(mine).size, id).toBeGreaterThanOrEqual(KIND_MIN_COMPANIES);
+      if (id === 'H-19') {
+        expect(new Set(mine)).toEqual(new Set(['c01', 'c03', 'c06', 'c08', 'c10']));
+        expect(mine.length).toBe(7);
+        companyIds.forEach((c) => expect(mine.filter((m) => m === c).length, c).toBeLessThanOrEqual(2));
+      } else expect(new Set(mine).size, id).toBe(mine.length);
     }
   });
 });
@@ -160,6 +164,7 @@ describe('むずかしいの設計表 v3 — 形と、種類と会社の適合',
     'H-22': /^文言=[123]$/,
     'H-23': /^反転=(flag|note)$/,
     'H-28': /^科目名=(買掛金|短期借入金)$/,
+    'H-19': /^欠け=(2|3)$/,
     'H-35': /^社名=c\d\d$/,
     'H-05': /^作り方=(符号を逆に|20% ずらす)$/,
     'H-29': /^欄=[A-Za-z]+$/,
@@ -210,11 +215,11 @@ describe('むずかしいの設計表 v3 — 形と、種類と会社の適合',
     anomalies.filter((r) => r.kind === 'H-31').forEach((r) => expect(slotOf(r.last), r.id).not.toBe('headline'));
   });
 
-  it('P18: H-05 の「20% ずらす」は、売上債権の増減が小さい会社 (c03・c08) に当てない (G3: 5 百万円以上。20% が 5 に届かず端数と見分けられない。#170 レビュー B2)。その会社は符号を逆に', () => {
+  it('P18: H-05 の「20% ずらす」は、売上債権の増減が小さい会社 (作り直した正常で −12・−13・−5 の c02・c08・c09) に当てない (G3: 5 百万円以上。20% が 5 に届かず端数と見分けられない。#170 レビュー B2。実際の数字は K5 が数える)。その会社は符号を逆に。20% の行は 2 つ以上', () => {
     const h05 = anomalies.filter((r) => r.kind === 'H-05');
     expect(h05.length).toBe(7);
-    expect(h05.some((r) => r.last === '作り方=20% ずらす')).toBe(true);
-    h05.filter((r) => r.company === 'c03' || r.company === 'c08').forEach((r) => expect(r.last, r.id).toBe('作り方=符号を逆に'));
+    expect(h05.filter((r) => r.last === '作り方=20% ずらす').length).toBeGreaterThanOrEqual(2);
+    h05.filter((r) => ['c02', 'c08', 'c09'].includes(r.company)).forEach((r) => expect(r.last, r.id).toBe('作り方=符号を逆に'));
   });
 
   it('P19: H-30 の欄は誤字の表 (§5) にある 5 欄で、誤字は標準の科目名の末尾 1 字を落とした形 (1 画の違いでなく、読めば欠けている。#170 レビュー N2)', () => {
@@ -235,6 +240,23 @@ describe('むずかしいの設計表 v3 — 形と、種類と会社の適合',
     const h30 = anomalies.filter((r) => r.kind === 'H-30');
     expect(h30.length).toBe(5);
     h30.forEach((r) => expect(Object.keys(ITEM_KEY), r.id).toContain(slotOf(r.last)));
+  });
+
+  it('P20: H-19 の 2 問が同じ会社に当たるときは、欠けるセグメントが違う (最後 = 3・真ん中 = 2。同じ問題が 2 つにならない)', () => {
+    const h19 = anomalies.filter((r) => r.kind === 'H-19');
+    expect(h19.length).toBe(7);
+    for (const c of new Set(h19.map((r) => r.company))) {
+      const forms = h19.filter((r) => r.company === c).map((r) => r.last);
+      expect(new Set(forms).size, c).toBe(forms.length);
+    }
+    expect(h19.some((r) => r.last === '欠け=2')).toBe(true);
+  });
+
+  it('P21: H-21 は、営業 CF がマイナスの正常 (CN) の会社に当てない (主張を up にすると、営業 CF のマイナスに『プラス』の文が付き、参考の規則 soft-ocf-vs-operating-income が異変の問題で出る)', () => {
+    const cn = normals.filter((r) => elementsOf(r).includes('CN')).map((r) => r.company);
+    expect(cn.length).toBeGreaterThan(0);
+    expect(anomalies.filter((r) => r.kind === 'H-21').length).toBe(7);
+    anomalies.filter((r) => r.kind === 'H-21').forEach((r) => expect(cn, r.id).not.toContain(r.company));
   });
 
   it('P16: H-24 は、後発事象 (E) を持つ正常の会社に当てない', () => {
