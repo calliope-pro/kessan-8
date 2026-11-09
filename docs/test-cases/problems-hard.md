@@ -1,6 +1,6 @@
 # ケース表 v3: むずかしいの問題データ (Task #140・Sub-task #170・#171・#172)
 
-根拠: [design-v3.md](../design-v3.md) (main。#178) の §1.5 (問題の数・R-S5)・§2.3 (むずかしいの 20 行)・§2.7 (段・`tier-balance`)・§3.2 の **#140 の 1〜8** と「チケットの受け入れ条件の読み替え」・[requirements.md](../requirements.md) (第 3 版)・[charter.md](../charter.md)・検証器 (calliope/verifier-v3。#138)。設計表: [problems-hard.md](../plans/problems-hard.md) (v3。#170)。v2 の設計表とテスト (32 問・16 種類) は git の履歴 (661e1af の親) に残る。**この表がそれを置き換える**。
+根拠: [design-v3.md](../design-v3.md) (main。#178) の §1.5 (問題の数・R-S5)・§2.3 (むずかしいの 20 行)・§2.7 (段・`tier-balance`)・§3.2 の **#140 の 1〜8** と「チケットの受け入れ条件の読み替え」・[requirements.md](../requirements.md) (第 3 版)・[charter.md](../charter.md)・検証器 (calliope/verifier-v3。#138)。設計表: [problems-hard.md](../plans/problems-hard.md) (v3。#170)。v2 の設計表とテスト (32 問・16 種類) は git の履歴 (`git show 35d6c9d:docs/plans/problems-hard.md`・`:src/data/problems-hard.test.ts`) に残る。**この表がそれを置き換える**。
 
 charter の方針どおり、問題データ (JSON) の中身は、ケース表ではなく**検証器を全問に当てて**確かめる。ここに置くのは、(1) 設計表そのものの約束 (#170)、(2) 検証器が見ない約束と、データを作る道具の約束 (#171)、(3) CI の約束 (#172)。
 
