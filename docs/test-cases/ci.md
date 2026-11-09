@@ -12,6 +12,7 @@ CI は実際に GitHub 上で回して確かめるのが本物の確認なので
 | C2 | 権限 | 最上位に `permissions:` がある。ファイル全体 (job の中の `permissions:` も含む) の権限の行が `contents: read` の 1 つだけ (`id-token: write` の追加・job への `contents: write`・`permissions: write-all` で赤)。`secrets.` の参照が無い | セキュリティ (設計 §8) |
 | C3 | job `check` の手順の並び | `npm ci` → `npm run typecheck` → `npm test` → `npm run verify:data` (問題データ全件の検証。Task #23) → `npm run build` → `npm run check:size` の順に出る | 状態遷移 (順序。設計 §7) |
 | C3b | `verify:data` の呼び方 | job `check` の `npm run verify:data` の行に `--require-complete` (値なし = 全難易度) がある。`=easy`・`=hard` の片方だけにしない | 異常系 (問題データの不足を警告で見逃さない。#26 の追加の受け入れ条件) |
+| C3c | `verify:data` のカード v3 の検査 (#140 の追加の受け入れ条件) | job `check` の `npm run verify:data` の行に `--require-cards=hard` (または全難易度の `--require-cards`) がある。`--require-cards=easy` だけにしない。`--require-complete` は付いたまま (C3b)。カードの検査 `card-*` の不足を警告で見逃さない | 異常系 (データの Task の完了時に致命にする約束。docs/test-cases/cards.md §11) |
 | C4 | Node の設定 | `actions/setup-node` を使い、`node-version: 22` と `cache: npm` がある (`package.json` の `engines` と整合) | 正常 |
 | C5 | job `e2e` の手順 | `npx playwright install --with-deps chromium` が `npm run test:e2e` より前にある。`check` とは別の job | 状態遷移 |
 | C6 | job `e2e` の失敗時 | `if: failure()` (または `if: ${{ !cancelled() }}`) の手順で、`playwright-report` を `actions/upload-artifact` に上げる | 異常系 (失敗の原因を後から見られる) |
