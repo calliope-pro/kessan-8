@@ -14,8 +14,12 @@ import argparse
 import json
 import os
 import random
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from profiles import BASE_YEAR, PROFILES  # noqa: E402  数字の係数 (gen.py と同じ)
+
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 
 # 台帳 v3 のやさしい 15 種類 (設計 §2.2)。(id, 段, 系統, 名前)
@@ -59,15 +63,35 @@ COMPANIES = [
 IDS = [c['company'] for c in COMPANIES]
 BY = {c['company']: c for c in COMPANIES}
 
-# E-02 を置ける会社: 増益なら営業利益率 8% 以下 (10 倍にした営業利益が売上高の 0.8 倍以下)、減益なら誰でも (1/10)。c09 は 8.0% で境目なので外す。
-# 5 社に固定する: 増益の基 3 社 (c03・c06・c07。営業利益率の目安 2.6〜5.0%) と減益の基 2 社 (c02・c10)。桁が増える見え方と減る見え方の両方を使う。
+# 営業利益率のゆらぎ (gen.py の _step: om = p.om + U(−0.004, +0.006))・売上高の伸び (p.growth の % の範囲) から、1 社 1 期の売上高・営業利益の取りうる範囲を導く。
+# 期までの期数 = fy − BASE_YEAR (基準年の前期から数える。gen.py の years = BASE_YEAR+1 …)。丸め (10 の倍数) の ±5 は営業利益の下限・上限に足す。
+OM_LO, OM_HI = -0.004, 0.006
+
+
+def ranges(c):
+    p = PROFILES[c['company']]
+    steps = c['fy'] - BASE_YEAR
+    lo, hi = p['growth']
+    sales_min = p['sales0'] * (1 + lo / 100) ** steps
+    sales_max = p['sales0'] * (1 + hi / 100) ** steps
+    return dict(
+        salesRange=[int(sales_min), int(sales_max)],
+        opRange=[int(sales_min * (p['om'] + OM_LO) - 5), int(sales_max * (p['om'] + OM_HI) + 5)],
+        omRange=[round(p['om'] + OM_LO, 4), round(p['om'] + OM_HI, 4)],
+    )
+
+
+for _c in COMPANIES:
+    _c.update(ranges(_c))
+
+# E-02 を置ける会社: 増益なら 10 倍にした営業利益が売上高の 0.8 倍以下 (営業利益率 8% 以下。設計 §2.2)、減益なら誰でも (1/10)。
+# 5 社に固定する: 増益の基 3 社 (c03・c06・c07) と減益の基 2 社 (c02・c10)。桁が増える見え方と減る見え方の両方を使う。c09 (営業利益率が最大 8.6%) は増益の基に使えない。
 E02_OK = ['c02', 'c03', 'c06', 'c07', 'c10']
 for _c in E02_OK:
-    assert BY[_c]['op'] == 'down' or BY[_c]['om'] <= 0.06, _c
-# 営業利益 (前期・当期) の整数部が必ず 4 桁以上の会社 (E-21 no-comma を営業利益の欄に当てられる。c02 は約 900、c09 は約 600 で 3 桁)
-OP4 = ['c01', 'c03', 'c04', 'c05', 'c06', 'c07', 'c08', 'c10']
-# 売上高が必ず 5 桁以上の会社 (E-21 comma-shift を売上高の欄に当てられる。c09 は約 8,000 で 4 桁)
-SALES5 = [c for c in IDS if c != 'c09']
+    assert BY[_c]['op'] == 'down' or BY[_c]['omRange'][1] <= 0.08, _c
+# 営業利益の整数部が必ず 4 桁以上の会社 (E-21 no-comma を営業利益の欄に当てられる) = 下限が 1,000 以上。売上高が必ず 5 桁以上の会社 (comma-shift を売上高の欄に) = 下限が 10,000 以上。
+OP4 = [c['company'] for c in COMPANIES if c['opRange'][0] >= 1000]
+SALES5 = [c['company'] for c in COMPANIES if c['salesRange'][0] >= 10000]
 
 
 def solve(seed=0):
@@ -188,7 +212,7 @@ def build(seed=0):
         cid = c['company']
         n += 1
         base_id = f'easy-{n:03d}'
-        problems.append(dict(id=base_id, company=cid, fiscalYear=c['fy'], month=c['month'], kind=None, tier=None, op=c['op'], omTarget=c['om']))
+        problems.append(dict(id=base_id, company=cid, fiscalYear=c['fy'], month=c['month'], kind=None, tier=None, op=c['op'], omTarget=c['om'], salesRange=c['salesRange'], opRange=c['opRange'], omRange=c['omRange']))
         for k, nth in sorted(per_company[cid], key=lambda kn: (TIER[kn[0]], [x[0] for x in KINDS].index(kn[0]))):
             n += 1
             problems.append(dict(id=f'easy-{n:03d}', company=cid, fiscalYear=c['fy'], month=c['month'], kind=k, tier=TIER[k], base=base_id, edit=edit_for(k, cid, nth)))

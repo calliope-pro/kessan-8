@@ -26,6 +26,9 @@ interface Entry {
   tier: 1 | 2 | 3 | null;
   op?: 'up' | 'down';
   omTarget?: number;
+  salesRange?: [number, number];
+  opRange?: [number, number];
+  omRange?: [number, number];
   base?: string;
   edit?: Edit;
 }
@@ -97,19 +100,20 @@ describe('やさしいの設計表 v3 (spec-v3.json)', () => {
     expect(normals.filter((p) => p.op === 'up').length).toBeGreaterThanOrEqual(CLAIM_DOWN_MIN_COMPANIES.operatingIncome);
   });
 
-  it('SP7: E-02 は、増益の基なら営業利益率の目安が 6% 以下 (10 倍にした営業利益が売上高の 0.8 倍以下に収まる余裕。8% の境目の手前)、減益の基なら 1/10', () => {
+  it('SP7: E-02 は、増益の基なら営業利益率が取りうる最大 (omRange の上限 = profiles の目安 + gen.py のゆらぎ +0.6 ポイント) でも 8% 以下 (10 倍にした営業利益が売上高の 0.8 倍以下)、減益の基なら 1/10', () => {
     for (const p of anomalies.filter((a) => a.kind === 'E-02')) {
       const base = normals.find((n) => n.id === p.base);
       if (base?.op === 'up') {
         expect(p.edit?.factor, p.id).toBe(10);
-        expect(base.omTarget as number, p.id).toBeLessThanOrEqual(0.06);
+        expect(base.omRange?.[1] as number, p.id).toBeLessThanOrEqual(0.08);
       } else expect(p.edit?.factor, p.id).toBe(0.1);
     }
   });
 
   it('SP8: 種類ごとの edit が、設計 §1.6・§2.2 の「当ててよい欄」の中にある', () => {
-    const OP4 = new Set(['c01', 'c03', 'c04', 'c05', 'c06', 'c07', 'c08', 'c10']); // 営業利益の整数部が必ず 4 桁以上 (profiles.py の営業利益の目安 ≥ 約 1,000 百万円)
-    const SALES5 = new Set(companies.filter((c) => c !== 'c09')); // 売上高の整数部が必ず 5 桁以上 (c09 は約 8,000 百万円)
+    // 営業利益の整数部が必ず 4 桁以上 (opRange の下限 ≥ 1,000)・売上高の整数部が必ず 5 桁以上 (salesRange の下限 ≥ 10,000)。範囲は spec-v3.json にある (make-spec-v3.py が profiles.py の係数から導く)
+    const OP4 = new Set(normals.filter((n) => (n.opRange?.[0] ?? 0) >= 1000).map((n) => n.company));
+    const SALES5 = new Set(normals.filter((n) => (n.salesRange?.[0] ?? 0) >= 10000).map((n) => n.company));
     for (const p of anomalies) {
       const e = p.edit as Edit;
       const base = normals.find((n) => n.id === p.base) as Entry;
@@ -170,6 +174,14 @@ describe('やさしいの設計表 v3 (spec-v3.json)', () => {
     expect(m).not.toBeNull();
     const table = execFileSync('python3', [MAKE, '--table'], { cwd: root, encoding: 'utf-8' }).trim();
     expect((m as RegExpExecArray)[1]).toBe(table);
+  });
+
+  it('SP14: 金額は 6 桁以内 (導いた上限): 売上高の最大 < 1,000,000。E-02 の増益の基は 10 倍にした営業利益の最大も < 1,000,000。営業利益は売上高より小さい', () => {
+    for (const n of normals) {
+      expect(n.salesRange?.[1] as number, n.id).toBeLessThan(1_000_000);
+      expect((n.opRange?.[1] as number) * 10, n.id).toBeLessThan(1_000_000);
+      expect(n.opRange?.[1] as number, n.id).toBeLessThan(n.salesRange?.[0] as number);
+    }
   });
 
   it('SP13: 種類 × 会社の表 (種類 15 × 社 10) の数が合う。1 社が持つ異変の問題は 7 か 8 問 (段 1 が 5・段 2 が 1〜2・段 3 が 1)', () => {

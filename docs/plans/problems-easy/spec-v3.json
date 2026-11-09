@@ -14,7 +14,19 @@
    "kind": null,
    "tier": null,
    "op": "up",
-   "omTarget": 0.09
+   "omTarget": 0.09,
+   "salesRange": [
+    34000,
+    44030
+   ],
+   "opRange": [
+    2918,
+    4231
+   ],
+   "omRange": [
+    0.086,
+    0.096
+   ]
   },
   {
    "id": "easy-002",
@@ -133,7 +145,19 @@
    "kind": null,
    "tier": null,
    "op": "down",
-   "omTarget": 0.042
+   "omTarget": 0.042,
+   "salesRange": [
+    20706,
+    26950
+   ],
+   "opRange": [
+    781,
+    1298
+   ],
+   "omRange": [
+    0.038,
+    0.048
+   ]
   },
   {
    "id": "easy-011",
@@ -241,7 +265,19 @@
    "kind": null,
    "tier": null,
    "op": "up",
-   "omTarget": 0.036
+   "omTarget": 0.036,
+   "salesRange": [
+    137214,
+    157304
+   ],
+   "opRange": [
+    4385,
+    6611
+   ],
+   "omRange": [
+    0.032,
+    0.042
+   ]
   },
   {
    "id": "easy-019",
@@ -350,7 +386,19 @@
    "kind": null,
    "tier": null,
    "op": "up",
-   "omTarget": 0.14
+   "omTarget": 0.14,
+   "salesRange": [
+    11461,
+    15173
+   ],
+   "opRange": [
+    1553,
+    2220
+   ],
+   "omRange": [
+    0.136,
+    0.146
+   ]
   },
   {
    "id": "easy-027",
@@ -470,7 +518,19 @@
    "kind": null,
    "tier": null,
    "op": "down",
-   "omTarget": 0.11
+   "omTarget": 0.11,
+   "salesRange": [
+    42000,
+    52907
+   ],
+   "opRange": [
+    4447,
+    6142
+   ],
+   "omRange": [
+    0.106,
+    0.116
+   ]
   },
   {
    "id": "easy-036",
@@ -574,7 +634,19 @@
    "kind": null,
    "tier": null,
    "op": "up",
-   "omTarget": 0.05
+   "omTarget": 0.05,
+   "salesRange": [
+    84707,
+    113374
+   ],
+   "opRange": [
+    3891,
+    6353
+   ],
+   "omRange": [
+    0.046,
+    0.056
+   ]
   },
   {
    "id": "easy-044",
@@ -694,7 +766,19 @@
    "kind": null,
    "tier": null,
    "op": "up",
-   "omTarget": 0.026
+   "omTarget": 0.026,
+   "salesRange": [
+    53647,
+    67887
+   ],
+   "opRange": [
+    1175,
+    2177
+   ],
+   "omRange": [
+    0.022,
+    0.032
+   ]
   },
   {
    "id": "easy-053",
@@ -799,7 +883,19 @@
    "kind": null,
    "tier": null,
    "op": "down",
-   "omTarget": 0.17
+   "omTarget": 0.17,
+   "salesRange": [
+    25227,
+    31851
+   ],
+   "opRange": [
+    4182,
+    5610
+   ],
+   "omRange": [
+    0.166,
+    0.176
+   ]
   },
   {
    "id": "easy-061",
@@ -919,7 +1015,19 @@
    "kind": null,
    "tier": null,
    "op": "up",
-   "omTarget": 0.08
+   "omTarget": 0.08,
+   "salesRange": [
+    7600,
+    9842
+   ],
+   "opRange": [
+    572,
+    851
+   ],
+   "omRange": [
+    0.076,
+    0.086
+   ]
   },
   {
    "id": "easy-070",
@@ -1029,7 +1137,19 @@
    "kind": null,
    "tier": null,
    "op": "down",
-   "omTarget": 0.018
+   "omTarget": 0.018,
+   "salesRange": [
+    188238,
+    238203
+   ],
+   "opRange": [
+    2630,
+    5721
+   ],
+   "omRange": [
+    0.014,
+    0.024
+   ]
   },
   {
    "id": "easy-078",
