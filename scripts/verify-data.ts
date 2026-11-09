@@ -15,7 +15,7 @@ if (requireArg !== undefined && requireArg.includes('=') && !['easy', 'hard'].in
   console.error('使いかた: --require-complete[=easy|hard] (値は easy か hard)');
   process.exit(2);
 }
-// --require-cards (全難易度) / --require-cards=easy / =hard: カード v2 の検査 (shortfalls の card-*・anomaly-min-deviation) を致命にする。--require-complete の致命には数えない
+// --require-cards (全難易度) / --require-cards=easy / =hard: カード v3 の検査 (shortfalls の card-*・anomaly-min-deviation) を致命にする。--require-complete の致命には数えない
 const cardsArg = args.find((a) => a === '--require-cards' || a.startsWith('--require-cards='));
 const cardsScope = cardsArg?.split('=')[1];
 if (cardsArg !== undefined && cardsArg.includes('=') && !['easy', 'hard'].includes(cardsScope ?? '')) {

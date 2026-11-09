@@ -150,7 +150,7 @@ describe('npm run verify:data', () => {
   });
 
   // ケース表 docs/test-cases/cards.md §6 (L1〜L3 の cards)
-  describe('--require-cards (カード v2)', () => {
+  describe('--require-cards (カード v3)', () => {
     const hidden = () => [normalVariant('easy-001', 'easy', 'fixture-c01'), anomalyVariant('easy-002', 'easy', 'fixture-c01')];
     it('Lc1: card-* の shortfalls があっても --require-complete は致命にしない (pool-size だけの致命は今のまま)', () => {
       const r = run('--dir', dataDir({ problems: hidden() }));

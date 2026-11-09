@@ -19,17 +19,17 @@
 | `cardCells(card)` | 見えるセルの集合 = 全欄の `reads`・`itemKey`・`frame.reads`・`headline.reads`・`footer.reads`・`irFrame.reads` + 場所のセル `card.0.<欄の key>` (全欄・`headline`・`frame`・`frame.period`・`period`・`irHead`。後者 3 つは §1.1 の表のとおり有るとき) |
 | `placeSlots(card, place)` | 異変の場所 (`AnomalyPlace`) → その場所を見せる欄の key の配列 (R-D3。`cardEdits` の問題にはテンプレートのカードを渡す)。パスの場所は `reads` が場所と同じか場所の親 (入れ物)・子、`itemKey` の場所は欄の `itemKey` が同じ、`{doc:'card', card:0, slot}` はその key (欄・見出し語・枠・期末日・資料 2 の表題が有るとき) |
 | `cardRelationIssues(card)` (`src/verifier/cards.ts`) | `Card` → `{ check: 'R-dir'｜'R-margin'｜'R-range'｜'R-ne'｜'R-lt'; message }[]` (落ちた検査。空 = 整合)。**決めた**: 設計 §3.2 #138-3「落ちた検査の名前を返す」を、この戻り値にした。引数は `Card` だけ (v2 の `ctx`・`irUnit`・`statements` は要らない。見出し語の向きは `Card.headline` と数字から照らす) |
-| `relationAllowed(problem, kind)` | 異変の問題・種類 → その種類で落ちてよい `card-relation` の検査の名前 (§6)。種類ごとの固定の集合は `anomaly-kinds.json` の `relationChecks` (任意。無ければ空) に持ち、`drop` の編集は「落とした欄を読む検査」を足す。**決めた**: 設計の表 (§1.2) をデータの 1 か所 (種類の定義) に置き、コードに種類の ID を埋めない |
+| `relationAllowed(problem, kind)` | 異変の問題・種類 → その種類で落ちてよい `card-relation` の検査の名前 (§6)。種類ごとの固定の集合は `anomaly-kinds.json` の `relationChecks` (任意。無ければ空) に持ち、**`drop` の種類 (`editOp` = `drop`。E-19・H-31) の `drop` の編集だけ**「落とした欄を読む検査」を足す (dup の種類などに drop の問題が来ても許さない。包括レビュー N1)。**決めた**: 設計の表 (§1.2) をデータの 1 か所 (種類の定義) に置き、コードに種類の ID を埋めない |
 | `cardStructureIssues(card)` | `Card` → 欄の並びが形の定義と違う・数字や文の数が上限を超える・見出し語が出ていない、の文の配列。`cardLimitIssues(card, allowance?)`: 上限だけ (§3) |
 | `cardTextLengthIssues(card)` | 文欄の `text` が 40 字を超える欄の文 |
-| `cardEditIssues(problem, company)` | `cardEdits` が、§2.2 の op ごとに当ててよい欄に当たっているかの文 (K11 の v3) |
+| `cardEditIssues(problem, company, kinds?)` | `cardEdits` が、§2.2 の op ごとに当ててよい欄に当たっているかの文 (K11 の v3)。`kinds` を渡すと、種類の `editOp` と編集の op が同じかも見る (K11k) |
 | `displayChanges(problem, base, company)` | 検査 5: `places` の欄の表示が基の同じ欄と違うか |
 | `cardVisibility(problem, company, kinds, result?, base?)` | 異変の問題 → `{ missingPlaces: string[]; v2: boolean; v3: boolean｜null }` (V1 を満たさない場所・V2・検査 5)。`isVisible` = `missingPlaces` が空 かつ `v2` かつ `v3 !== false`。正常な問題は常に見える |
 | `doubleDiscrepancies(problem, company, kinds, result?, base?)` | 異変の問題 → 種類の `primaryRules` の外で「カードに収まる」hard の違反の規則の一覧 (空 = カードの上の食い違いは 1 つだけ) |
 | `deviationIssues(problem, company)` | §9。種類ごとの最小のずれ |
 | `verifyDataset` の追加 | §7 |
 | 規則 (`HARD_RULE_IDS` に足す。どれも問題だけを見る) | `card-slots`・`card-unit`・`card-format`・`card-headline`・`card-period`・`xdoc-seg-names` (v2 から。直す所は §4)、**新規** `card-sign`・`card-column-suffix`・`card-digits`・`card-date-valid` |
-| 型 (`types.ts`) | `ShapeId`・`SHAPE_IDS` を消す。`CardEdit` = §2.1。`AnomalyPlace` の card の場所 = `{ doc: 'card'; card: 0; slot: string }` (**決めた**: `shape` を捨てる。場所のセル = `card.0.<slot>`)。`AnomalyKind.relationChecks?: ('R-dir'｜'R-margin'｜'R-range'｜'R-ne'｜'R-lt')[]` と `AnomalyKind.ledger?: 'v3'` (台帳 v3 の種類の印。§6.4) を足す。`Anomaly.base`・`changed` は今のまま |
+| 型 (`types.ts`) | `ShapeId`・`SHAPE_IDS` を消す。`CardEdit` = §2.1。`AnomalyPlace` の card の場所 = `{ doc: 'card'; card: 0; slot: string }` (**決めた**: `shape` を捨てる。場所のセル = `card.0.<slot>`)。`AnomalyKind.relationChecks?: ('R-dir'｜'R-margin'｜'R-range'｜'R-ne'｜'R-lt')[]` と `AnomalyKind.ledger?: 'v3'` (台帳 v3 の種類の印。§6.4)・`AnomalyKind.editOp?: CardEdit['op']` (その種類が使う cardEdits の op。§2.2 の K11k・§6.4 の KD6) を足す。`Anomaly.base`・`changed` は今のまま |
 
 **基準問題** (`src/verifier/fixtures/`): **B** = `normal-b.problem.json` (億円・セグメント 3)、**A** = `normal.problem.json` (百万円・セグメント 2)。どちらも `difficulty: 'easy'` で入っているので、むずかしいの形は `{ ...B, difficulty: 'hard' }` で使う。**v3 の基準は B** (IR が億円。A は IR が百万円で、R-D7 に反するデータの例として §7 の DS11 だけに使う)。以下の値は **測った** (fixture を読んだ値。再現: `src/verifier/fixtures/*.json`)。
 
@@ -164,7 +164,7 @@ type CardEdit =
 | K11e | `glyph` | 数字を含む欄 | 文欄・`at` が数字の文字でない・範囲外。**`cardEditIssues` が文を返し (errors の `card-edit-op`)、`deriveCards` も `RangeError` を投げる (両方)**。`format` の `comma-shift` が 5 桁未満 (DX2) も同じ (両方) |
 | K11f | `sign` | **値が正の金額の欄で、`card-sign` の対象 (売上高 `sales`・`ta`・`tlna`・`cash`・`arPrev`・`arCurr`・`cfEnd`・`irSales`・`irCashCur`・`irCashPrev`・`irDebtPrev` の 11 欄)** | 対象外 (`opPrev`・`opCurr`・`margin`・`pbt`・`cfStart`・`ocf`・`cfAr`・`irNetDebtPrev`)・値が 0 の欄 (無借金の `irDebtPrev`)・値が負の欄 |
 | K11g | `day` | `period` だけ | (型が `slot: 'period'`) |
-| K11h | `headline` | 元の語の組の外の語 (増益・減益 → `増収`・`減収`) | 組の中の語 (`減益`・`増益`) |
+| K11h | `headline` | **向きを変えない語だけ** (元の見出し語が増益 → `増収`、減益 → `減収`) | 向きが逆の語 (増益のカードに `減収`・減益のカードに `増収`。E-17 と同時に見える。包括レビュー B1)・組の中の語 (`減益`・`増益`)・元の見出し語が無い問題 |
 | K11i | `drop` | 数字の欄・文欄・`period`・資料 2 の欄 | `headline`・表題 (`frame`) (「何のカードか」が消える。見出し語の欠落は E-23 の語の違いと見え方が重なる) |
 | K11j | `unit` の語 | その欄の正常の語以外 (短信の欄 `百万円` → `億円`、IR の欄 `億円` → `百万円`) | その欄の正常の語と同じ (`sales` を `百万円` に。表示が変わらない) |
 
@@ -178,6 +178,8 @@ type CardEdit =
 | P4 | 入れ物の場所: むずかしい `{doc:'ir', path:'segments.items'}` → `['irSegs']`。`ir.segments.items.2` (欠けた要素) も `['irSegs']` |
 | P5 | `{doc:'ir', path:'header.companyName'}` → `['irHead']` (むずかしい)。やさしいは空 |
 | P6 | `{doc:'card', card:0, slot:K}` → `[K]` (K = 欄の key・`headline`・`frame`・`frame.period`・`period`・(むずかしいは) `irHead`)。形に無い K (`nope`・やさしいの `irSales`) → 空 |
+
+**K11k 種類と op の対応** (`kinds` を渡す。包括レビュー N1): 種類の `editOp` は E-19・H-31 = `drop`、E-22・H-33 = `dup`、E-21・H-32 = `format`、E-03・H-29 = `unit`、E-25・H-34 = `sign`、E-26 = `suffix`、E-27 = `glyph`、E-28 = `day`、E-23 = `headline`。`cardEdits` を持つ異変の問題が、種類の `editOp` と違う op (E-19 に `dup`・E-22 に `drop`)・`editOp` の無い種類・一覧に無い種類の問題なら文を返す。編集の無い問題・`kinds` を渡さないときは見ない。`verifyDataset` はこの文を errors の `card-edit-op` にする (DS20b)。
 
 ## 3. 構造・文字数 (`cardStructureIssues`・`cardTextLengthIssues`)
 
@@ -309,6 +311,7 @@ type CardEdit =
 | KD1 | **台帳 v3 の印 `ledger: 'v3'`**: やさしい = E-02・E-03・E-04・E-05・E-12・E-17 (既存) と E-19・E-21〜E-28 の新規 = **15 種類**。むずかしい = H-01・H-03・H-04・H-05・H-13・H-17・H-19〜H-24・H-28 (既存。H-19・H-20・H-21・H-22・H-23・H-24 を含む 13 種類) と H-29〜H-35 (新規) = **20 種類**。印の無い種類はそれ以外。データ検査: 印のある種類を `kind-shape` が受け入れ、印の値が `'v3'` 以外なら誤り (SE4) |
 | KD2 | **新しい種類** (id・系統・`primaryRules`。`allowedRules` = `primaryRules` + 既存の種類と同様に必要な規則 (`changed` を読む違反は `changed` の許容で通るので、足すのは主な規則だけ)): E-19 (appearance・`card-slots`)・E-21 (appearance・`card-format`)・E-22 (appearance・`card-slots`)・E-23 (appearance・`card-headline`)・E-24 (calculation・`ratio-operating-margin`)・E-25 (appearance・`card-sign`)・E-26 (appearance・`card-column-suffix`)・E-27 (appearance・`card-digits`)・E-28 (appearance・`card-date-valid`)・H-29 (card-form・`card-unit`)・H-30 (card-form・`label-spelling`)・H-31 (card-form・`card-slots`)・H-32 (card-form・`card-format`)・H-33 (card-form・`card-slots`)・H-34 (card-form・`card-sign`)・H-35 (cross-document・`header-company-name`)。`relationChecks`: E-23 = R-dir・E-24 = R-margin・R-lt。ほかの新しい種類は持たない (E-19・H-31 の `drop` は `drop` した欄を読む検査をコードで足す。RC6・AL7) |
 | KD3 | **既存の種類に足す** (N1): E-02 = `primaryRules`・`allowedRules` に `ratio-operating-margin` を足し、系統を `calculation` に (設計 §2.3)。`relationChecks` = R-margin・R-range。E-12 に `relationChecks` = R-margin。E-17 に R-dir。E-03 の `primaryRules`・`allowedRules` に `card-unit` を足す (v3 の `cardEdits` の `unit`。今の `unit-consistency`・`sign-consistency` は残す)。E-04・E-05 は足すものが無い (E-04 は `card-period` を持つ)。むずかしいの既存の種類は、`ledger` の印だけ |
+| KD6 | **`editOp`** (包括レビュー N1): E-03・E-19・E-21・E-22・E-23・E-25・E-26・E-27・E-28・H-29・H-31・H-32・H-33・H-34 が §2.2 の K11k の対応どおりの `editOp` を持ち、ほかの種類は持たない。`editOp` が op の名前 9 つ以外なら `kind-shape` の誤り (SE4) |
 | KD4 | `unknown-rule` (errors): 種類が参照する規則 ID はすべて `HARD_RULE_IDS` か `SOFT_RULE_IDS` にある (KD2 の `card-sign` などが規則に入っている)。`kind-primary-not-allowed`・`kind-no-primary` の検査は新しい種類も通る |
 | KD5 | **今のデータ** (`src/data`) に当てて、`errors` が 0 件のまま (E-02 の定義を足しても今の E-02 の問題の `expectedRules`・主な規則の検査が壊れない)。壊れるなら足さずに §10 と §13 の申し送りに書く |
 
@@ -349,6 +352,7 @@ type CardEdit =
 | DS17 | `card-double-discrepancy`・`anomaly-min-deviation`・`card-place-text`・`cash-scope` | `card-double-discrepancy` = `doubleDiscrepancies` ≠ 空 (問題ごと)。`anomaly-min-deviation` = `deviationIssues` ≠ 空 (§9)。`card-place-text` = 異変の `places` が `ir.statements.<N>.text` を指す (shortfalls。カードの文は claims から作り、`text` は読まない)。`cash-scope` (errors) = `notes.cashScope` が標準の名前と違う |
 | DS18 | 既存の維持 | `pool-size`・`both-sided-companies`・`family-balance` は今のまま (`stats` の形も)。`anomaly-ratio` は出さない |
 | DS20 | `card-edit-op` (errors) | `deriveCards` が `RangeError` を投げる `cardEdits` (形に無い欄・`comma-shift` が 5 桁未満・`glyph` の `at` が数字でない・見出し語に `drop` など) を持つ異変の問題 → `verifyDataset` は `RangeError` を握りつぶさず、`card-edit-op` を errors に出す (メッセージに `RangeError` の内容)。v2 は `card-invisible` (shortfalls) にしか出ず、注入の添字ずれが `--require-complete` を素通りした |
+| DS20b | `card-edit-op` (errors) | 種類の `editOp` と違う op の `cardEdits` (H-33 = dup の問題に drop)・`editOp` の無い種類の `cardEdits` → errors の `card-edit-op` (K11k。種類の取り違えを通さない) |
 | DS19 | 外すもの | `card-shape-companies`・`card-shape-both-sided`・`card-shape-kinds` (形ごとの検査)。コードは出ない |
 
 テスト: 小さな合成のデータ (会社 2〜3 社・問題 数件を、基準問題 B から作る) で、各コードが条件どおり出る・出ない (境界: DS4 は 40 字 → 出ない・41 字 → 出る、DS12 は「段 1 の問題を会社 a が 5 問・会社 b が 4 問」(差 1) → 出ない・「段 3 を a が 2 問・b が 0 問・ほか 1 問ずつ」 → 出る (0 問の会社を数える)・「会社 a が 5 問・会社 b が 3 問」(差 2) → 出る・「会社 a に段 1 が 5 問・段 3 が 1 問で、どの会社もそうなっている」 → 出ない (会社の中の差は見ない)、DS14 は 5 問 → 出ない・4 問 → 出る・印のある種類が 0 問 → 出る・印の無い種類が 3 問 → 出ない (数えない)・むずかしいの accounting の印のある種類は 7 問 → 出ない・5 問 → 出る)。実データ (`src/data`) には、`errors` が 0 件のまま (`card-structure`・`card-relation` を含む) で、shortfalls に `card-*` が出ること。測った件数を PR と §10 に書く。
@@ -360,7 +364,7 @@ type CardEdit =
 | SE1 | `cardEdits` の `op` が未知・`card` が 0 でない・`slot` が文字列でない・`style` が未知・`word` が `前期`/`当期` でない (`suffix`)・`day` が 32 でない・`at` が整数でない・`headline` に `word` が無い・未知のキー・**`shape` を持つ** (v2 の型。`swap` を含む) → 誤りを返す |
 | SE2 | 正しい `cardEdits` (DX1〜DX9)・`cardEdits` が 1 件の問題・`cardEdits` の無い問題 → 誤りなし |
 | SE3 | `AnomalyPlace` の card の場所 `{doc:'card', card:0, slot}` → 正しければ誤りなし。`shape` を持つ・`card` が 0 でない・`slot` が無い・`path` か `itemKey` を持つ・未知のキー → 誤り |
-| SE4 | `AnomalyKind.relationChecks` が 5 つの名前以外・配列でない → 誤り (`kindShapeErrors`)。`AnomalyKind.ledger` が `'v3'` 以外の値 (`'V3'`・`'v2'`・`true`)・文字列でない → 誤り。どちらも無い種類は誤りなし |
+| SE4 | `AnomalyKind.relationChecks` が 5 つの名前以外・配列でない → 誤り (`kindShapeErrors`)。`AnomalyKind.ledger` が `'v3'` 以外の値 (`'V3'`・`'v2'`・`true`)・文字列でない → 誤り。`AnomalyKind.editOp` が op の名前 9 つ以外 (`swap`・配列) → 誤り。どちらも無い種類は誤りなし |
 
 ## 9. 道具なしで気づける最小のずれ `deviationIssues` (**仕様** §2.8。M1〜M6 は v2 のまま、E-24・E-02 を足す)
 
