@@ -190,7 +190,7 @@ type CardEdit =
 | ST3 | `headline` が無いカード (主張が無い問題) → 文 (見出し語が出ていない) |
 | ST4 | `cardLimitIssues(カード)`: やさしいに数字の欄を 1 つ足す (5 つ) → 上限超えの文。むずかしいで `ir` の数字を 6 つにする・`notes` の文欄を 6 つにする → 超えの文。`cardLimitIssues(カード, 1)` (`dup` を持つ異変) では、やさしいの数字 5 は可・6 は不可 |
 | ST5 | `cardTextLengthIssues`: 文欄の `text` が 40 字ちょうど → 空、41 字 → 1 件。数字の欄は長さを見ない。文字数は `[...text].length` |
-| ST6 | **今の正常な問題**に当てる: `cardStructureIssues` は全問で空 (#180 で測り、PR に書く)。`cardTextLengthIssues` の今の件数は #180 で測り、データの課題の一覧 (§10) に書く。**見込み** (v2 の測定。ケース表 v2 の C8・S18): 正常な問題は **4 問・6 欄** (hard-023 方針注記 56・hard-024 後発事象 47 と IR 後発 47・hard-031 方針注記 56・hard-032 後発事象 49 と IR 後発 49。型の文 `irOcf` は 21 字以内)、異変の問題を含めると **6 問** (さらに hard-018 方針注記 56・hard-019 IR 後発 69)、やさしいは 0。v3 のカードの文欄は v2 の H3・H2 の文欄の和集合なので同じ数になるはず。ずれたら理由を §10 に書く |
+| ST6 | **今の正常な問題**に当てる: `cardStructureIssues` は全問で空 (#180 で測り、PR に書く)。`cardTextLengthIssues` の今の件数は #180 で測り、データの課題の一覧 (§10) に書く。**測った** (実装者と監視役が別々に、v3 のむずかしいの文欄 `audit`・`policyNote`・`subseq`・`segs`・`irSubseq` (null は `なし`)・`irSegs` を `src/data/problems/hard` の全 32 問と見本で `[...text].length > 40` として数えた。再現は「その 6 欄を全問で数える」。型の文 `irOcf` は 21 字以内で数えない): 正常な問題は **4 問・6 欄** (hard-023 `policyNote` 56・hard-024 `subseq` 47 と `irSubseq` 47・hard-031 `policyNote` 56・hard-032 `subseq` 49 と `irSubseq` 49)、異変の問題を含めると **6 問** (さらに hard-018 `policyNote` 56・hard-019 `irSubseq` 69)、見本は最長 25 字で 0。**やさしいは 0** (やさしいの問題 easy-006・015・019・020 にも 40 字を超える文はあるが、やさしいのカードに文欄が無いので数えない)。#180 の実装の数がこれと違えば、理由を §10 に書く |
 
 ## 4. 検証器の規則 (形のずれ。問題に `cardEdits` が付くと落ちる。v2 の K1〜K6 の直しと、新規 4 つ)
 
@@ -341,7 +341,7 @@ type CardEdit =
 | DS9 | `claims-count` (errors) | 1 問の中で **`operatingIncome`・`operatingCashFlow` の主張がちょうど 1 つ**でない (0 個・2 個以上)。問題 × metric ごとに 1 件。**`netSales` は数えない** (R-D5)。異変の問題・正常な問題・見本の全部 |
 | DS10 | `card-ir-unit` (shortfalls。R-D7) | IR の単位が億円でない問題 (`ir.header.unit` ≠ `億円`。問題ごとに 1 件)・`companies.json` の `irUnit` が `億円` でない会社 (会社ごとに 1 件。**今は 5 社**: c03・c05・c06・c08・c10 が億円で、c01・c02・c04・c07・c09 が百万円。設計 §1.4・**測った**: `companies.json`) |
 | DS11 | 基準問題 A (百万円の IR) | `card-ir-unit` の shortfall が出る・`card-unit` (規則) は落ちない (K2・K12) |
-| DS12 | `card-tier-balance` (shortfalls。設計 §2.7・§3.2 #138-5) | **段ごとに、会社どうしの差が 1 問以内** (設計 §2.7・§1.5「各社が持つ異変の問題の数が、段ごとに 1 問以内の差」。段 t について、各社が持つ段 t の異変の問題の数の最大 − 最小 ≤ 1。段 1・2・3 のそれぞれで当てる。**1 社の中の段どうしの差ではない**: 設計の推奨のプールは 1 社に段 1 が 5 問・段 3 が 1 問で、会社の中の差は 4 になる。段を持つ異変の問題だけ数える。違反した段と会社を列挙して 1 件) |
+| DS12 | `card-tier-balance` (shortfalls。設計 §2.7・§3.2 #138-5) | **段ごとに、会社どうしの差が 1 問以内** (「各社」は `companies.json` の全社 = DS6 と同じ会社の集合。**その段の問題を 1 問も持たない会社も 0 問として数える**。持つ会社だけで数えると、段 3 の 10 問を a に 2 問・b に 0 問・ほか 1 問ずつ置いたとき最大 2 − 最小 1 = 1 で通るが、本当の差は 2 で、`draw` が段 3 の枠で b を引くと異変が出ない偏りになる。設計 §2.7・§1.5「各社が持つ異変の問題の数が、段ごとに 1 問以内の差」。段 t について、各社が持つ段 t の異変の問題の数の最大 − 最小 ≤ 1。段 1・2・3 のそれぞれで当てる。**1 社の中の段どうしの差ではない**: 設計の推奨のプールは 1 社に段 1 が 5 問・段 3 が 1 問で、会社の中の差は 4 になる。段を持つ異変の問題だけ数える。違反した段と会社を列挙して 1 件) |
 | DS13 | `card-normal-tier` (shortfalls) | 正常な問題が `tier` を持つ (問題ごとに 1 件) |
 | DS14 | `card-kind-count` (shortfalls) | **数える種類 = `anomaly-kinds.json` の `ledger: 'v3'` の印を持つ種類** (§6.4。台帳 v3 のやさしい 15・むずかしい 20。`anomaly-kinds.json` には台帳から外れた種類 (E-01・E-06〜E-11・E-13〜E-16・H-02・H-06〜H-12・H-14〜H-16・H-18) が残るが、**印の無い種類は数えない**)。難易度の印のある種類ごとに、異変の問題の数が 5 問でない (むずかしいの会計 (accounting) と資料間 (cross-document) の印のある 11 種類は 7 問でない。**0 問も出る**。種類を列挙して 1 件)。`card-kind-companies` = 印のある種類ごとに、その種類の異変の問題を持つ会社が 5 社未満 (0 問を含む。種類を列挙して 1 件)。印の無い種類の問題は、この 2 つの数え方に入らない (印の無い種類の問題が残っていても出ない) |
 | DS15 | `card-pool-size` (shortfalls) | 難易度の問題数が やさしい 85・むずかしい 132 でない (設計 §1.5。数は 15 × 5 + 10 と 11 × 7 + 9 × 5 + 10 で、DS14 の数え方の和 + 正常 10。印の無い種類の問題は含めない)。**`pool-size` (25 問。要件) は今のまま** (`--require-complete` の致命。85・132 を入れると今のデータで CI が赤になる) |
@@ -351,7 +351,7 @@ type CardEdit =
 | DS20 | `card-edit-op` (errors) | `deriveCards` が `RangeError` を投げる `cardEdits` (形に無い欄・`comma-shift` が 5 桁未満・`glyph` の `at` が数字でない・見出し語に `drop` など) を持つ異変の問題 → `verifyDataset` は `RangeError` を握りつぶさず、`card-edit-op` を errors に出す (メッセージに `RangeError` の内容)。v2 は `card-invisible` (shortfalls) にしか出ず、注入の添字ずれが `--require-complete` を素通りした |
 | DS19 | 外すもの | `card-shape-companies`・`card-shape-both-sided`・`card-shape-kinds` (形ごとの検査)。コードは出ない |
 
-テスト: 小さな合成のデータ (会社 2〜3 社・問題 数件を、基準問題 B から作る) で、各コードが条件どおり出る・出ない (境界: DS4 は 40 字 → 出ない・41 字 → 出る、DS12 は「段 1 の問題を会社 a が 5 問・会社 b が 4 問」(差 1) → 出ない・「会社 a が 5 問・会社 b が 3 問」(差 2) → 出る・「会社 a に段 1 が 5 問・段 3 が 1 問で、どの会社もそうなっている」 → 出ない (会社の中の差は見ない)、DS14 は 5 問 → 出ない・4 問 → 出る・印のある種類が 0 問 → 出る・印の無い種類が 3 問 → 出ない (数えない)・むずかしいの accounting の印のある種類は 7 問 → 出ない・5 問 → 出る)。実データ (`src/data`) には、`errors` が 0 件のまま (`card-structure`・`card-relation` を含む) で、shortfalls に `card-*` が出ること。測った件数を PR と §10 に書く。
+テスト: 小さな合成のデータ (会社 2〜3 社・問題 数件を、基準問題 B から作る) で、各コードが条件どおり出る・出ない (境界: DS4 は 40 字 → 出ない・41 字 → 出る、DS12 は「段 1 の問題を会社 a が 5 問・会社 b が 4 問」(差 1) → 出ない・「段 3 を a が 2 問・b が 0 問・ほか 1 問ずつ」 → 出る (0 問の会社を数える)・「会社 a が 5 問・会社 b が 3 問」(差 2) → 出る・「会社 a に段 1 が 5 問・段 3 が 1 問で、どの会社もそうなっている」 → 出ない (会社の中の差は見ない)、DS14 は 5 問 → 出ない・4 問 → 出る・印のある種類が 0 問 → 出る・印の無い種類が 3 問 → 出ない (数えない)・むずかしいの accounting の印のある種類は 7 問 → 出ない・5 問 → 出る)。実データ (`src/data`) には、`errors` が 0 件のまま (`card-structure`・`card-relation` を含む) で、shortfalls に `card-*` が出ること。測った件数を PR と §10 に書く。
 
 ## 8. 型の検証 `shapeErrors` (K13)
 
@@ -360,7 +360,7 @@ type CardEdit =
 | SE1 | `cardEdits` の `op` が未知・`card` が 0 でない・`slot` が文字列でない・`style` が未知・`word` が `前期`/`当期` でない (`suffix`)・`day` が 32 でない・`at` が整数でない・`headline` に `word` が無い・未知のキー・**`shape` を持つ** (v2 の型。`swap` を含む) → 誤りを返す |
 | SE2 | 正しい `cardEdits` (DX1〜DX9)・`cardEdits` が 1 件の問題・`cardEdits` の無い問題 → 誤りなし |
 | SE3 | `AnomalyPlace` の card の場所 `{doc:'card', card:0, slot}` → 正しければ誤りなし。`shape` を持つ・`card` が 0 でない・`slot` が無い・`path` か `itemKey` を持つ・未知のキー → 誤り |
-| SE4 | `AnomalyKind.relationChecks` が 5 つの名前以外・配列でない → 誤り (`kindShapeErrors`)。無い種類は誤りなし |
+| SE4 | `AnomalyKind.relationChecks` が 5 つの名前以外・配列でない → 誤り (`kindShapeErrors`)。`AnomalyKind.ledger` が `'v3'` 以外の値 (`'V3'`・`'v2'`・`true`)・文字列でない → 誤り。どちらも無い種類は誤りなし |
 
 ## 9. 道具なしで気づける最小のずれ `deviationIssues` (**仕様** §2.8。M1〜M6 は v2 のまま、E-24・E-02 を足す)
 
