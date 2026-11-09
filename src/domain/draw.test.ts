@@ -193,6 +193,15 @@ describe('履歴と見つけた種類', () => {
     }
   });
 
+  it('DW15b: 会社の並びも、見つけた種類を後回しにする — 種類 A だけの会社 8 社と種類 B だけの会社 8 社で、見つけた種類 = {B} なら、8 枠とも A の会社 (c01〜c08)', () => {
+    const pool = buildPool('easy', range(1, 16), (c) => [c <= 8 ? { tag: 'a', kind: 'A' } : { tag: 'b', kind: 'B' }]);
+    for (const seed of seeds(50)) {
+      const rs = run(pool, 'easy', seed, { ...anomaliesOnly, foundKinds: ['B'] });
+      expect(rs.map(kindOf), `seed ${seed}`).toEqual(Array(8).fill('A'));
+      expect(rs.every((r) => companyNumber(r) <= 8)).toBe(true);
+    }
+  });
+
   it('DW16: 見つけた種類が全種類でも例外にならない (除外でなく後回し)', () => {
     for (const seed of seeds(50)) expect(run(kindPool, 'easy', seed, { ...anomaliesOnly, foundKinds: ['A', 'B'] })).toHaveLength(8);
   });
