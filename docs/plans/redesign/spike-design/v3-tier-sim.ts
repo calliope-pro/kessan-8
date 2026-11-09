@@ -69,6 +69,16 @@ for (const [name, kinds, count] of [['やさしい', EASY, () => 5], ['むずか
   }
 }
 
+// 種類の出方の検査 (R-S6 の置き換え。設計 v3 §2.7・§3.2 #155-3 (c)。#174 包括レビュー N1): 累積・推奨のプールで、枠の群ごとに「異変の枠で出る種類の最大の割合 ÷ 一様の割合」を、見る対象で数えた値と ID で数えた値で出す。
+// 検査の定義は「一様の割合の 1.5 倍以内」。むずかしいは見る対象で数えると、等しいはずの 2 つの数字 (H-01・H-03・H-04 を 1 つにまとめる) が 3 ID 分の割合になって 1.5 倍を超えるので、ID で数える。
+for (const [name, kinds, count] of [['やさしい', EASY, () => 5], ['むずかしい', HARD, (k: string) => (HARD_PRIMARY.has(k) ? 7 : 5)]] as const) {
+  const obj = new Map(kinds.map(([k, , o]) => [k, o])); const pl = pool([...kinds], count);
+  const byId = GROUPS.map(() => new Map<string, number>()), byObj = GROUPS.map(() => new Map<string, number>()); const tot = GROUPS.map(() => 0);
+  for (let seed = 1; seed <= 10000; seed++) draw(pl, mulberry32(seed), true).forEach((p, slot) => { if (p.kind === null) return; const gi = GROUPS.findIndex(([, ss]) => ss.includes(slot)); byId[gi]!.set(p.kind, (byId[gi]!.get(p.kind) ?? 0) + 1); const o = obj.get(p.kind)!; byObj[gi]!.set(o, (byObj[gi]!.get(o) ?? 0) + 1); tot[gi]!++; });
+  const line = (m: Map<string, number>, gi: number) => { const top = Math.max(...m.values()) / tot[gi]!; return `${m.size} 種で最多 ${(top * 100).toFixed(1)}% = 一様 (${(100 / m.size).toFixed(1)}%) の ${(top * m.size).toFixed(2)} 倍`; };
+  GROUPS.forEach(([g], gi) => console.log(`${name} 累積 ${g}: 見る対象で数える: ${line(byObj[gi]!, gi)} / ID で数える: ${line(byId[gi]!, gi)}`));
+}
+
 if (DEBUG) { const pl = pool([...EASY], () => 5); const c = new Map<string, number>(); let tot = 0; for (let seed = 1; seed <= 10000; seed++) { const ps = draw(pl, mulberry32(seed), true); [2, 3, 4].forEach((sl) => { const p = ps[sl]!; if (p.kind) { c.set(p.kind, (c.get(p.kind) ?? 0) + 1); tot++; } }); } console.log([...c.entries()].sort().map(([k, v]) => `${k} ${(v / tot * 100).toFixed(1)}%`).join(' / ')); }
 
 // ---- 別の道 (§3.2 #155・§3.4 の問 4 (ii)): draw を「種類を先に選ぶ」に変えて、種類ごとに 2 問・2 社 (やさしい 34 問・むずかしい 61 問) にしたとき ----

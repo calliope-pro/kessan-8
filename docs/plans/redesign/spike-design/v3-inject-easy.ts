@@ -53,23 +53,36 @@ for (const dir of ['easy', 'hard']) {
 }
 
 // (2) 数字・文を変える種類の注入
-type Recipe = { kind: string; label: string; primary: string[]; make: (q: any) => any | null; min?: (b: any, q: any) => string };
+// card-relation の関係 3 つ (設計 v3 §1.2。PR #157 の cardRelationIssues に足す): r1 = ③ ÷ ② が [0.5, 2] の外・r2 = ③ = ②・r3 = ③ ≥ ① (③ は ① より小さい)
+const relBroken = (q: any): string[] => {
+  const s1 = gv(q, `${IS}.current.netSales`), o0 = gv(q, `${IS}.previous.operatingIncome`), o1 = gv(q, `${IS}.current.operatingIncome`);
+  const r: string[] = []; const ratio = o1 / o0;
+  if (!(ratio >= 0.5 && ratio <= 2)) r.push('r1'); if (o1 === o0) r.push('r2'); if (!(o1 < s1)) r.push('r3');
+  return r;
+};
+// rel = その種類の主な手がかりとして card-relation の関係が落ちてよいもの (E-02 は r1・E-24 は r3)。ほかの関係が落ちたら、遊び手に 2 つ目の手がかりが見える二重の食い違い
+type Recipe = { kind: string; label: string; primary: string[]; make: (q: any) => any | null; rel?: string[]; min?: (b: any, q: any) => string };
 // 科目名の規則 (label-spelling) の違反の paths は項目キー。形にその項目キーの欄があれば形に載る
 const SHOWN_KEYS = [T('incomeStatement.netSales'), T('incomeStatement.operatingIncome'), T('summary.operatingMargin')];
 const flip = (q: any) => { for (const s of q.ir.statements) for (const c of s.claims) if (c.metric === 'operatingIncome') c.direction = c.direction === 'up' ? 'down' : 'up'; return q; };
 const RECIPES: Recipe[] = [
   { kind: 'E-17', label: '営業利益の主張の向きを逆にする (見出し語が数字と逆)', primary: ['claims-direction'], make: (b) => flip(clone(b)) },
   { kind: 'E-12', label: '営業利益率を 2.2 倍にする (道具なしで気づける 2 倍以上)', primary: ['ratio-operating-margin'], make: (b) => { const q = clone(b); sv(q, 'summary.operatingMargin', Math.round(gv(b, 'summary.operatingMargin') * 2.2 * 10) / 10); return q; } },
-  { kind: 'E-02', label: '当期の営業利益を 10 倍 (増益) か 1/10 (減益) にする。再計算しない', primary: ['ratio-operating-margin'], make: (b) => { const q = clone(b); const k = `${IS}.current.operatingIncome`; const up = gv(b, k) > gv(b, `${IS}.previous.operatingIncome`); sv(q, k, up ? gv(b, k) * 10 : Math.round(gv(b, k) / 10)); return q; } },
+  // 無条件に 10 倍すると、営業利益率が 8% を超える基では ③ が ① を超え、E-24 の見え方も出る (#174 包括レビュー B1)。採用は、10 × ③ ≤ 0.8 × ① の基だけ
+  { kind: 'E-02 (旧: 基を限らない)', label: '当期の営業利益を 10 倍 (増益) か 1/10 (減益) にする。再計算しない', primary: ['ratio-operating-margin'], rel: ['r1'], make: (b) => { const q = clone(b); const k = `${IS}.current.operatingIncome`; const up = gv(b, k) > gv(b, `${IS}.previous.operatingIncome`); sv(q, k, up ? gv(b, k) * 10 : Math.round(gv(b, k) / 10)); return q; } },
+  { kind: 'E-02 (採用: 増益は 10×③ ≤ 0.8×① の基だけ)', label: '当期の営業利益を 10 倍 (増益。10 × ③ ≤ 0.8 × ① の基だけ) か 1/10 (減益) にする。再計算しない', primary: ['ratio-operating-margin'], rel: ['r1'], make: (b) => { const q = clone(b); const k = `${IS}.current.operatingIncome`; const up = gv(b, k) > gv(b, `${IS}.previous.operatingIncome`); if (up && 10 * gv(b, k) > 0.8 * gv(b, `${IS}.current.netSales`)) return null; sv(q, k, up ? gv(b, k) * 10 : Math.round(gv(b, k) / 10)); return q; } },
   { kind: 'E-05', label: '営業利益の科目名を「営業和益」にする (labelOverrides。営業利益は 2 欄に出る)', primary: ['label-spelling'], make: (b) => { const q = clone(b); q.labelOverrides = { ...(q.labelOverrides ?? {}), [T('incomeStatement.operatingIncome')]: '営業和益' }; return q; } },
-  { kind: 'E-24', label: '当期の売上高を、営業利益の 0.6 倍にする (売上高が営業利益より小さい)。再計算しない', primary: ['ratio-operating-margin'], make: (b) => { const q = clone(b); sv(q, `${IS}.current.netSales`, Math.round(gv(b, `${IS}.current.operatingIncome`) * 0.6)); return q; } },
+  { kind: 'E-24', label: '当期の売上高を、営業利益の 0.6 倍にする (売上高が営業利益より小さい)。再計算しない', primary: ['ratio-operating-margin'], rel: ['r3'], make: (b) => { const q = clone(b); sv(q, `${IS}.current.netSales`, Math.round(gv(b, `${IS}.current.operatingIncome`) * 0.6)); return q; } },
 ];
 for (const r of RECIPES) {
-  let applied = 0, skipped = 0, doubled = 0, noPrimary = 0, same = 0; const extras = new Set<string>();
+  let applied = 0, skipped = 0, doubled = 0, noPrimary = 0, same = 0, relDoubled = 0, relPrimary = 0; const extras = new Set<string>(); const relExtras = new Set<string>();
   for (const b of bases) {
     const q = r.make(b);
     if (q === null) { skipped++; continue; }
     applied++;
+    const rb = relBroken(q); const relExtra = rb.filter((x) => !(r.rel ?? []).includes(x));
+    if (relExtra.length) { relDoubled++; relExtra.forEach((x) => relExtras.add(x)); }
+    if ((r.rel ?? []).length && (r.rel ?? []).every((x) => rb.includes(x))) relPrimary++;
     if (!displayChanged(b, q)) same++;
     const shown = new Set([...SHOWN, ...SHOWN_KEYS, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`]);
     const onCard = verifyProblem(q, co(b)).hard.filter((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x: string) => shown.has(norm(x))));
@@ -77,7 +90,7 @@ for (const r of RECIPES) {
     if (extra.length) { doubled++; extra.forEach((x) => extras.add(x)); }
     if (!onCard.some((v: any) => r.primary.includes(v.rule))) noPrimary++;
   }
-  console.log(`(2) ${r.kind} ${r.label}: 適用 ${applied}・適用できない ${skipped} / 二重の食い違い ${doubled}${extras.size ? ` (${[...extras].join(', ')})` : ''} / 形に載る主な規則が無い ${noPrimary} / 表示が変わらない ${same}`);
+  console.log(`(2) ${r.kind} ${r.label}: 適用 ${applied}・適用できない ${skipped} / 二重の食い違い ${doubled}${extras.size ? ` (${[...extras].join(', ')})` : ''} / 形に載る主な規則が無い ${noPrimary} / 表示が変わらない ${same} / card-relation の主な関係 (${(r.rel ?? []).join('・') || 'なし'}) が落ちる ${relPrimary} / card-relation の別の関係が落ちる二重の食い違い ${relDoubled}${relExtras.size ? ` (${[...relExtras].join(', ')})` : ''}`);
 }
 
 // (3) 表示だけを変える種類の当てられる数
@@ -98,7 +111,7 @@ for (const r of RECIPES) {
 
 // (4) E-02 が作る ③ ÷ ② の比が、正常の範囲 [0.5, 2] (設計 v3 §1.2 の関係 3) の外にあること。増益の問題 = 10 倍で 10 以上・減益の問題 = 1/10 で 0.1 以下 (導いた) を、正常 28 問で数える
 {
-  const rc = RECIPES.find((r) => r.kind === 'E-02')!;
+  const rc = RECIPES.find((r) => r.kind.startsWith('E-02 (旧'))!;
   const rs: number[] = [];
   for (const dir of ['easy', 'hard']) for (const f of readdirSync(resolve(root, `src/data/problems/${dir}`)).sort()) {
     const p = read(`src/data/problems/${dir}/${f}`); if (p.anomaly) continue;
@@ -118,4 +131,24 @@ for (const r of RECIPES) {
   // E-28: 期末日の表示は文字列の切り出しで作る (Date で整形しない)。ISO 文字列 YYYY-MM-DD の日だけを 32 にした表示が、すべての正常な問題で作れる
   const shown = bases.map((p) => { const d = String(gv(p, 'columnDates.incomeStatement.current')); const [y, m] = d.split('-'); return `${Number(y)}年${Number(m)}月32日`; });
   console.log(`(5) E-28 期末日の表示の日を 32 にする (文字列の切り出し): 作れる ${shown.length}/${bases.length} 問。例: ${shown[0]}。Date で整形すると 2024-03-32 は ${String(new Date('2024-03-32'))} になり、E-28 の見え方にならない`);
+}
+
+// (6) E-25 あり得ない符号 (設計 v3 §1.6 の `sign`。#174 包括レビュー B2): 値を負にする作り方と、表示だけに △ を付ける作り方を比べる。
+//     値を負にすると、営業利益率 (正の値のまま) と ③ ÷ ① の符号が食い違い、card-relation の r3 (③ < ①) も落ちて、符号以外の手がかりが同時に見える。表示だけなら基と同じデータなので 0。
+{
+  let rulesDoubled = 0, relDoubled = 0; const rules = new Set<string>(), rels = new Set<string>();
+  for (const b of bases) {
+    const q = clone(b); sv(q, `${IS}.current.netSales`, -gv(b, `${IS}.current.netSales`));
+    const onCard = verifyProblem(q, co(b)).hard.filter((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x: string) => new Set([...SHOWN, ...SHOWN_KEYS, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`]).has(norm(x))));
+    const rr = [...new Set<string>(onCard.map((v: any) => v.rule))]; if (rr.length) { rulesDoubled++; rr.forEach((x) => rules.add(x)); }
+    const rb = relBroken(q); if (rb.length) { relDoubled++; rb.forEach((x) => rels.add(x)); }
+  }
+  console.log(`(6) E-25 売上高の値を負にする作り方 (旧): 形に載る別の規則が落ちる ${rulesDoubled}/${bases.length}${rules.size ? ` (${[...rules].join(', ')})` : ''} / card-relation が落ちる ${relDoubled}/${bases.length}${rels.size ? ` (${[...rels].join(', ')})` : ''}`);
+  let dd = 0, rd = 0;
+  for (const b of bases) {  // 表示だけ: データは基のまま
+    const q = clone(b);
+    const onCard = verifyProblem(q, co(b)).hard.filter((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x: string) => new Set([...SHOWN, ...SHOWN_KEYS, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`]).has(norm(x))));
+    if (onCard.length) dd++; if (relBroken(q).length) rd++;
+  }
+  console.log(`(6) E-25 表示だけに △ を付ける作り方 (採用。データは基のまま): 形に載る別の規則が落ちる ${dd}/${bases.length} / card-relation が落ちる ${rd}/${bases.length} / 売上高が正で △ を付けられる ${bases.filter((p) => gv(p, `${IS}.current.netSales`) > 0).length}/${bases.length}`);
 }

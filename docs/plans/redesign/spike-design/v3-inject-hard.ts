@@ -49,6 +49,13 @@ const mul = (doc: 'tanshin' | 'ir', path: string, m: number) => (q: any) => { co
 const flip = (metric: string) => (q: any) => { for (const s of q.ir.statements) for (const c of s.claims) if (c.metric === metric) c.direction = c.direction === 'up' ? 'down' : 'up'; };
 // 科目名の規則 (label-spelling・account-section) の違反の paths は、セルでなく項目キー。形にその項目キーの欄があれば形に載る (設計 v2 §1.5 V2)
 const SHOWN_KEYS = [T('balanceSheet.receivables'), T('cashFlow.operatingCashFlow'), T('cashFlow.receivablesChange'), T('incomeStatement.netSales'), T('incomeStatement.operatingIncome'), T('summary.operatingMargin')];
+// card-relation の関係 3 つ (設計 v3 §1.2): r1 = ③ ÷ ② が [0.5, 2] の外・r2 = ③ = ②・r3 = ③ ≥ ①。むずかしいの種類はカードの数字を変えないので、どの注入でも 0 のはず (#174 包括レビュー B1)
+const relBroken = (q: any): string[] => {
+  const t = q.tanshin.incomeStatement, s1 = t.current.netSales, o0 = t.previous.operatingIncome, o1 = t.current.operatingIncome;
+  const r: string[] = []; const ratio = o1 / o0;
+  if (!(ratio >= 0.5 && ratio <= 2)) r.push('r1'); if (o1 === o0) r.push('r2'); if (!(o1 < s1)) r.push('r3');
+  return r;
+};
 const RECIPES: { kind: string; label: string; make: (q: any) => void; primary?: string[] }[] = [
   { kind: 'H-01', label: '買掛金を +10% ずらし、負債・純資産の合計を再計算 (総資産は元のまま)', make: (q) => { const b = q.tanshin.balanceSheet.current; const d = Math.round(b.payables * 0.1); b.payables += d; b.totalCurrentLiabilities += d; b.totalLiabilities += d; b.totalLiabilitiesAndNetAssets += d; } },
   { kind: 'H-03', label: '再計算しない (cashFlow.incomeBeforeTax だけ。税引前利益 → 当期純利益の値)', make: (q) => sv(q.tanshin, 'cashFlow.incomeBeforeTax', q.tanshin.incomeStatement.current.netIncome) },
@@ -73,9 +80,10 @@ const bases = readdirSync(resolve(root, 'src/data/problems/hard')).sort().map((f
 console.log(`基: むずかしいの正常な問題 ${bases.length} 問。形に載るセル ${SHOWN.length} 欄 (カード 4 欄 + 見出し語・資料)`);
 for (const r of RECIPES) {
   const primary: string[] = r.primary ?? kinds.find((k: any) => k.id === r.kind).primaryRules;
-  let doubled = 0, noPrimary = 0, same = 0; const extras = new Set<string>();
+  let doubled = 0, noPrimary = 0, same = 0, relBad = 0; const extras = new Set<string>();
   for (const b of bases) {
     const q = JSON.parse(JSON.stringify(b)); r.make(q);
+    if (relBroken(q).length) relBad++;
     const vs = verifyProblem(q, companies.find((c: any) => c.id === b.companyId)).hard;
     if (!displayChanged(b, q)) same++;
     const shown = new Set([...SHOWN.filter((x) => !x.startsWith('@')), ...SHOWN_KEYS, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`, `ir.statements.${stmtIndex(b, 'operatingCashFlow')}`]);
@@ -84,7 +92,41 @@ for (const r of RECIPES) {
     if (extra.length) { doubled++; extra.forEach((x) => extras.add(x)); }
     if (!onCard.some((v: any) => primary.includes(v.rule))) noPrimary++;
   }
-  console.log(`${r.kind} ${r.label}: 二重の食い違い ${doubled}/${bases.length}${extras.size ? ` (${[...extras].join(', ')})` : ''}・形に載る主な規則が無い ${noPrimary}/${bases.length}・表示が変わらない ${same}/${bases.length}`);
+  console.log(`${r.kind} ${r.label}: 二重の食い違い ${doubled}/${bases.length}${extras.size ? ` (${[...extras].join(', ')})` : ''}・形に載る主な規則が無い ${noPrimary}/${bases.length}・表示が変わらない ${same}/${bases.length}・card-relation が落ちる ${relBad}/${bases.length}`);
+}
+
+// H-34 あり得ない符号 (設計 v3 §1.6 の `sign`・§2.3。#174 包括レビュー B2・B3)
+// (a) 対象欄を閉じる: 「正でなければならない」欄 = 11 欄。正常な問題 (むずかしい 16・やさしい 12 = 28 問) で負・0 になるものが 0 であること。対象外 = 正常でも負になりうる欄
+const NEG_OK: [string, string][] = [
+  ['sales', 'tanshin.incomeStatement.current.netSales'], ['ta', 'tanshin.balanceSheet.current.totalAssets'], ['tlna', 'tanshin.balanceSheet.current.totalLiabilitiesAndNetAssets'],
+  ['cash', 'tanshin.balanceSheet.current.cash'], ['arPrev', 'tanshin.balanceSheet.previous.receivables'], ['arCurr', 'tanshin.balanceSheet.current.receivables'], ['cfEnd', 'tanshin.cashFlow.cashEnding'],
+  ['irSales', 'ir.highlights.netSales.amount'], ['irCashCur', 'ir.supplement.cash.current'], ['irCashPrev', 'ir.supplement.cash.previous'], ['irDebtPrev', 'ir.supplement.interestBearingDebt.previous'],
+];
+const NEG_NG: [string, string][] = [
+  ['opPrev', 'tanshin.incomeStatement.previous.operatingIncome'], ['opCurr', 'tanshin.incomeStatement.current.operatingIncome'], ['pbt', 'tanshin.incomeStatement.current.incomeBeforeTax'],
+  ['cfStart', 'tanshin.cashFlow.incomeBeforeTax'], ['ocf', 'tanshin.cashFlow.operatingCashFlow'], ['cfAr', 'tanshin.cashFlow.receivablesChange'], ['irNetDebtPrev', 'ir.supplement.netDebt.previous'], ['margin', 'tanshin.summary.operatingMargin'],
+];
+{
+  const all: any[] = [];
+  for (const d of ['easy', 'hard']) for (const f of readdirSync(resolve(root, `src/data/problems/${d}`)).sort()) { const p = read(`src/data/problems/${d}/${f}`); if (!p.anomaly) all.push(p); }
+  const neg = (path: string) => { const [doc, ...rest] = path.split('.'); return all.filter((p) => gv(p[doc], rest.join('.')) <= 0).map((p) => p.id); };
+  console.log(`H-34 対象 ${NEG_OK.length} 欄 (正常 ${all.length} 問で 0 以下になる問題): ` + NEG_OK.map(([n, pth]) => `${n} ${neg(pth).length}`).join('・'));
+  console.log(`H-34 対象外 ${NEG_NG.length} 欄 (正常で負・0 になる問題): ` + NEG_NG.map(([n, pth]) => `${n} ${neg(pth).length}${neg(pth).length ? `(${neg(pth).join(',')})` : ''}`).join('・'));
+  // (b) 値を負にする作り方 (旧) は、対象 11 欄のうちいくつで二重の食い違いを出すか。表示だけに △ を付ける作り方 (採用) は、データが基のままなので 0
+  let valueDoubled = 0; const detail: string[] = [];
+  for (const [n, pth] of NEG_OK) {
+    let bad = 0; const rules = new Set<string>();
+    for (const b of bases) {
+      const q = JSON.parse(JSON.stringify(b)); const [doc, ...rest] = pth.split('.'); sv(q[doc as 'tanshin' | 'ir'], rest.join('.'), -gv(b[doc], rest.join('.')));
+      const shown = new Set([...SHOWN.filter((x) => !x.startsWith('@')), ...SHOWN_KEYS, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`, `ir.statements.${stmtIndex(b, 'operatingCashFlow')}`]);
+      const onCard = verifyProblem(q, companies.find((c: any) => c.id === b.companyId)).hard.filter((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x) => shown.has(norm(x))));
+      const rr = [...new Set<string>(onCard.map((v: any) => v.rule))]; if (rr.length || relBroken(q).length) { bad++; rr.forEach((x) => rules.add(x)); if (relBroken(q).length) rules.add('card-relation'); }
+    }
+    if (bad) valueDoubled++; detail.push(`${n} ${bad}/${bases.length}${rules.size ? `(${[...rules].join(',')})` : ''}`);
+  }
+  console.log(`H-34 値を負にする作り方 (旧) で、別の規則も落ちる (二重の食い違い) 欄: ${valueDoubled}/${NEG_OK.length} 欄。内訳 (問題数): ` + detail.join('・'));
+  let dd = 0; for (const b of bases) { const q = JSON.parse(JSON.stringify(b)); const shown = new Set([...SHOWN.filter((x) => !x.startsWith('@')), ...SHOWN_KEYS, ...FRAME, `ir.statements.${stmtIndex(b, 'operatingIncome')}`, `ir.statements.${stmtIndex(b, 'operatingCashFlow')}`]); if (verifyProblem(q, companies.find((c: any) => c.id === b.companyId)).hard.some((v: any) => v.paths.length > 0 && [...new Set<string>(v.paths)].every((x) => shown.has(norm(x)))) || relBroken(q).length) dd++; }
+  console.log(`H-34 表示だけに △ を付ける作り方 (採用。データは基のまま): 形に載る規則が落ちる ${dd}/${bases.length} (= 基の正常と同じ。0)`);
 }
 
 // 読む量 (設計 v3 §1.3): 形の全部の文字数。科目名・見出し・単位は設計の表のとおりの定数、数字・文は正常 16 問のデータから。製品のコードではない。
