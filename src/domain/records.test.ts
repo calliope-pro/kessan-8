@@ -96,7 +96,9 @@ describe('記録', () => {
   });
 
   it('DC9: 壊れた JSON・形の違う値・版 1 (今の版。sampleSeen を持つ)・null は空の記録 (例外にならない)', () => {
-    const v1 = { version: 1, easy: emptyRecords().easy, hard: emptyRecords().hard, sampleSeen: { easy: true, hard: false } };
+    // 空でない版 1 の記録 (best・clears・kinds・history がある): 「捨てる」と「読む」を区別できるように
+    const filled = { best: 5, bestBefore: 3, clears: 1, kinds: ['E-06'], history: ['easy-001'] };
+    const v1 = { version: 1, easy: filled, hard: filled, sampleSeen: { easy: true, hard: false } };
     for (const raw of ['{not json', '42', 'null', JSON.stringify({ version: 999 }), JSON.stringify({ version: 2, easy: 'x' }), JSON.stringify(v1), null]) {
       expect(parseRecords(raw), String(raw)).toEqual(emptyRecords());
     }

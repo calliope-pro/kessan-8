@@ -1,5 +1,7 @@
 # ケース表: 資料束の表示と道具 (Sub-task #62)
 
+> **注記 (Task #155。2026-11-09)**: 古い画面 (`src/ui/`)・古い E2E (`e2e/` の flow・viewer・viewer-in-app・live・prod・release の各 spec と `support.ts`)・E2E 用のデモページ (`viewer-demo.html`・`VIEWER_DEMO`) は、#155 の PR で消した (責任者の決定。[domain-v3.md](domain-v3.md) §6)。**この表の手順で、消えたファイルを指すものは、画面を作り直す #141 が新しい画面で置き換える**。残っているのは、仮画面の足場の確かめ (`e2e/smoke.spec.ts`) だけ。題名・副題は `src/title.ts`。
+
 Task #57 (画面: 資料束の表示と道具)。受け入れ条件 2・9 (要件)、[experience.md](https://github.com/calliope-pro/kessan-8/blob/calliope/experience/docs/plans/experience.md) §6.5 の SC4-1〜SC4-7 (資料の切替・ページ送り・タブ・道具バー・印・検算)、§6.3 の 1・2・3b、§6.6 (印は `marks`)、設計 [design.md](../design.md) §4.1 (path・itemKey・単位・△・見た目の上書き)・§7。項目名の標準は [labels.md](labels.md) (`src/domain/labels.ts`)。
 
 **範囲**: 資料束の 10 画面の表示、資料の切替・ページ送り・タブ、道具バー (印スイッチ・検算・「判定する」の口)、印、検算、異変の場所を強調する口。**範囲外** (#28 の #59・#60・#61): 状態遷移 (`reduce`)・出題・タイトル・難易度・判定のパネル (SC4-10)・答え合わせ (SC5)・クリア・演出 (V1〜V4・R4〜R6)・記録。見本・導入 (SC2・SC3) も範囲外。並べて見る (T3・T4) は experience.md が後回し。

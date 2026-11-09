@@ -259,4 +259,4 @@
 | `sample → reading` などでも記録を更新する / いつも 1 社目の問題で数える | DC7 |
 | 記録の版を 1 のまま / 履歴を重複させる / 見つけた種類を不正解でも入れる | DC8 / DC6 / DC5 |
 
-生き残った壊し方は無い (22 通り)。DX3 は `npm run test:e2e` (仮画面: 題名と「作り直し中」・外部通信なし・幅 320・375・414 でのはみ出しなし・CSP) で、DX2 は `npm run typecheck`・`npm test` (905 件)・`npm run verify:data -- --require-complete`・`npm run build`・`npm run check:size` で確かめた。
+生き残った壊し方は無い (22 通り + 下の 1 通り)。レビュー 1 回目 N1: DC9 の版 1 の記録を空でないもの (best 5・clears 1・kinds `E-06`・履歴あり) にして、`parseRecords` が版 1 も受け付ける壊し方 (読み替え) でも DC9 が赤になることを確かめた (空の記録だと「捨てる」と「読む」を区別できず生き残っていた)。DX3 は `npm run test:e2e` (仮画面: 題名と「作り直し中」・外部通信なし・幅 320・375・414 でのはみ出しなし・CSP) で、DX2 は `npm run typecheck`・`npm test` (905 件)・`npm run verify:data -- --require-complete`・`npm run build`・`npm run check:size` で確かめた。
