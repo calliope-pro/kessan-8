@@ -84,8 +84,9 @@ button { font: inherit; color: inherit; }
 .field { display: inline-flex; border: 1px solid var(--rule); font-family: var(--font-num); font-size: var(--num); font-weight: 700; line-height: 1; background: var(--paper); }
 .cell { display: grid; place-items: center; width: var(--cell); height: 1.3em; border-left: 1px solid var(--rule-mid); }
 .cell:first-child { border-left: 0; }
-.sep { flex: none; width: 3px; align-self: stretch; background: var(--rule); }
+.sep { flex: none; display: flex; align-items: flex-end; justify-content: center; width: 0.34em; align-self: stretch; border-left: 3px solid var(--rule); font-size: 1em; font-weight: 900; line-height: 1; padding-bottom: 0.06em; }
 .sep + .cell { border-left: 0; }
+.cell.neg { color: var(--stamp); }
 .cell.point { width: 0.6em; border-left: 0; }
 .unit { font-size: 1em; font-weight: 700; padding-bottom: 0.15em; white-space: nowrap; }
 
@@ -167,6 +168,47 @@ button { font: inherit; color: inherit; }
   .seal { min-height: 52px; }
   .seal small { display: none; }
 }
+
+
+/* ---- むずかしい: 伝票の下に資料 1・資料 2 を縦に並べる (設計 §1.3。余白と区切りで目が走る組み方) ---- */
+.card-set { display: grid; gap: calc(var(--step) * 2); }
+.docs { display: grid; gap: calc(var(--step) * 2); align-items: start; }
+.doc { background: var(--paper); border: 1px solid var(--rule); border-top: 6px solid var(--rule-soft); padding: calc(var(--step) * 1.25) calc(var(--step) * 1.25) var(--step); }
+.doc-title { margin: 0 0 var(--step); font-size: 1.05em; font-weight: 900; letter-spacing: 0.06em; padding-bottom: calc(var(--step) * 0.5); border-bottom: 3px solid var(--rule); }
+.ir-head { margin: 0 0 var(--step); font-weight: 800; }
+.block { padding-top: var(--step); }
+.block + .block { margin-top: var(--step); border-top: 2px solid var(--rule); }
+.block-title { margin: 0 0 calc(var(--step) * 0.25); font-size: 1em; font-weight: 900; color: var(--ink-soft); }
+.group { margin: calc(var(--step) * 0.5) 0 0; font-weight: 800; color: var(--ink-soft); border-bottom: 1px dashed var(--rule-soft); }
+.doc .row { padding: calc(var(--step) * 0.375) 0; }
+/* 資料の数字の行は、スマホでも 1 行 (科目名が左・桁マスが右)。縦に流す長さを縮める */
+.doc .row:not(.row-text) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--step); }
+.doc .row:not(.row-text) .amount { margin-top: 0; }
+.card-set > .sheet { width: 100%; max-width: 38em; justify-self: center; }
+.doc .label { font-weight: 700; }
+.field.compact { font-size: 1.0625rem; }
+.field.compact .cell { width: 0.82em; height: 1.25em; }
+.field.compact .sep { width: 0.3em; }
+.sentence { margin: 2px 0 0; font-weight: 700; overflow-wrap: anywhere; }
+@media (min-width: 560px) {
+  .doc .row-text { grid-template-columns: minmax(8em, 0.4fr) minmax(0, 1fr); align-items: baseline; }
+}
+@media (min-width: 1000px) {
+  .docs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .desk > .card-set { max-width: 72em; }
+}
+
+/* ---- 見え方の一覧 (?mode=gallery) ---- */
+.gallery { display: grid; gap: calc(var(--step) * 3); }
+.gallery-item { display: grid; gap: var(--step); }
+.gallery-title { margin: 0; font-size: 1.05em; font-weight: 900; border-bottom: 3px solid var(--rule); }
+.toggle { display: flex; align-items: center; gap: var(--step); font-weight: 800; }
+.toggle input { width: 1.25em; height: 1.25em; }
+@media (min-width: 900px) {
+  .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .desk.wide .gallery { max-width: 76em; }
+}
+a.seal { text-decoration: none; }
 
 /* ---- 動きを減らす設定: 色の変化だけ ---- */
 @media (prefers-reduced-motion: reduce) {

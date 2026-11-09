@@ -20,11 +20,11 @@ export function summaryText(text: string): string {
     `判定: ${a.verdict} (合格 ${a.passed} / ${a.n} 人。基準: 0 社目ありの条件で、見つけ 3/4 以上かつ誤り 1/4 以下)`,
     footnote(a.n, a.passed),
     '',
-    '人 | 0 社目 | 形 | 種 | 見つけ | 誤り | 合否',
-    ...records.map((r) => `${r.pid || '(未記入)'} | ${r.withSample ? 'あり' : 'なし'} | ${r.shape} | ${r.seed} | ${r.found}/${r.anomalies} | ${r.falseAlarms}/${r.normals} | ${r.pass ? '合格' : '不合格'}`),
+    '人 | 0 社目 | 種 | 見つけ | 誤り | 合否',
+    ...records.map((r) => `${r.pid || '(未記入)'} | ${r.withSample ? 'あり' : 'なし'} | ${r.seed} | ${r.found}/${r.anomalies} | ${r.falseAlarms}/${r.normals} | ${r.pass ? '合格' : '不合格'}`),
   ];
   if (a.aux.length > 0) {
-    lines.push('', '補助 (同じ人の 0 社目あり − なし の見つけ数):');
+    lines.push('', '補助 (同じ人の 0 社目あり − なし の見つけ数。v3 は A・B が同じ形で、B は A のあとに遊ぶので、この差を 0 社目の効きとは読まない):');
     for (const x of a.aux) lines.push(`${x.pid}: あり ${x.foundWith} − なし ${x.foundWithout} = ${x.diff >= 0 ? '+' : ''}${x.diff}${x.ceiling ? ' (天井: 両方 4/4。「効かない」に数えない)' : ''}`);
   }
   if (broken > 0) lines.push('', `読めなかった記録: ${broken} 件`);

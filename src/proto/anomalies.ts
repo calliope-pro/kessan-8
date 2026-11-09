@@ -1,15 +1,15 @@
-// 試作の異変 (docs/design-v2.md §2.2 の台帳の、やさしい 15 種類)。
+// 試作の異変 (docs/design-v3.md §2.2 の台帳のやさしい 15 種類と、§2.3 のむずかしいから 5 種類)。
 // 異変は問題データの変更 (数字・文のセル、labelOverrides) か cardEdits で表す。カードを手で書き換えない (設計 R-D2)。
 // 元の問題 (同じ会社・同じ期の正常な問題) は変えず、複製に 1 つだけ異変を加える (R-S5 (d))。
 import type { Problem } from '../domain/types';
-import { fmtAmount, getCell, headlineWord, SHAPES, type CardEdit, type EditBody, type ShapeId } from './cards';
+import { fmtAmount, fmtOku, getCell, headlineWord, irOku, ocfClaimIndex, opClaimIndex, type CardEdit, type Difficulty } from './cards';
 
 export interface AnomalyResult {
   kind: string;
   name: string;
   problem: Problem;
   edits: CardEdit[];
-  /** 異変の場所。セルのパス・`slot:<キー>`・`headline`・`period`。カードの上で見えるものだけ (R-D3・R-S4 の V1)。 */
+  /** 異変の場所。セルのパス・`slot:<キー>`・`headline`・`period`・`frame`。カードの上で見えるものだけ (R-D3・R-S4 の V1)。 */
   places: string[];
   explanation: string;
 }
@@ -20,14 +20,15 @@ type Rng = () => number;
 export interface AnomalyDef {
   id: string;
   name: string;
-  shapes: readonly ShapeId[];
-  make(p: Problem, shape: ShapeId, rng: Rng): Made;
+  difficulty: Difficulty;
+  /** この正常な問題に当てられるか (E-02 だけ基の条件がある)。 */
+  applies?(p: Problem): boolean;
+  make(p: Problem, rng: Rng): Made;
 }
 
 const IS = 'tanshin.incomeStatement';
-const BS = 'tanshin.balanceSheet.current';
-const edit = (shape: ShapeId, e: EditBody): CardEdit => ({ shape, card: 0, ...e });
 const round1 = (n: number) => Math.round(n * 10) / 10;
+const pickOf = <T>(rng: Rng, xs: readonly T[]): T => xs[Math.floor(rng() * xs.length)]!;
 
 function setCell(p: Problem, path: string, value: unknown): void {
   const keys = path.split('.');
@@ -36,188 +37,223 @@ function setCell(p: Problem, path: string, value: unknown): void {
   parent[last] = value;
 }
 
-function claimIndex(p: Problem, metric: 'operatingIncome' | 'netSales'): number {
-  return p.ir.statements.findIndex((s) => s.slide === 'highlights' && s.claims.some((c) => c.metric === metric));
+const NUMBER_SLOTS = ['sales', 'opPrev', 'opCurr', 'margin'] as const;
+const AMOUNT_SLOTS = ['sales', 'opPrev', 'opCurr'] as const;
+const LABEL: Record<string, string> = { sales: '売上高', opPrev: '営業利益 (前期)', opCurr: '営業利益 (当期)', margin: '営業利益率' };
+const AMOUNT_PATH: Record<string, string> = { sales: `${IS}.current.netSales`, opPrev: `${IS}.previous.operatingIncome`, opCurr: `${IS}.current.operatingIncome` };
+const cur = (p: Problem) => p.tanshin.incomeStatement.current;
+const isUp = (p: Problem) => cur(p).operatingIncome > p.tanshin.incomeStatement.previous.operatingIncome;
+const claimOf = (p: Problem, n: number, metric: string) => p.ir.statements[n]!.claims.find((c) => c.metric === metric)!;
+
+/** 月末日 (閏年も含む)。表示には使わない (Date は期末日の整形に使わない)。作るときだけ。 */
+function monthEnd(y: number, m: number): number {
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
-const metricOf = (shape: ShapeId) => (shape === 'E1' ? 'operatingIncome' : 'netSales');
 
-// 形ごとの、形のずれに使う欄
-const UNIT_SLOT: Record<ShapeId, string> = { E1: 'opCurr', E2: 'salesCurr', E3: 'fixed' };
-const DROP_SLOT: Record<ShapeId, string> = { E1: 'margin', E2: 'salesPrev', E3: 'fixed' };
-const SWAP_SLOTS: Record<ShapeId, [string, string]> = { E1: ['sales', 'margin'], E2: ['salesPrev', 'salesCurr'], E3: ['current', 'total'] };
-const FORMAT_SLOT: Record<ShapeId, string> = { E1: 'sales', E2: 'salesCurr', E3: 'current' };
-const DUP_SLOT: Record<ShapeId, string> = { E1: 'margin', E2: 'salesCurr', E3: 'fixed' };
-const TYPO: Record<ShapeId, { itemKey: string; from: string; to: string; slots: string[] }> = {
-  E1: { itemKey: 'tanshin.incomeStatement.operatingIncome', from: '営業利益', to: '営業和益', slots: ['opPrev', 'opCurr'] },
-  E2: { itemKey: 'tanshin.incomeStatement.netSales', from: '売上高', to: '売上商', slots: ['salesPrev', 'salesCurr'] },
-  E3: { itemKey: 'tanshin.balanceSheet.totalCurrentAssets', from: '流動資産', to: '流動貸産', slots: ['current'] },
-};
-const LABEL: Record<string, string> = {
-  margin: '営業利益率', salesPrev: '売上高 (前期)', fixed: '固定資産', sales: '売上高', salesCurr: '売上高 (当期)', current: '流動資産', total: '総資産', opCurr: '営業利益 (当期)',
-};
-
-const ALL = SHAPES;
 export const ANOMALIES: readonly AnomalyDef[] = [
   {
-    id: 'E-17', name: '見出しと数字の向きが逆', shapes: ['E1', 'E2'],
-    make(p, shape) {
-      const n = claimIndex(p, metricOf(shape));
-      const claim = p.ir.statements[n]!.claims.find((c) => c.metric === metricOf(shape))!;
-      const noun = shape === 'E1' ? '益' : '収';
-      const real = headlineWord(claim.direction, noun);
+    id: 'E-17', name: '見出しと数字の向きが逆', difficulty: 'easy',
+    make(p) {
+      const n = opClaimIndex(p);
+      const claim = claimOf(p, n, 'operatingIncome');
+      const real = headlineWord(claim.direction, '益');
       claim.direction = claim.direction === 'up' ? 'down' : 'up';
-      const shown = headlineWord(claim.direction, noun);
-      const [pre, cur] = shape === 'E1'
-        ? [p.tanshin.incomeStatement.previous.operatingIncome, p.tanshin.incomeStatement.current.operatingIncome]
-        : [p.tanshin.incomeStatement.previous.netSales, p.tanshin.incomeStatement.current.netSales];
-      const what = shape === 'E1' ? '営業利益' : '売上高';
-      return { edits: [], places: [`ir.statements.${n}`], explanation: `見出しは【${shown}】ですが、${what}は ${fmtAmount(pre)} から ${fmtAmount(cur)} へ動いていて、本当は【${real}】です。` };
+      const shown = headlineWord(claim.direction, '益');
+      const [pre, now] = [p.tanshin.incomeStatement.previous.operatingIncome, cur(p).operatingIncome];
+      return { edits: [], places: [`ir.statements.${n}`], explanation: `見出しは【${shown}】ですが、営業利益は ${fmtAmount(pre)} から ${fmtAmount(now)} へ動いていて、本当は【${real}】です。` };
     },
   },
   {
-    id: 'E-12', name: '営業利益率が数字と合わない', shapes: ['E1'],
+    id: 'E-12', name: '営業利益率が数字と合わない', difficulty: 'easy',
     make(p) {
       const base = p.tanshin.summary.operatingMargin;
       const bad = round1(base * 2.2);
       p.tanshin.summary.operatingMargin = bad;
-      const op = p.tanshin.incomeStatement.current.operatingIncome, sales = p.tanshin.incomeStatement.current.netSales;
-      return { edits: [], places: ['tanshin.summary.operatingMargin'], explanation: `営業利益率は ${bad}% と書いてありますが、営業利益 ${fmtAmount(op)} ÷ 売上高 ${fmtAmount(sales)} は約 ${base}% です。` };
+      return { edits: [], places: ['tanshin.summary.operatingMargin'], explanation: `営業利益率は ${bad}% と書いてありますが、営業利益 ${fmtAmount(cur(p).operatingIncome)} ÷ 売上高 ${fmtAmount(cur(p).netSales)} は約 ${base}% です。` };
     },
   },
   {
-    id: 'E-02', name: '桁がずれた数字', shapes: ALL,
-    make(p, shape) {
-      if (shape === 'E1') {
-        // 営業利益率は元のまま (再計算しない): 売上高と営業利益から出る割合と合わなくなり、1 枚の中で見える (設計 §2.2。ratio-operating-margin)
-        const was = p.tanshin.incomeStatement.current.netSales;
-        setCell(p, `${IS}.current.netSales`, was * 10);
-        return { edits: [], places: [`${IS}.current.netSales`, 'tanshin.summary.operatingMargin'], explanation: `売上高が ${fmtAmount(was * 10)} になっています。営業利益率 ${p.tanshin.summary.operatingMargin}% と合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
-      }
-      if (shape === 'E2') {
-        const was = p.tanshin.incomeStatement.current.netSales;
-        setCell(p, `${IS}.current.netSales`, was * 10);
-        return { edits: [], places: [`${IS}.current.netSales`], explanation: `当期の売上高が ${fmtAmount(was * 10)} になっています。棒の高さと釣り合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
-      }
-      // 総資産は元のまま (足し直さない): 流動資産 + 固定資産と合わなくなり、1 枚の中で見える (設計 §2.2。bs-total-assets)
-      const was = p.tanshin.balanceSheet.current.totalFixedAssets;
-      setCell(p, `${BS}.totalFixedAssets`, was * 10);
-      return { edits: [], places: [`${BS}.totalFixedAssets`, `${BS}.totalAssets`], explanation: `固定資産が ${fmtAmount(was * 10)} になっています。流動資産との和が総資産 ${fmtAmount(p.tanshin.balanceSheet.current.totalAssets)} と合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
-    },
-  },
-  {
-    id: 'E-18', name: '2 つの数字が入れ替わっている', shapes: ['E1'],
+    id: 'E-02', name: '桁がずれた数字', difficulty: 'easy',
+    // 増益は 10 倍にしても売上高の 0.8 倍以下の基だけ (10 倍にした営業利益が売上高を超えると E-24 の見え方が同時に出る。設計 §2.2)
+    applies: (p) => !isUp(p) || 10 * cur(p).operatingIncome <= 0.8 * cur(p).netSales,
     make(p) {
-      const cur = p.tanshin.incomeStatement.current;
-      const [s, o] = [cur.netSales, cur.operatingIncome];
-      cur.netSales = o;
-      cur.operatingIncome = s;
-      return { edits: [], places: [`${IS}.current.netSales`, `${IS}.current.operatingIncome`], explanation: `売上高 ${fmtAmount(o)} と営業利益 ${fmtAmount(s)} が入れ替わっています。売上高が営業利益より小さいはずがありません。` };
+      const was = cur(p).operatingIncome;
+      const up = isUp(p);
+      const now = up ? was * 10 : Math.round(was / 10);
+      setCell(p, `${IS}.current.operatingIncome`, now);
+      // 営業利益率は元のまま (再計算しない): 売上高と営業利益から出る割合と合わなくなる
+      return { edits: [], places: [`${IS}.current.operatingIncome`, 'tanshin.summary.operatingMargin'], explanation: `営業利益 (当期) が ${fmtAmount(now)} になっています。前期の ${fmtAmount(p.tanshin.incomeStatement.previous.operatingIncome)} と桁が違い、営業利益率 ${p.tanshin.summary.operatingMargin}% とも合いません。本当は ${fmtAmount(was)} で、桁が 1 つずれています。` };
     },
   },
   {
-    id: 'E-23', name: '見出しの語の種類が違う', shapes: ['E1', 'E2'],
-    make(p, shape) {
-      const claim = p.ir.statements[claimIndex(p, metricOf(shape))]!.claims.find((c) => c.metric === metricOf(shape))!;
-      const word = headlineWord(claim.direction, shape === 'E1' ? '収' : '益');
-      const right = headlineWord(claim.direction, shape === 'E1' ? '益' : '収');
-      const what = shape === 'E1' ? '営業利益 (もうけ)' : '売上高';
-      return { edits: [edit(shape, { op: 'headline', word })], places: ['headline'], explanation: `この伝票は${what}を見せているので、見出しは【${right}】のはずです。【${word}】は別のものの語です。` };
+    id: 'E-24', name: '売上高が営業利益より小さい', difficulty: 'easy',
+    make(p) {
+      const was = cur(p).netSales;
+      const now = Math.round(cur(p).operatingIncome * 0.6);
+      setCell(p, `${IS}.current.netSales`, now);
+      return { edits: [], places: [`${IS}.current.netSales`, `${IS}.current.operatingIncome`], explanation: `売上高 ${fmtAmount(now)} が、営業利益 ${fmtAmount(cur(p).operatingIncome)} より小さくなっています。営業利益は売上高から費用を引いた残りなので、売上高より大きくなりません。本当の売上高は ${fmtAmount(was)} です。` };
     },
   },
   {
-    id: 'E-03', name: '単位の語が 1 つだけ違う', shapes: ALL,
-    make(_p, shape) {
-      const slot = UNIT_SLOT[shape];
-      return { edits: [edit(shape, { op: 'unit', slot, unit: '億円' })], places: [`slot:${slot}`], explanation: `「${LABEL[slot]}」の単位だけ「億円」で、ほかの金額は「百万円」です。` };
+    id: 'E-03', name: '単位の語が 1 つだけ違う', difficulty: 'easy',
+    make(_p, rng) {
+      const slot = pickOf(rng, AMOUNT_SLOTS);
+      return { edits: [{ op: 'unit', slot, unit: '億円' }], places: [`slot:${slot}`], explanation: `「${LABEL[slot]}」の単位だけ「億円」で、ほかの金額は「百万円」です。` };
     },
   },
   {
-    id: 'E-05', name: '科目名の誤字', shapes: ALL,
-    make(p, shape) {
-      const t = TYPO[shape];
-      const d = [...t.to].findIndex((ch, i) => ch !== [...t.from][i]);
-      p.labelOverrides = { ...(p.labelOverrides ?? {}), [t.itemKey]: t.to };
-      return { edits: [], places: t.slots.map((k) => `slot:${k}`), explanation: `「${t.to}」は誤字です。「${[...t.to][d]}」ではなく「${[...t.from][d]}」で、正しくは「${t.from}」です。` };
+    id: 'E-05', name: '科目名の誤字', difficulty: 'easy',
+    make(p) {
+      p.labelOverrides = { ...(p.labelOverrides ?? {}), 'tanshin.incomeStatement.operatingIncome': '営業和益' };
+      return { edits: [], places: ['slot:opPrev', 'slot:opCurr'], explanation: '「営業和益」は誤字です。「和」ではなく「利」で、正しくは「営業利益」です。' };
     },
   },
   {
-    id: 'E-19', name: '欄が 1 つ足りない', shapes: ALL,
-    make(_p, shape) {
-      const slot = DROP_SLOT[shape];
-      return { edits: [edit(shape, { op: 'drop', slot })], places: [`slot:${slot}`], explanation: `いつもある「${LABEL[slot]}」の欄がありません。` };
+    id: 'E-19', name: '欄が 1 つ足りない', difficulty: 'easy',
+    make(_p, rng) {
+      const slot = pickOf(rng, NUMBER_SLOTS);
+      return { edits: [{ op: 'drop', slot }], places: [`slot:${slot}`], explanation: `いつもある「${LABEL[slot]}」の欄がありません。` };
     },
   },
   {
-    id: 'E-20', name: '欄の並びが違う', shapes: ALL,
-    make(_p, shape) {
-      const [a, b] = SWAP_SLOTS[shape];
-      return { edits: [edit(shape, { op: 'swap', slots: [a, b] })], places: [`slot:${a}`, `slot:${b}`], explanation: `「${LABEL[a]}」と「${LABEL[b]}」の位置が、いつもと入れ替わっています。` };
+    id: 'E-22', name: '同じ欄が 2 回出る', difficulty: 'easy',
+    make(_p, rng) {
+      if (rng() < 0.5) return { edits: [{ op: 'dup', slot: 'headline' }], places: ['headline'], explanation: '見出し語が 2 回出ています。' };
+      const slot = pickOf(rng, NUMBER_SLOTS);
+      return { edits: [{ op: 'dup', slot }], places: [`slot:${slot}#2`], explanation: `「${LABEL[slot]}」の欄が 2 回出ています。` };
     },
   },
   {
-    id: 'E-21', name: '数字の桁区切りが違う', shapes: ALL,
-    make(_p, shape, rng) {
-      const slot = FORMAT_SLOT[shape];
-      const style = rng() < 0.5 ? 'no-comma' : 'comma-shift';
-      return { edits: [edit(shape, { op: 'format', slot, style })], places: [`slot:${slot}`], explanation: `「${LABEL[slot]}」の桁区切りの位置が、いつもと違います。${style === 'no-comma' ? '区切りがありません。' : '区切りがずれています。'}` };
+    id: 'E-21', name: '数字の桁区切りが違う', difficulty: 'easy',
+    // no-comma は整数部が 4 桁以上の金額の欄 (売上高・営業利益のどれでも)、comma-shift は 5 桁以上 (やさしいでは売上高だけ。設計 §1.6)。
+    make(p, rng) {
+      const wide = (slot: string, min: number) => Number(getCell(p, AMOUNT_PATH[slot]!)) >= min;
+      const shift = rng() >= 0.5 && wide('sales', 10000);
+      if (shift) return { edits: [{ op: 'format', slot: 'sales', style: 'comma-shift' }], places: ['slot:sales'], explanation: '「売上高」の桁区切りの位置が、いつもと違います。カンマがずれています。' };
+      const slot = pickOf(rng, AMOUNT_SLOTS.filter((k) => wide(k, 1000)));
+      return { edits: [{ op: 'format', slot, style: 'no-comma' }], places: [`slot:${slot}`], explanation: `「${LABEL[slot]}」の桁区切りの位置が、いつもと違います。カンマがありません。` };
     },
   },
   {
-    id: 'E-22', name: '同じ欄が 2 回出る', shapes: ALL,
-    make(_p, shape) {
-      const slot = DUP_SLOT[shape];
-      return { edits: [edit(shape, { op: 'dup', slot })], places: [`slot:${slot}#2`], explanation: `「${LABEL[slot]}」の欄が 2 回出ています。` };
+    id: 'E-25', name: 'あり得ない符号', difficulty: 'easy',
+    make(p) {
+      return { edits: [{ op: 'sign', slot: 'sales' }], places: ['slot:sales'], explanation: `売上高に △ (マイナス) が付いています。売上高がマイナスになることはありません。本当は ${fmtAmount(cur(p).netSales)} です。` };
     },
   },
   {
-    id: 'E-04', name: '期と期末日が合わない', shapes: ALL,
+    id: 'E-23', name: '見出しの語の種類が違う', difficulty: 'easy',
+    make(p) {
+      const n = opClaimIndex(p);
+      const dir = claimOf(p, n, 'operatingIncome').direction;
+      const word = headlineWord(dir, '収');
+      return { edits: [{ op: 'headline', word }], places: ['headline'], explanation: `このカードは営業利益 (もうけ) を見せているので、見出しは【${headlineWord(dir, '益')}】のはずです。【${word}】は売上高の語です。` };
+    },
+  },
+  {
+    id: 'E-04', name: '期と期末日が合わない', difficulty: 'easy',
     make(p) {
       const path = 'tanshin.columnDates.incomeStatement.current';
-      const was = getCell(p, path) as string;
-      const [y, ...rest] = was.split('-');
-      setCell(p, path, [String(Number(y) - 1), ...rest].join('-'));
-      return { edits: [], places: ['period'], explanation: `${p.tanshin.header.periodLabel}なのに、期末日が 1 年前の日付になっています。` };
+      const [y, m] = (getCell(p, path) as string).split('-').map(Number) as [number, number];
+      const ny = y - 1;
+      setCell(p, path, `${ny}-${String(m).padStart(2, '0')}-${String(monthEnd(ny, m)).padStart(2, '0')}`);
+      return { edits: [], places: ['frame', 'period'], explanation: `${p.tanshin.header.periodLabel}なのに、期末日が 1 年前の ${ny}年${m}月${monthEnd(ny, m)}日になっています。` };
     },
   },
   {
-    id: 'E-07', name: '棒の高さが数字と逆', shapes: ['E2'],
+    id: 'E-26', name: '添え字が取り違えられている', difficulty: 'easy',
+    make(p, rng) {
+      const toPrev = rng() < 0.5;
+      const slot = toPrev ? 'opCurr' : 'opPrev';
+      const word = toPrev ? '前期' : '当期';
+      return { edits: [{ op: 'suffix', slot, word }], places: ['slot:opPrev', 'slot:opCurr'], explanation: `「営業利益 (${word})」の行が 2 つ並んでいて、${fmtAmount(p.tanshin.incomeStatement.previous.operatingIncome)} と ${fmtAmount(cur(p).operatingIncome)} の 2 つの違う数字が入っています。同じ期の数字が 2 つあるはずがありません。` };
+    },
+  },
+  {
+    id: 'E-27', name: '数字に数字でない字が混じる', difficulty: 'easy',
+    make(p, rng) {
+      const slot = pickOf(rng, AMOUNT_SLOTS);
+      const v = String(getCell(p, AMOUNT_PATH[slot]!));
+      const at = Math.floor(v.length / 2);
+      const shown = fmtAmount(Number(v)).split('').map((ch, i, a) => (/\d/.test(ch) && a.slice(0, i).filter((c) => /\d/.test(c)).length === at ? 'X' : ch)).join('');
+      return { edits: [{ op: 'glyph', slot, at }], places: [`slot:${slot}`], explanation: `「${LABEL[slot]}」の数字が ${shown} になっていて、数字でない字「X」が混じっています。` };
+    },
+  },
+  {
+    id: 'E-28', name: '期末日が存在しない日付', difficulty: 'easy',
     make(p) {
-      const b = p.ir.results.chart.netSales;
-      if (b.current >= b.previous) b.current = round1(b.previous * 0.6);
-      else b.previous = round1(b.current * 0.6);
-      return { edits: [], places: ['ir.results.chart.netSales'], explanation: `数字では売上が大きいほうの棒が、小さいほうの棒より低く描かれています。` };
+      const [y, m] = (getCell(p, 'tanshin.columnDates.incomeStatement.current') as string).split('-').map(Number);
+      return { edits: [{ op: 'day', slot: 'period', day: 32 }], places: ['period'], explanation: `期末が ${y}年${m}月32日になっています。${m}月に 32 日はありません。` };
     },
   },
+  // ---- むずかしい (試作は 5 種類。1 社を読む時間を、正常と異変の両方で測るため) ----
   {
-    id: 'E-06', name: '棒の高さの比が数字の比と合わない', shapes: ['E2'],
-    make(p) {
-      const b = p.ir.results.chart.netSales;
-      const s = Math.min(b.previous, b.current), l = Math.max(b.previous, b.current);
-      b.axisMin = Math.ceil(3 * s - 2 * l);
-      return { edits: [], places: ['ir.results.chart.netSales.axisMin'], explanation: `棒グラフが 0 から始まっていません。数字の差は小さいのに、棒の差が大きく見えます。` };
-    },
-  },
-  {
-    id: 'E-09', name: '足し算が合わない', shapes: ['E3'],
+    id: 'H-01', name: '資産の合計と負債・純資産の合計が一致しない', difficulty: 'hard',
     make(p) {
       const bs = p.tanshin.balanceSheet.current;
-      const sum = bs.totalCurrentAssets + bs.totalFixedAssets;
-      bs.totalAssets = Math.round(sum * 1.12);
-      return { edits: [], places: [`${BS}.totalAssets`], explanation: `流動資産 ${fmtAmount(bs.totalCurrentAssets)} + 固定資産 ${fmtAmount(bs.totalFixedAssets)} は ${fmtAmount(sum)} ですが、総資産は ${fmtAmount(bs.totalAssets)} と書いてあります。` };
+      const delta = Math.max(1, Math.round(bs.payables * 0.1));
+      bs.payables += delta;
+      bs.totalCurrentLiabilities += delta;
+      bs.totalLiabilities += delta;
+      bs.totalLiabilitiesAndNetAssets += delta;
+      return { edits: [], places: ['slot:ta', 'slot:tlna'], explanation: `総資産 ${fmtAmount(bs.totalAssets)} と、負債及び純資産合計 ${fmtAmount(bs.totalLiabilitiesAndNetAssets)} が一致していません。貸借対照表の両側は必ず同じ額になります。` };
+    },
+  },
+  {
+    id: 'H-04', name: 'CF の期末残高が貸借の現金と合わない', difficulty: 'hard',
+    make(p) {
+      const was = p.tanshin.cashFlow.cashEnding;
+      p.tanshin.cashFlow.cashEnding = Math.round(was * 1.05);
+      return { edits: [], places: ['slot:cfEnd', 'slot:cash'], explanation: `キャッシュ・フローの期末残高 ${fmtAmount(p.tanshin.cashFlow.cashEnding)} が、貸借の現金及び預金 ${fmtAmount(p.tanshin.balanceSheet.current.cash)} と合いません。本当は ${fmtAmount(was)} です。` };
+    },
+  },
+  {
+    id: 'H-13', name: '同じ数字が短信と IR で少し違う', difficulty: 'hard',
+    make(p) {
+      const was = p.ir.highlights.netSales.amount;
+      p.ir.highlights.netSales.amount = round1(was * 1.05);
+      return { edits: [], places: ['slot:irSales', 'slot:sales'], explanation: `短信の売上高 ${fmtAmount(p.tanshin.incomeStatement.current.netSales)} 百万円に対し、IR の売上高が 5% 多い数字になっています。同じ数字は同じ値のはずです。` };
+    },
+  },
+  {
+    id: 'H-21', name: 'IR の文と数字の向きが逆', difficulty: 'hard',
+    make(p) {
+      const n = ocfClaimIndex(p);
+      const claim = claimOf(p, n, 'operatingCashFlow');
+      const was = claim.direction;
+      claim.direction = was === 'up' ? 'down' : 'up';
+      return { edits: [], places: [`ir.statements.${n}`], explanation: `IR は営業キャッシュ・フローを「${claim.direction === 'up' ? 'プラス' : 'マイナス'}」と書いていますが、短信の営業キャッシュ・フローは ${fmtAmount(p.tanshin.cashFlow.operatingCashFlow)} 百万円で、本当は「${was === 'up' ? 'プラス' : 'マイナス'}」です。` };
+    },
+  },
+  {
+    id: 'H-33', name: '同じ欄が 2 回出る', difficulty: 'hard',
+    make(_p, rng) {
+      const slot = pickOf(rng, ['cash', 'ta', 'ocf', 'irSales', 'audit', 'irSegs'] as const);
+      return { edits: [{ op: 'dup', slot }], places: [`slot:${slot}#2`], explanation: `資料の「${HARD_LABEL[slot]}」の欄が 2 回出ています。` };
     },
   },
 ];
 
-export function kindsFor(shape: ShapeId): AnomalyDef[] {
-  return ANOMALIES.filter((a) => a.shapes.includes(shape));
+const HARD_LABEL: Record<string, string> = { cash: '現金及び預金', ta: '総資産', ocf: '営業キャッシュ・フロー', irSales: 'IR の売上高', audit: '監査', irSegs: 'IR の報告セグメント' };
+
+export function kindsFor(difficulty: Difficulty): AnomalyDef[] {
+  return ANOMALIES.filter((a) => a.difficulty === difficulty);
 }
 
-/** 正常な問題の複製に、異変を 1 つ加える。その形で見えない種類は作らない (R-S4)。 */
-export function buildAnomaly(kind: string, normal: Problem, shape: ShapeId, rng: Rng): AnomalyResult {
+export function applicable(kind: string, p: Problem): boolean {
   const def = ANOMALIES.find((a) => a.id === kind);
   if (!def) throw new Error(`知らない異変の種類: ${kind}`);
-  if (!def.shapes.includes(shape)) throw new Error(`${kind} は ${shape} では見えません`);
+  return def.applies ? def.applies(p) : true;
+}
+
+/** 正常な問題の複製に、異変を 1 つ加える。 */
+export function buildAnomaly(kind: string, normal: Problem, rng: Rng): AnomalyResult {
+  const def = ANOMALIES.find((a) => a.id === kind);
+  if (!def) throw new Error(`知らない異変の種類: ${kind}`);
+  if (def.applies && !def.applies(normal)) throw new Error(`${kind} は ${normal.id} には当てられません`);
   const problem = structuredClone(normal);
-  const made = def.make(problem, shape, rng);
+  const made = def.make(problem, rng);
   return { kind, name: def.name, problem, ...made };
 }
+
+// 使っていない import の抑止 (fmtOku・irOku は将来の種類で使う)
+void fmtOku; void irOku;

@@ -1,13 +1,14 @@
 // 正常を覚えられるかの確かめ (docs/plans/redesign/plans.md §8.1 の「① の測り方」)。
 // 1 人 8 枚 = 異変 4 + 正常 4。異変は型のずれだけ (向きの逆・桁・比率の計算違いは、0 社目が無くても見つかるので使わない)。
+// v3: 形は 1 つ (もうけ)。並びの入れ替え (E-20) は無いので、桁区切りのカンマの位置 (E-21) に替えた。
 import { mulberry32 } from '../domain/rng';
 import type { Company, Problem } from '../domain/types';
 import { buildAnomaly } from './anomalies';
-import { deriveCard, type ShapeId } from './cards';
+import { deriveCards } from './cards';
 import type { Round } from './draw';
 
-/** 型のずれ: 欄の欠落・並びの入れ替え・単位の語・欄の重複。 */
-export const FORM_KINDS = ['E-19', 'E-20', 'E-03', 'E-22'] as const;
+/** 型のずれ: 欄の欠落・桁区切り・単位の語・欄の重複。 */
+export const FORM_KINDS = ['E-19', 'E-21', 'E-03', 'E-22'] as const;
 export const DECK_SIZE = 8;
 
 function shuffle<T>(xs: readonly T[], rng: () => number): T[] {
@@ -26,34 +27,33 @@ export interface DeckRef {
 }
 
 /**
- * 確かめの組は、見本と同じ見出し語 (E1 なら【増益】) の正常だけから引く。
+ * 確かめの組は、見本と同じ見出し語 (【増益】) の正常だけから引く。
  * 見出し語の違い (【減益】など) は型のずれではないのに、答えを動かす手がかりになるため (包括レビュー B1)。
- * 見出し語のない形 (E3) は絞らない。
  */
-function sameHeadline(normals: readonly Problem[], shape: ShapeId, ref: DeckRef): Problem[] {
+function sameHeadline(normals: readonly Problem[], ref: DeckRef): Problem[] {
   const headOf = (p: Problem): string | null => {
     const c = ref.companies.find((x) => x.id === p.companyId);
     if (!c) throw new Error(`会社がありません: ${p.companyId}`);
-    return deriveCard(p, c, shape).headline?.text ?? null;
+    return deriveCards(p, c, 'easy').headline?.text ?? null;
   };
   const want = headOf(ref.sample);
-  return want === null ? [...normals] : normals.filter((p) => headOf(p) === want);
+  return normals.filter((p) => headOf(p) === want);
 }
 
-export function buildDeck(seed: number, shape: ShapeId, normals: readonly Problem[], ref: DeckRef): Round[] {
+export function buildDeck(seed: number, normals: readonly Problem[], ref: DeckRef): Round[] {
   const rng = mulberry32((seed ^ 0x51ed270b) >>> 0);
   const byCompany = new Map<string, Problem[]>();
-  for (const p of shuffle(sameHeadline(normals, shape, ref), rng)) byCompany.set(p.companyId, [...(byCompany.get(p.companyId) ?? []), p]);
+  for (const p of shuffle(sameHeadline(normals, ref), rng)) byCompany.set(p.companyId, [...(byCompany.get(p.companyId) ?? []), p]);
   const picked = shuffle([...byCompany.keys()], rng).slice(0, DECK_SIZE).map((c) => byCompany.get(c)![0]!);
   if (picked.length < DECK_SIZE) throw new Error('確かめの 1 組を作れません: 会社が足りません');
   const anomalyAt = new Set(shuffle([0, 1, 2, 3, 4, 5, 6, 7], rng).slice(0, 4));
   const kinds = shuffle(FORM_KINDS, rng);
   let k = 0;
   return picked.map((base, i): Round => {
-    if (!anomalyAt.has(i)) return { problem: base, baseId: base.id, shape, edits: [], anomaly: null };
+    if (!anomalyAt.has(i)) return { problem: base, baseId: base.id, edits: [], anomaly: null };
     const kind = kinds[k++]!;
-    const b = buildAnomaly(kind, base, shape, rng);
-    return { problem: b.problem, baseId: base.id, shape, edits: b.edits, anomaly: { kind, name: b.name, places: b.places, explanation: b.explanation } };
+    const b = buildAnomaly(kind, base, rng);
+    return { problem: b.problem, baseId: base.id, edits: b.edits, anomaly: { kind, name: b.name, places: b.places, explanation: b.explanation } };
   });
 }
 
@@ -104,7 +104,6 @@ export const RECORD_HEADER = '８期連続 試作 確かめ記録';
 
 export interface ParsedRecord {
   pid: string;
-  shape: ShapeId;
   /** 0 社目 (見本) を見せた条件か。 */
   withSample: boolean;
   seed: number;
@@ -117,14 +116,13 @@ export interface ParsedRecord {
 
 export function parseRecord(text: string): ParsedRecord | null {
   const pid = /^参加者: (.*)$/m.exec(text)?.[1];
-  const cond = /^条件: 形=(E[123]) 0社目=(あり|なし) 種=(\d+)$/m.exec(text);
+  const cond = /^条件: 0社目=(あり|なし) 種=(\d+)$/m.exec(text);
   const res = /^結果: 異変 (\d+)\/(\d+) を見つけた \/ 正常 (\d+)\/(\d+) を異変と答えた → (合格|不合格)/m.exec(text);
   if (pid === undefined || !cond || !res) return null;
   return {
     pid: pid.trim(),
-    shape: cond[1] as ShapeId,
-    withSample: cond[2] === 'あり',
-    seed: Number(cond[3]),
+    withSample: cond[1] === 'あり',
+    seed: Number(cond[2]),
     found: Number(res[1]),
     anomalies: Number(res[2]),
     falseAlarms: Number(res[3]),

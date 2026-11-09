@@ -6,8 +6,8 @@ import { answer, DECK_REF, NORMALS } from './support';
 for (const sample of ['on', 'off'] as const) {
   test(`確かめ (0 社目 ${sample}): 8 枚を通すと記録が出る`, async ({ page }) => {
     const seed = 5;
-    const deck = buildDeck(seed, 'E1', NORMALS, DECK_REF);
-    await page.goto(`/proto.html?mode=test&shape=E1&seed=${seed}&sample=${sample}&pid=T1`);
+    const deck = buildDeck(seed, NORMALS, DECK_REF);
+    await page.goto(`/proto.html?mode=test&seed=${seed}&sample=${sample}&pid=T1`);
     await page.getByRole('button', { name: sample === 'on' ? '見本を見る' : '1 枚目へ' }).click();
     if (sample === 'on') {
       await expect(page.locator('.slip .example-stamp')).toHaveCount(1);
@@ -29,8 +29,8 @@ for (const sample of ['on', 'off'] as const) {
 }
 
 test('確かめでは、間違えても 0 社目に戻らず、8 枚を最後まで見せる', async ({ page }) => {
-  const deck = buildDeck(7, 'E3', NORMALS, DECK_REF);
-  await page.goto('/proto.html?mode=test&shape=E3&seed=7&sample=off');
+  const deck = buildDeck(7, NORMALS, DECK_REF);
+  await page.goto('/proto.html?mode=test&seed=7&sample=off');
   await page.getByRole('button', { name: '1 枚目へ' }).click();
   for (let i = 0; i < 8; i++) {
     await expect(page.locator('.checks .now')).toContainText(`${i + 1} 枚目`);
