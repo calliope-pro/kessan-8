@@ -71,12 +71,9 @@ describe('companies.json (docs/plans/companies.md §5 の 10 社)', () => {
     reds.forEach((c) => expect(['●', '⬤', '◉', '⚫', '⏺']).not.toContain(c.emblem));
   });
 
-  it('N4-1: 見本の IR スライドの注釈は、短信と「同じ」と言うとき、IR を億円で出す会社があることを断る (包括レビュー n4)', () => {
-    for (const key of ['highlights', 'segments', 'outlook', 'supplement'] as const) {
-      const note = (sample.notes as Record<string, string>)[key] as string;
-      expect(note, key).toContain('同じ');
-      expect(note, key).toContain('億円');
-    }
+  it('DM1: 見本は正常な問題 1 つ (anomaly が null)。画面ごとの注釈 notes を持たない (出所は 1 つ。docs/test-cases/domain-v3.md §5)', () => {
+    expect(Object.keys(sample)).toEqual(['problem']);
+    expect(sample.problem.anomaly).toBeNull();
   });
 
   it('K7: 事業の説明は「会社」で終わる 1 文で、数字を含まず、全社で重複しない (companies.md §5.4)', () => {

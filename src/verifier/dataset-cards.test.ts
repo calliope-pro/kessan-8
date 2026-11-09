@@ -342,7 +342,7 @@ describe('10.2 設計 #156 の取り込み (S16〜S19)', () => {
   });
 
   describe('S21 (N3): 見本にも同じ検査 (claims-count・card-structure・card-relation・card-text-length)', () => {
-    const withSample = (problem: Problem) => ({ ...cardPool(), companies: [...cardPool().companies, { ...companyA(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem, notes: {} } }] });
+    const withSample = (problem: Problem) => ({ ...cardPool(), companies: [...cardPool().companies, { ...companyA(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem } }] });
     const sample = () => normalVariant('sample', 'easy', 'c-sample');
     it('基準の見本は errors も card-* の shortfalls も出ない', () => {
       const r = verifyDataset(withSample(sample()));
