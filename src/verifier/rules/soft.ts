@@ -55,11 +55,13 @@ export const SOFT_RULES: Rule[] = [
       return within(x, 25, 40) ? null : `実効税率 ${x.toFixed(1)}% が 25〜40% の外`;
     }),
   ),
-  rule('soft-ocf-vs-operating-income', (each) =>
+  rule('soft-ocf-vs-operating-income', (each, ctx) =>
     each((r) => {
       const oi = r.t(is('operatingIncome'));
       const x = r.t('cashFlow.operatingCashFlow') / oi;
-      return oi > 0 && within(x, 0.3, 3) ? null : `営業 CF ÷ 営業利益 ${x.toFixed(2)} が 0.3〜3 の外`;
+      // 営業 CF の主張が down (マイナス) の問題は、下限 0.3 を外す: 営業利益が正で営業 CF がマイナスの会社は、正常にも要る (R-S5 (f)。設計 v3 §1.5。責任者の決定 2026-11-09)
+      const cfDown = ctx.p.ir.statements.some((s) => s.claims.some((c) => c.metric === 'operatingCashFlow' && c.direction === 'down'));
+      return oi > 0 && (cfDown ? x <= 3 : within(x, 0.3, 3)) ? null : `営業 CF ÷ 営業利益 ${x.toFixed(2)} が ${cfDown ? '3 以下' : '0.3〜3'} の外`;
     }),
   ),
   rule('soft-cash-vs-sales', (each) =>

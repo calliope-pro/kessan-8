@@ -64,11 +64,13 @@ describe('.github/workflows/ci.yml', () => {
     expect(line).not.toMatch(/--require-complete=/); // easy だけ・hard だけにしない (両方)
   });
 
-  it('C3c: verify:data は --require-cards=easy (または値なしの --require-cards) も付ける。やさしいのカード v3 の検査 (card-*) を致命にする (#139 の受け入れ条件。むずかしいの =hard だけにしない)', () => {
+  it('C3c: verify:data は値なしの --require-cards を行にちょうど 1 つ付ける (やさしい #139・むずかしい #140 のカード v3 の検査 card-* を、全難易度で致命にする)。=easy・=hard の片方だけにしない', () => {
     const line = (jobs()['check'] ?? '').split('\n').find((l) => l.includes('npm run verify:data')) ?? '';
-    expect(line).toMatch(/--require-cards(=easy)?(\s|$)/);
-    // CLI は最初の --require-cards だけを読む (scripts/verify-data.ts の cardsArg)。2 つ並べると後ろが黙って外れる。むずかしいを足すときは =easy を値なしの --require-cards に置き換える
+    expect(line).toMatch(/--require-cards(\s|$)/); // 値なし = 全難易度
+    expect(line).not.toMatch(/--require-cards=/);
+    // CLI は最初の --require-cards だけを読む (scripts/verify-data.ts の cardsArg)。2 つ並べると後ろが黙って外れる (#139 のレビュー B1・#172 のレビュー B1)
     expect((line.match(/--require-cards/g) ?? []).length).toBe(1);
+    expect(line).toMatch(/--require-complete(\s|$)/); // C3b のまま
   });
 
   it('C4: Node 22 と npm のキャッシュ (engines と整合)', () => {

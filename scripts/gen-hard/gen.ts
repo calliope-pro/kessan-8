@@ -1,8 +1,21 @@
-// @ts-nocheck — 問題データを作る道具 (むずかしい 32 問。docs/plans/problems-hard.md)。生成物は src/data/problems/hard/*.json で、JSON が唯一の出所。
-// 正常な資料束の生成器 (むずかしい 32 問の土台)。検証器の規則 (hard 全部) を満たすよう、連動の式から数字を導く。
+// @ts-nocheck — 問題データを作る道具 (むずかしい 132 問。docs/plans/problems-hard.md)。生成物は src/data/problems/hard/*.json で、JSON が唯一の出所。
+// 正常な問題の生成器 (正常 10 問と、異変の問題の基)。検証器の規則 (hard 全部) を満たすよう、連動の式から数字を導く。v3 で直した 4 点: 全社 億円 (companies.json の irUnit)・要素 DN (営業利益が減る)・CN (営業 CF がマイナス)・段を持たせない・営業 CF の文を向きで作る。
 import { readFileSync } from 'node:fs';
 import { roundHalfAway as rh, toIrUnit, dividendAmount } from '../../src/verifier/math.ts';
-import type { ProblemSpec } from './spec.ts';
+
+/** 正常な問題の指定 (plan.ts の正常の行)。 */
+export interface NormalSpec {
+  /** 問題の番号 (hard-001〜010)。乱数の種に使う。 */
+  n: number;
+  id: string;
+  company: string;
+  fiscalYear: number;
+  /** 疑わしく見える要素 (G X D N C P E DN CN)。 */
+  elements: string[];
+}
+
+/** 会計方針の変更の注記 (40 字以内。H-23 の反転も同じ文を使う)。 */
+export const POLICY_TEXT = '当期から収益認識の適用指針の改正を適用。影響は軽微。';
 
 export const companies: any[] = JSON.parse(readFileSync(new URL('../../src/data/companies.json', import.meta.url), 'utf-8'));
 
@@ -44,14 +57,12 @@ const lastDay = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export interface GenOpts { spec: ProblemSpec; seedTweak?: number }
-
-export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state: any } {
+export function genNormal(spec: NormalSpec, prev?: any): { problem: any; state: any } {
   const co = companies.find((c) => c.id === spec.company);
   const P = PROF[spec.company] as Prof;
   const R = mulberry32(hash(`${spec.company}:${spec.fiscalYear}:${spec.n}`));
   const rr = (a: number, b: number) => a + (b - a) * R();
-  const el = new Set(spec.kind === null ? spec.elements : []);
+  const el = new Set(spec.elements);
   const unit10 = co.irUnit === '億円' ? 10 : 1; // 億円の会社は営業利益・セグメント利益・調整額を 10 の倍数に
   const q = (x: number, m = 1) => Math.round(x / m) * m;
 
@@ -67,6 +78,8 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
   // 当期
   let OI1 = q(OI0 * (S1 / S0) * rr(0.96, 1.04), 10); // 売上高に連れて動く (大きな増減率 G は別に作る)
   if (el.has('G')) OI1 = q(OI0 * rr(1.18, 1.26), 10);
+  else if (el.has('DN')) OI1 = q(OI0 * rr(0.82, 0.92), 10); // 営業利益が減る (R-S5 (f)。【減益】が正常にも出る)
+  else OI1 = Math.max(OI1, q(OI0 * 1.03, 10)); // 前期比 2% 以上の増益 (向きが読み取れる。#171 の J5)
   const gp1 = q(S1 * (P.gm + rr(-0.004, 0.006)), 10);
   const sga0 = gp0 - OI0;
   const sga1 = gp1 - OI1;
@@ -119,7 +132,7 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
 
   // 当期の貸借 (キャッシュ・フロー以外)
   const k = S1 / S0;
-  const rec1 = Math.round(rec0 * k * rr(0.97, 1.04));
+  const rec1 = Math.round(rec0 * k * (el.has('CN') ? rr(1.26, 1.32) : rr(0.97, 1.04))); // CN = 売上債権が膨らみ、営業 CF がマイナスになる (R-S5 (f))
   const inv1 = Math.round(inv0 * k * rr(0.97, 1.04));
   const oca1 = oca0;
   const pay1 = Math.round(pay0 * k * rr(0.97, 1.03));
@@ -274,8 +287,9 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
   const u = (v: number) => toIrUnit(v, unit);
   const hdr = (un: string) => ({ companyName: co.name, securitiesCode: co.securitiesCode, periodLabel, unit: un });
 
-  const subsText = event ? `期末後に子会社の事業の一部を譲渡することを決定した。譲渡益は約 ${Math.max(10, q(NI1 * 0.5, 10)).toLocaleString('ja-JP')} 百万円の見込みである。` : '該当事項はありません。';
-  const policyNote = accountingPolicy ? '当期から、収益認識に関する会計基準の適用指針の改正を適用している。この変更による当期の損益への影響は軽微である。' : '該当事項はありません。';
+  // 文欄は 40 字以内 (カードの文欄。設計 v3 §1.1)
+  const subsText = event ? `期末後に子会社の一部を譲渡。譲渡益は約 ${Math.max(10, q(NI1 * 0.5, 10)).toLocaleString('ja-JP')} 百万円の見込み。` : '該当事項はありません。';
+  const policyNote = accountingPolicy ? POLICY_TEXT : '該当事項はありません。';
 
   const tanshin = {
     header: hdr('百万円'),
@@ -372,31 +386,22 @@ export function genNormal(spec: ProblemSpec, prev?: any): { problem: any; state:
       ...(mixed ? [{ metric: 'ordinaryIncome', direction: up(ord1, ord0) }, { metric: 'netIncomeParent', direction: up(NI1, NI0) }] : [])] },
     { slide: 'outlook', text: TEXT.outlook(spec.company, fNS > aNS, fOI > aOI), claims: [
       { metric: 'forecastNetSales', direction: up(x10(fNS), x10(aNS)) }, { metric: 'forecastOperatingIncome', direction: up(x10(fOI), x10(aOI)) }] },
-    { slide: 'supplement', text: TEXT.ocf(spec.company), claims: [{ metric: 'operatingCashFlow', direction: cf.operatingCashFlow > 0 ? 'up' : 'down' }] },
+    { slide: 'supplement', text: cf.operatingCashFlow > 0 ? TEXT.ocf(spec.company) : TEXT.ocf(spec.company).replace('プラス', 'マイナス'), claims: [{ metric: 'operatingCashFlow', direction: cf.operatingCashFlow > 0 ? 'up' : 'down' }] },
   ];
   if (P.pays && divCur !== divPrev) {
     ir.statements.push({ slide: 'highlights', text: divCur > divPrev ? TEXT.divUp(spec.company) : TEXT.divDown(spec.company), claims: [{ metric: 'dividend', direction: divCur > divPrev ? 'up' : 'down' }] });
   }
 
   const problem = {
-    id: `hard-${String(spec.n).padStart(3, '0')}`, difficulty: 'hard', companyId: spec.company, fiscalYear: spec.fiscalYear, tier: spec.tier,
+    id: spec.id, difficulty: 'hard', companyId: spec.company, fiscalYear: spec.fiscalYear,
     tanshin, ir, anomaly: null,
   };
   return { problem, state: { PL1, BS1, sg1, divCur, intCur } };
 }
 
-/** 会社ごとに期の昇順でつなぐ (前期の当期 = 次期の前期)。全問を n の順で返す。 */
-export function genAll(specs: ProblemSpec[]): any[] {
-  const out: any[] = [];
-  for (const c of new Set(specs.map((s) => s.company))) {
-    let prev: any;
-    for (const s of specs.filter((x) => x.company === c).sort((a, b) => a.fiscalYear - b.fiscalYear)) {
-      const r = genNormal(s, prev);
-      prev = r.state;
-      out.push(r.problem);
-    }
-  }
-  return out.sort((a, b) => a.id.localeCompare(b.id));
+/** 正常な問題を指定の順に作る (会社ごとに期は 1 つなので、前期からのつなぎ (prev) は使わない)。 */
+export function genAll(specs: NormalSpec[]): any[] {
+  return specs.map((s) => genNormal(s).problem);
 }
 
 // 会社の口調 (companies.md §5.3) に合わせた IR の文。主張は claims に持つ。程度の語は使わない。

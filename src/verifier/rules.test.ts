@@ -258,6 +258,22 @@ describe('参考の規則 (S)', () => {
     expect(softs(p)).toContain(rule);
   });
 
+  it('S14: 営業 CF の主張が down (マイナス) の問題では、営業 CF がマイナスでも soft-ocf-vs-operating-income が出ない (R-S5 (f) が正常に求める値。責任者の決定 2026-11-09)', () => {
+    const p = set(set(normalA(), 'tanshin.cashFlow.operatingCashFlow', -300), 'ir.statements.2.claims.0.direction', 'down');
+    expect(softs(p)).not.toContain('soft-ocf-vs-operating-income');
+  });
+
+  it('S15: 主張が up のまま営業 CF がマイナス (向きが数字と逆) は、soft-ocf-vs-operating-income が出る (今のまま。hard の claims-direction も落ちる)', () => {
+    const p = set(normalA(), 'tanshin.cashFlow.operatingCashFlow', -300);
+    expect(softs(p)).toContain('soft-ocf-vs-operating-income');
+    expect(verifyProblem(p, companyA()).hard.map((v) => v.rule)).toContain('claims-direction');
+  });
+
+  it('S16: 主張が down でも、営業利益が 0 以下なら soft-ocf-vs-operating-income が出る (今のまま)', () => {
+    const p = set(set(set(normalA(), 'tanshin.cashFlow.operatingCashFlow', -300), 'ir.statements.2.claims.0.direction', 'down'), 'tanshin.incomeStatement.current.operatingIncome', 0);
+    expect(softs(p)).toContain('soft-ocf-vs-operating-income');
+  });
+
   it('S11: 前期が 0 でも verifyProblem は例外にならない', () => {
     expect(() => verifyProblem(set(normalA(), 'tanshin.summary.netSales.previous', 0), companyA())).not.toThrow();
   });

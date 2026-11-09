@@ -168,11 +168,21 @@ describe('npm run verify:data', () => {
       const r = run('--dir', dataDir({ problems: hidden() }), '--require-complete=easy');
       expect(r.out).toContain('card-invisible');
     });
-    it('Lc4: 今のデータ (src/data) は --require-complete で終了コード 0、card-* は警告として出る', () => {
-      const r = run('--require-complete');
+    it('Lc4: 今のデータ (src/data。やさしい 85・むずかしい 132) は --require-complete --require-cards で終了コード 0。card-* の警告は 0 件 (データが揃った。#172)', () => {
+      const r = run('--require-complete', '--require-cards');
       expect(r.code).toBe(0);
-      expect(r.out).toContain('card-');
-      expect(run('--require-cards').code).toBe(1);
+      expect(r.out).toContain('217 問を検証');
+      expect(r.out).not.toContain('card-');
+    });
+    it('Lc5: 今のデータは --require-cards=hard でも終了コード 0 (CI に足す呼び方。#172)', () => {
+      expect(run('--require-complete', '--require-cards=hard').code).toBe(0);
+    });
+    it('Lc6: むずかしいの問題にカードの不足があると、--require-cards=hard が終了コード 1 (致命の検査が空振りでない)。=easy は 0', () => {
+      const dir = dataDir({ problems: [normalVariant('hard-001', 'hard', 'fixture-c01'), anomalyVariant('hard-002', 'hard', 'fixture-c01')] });
+      const hard = run('--dir', dir, '--require-cards=hard');
+      expect(hard.code).toBe(1);
+      expect(hard.out).toContain('card-');
+      expect(run('--dir', dir, '--require-cards=easy').code).toBe(0);
     });
   });
 });
