@@ -399,6 +399,16 @@ describe('種類の出方 (R-S6 の置き換え)', () => {
     }
   }, LONG);
 
+  it('DW34: 会社から答えが漏れない — 履歴を引き継ぐ 3 万周 (各答え 0.85 で正解) で、「前の周で正常として出た会社」でもそれ以外でも、異変の枠の割合は 0.5 ± 2 ポイント', () => {
+    for (const d of BOTH) {
+      const r = recommended(d, { laps: 30_000, carry: true, accuracy: 0.85 });
+      const p = (b: { anomaly: number; total: number }): number => b.anomaly / b.total;
+      expect(r.afterNormal.total, `${d}: 前の周で正常だった会社の枠の数 (標準誤差が小さいだけ)`).toBeGreaterThan(20_000);
+      expect(Math.abs(p(r.afterNormal) - 0.5), `${d}: 前の周で正常だった会社 ${p(r.afterNormal).toFixed(3)}`).toBeLessThanOrEqual(0.02);
+      expect(Math.abs(p(r.others) - 0.5), `${d}: それ以外 ${p(r.others).toFixed(3)}`).toBeLessThanOrEqual(0.02);
+    }
+  }, LONG);
+
   it('DW29b: 偏ったプールでは、検査 (R-S6 (c)) がどれかの群で 1.5 倍超を返す (検査が偏りを見逃さない)', () => {
     for (const d of BOTH) {
       const checks = checkGroups(measure('uneven', makeUnevenPool(d), d, { laps: LAPS }), kindsOf(d));

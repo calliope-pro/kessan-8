@@ -23,6 +23,12 @@ export interface SimResult {
   anomalySlots: number;
   /** 群ごとの、異変の枠で出た種類 ID の数。 */
   kindCounts: Map<string, number>[];
+  /**
+   * 会社から答えが漏れないことの数え方 (B1)。遊び手が見た枠だけを、その会社が**前の周で正常な問題として出ていたか**で分け、
+   * それぞれで異変の枠だった数を数える。履歴を引き継ぐときだけ意味を持つ (引き継がなくても数える)。
+   */
+  afterNormal: { anomaly: number; total: number };
+  others: { anomaly: number; total: number };
 }
 
 /** 種 1〜laps で出題する。 */
@@ -33,11 +39,19 @@ export function simulate(pool: Problem[], difficulty: Difficulty, o: SimOptions)
   const kindCounts = GROUPS.map(() => new Map<string, number>());
   let slots = 0;
   let anomalySlots = 0;
+  const afterNormal = { anomaly: 0, total: 0 };
+  const others = { anomaly: 0, total: 0 };
+  let prevNormal = new Set<string>();
   for (let seed = 1; seed <= o.laps; seed++) {
     const rounds = draw(pool, { difficulty, rng: mulberry32(seed), history: o.carry ? rec[difficulty].history : undefined, foundKinds: o.carry ? rec[difficulty].kinds : undefined });
+    const normalThisLap = new Set<string>();
     for (let slot = 0; slot < ROUNDS_TO_CLEAR; slot++) {
       const problem = rounds[slot]!.problem;
       slots++;
+      const bucket = prevNormal.has(problem.companyId) ? afterNormal : others;
+      bucket.total++;
+      if (problem.anomaly !== null) bucket.anomaly++;
+      else normalThisLap.add(problem.companyId);
       if (problem.anomaly !== null) {
         anomalySlots++;
         const counts = kindCounts[GROUPS.findIndex((g) => g.includes(slot))]!;
@@ -47,8 +61,9 @@ export function simulate(pool: Problem[], difficulty: Difficulty, o: SimOptions)
       if (o.carry) rec = recordAnswer(rec, { difficulty, round: slot, problem, answer: (problem.anomaly !== null) === ok ? 'anomaly' : 'normal', correct: ok });
       if (!ok) break;
     }
+    prevNormal = normalThisLap;
   }
-  return { slots, anomalySlots, kindCounts };
+  return { slots, anomalySlots, kindCounts, afterNormal, others };
 }
 
 export interface GroupCheck {
