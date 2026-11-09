@@ -1,55 +1,65 @@
-// UG1〜UG18 (docs/test-cases/flow.md §1.4)
+// DT1〜DT19 (docs/test-cases/domain-v3.md §2): 状態遷移 reduce。0 社目 (sample)・BEGIN・枠は問題だけ・間違えたら 0 社目へ。
 import { describe, expect, it } from 'vitest';
-import { makePool } from '../testing/fixtures';
+import { makeSmallPool } from '../testing/pool-v3';
 import { draw } from './draw';
 import { type Action, type GameState, initialState, reduce } from './game';
 import { mulberry32 } from './rng';
-import type { Problem } from './types';
+import type { Difficulty, Round } from './types';
 
-const pool = makePool({ difficulty: 'easy', companies: 12 });
-const eight = (seed: number): Problem[] => draw(pool, { difficulty: 'easy', rng: mulberry32(seed) });
-const eightHard = (seed: number): Problem[] => draw(makePool({ difficulty: 'hard', companies: 12 }), { difficulty: 'hard', rng: mulberry32(seed) });
+const pools: Record<Difficulty, ReturnType<typeof makeSmallPool>> = { easy: makeSmallPool('easy', 12), hard: makeSmallPool('hard', 12) };
+const eight = (seed: number, d: Difficulty = 'easy'): Round[] => draw(pools[d], { difficulty: d, rng: mulberry32(seed) });
 
+type Of<P extends GameState['phase']> = Extract<GameState, { phase: P }>;
 const apply = (s: GameState, ...actions: Action[]): GameState => actions.reduce(reduce, s);
-const reading = (seed = 1): GameState => apply(initialState, { type: 'START' }, { type: 'PICK', difficulty: 'easy', problems: eight(seed) });
-const answerOf = (s: GameState, correct: boolean) => {
+const difficulty = (): GameState => reduce(initialState, { type: 'START' });
+/** sample (0 社目。missed なし)。 */
+const sample = (seed = 1): GameState => reduce(difficulty(), { type: 'PICK', difficulty: 'easy', rounds: eight(seed) });
+const reading = (seed = 1): GameState => reduce(sample(seed), { type: 'BEGIN' });
+const answerOf = (s: GameState, correct: boolean): Action => {
   if (s.phase !== 'reading') throw new Error('reading ではない');
-  const hasAnomaly = s.problems[s.round]!.anomaly !== null;
-  return { type: 'ANSWER', answer: hasAnomaly === correct ? 'anomaly' : 'normal' } as const;
+  const hasAnomaly = s.rounds[s.round]!.problem.anomaly !== null;
+  return { type: 'ANSWER', answer: hasAnomaly === correct ? 'anomaly' : 'normal' };
 };
-const revealedCorrect = (s = reading()) => reduce(s, answerOf(s, true));
-const revealedWrong = (s = reading()) => reduce(s, answerOf(s, false));
-const cleared = (): GameState => {
-  let s = reading();
-  for (let i = 0; i < 8; i++) s = reduce(revealedCorrect(s), { type: 'NEXT' });
+const revealedCorrect = (s: GameState = reading()): GameState => reduce(s, answerOf(s, true));
+const revealedWrong = (s: GameState = reading()): GameState => reduce(s, answerOf(s, false));
+/** round 番目 (0 始まり) の reading。 */
+const readingAt = (round: number, seed = 1): GameState => {
+  let s = reading(seed);
+  for (let i = 0; i < round; i++) s = reduce(revealedCorrect(s), { type: 'NEXT' });
   return s;
 };
+const cleared = (): GameState => reduce(revealedCorrect(readingAt(7)), { type: 'NEXT' });
+/** 不正解のあと RESTART した 0 社目 (missed あり)。 */
+const sampleWithMissed = (): GameState => reduce(revealedWrong(readingAt(2)), { type: 'RESTART', rounds: eight(2) });
 
-const otherView = { doc: 'ir', screen: 'outlook' } as const;
 const everyAction = (): Action[] => [
   { type: 'START' },
-  { type: 'PICK', difficulty: 'hard', problems: eightHard(9) },
-  { type: 'VIEW', view: otherView },
+  { type: 'PICK', difficulty: 'hard', rounds: eight(9, 'hard') },
+  { type: 'BEGIN' },
   { type: 'ANSWER', answer: 'anomaly' },
   { type: 'NEXT' },
-  { type: 'RESTART', problems: eight(9) },
+  { type: 'RESTART', rounds: eight(9) },
   { type: 'TO_DIFFICULTY' },
   { type: 'TO_TITLE' },
-  { type: 'TOGGLE_MARK', key: 'tanshin.summary.netSales.current' },
+  // 消えた action (型の外から渡す)
+  { type: 'VIEW', view: { doc: 'ir', screen: 'outlook' } } as unknown as Action,
+  { type: 'TOGGLE_MARK', key: 'tanshin.summary.netSales.current' } as unknown as Action,
 ];
 
-// action × phase の受け付ける組み合わせ (docs/design.md §5.2 の表。TOGGLE_MARK は印の状態)
+// action × phase の受け付ける組み合わせ (docs/design-v2.md §3.2 の表)
 const accepted: [string, GameState, string[]][] = [
   ['title', initialState, ['START']],
-  ['difficulty', reduce(initialState, { type: 'START' }), ['PICK', 'TO_TITLE']],
-  ['reading', reading(), ['VIEW', 'ANSWER', 'TO_TITLE', 'TOGGLE_MARK']],
-  ['revealed(正解)', revealedCorrect(), ['VIEW', 'NEXT', 'TO_TITLE']],
-  ['revealed(不正解)', revealedWrong(), ['VIEW', 'RESTART', 'TO_DIFFICULTY', 'TO_TITLE']],
+  ['difficulty', difficulty(), ['PICK', 'TO_TITLE']],
+  ['sample (missed なし)', sample(), ['BEGIN', 'TO_TITLE']],
+  ['sample (missed あり)', sampleWithMissed(), ['BEGIN', 'TO_TITLE']],
+  ['reading', reading(), ['ANSWER', 'TO_TITLE']],
+  ['revealed(正解)', revealedCorrect(), ['NEXT', 'TO_TITLE']],
+  ['revealed(不正解)', revealedWrong(), ['RESTART', 'TO_DIFFICULTY', 'TO_TITLE']],
   ['cleared', cleared(), ['PICK', 'TO_DIFFICULTY', 'TO_TITLE']],
 ];
 
 describe('状態遷移 reduce', () => {
-  it('UG1: 受け付ける action × phase だけが変わり、ほかは状態を変えずに返す', () => {
+  it('DT1: 受け付ける action × phase だけが変わり、ほかは状態を変えずに返す。VIEW・TOGGLE_MARK はどの phase でも ignored', () => {
     for (const [name, state, ok] of accepted) {
       for (const action of everyAction()) {
         const next = reduce(state, action);
@@ -59,137 +69,149 @@ describe('状態遷移 reduce', () => {
     }
   });
 
-  it('UG2: title に START で difficulty', () => {
-    expect(reduce(initialState, { type: 'START' }).phase).toBe('difficulty');
+  it('DT2: title に START で difficulty (draws はそのまま)', () => {
+    expect(reduce(initialState, { type: 'START' })).toEqual({ phase: 'difficulty', draws: 0 });
   });
 
-  it('UG3: PICK で reading の 1 社目 (短信の 1 画面目・印は空・draws + 1)', () => {
-    const problems = eight(1);
-    const s = apply(initialState, { type: 'START' }, { type: 'PICK', difficulty: 'easy', problems });
-    expect(s).toMatchObject({ phase: 'reading', difficulty: 'easy', round: 0, marks: [], view: { doc: 'tanshin', screen: 'summary' }, draws: 1 });
-    expect((s as { problems: Problem[] }).problems).toEqual(problems);
+  it('DT3: difficulty に PICK で sample (0 社目): 難易度・8 枠・draws + 1・missed なし', () => {
+    const rounds = eight(1);
+    const s = reduce(difficulty(), { type: 'PICK', difficulty: 'easy', rounds });
+    expect(s).toEqual({ phase: 'sample', difficulty: 'easy', rounds, draws: 1 });
+    expect('missed' in s).toBe(false);
   });
 
-  it('UG4: cleared からの PICK は、cleared が持つ難易度のまま・draws + 1', () => {
-    const c = cleared();
-    const s = reduce(c, { type: 'PICK', difficulty: 'hard', problems: eight(3) });
-    expect(s).toMatchObject({ phase: 'reading', difficulty: 'easy', round: 0, draws: (c as { draws: number }).draws + 1 });
+  it('DT4: cleared からの PICK は sample。難易度は cleared が持つものと同じ (action の難易度を使わない)・draws + 1・missed なし', () => {
+    const c = cleared() as Of<'cleared'>;
+    const s = reduce(c, { type: 'PICK', difficulty: 'hard', rounds: eight(3) });
+    expect(s).toMatchObject({ phase: 'sample', difficulty: 'easy', draws: c.draws + 1 });
+    expect('missed' in s).toBe(false);
   });
 
-  it('UG5: VIEW は見る画面だけを変える (revealed でも答え・正誤・印は変わらない)', () => {
-    const r = reduce(reading(), { type: 'VIEW', view: otherView });
-    expect(r).toMatchObject({ phase: 'reading', view: otherView });
-    const rv = revealedWrong();
-    const moved = reduce(rv, { type: 'VIEW', view: otherView });
-    expect(moved).toMatchObject({ phase: 'revealed', view: otherView });
-    expect(moved).toMatchObject({ answer: (rv as { answer: string }).answer, correct: false });
-  });
-
-  it('UG6: ANSWER で revealed。答え・正誤は judge と同じ。異変のある問題は 1 つ目の場所の画面、ない問題は見ていた画面のまま。印は持ち越し', () => {
-    for (let seed = 1; seed <= 30; seed++) {
-      const s0 = reduce(reading(seed), { type: 'TOGGLE_MARK', key: 'k1' });
-      const r0 = s0 as Extract<GameState, { phase: 'reading' }>;
-      const problem = r0.problems[0]!;
-      const target = { doc: 'tanshin', screen: 'cashFlow' } as const;
-      const s = reduce(s0, { type: 'ANSWER', answer: 'anomaly', view: target }) as Extract<GameState, { phase: 'revealed' }>;
-      expect(s.phase).toBe('revealed');
-      expect(s.answer).toBe('anomaly');
-      expect(s.correct).toBe(problem.anomaly !== null);
-      expect(s.marks).toEqual(['k1']);
-      if (problem.anomaly) expect(s.view).toEqual(target);
-      else expect(s.view).toEqual(r0.view);
+  it('DT5: sample (missed なし・あり) に BEGIN で reading の 1 社目 (同じ難易度・同じ rounds・draws は同じ・missed は持たない)', () => {
+    for (const s of [sample() as Of<'sample'>, sampleWithMissed() as Of<'sample'>]) {
+      const r = reduce(s, { type: 'BEGIN' });
+      expect(r).toEqual({ phase: 'reading', difficulty: s.difficulty, rounds: s.rounds, round: 0, draws: s.draws });
+      expect('missed' in r).toBe(false);
     }
   });
 
-  it('UG7: revealed で ANSWER は ignored (判定をやり直せない)', () => {
-    const s = revealedWrong();
-    expect(reduce(s, { type: 'ANSWER', answer: 'normal' })).toBe(s);
-    expect(reduce(s, { type: 'ANSWER', answer: 'anomaly' })).toBe(s);
+  it('DT6: reading に ANSWER で revealed (答え・正誤は problem.anomaly だけで決まる・round・rounds・draws は同じ)', () => {
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const r = reading(seed) as Of<'reading'>;
+      const hasAnomaly = r.rounds[0]!.problem.anomaly !== null;
+      for (const answer of ['anomaly', 'normal'] as const) {
+        const s = reduce(r, { type: 'ANSWER', answer });
+        expect(s).toEqual({ phase: 'revealed', difficulty: 'easy', rounds: r.rounds, round: 0, draws: r.draws, answer, correct: (answer === 'anomaly') === hasAnomaly });
+      }
+    }
+    // 異変のある枠・ない枠の 4 通りがすべて出ている
+    const kinds = new Set(Array.from({ length: 40 }, (_, i) => (reading(i + 1) as Of<'reading'>).rounds[0]!.problem.anomaly !== null));
+    expect(kinds).toEqual(new Set([true, false]));
   });
 
-  it('UG8: 正解のあと 1〜7 社目の NEXT で、次の社 (印は空・短信の 1 画面目・draws は同じ)', () => {
+  it('DT7: revealed に ANSWER は ignored (判定をやり直せない)', () => {
+    for (const s of [revealedCorrect(), revealedWrong()]) {
+      expect(reduce(s, { type: 'ANSWER', answer: 'normal' })).toBe(s);
+      expect(reduce(s, { type: 'ANSWER', answer: 'anomaly' })).toBe(s);
+    }
+  });
+
+  it('DT8: 正解のあと 1〜7 社目の NEXT で、次の社 (round + 1・draws は同じ)', () => {
     let s = reading();
     for (let round = 0; round < 7; round++) {
-      const rv = revealedCorrect(s);
+      const rv = revealedCorrect(s) as Of<'revealed'>;
       s = reduce(rv, { type: 'NEXT' });
-      expect(s).toMatchObject({ phase: 'reading', round: round + 1, marks: [], view: { doc: 'tanshin', screen: 'summary' }, draws: (rv as { draws: number }).draws });
+      expect(s).toMatchObject({ phase: 'reading', round: round + 1, draws: rv.draws, rounds: rv.rounds });
     }
   });
 
-  it('UG9: 8 社目の NEXT で cleared (難易度と、遊んだ 8 問を持つ)', () => {
-    expect(cleared()).toMatchObject({ phase: 'cleared', difficulty: 'easy', problems: eight(1) });
+  it('DT9: 8 社目の NEXT で cleared (難易度と、遊んだ 8 枠 (rounds)・draws)', () => {
+    const rounds = eight(1);
+    expect(cleared()).toEqual({ phase: 'cleared', difficulty: 'easy', rounds, draws: 1 });
   });
 
-  it('UG10: 不正解のあとの NEXT は ignored', () => {
+  it('DT10: 不正解の revealed に NEXT は ignored', () => {
     const s = revealedWrong();
     expect(reduce(s, { type: 'NEXT' })).toBe(s);
   });
 
-  it('UG11: 不正解のあとの RESTART で、新しい 8 問の 1 社目 (印は空・draws + 1)', () => {
-    const rv = revealedWrong(reduce(reading(), { type: 'TOGGLE_MARK', key: 'k1' }));
-    const problems = eight(2);
-    const s = reduce(rv, { type: 'RESTART', problems });
-    expect(s).toMatchObject({ phase: 'reading', round: 0, marks: [], draws: (rv as { draws: number }).draws + 1, difficulty: 'easy' });
-    expect((s as { problems: Problem[] }).problems).toEqual(problems);
+  it('DT11: 1 社目・4 社目・8 社目で不正解のあと RESTART で sample: 新しい rounds・draws + 1・同じ難易度・missed = 間違えた枠 (元の rounds[round])', () => {
+    for (const round of [0, 3, 7]) {
+      const rv = revealedWrong(readingAt(round)) as Of<'revealed'>;
+      const rounds = eight(2);
+      const s = reduce(rv, { type: 'RESTART', rounds });
+      expect(s).toEqual({ phase: 'sample', difficulty: 'easy', rounds, draws: rv.draws + 1, missed: rv.rounds[round] });
+    }
   });
 
-  it('UG12: 正解のあとの RESTART は ignored', () => {
+  it('DT12: 正解の revealed に RESTART は ignored', () => {
     const s = revealedCorrect();
-    expect(reduce(s, { type: 'RESTART', problems: eight(2) })).toBe(s);
+    expect(reduce(s, { type: 'RESTART', rounds: eight(2) })).toBe(s);
   });
 
-  it('UG13: 不正解の revealed と cleared で TO_DIFFICULTY は difficulty。正解の revealed と reading は ignored', () => {
-    expect(reduce(revealedWrong(), { type: 'TO_DIFFICULTY' }).phase).toBe('difficulty');
-    expect(reduce(cleared(), { type: 'TO_DIFFICULTY' }).phase).toBe('difficulty');
-    const rc = revealedCorrect();
-    expect(reduce(rc, { type: 'TO_DIFFICULTY' })).toBe(rc);
-    const r = reading();
-    expect(reduce(r, { type: 'TO_DIFFICULTY' })).toBe(r);
+  it('DT13: 不正解の revealed と cleared で TO_DIFFICULTY は difficulty (draws はそのまま)。正解の revealed・reading・sample では ignored', () => {
+    for (const s of [revealedWrong(), cleared()]) expect(reduce(s, { type: 'TO_DIFFICULTY' })).toEqual({ phase: 'difficulty', draws: (s as { draws: number }).draws });
+    for (const s of [revealedCorrect(), reading(), sample(), sampleWithMissed()]) expect(reduce(s, { type: 'TO_DIFFICULTY' })).toBe(s);
   });
 
-  it('UG14: TO_TITLE は走行を捨てる (問題・印・答えを持たない)。draws は残る', () => {
-    for (const s of [reduce(initialState, { type: 'START' }), reading(), revealedCorrect(), revealedWrong(), cleared()]) {
-      const t = reduce(s, { type: 'TO_TITLE' });
-      expect(t).toEqual({ phase: 'title', draws: (s as { draws: number }).draws });
+  it('DT14: TO_TITLE は走行を捨てる (rounds・答え・missed を持たない)。draws は残る。title では ignored', () => {
+    for (const s of [difficulty(), sample(), sampleWithMissed(), reading(), revealedCorrect(), revealedWrong(), cleared()]) {
+      expect(reduce(s, { type: 'TO_TITLE' })).toEqual({ phase: 'title', draws: (s as { draws: number }).draws });
     }
     expect(reduce(initialState, { type: 'TO_TITLE' })).toBe(initialState);
   });
 
-  it('UG15: TOGGLE_MARK は付け外し。付けた順に並ぶ。reading のほかでは ignored', () => {
-    const k1 = { type: 'TOGGLE_MARK', key: 'a' } as const;
-    const k2 = { type: 'TOGGLE_MARK', key: 'b' } as const;
-    const s = apply(reading(), k1, k2);
-    expect((s as { marks: string[] }).marks).toEqual(['a', 'b']);
-    expect((reduce(s, k1) as { marks: string[] }).marks).toEqual(['b']);
-    const rv = revealedWrong();
-    expect(reduce(rv, k1)).toBe(rv);
-  });
-
-  it('UG16: 印は revealed に持ち越され、NEXT・RESTART のあとは空', () => {
-    const marked = reduce(reading(), { type: 'TOGGLE_MARK', key: 'a' });
-    const rc = revealedCorrect(marked);
-    expect((rc as { marks: string[] }).marks).toEqual(['a']);
-    expect((reduce(rc, { type: 'NEXT' }) as { marks: string[] }).marks).toEqual([]);
-    const rw = revealedWrong(marked);
-    expect((rw as { marks: string[] }).marks).toEqual(['a']);
-    expect((reduce(rw, { type: 'RESTART', problems: eight(2) }) as { marks: string[] }).marks).toEqual([]);
-  });
-
-  it('UG17: 毎回正解の 8 社連続で、途中は reading の round が 0 → 7、最後の NEXT で cleared', () => {
+  it('DT15: 1 社目から 8 社目まで毎回正解で、reading の round が 0 → 7 と進み、最後の NEXT で cleared', () => {
     let s = reading();
     for (let i = 0; i < 7; i++) {
-      expect((s as { round: number }).round).toBe(i);
+      expect((s as Of<'reading'>).round).toBe(i);
       s = reduce(revealedCorrect(s), { type: 'NEXT' });
     }
-    expect((s as { round: number }).round).toBe(7);
+    expect((s as Of<'reading'>).round).toBe(7);
     expect(reduce(revealedCorrect(s), { type: 'NEXT' }).phase).toBe('cleared');
   });
 
-  it('UG18: 4 社目で不正解のあと RESTART で 1 社目・draws が 1 増える', () => {
-    let s = reading();
-    for (let i = 0; i < 3; i++) s = reduce(revealedCorrect(s), { type: 'NEXT' });
-    const rw = revealedWrong(s);
-    const next = reduce(rw, { type: 'RESTART', problems: eight(5) });
-    expect(next).toMatchObject({ phase: 'reading', round: 0, draws: (rw as { draws: number }).draws + 1 });
+  it('DT16: 4 社目で不正解 → RESTART → BEGIN: sample (missed あり) → reading の 1 社目。draws は RESTART で 1 増え、BEGIN では増えない。reading は missed を持たない', () => {
+    const rv = revealedWrong(readingAt(3)) as Of<'revealed'>;
+    const s = reduce(rv, { type: 'RESTART', rounds: eight(5) }) as Of<'sample'>;
+    expect(s.phase).toBe('sample');
+    expect(s.missed).toEqual(rv.rounds[3]);
+    expect(s.draws).toBe(rv.draws + 1);
+    const r = reduce(s, { type: 'BEGIN' }) as Of<'reading'>;
+    expect(r).toMatchObject({ phase: 'reading', round: 0, draws: s.draws });
+    expect('missed' in r).toBe(false);
+  });
+
+  it('DT17: reading・revealed の状態は view・marks を持たない (印・検算・画面の参照は無い)', () => {
+    for (const s of [reading(), revealedCorrect(), revealedWrong()]) {
+      expect('view' in s).toBe(false);
+      expect('marks' in s).toBe(false);
+    }
+  });
+
+  it('DT18: どの遷移も、渡した状態・rounds・action の rounds を書き換えない (深い凍結をかけても例外にならず、結果は同じ)', () => {
+    const freeze = <T>(x: T): T => {
+      if (typeof x === 'object' && x !== null && !Object.isFrozen(x)) {
+        Object.freeze(x);
+        Object.values(x).forEach(freeze);
+      }
+      return x;
+    };
+    for (const [name, state] of accepted) {
+      for (const action of everyAction()) {
+        const expected = reduce(structuredClone(state), structuredClone(action));
+        expect(() => reduce(freeze(structuredClone(state)), freeze(structuredClone(action))), `${name} × ${action.type}`).not.toThrow();
+        expect(reduce(freeze(structuredClone(state)), freeze(structuredClone(action)))).toEqual(expected);
+      }
+    }
+  });
+
+  it('DT19: 枠 (rounds の要素) と missed は problem だけを持つ (shape が無い)', () => {
+    const states = [sample(), sampleWithMissed(), reading(), revealedWrong(), cleared()] as { rounds: Round[]; missed?: Round }[];
+    for (const s of states) {
+      for (const r of s.rounds) expect(Object.keys(r)).toEqual(['problem']);
+      if (s.missed) expect(Object.keys(s.missed)).toEqual(['problem']);
+    }
+    expect((sampleWithMissed() as Of<'sample'>).missed).toBeDefined();
   });
 });
