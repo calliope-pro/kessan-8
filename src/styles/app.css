@@ -84,7 +84,7 @@ button { font: inherit; color: inherit; }
 .field { display: inline-flex; border: 1px solid var(--rule); font-family: var(--font-num); font-size: var(--num); font-weight: 700; line-height: 1; background: var(--paper); }
 .cell { display: grid; place-items: center; width: var(--cell); height: 1.3em; border-left: 1px solid var(--rule-mid); }
 .cell:first-child { border-left: 0; }
-.sep { flex: none; display: flex; align-items: flex-end; justify-content: center; width: 0.34em; align-self: stretch; border-left: 3px solid var(--rule); font-size: 1em; font-weight: 900; line-height: 1; padding-bottom: 0.06em; }
+.sep { flex: none; display: flex; align-items: flex-end; justify-content: center; width: 0.34em; align-self: stretch; background: linear-gradient(var(--rule), var(--rule)) left / 3px 100% no-repeat; font-size: 1em; font-weight: 900; line-height: 1; padding-bottom: 0.06em; }
 .sep + .cell { border-left: 0; }
 .cell.neg { color: var(--stamp); }
 .cell.point { width: 0.6em; border-left: 0; }
