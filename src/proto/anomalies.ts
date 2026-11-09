@@ -125,9 +125,13 @@ export const ANOMALIES: readonly AnomalyDef[] = [
   },
   {
     id: 'E-21', name: '数字の桁区切りが違う', difficulty: 'easy',
-    make(_p, rng) {
-      const style = rng() < 0.5 ? 'no-comma' : 'comma-shift';
-      return { edits: [{ op: 'format', slot: 'sales', style }], places: ['slot:sales'], explanation: `「売上高」の桁区切りの位置が、いつもと違います。${style === 'no-comma' ? 'カンマがありません。' : 'カンマがずれています。'}` };
+    // no-comma は整数部が 4 桁以上の金額の欄 (売上高・営業利益のどれでも)、comma-shift は 5 桁以上 (やさしいでは売上高だけ。設計 §1.6)。
+    make(p, rng) {
+      const wide = (slot: string, min: number) => Number(getCell(p, AMOUNT_PATH[slot]!)) >= min;
+      const shift = rng() >= 0.5 && wide('sales', 10000);
+      if (shift) return { edits: [{ op: 'format', slot: 'sales', style: 'comma-shift' }], places: ['slot:sales'], explanation: '「売上高」の桁区切りの位置が、いつもと違います。カンマがずれています。' };
+      const slot = pickOf(rng, AMOUNT_SLOTS.filter((k) => wide(k, 1000)));
+      return { edits: [{ op: 'format', slot, style: 'no-comma' }], places: [`slot:${slot}`], explanation: `「${LABEL[slot]}」の桁区切りの位置が、いつもと違います。カンマがありません。` };
     },
   },
   {

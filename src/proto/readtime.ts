@@ -2,13 +2,40 @@
 // 測るのは「カードを見せてから、判定の札を押すまでの秒数」。初見の遊び手 (集められる人数) が遊んだ記録を貼って集計する。
 import type { Card, Difficulty } from './cards';
 
-/** 設計 §1.3 の「読む量」と同じ数え方: 科目名・言い換え・数字・単位・文・見出し語。枠の外 (社名・期・期末日) は数えない。 */
-export function cardChars(card: Card): number {
-  const len = (s: string) => [...s].length;
-  let n = card.headline ? len(`【${card.headline.text}】`) + len(card.headline.gloss) : 0;
-  for (const s of card.slots) n += len(s.label) + len(s.gloss ?? '') + len(s.text) + len(s.unit);
-  return n;
+export interface CharBreakdown {
+  /** 欄の科目名・数字・単位・文 (見出し語を含む)。 */
+  slots: number;
+  /** 見て分かる言い換え (やさしいだけ)。 */
+  gloss: number;
+  /** 表題 (社名・期)・足元 (期末日)・資料 2 の表題。設計 §1.1 の「枠の外」。 */
+  frame: number;
+  /** 資料の見出し・ブロックの見出し・貸借の見出し。 */
+  headings: number;
+  total: number;
 }
+
+/**
+ * 画面に出る文字の全部 (読む量)。設計 §1.3 の測定 (spike-design/v3-inject-hard.ts の最後) は、社名 (短信と会社の名前で 2 回)・期・「期末」・
+ * 長めの科目名などを数えた 583 字 (むずかしい平均)。本試作は画面の文字を実際に数え、内訳を返す (数え方が違うので、設計の値と直接は比べない)。
+ */
+export function cardCharBreakdown(card: Card): CharBreakdown {
+  const len = (s: string) => [...s].length;
+  let slots = card.headline ? len(`【${card.headline.text}】`) * card.headline.count : 0;
+  let gloss = card.headline ? len(card.headline.gloss) * card.headline.count : 0;
+  for (const s of card.slots) { slots += len(s.label) + len(s.text) + len(s.unit); gloss += len(s.gloss ?? ''); }
+  const frame = len(card.company.name) + len(card.period) + len(card.periodEnd) + (card.irHead ? len(card.irHead.text) : 0);
+  let headings = 0;
+  if (card.difficulty === 'hard') {
+    headings += len('資料 1 決算短信のまとめ') + len('資料 2 IR のひとこと');
+    for (const b of card.blocks) {
+      headings += len(b.title);
+      for (const g of new Set(b.slots.map((x) => x.group).filter((x): x is string => !!x))) headings += len(g);
+    }
+  }
+  return { slots, gloss, frame, headings, total: slots + gloss + frame + headings };
+}
+
+export const cardChars = (card: Card): number => cardCharBreakdown(card).total;
 
 export interface ReadingRound {
   hasAnomaly: boolean;

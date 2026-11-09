@@ -11,7 +11,7 @@ const normal = deriveCards(base, companyOf(base), 'easy');
 describe('G1 全部の見え方を並べる', () => {
   it('E-21・E-22・E-24〜E-28 の変種', () => {
     expect(entries.map((e) => e.variant)).toEqual([
-      'E-21 no-comma', 'E-21 comma-shift', 'E-22 数字の欄', 'E-22 見出し語', 'E-24', 'E-25',
+      'E-21 no-comma', 'E-21 comma-shift', 'E-21 no-comma 営業利益 (前期)', 'E-21 no-comma 営業利益 (当期)', 'E-22 数字の欄', 'E-22 見出し語', 'E-24', 'E-25',
       'E-26 当期の欄を前期に', 'E-26 前期の欄を当期に', 'E-27 売上高', 'E-27 営業利益 (前期)', 'E-27 営業利益 (当期)', 'E-28',
     ]);
   });

@@ -1,16 +1,25 @@
 // ケース表 docs/proto/test-cases.md の R (1 社を読む時間)。
 import { describe, expect, it } from 'vitest';
 import { deriveCards } from './cards';
-import { cardChars, parseReading, readingRecord, summarizeReading, type Reading } from './readtime';
+import { cardCharBreakdown, cardChars, parseReading, readingRecord, summarizeReading, type Reading } from './readtime';
 import { companyOf, HARD_NORMALS, NORMALS } from './testing';
 
-describe('R1 カードの文字数', () => {
-  it('やさしいは 100 字以下・むずかしいは 450〜750 字', () => {
-    for (const p of NORMALS) expect(cardChars(deriveCards(p, companyOf(p), 'easy'))).toBeLessThanOrEqual(100);
+describe('R1 画面に出る文字の数 (内訳つき)', () => {
+  it('やさしいは 140 字以下・むずかしいは 550〜700 字。内訳の和が全体', () => {
+    for (const p of NORMALS) {
+      const b = cardCharBreakdown(deriveCards(p, companyOf(p), 'easy'));
+      expect(b.total).toBeLessThanOrEqual(140);
+      expect(b.total).toBe(b.slots + b.gloss + b.frame + b.headings);
+      expect(b.headings).toBe(0);
+    }
     for (const p of HARD_NORMALS) {
-      const n = cardChars(deriveCards(p, companyOf(p), 'hard'));
-      expect(n).toBeGreaterThanOrEqual(450);
-      expect(n).toBeLessThanOrEqual(750);
+      const c = deriveCards(p, companyOf(p), 'hard');
+      const b = cardCharBreakdown(c);
+      expect(b.total).toBeGreaterThanOrEqual(550);
+      expect(b.total).toBeLessThanOrEqual(700);
+      expect(b.total).toBe(b.slots + b.gloss + b.frame + b.headings);
+      expect(b.gloss).toBe(0);
+      expect(cardChars(c)).toBe(b.total);
     }
   });
 });

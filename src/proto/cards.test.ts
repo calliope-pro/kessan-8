@@ -1,6 +1,6 @@
 // ケース表 docs/proto/test-cases.md の C (カードの導出。v3)。
 import { describe, expect, it } from 'vitest';
-import { deriveCards, getCell, locate, type CardEdit } from './cards';
+import { deriveCards, getCell, irOku, locate, type CardEdit } from './cards';
 import { companyOf, HARD_NORMALS, NORMALS } from './testing';
 
 const sample = NORMALS.find((p) => p.id === 'easy-017')!;
@@ -82,7 +82,9 @@ describe('C6 むずかしい正常の資料は互いに整合する', () => {
       expect(v('cfStart')).toBe(v('pbt'));
       expect(v('cfEnd')).toBe(v('cash'));
       expect(v('cfAr')).toBe(-(v('arCurr') - v('arPrev')));
-      expect(Math.abs(v('irNetDebtPrev') - (v('irDebtPrev') - v('irCashPrev')))).toBeLessThanOrEqual(0.1000001);
+      // 表示する純有利子負債は、表示する有利子負債 − 現金と完全に一致する (読んだ遊び手が正常を異変と答えない。#184 レビュー B1)
+      expect(Math.round((v('irDebtPrev') - v('irCashPrev')) * 10)).toBe(Math.round(v('irNetDebtPrev') * 10));
+      expect(Math.abs(v('irNetDebtPrev') - irOku(get(p, 'ir.supplement.netDebt.previous'), companyOf(p)))).toBeLessThanOrEqual(0.15); // データのセルとも 0.15 以内
       expect(Math.abs((v('irSales') * 100) / v('sales') - 1)).toBeLessThanOrEqual(0.005);
       expect(Math.abs((v('irCashCur') * 100) / v('cash') - 1)).toBeLessThanOrEqual(0.01);
       expect(slot(c, 'irOcf').text.includes(v('ocf') >= 0 ? 'プラス' : 'マイナス')).toBe(true);

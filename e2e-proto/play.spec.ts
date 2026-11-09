@@ -127,8 +127,8 @@ test('むずかしい: 見本はカード + 資料 1・2。8 社連続で正し�
 
 test('見え方の一覧 (?mode=gallery): E-21・E-22・E-24〜E-28 の全部が並び、朱書きを出せる。横にはみ出さない', async ({ page }) => {
   await page.goto('/proto.html?mode=gallery');
-  await expect(page.locator('.gallery-item')).toHaveCount(13); // 正常 1 + 12 の見え方
-  for (const v of ['E-21 no-comma', 'E-21 comma-shift', 'E-22 数字の欄', 'E-22 見出し語', 'E-24', 'E-25', 'E-26 当期の欄を前期に', 'E-26 前期の欄を当期に', 'E-27 売上高', 'E-27 営業利益 (前期)', 'E-27 営業利益 (当期)', 'E-28']) {
+  await expect(page.locator('.gallery-item')).toHaveCount(15); // 正常 1 + 14 の見え方
+  for (const v of ['E-21 no-comma', 'E-21 comma-shift', 'E-21 no-comma 営業利益 (前期)', 'E-21 no-comma 営業利益 (当期)', 'E-22 数字の欄', 'E-22 見出し語', 'E-24', 'E-25', 'E-26 当期の欄を前期に', 'E-26 前期の欄を当期に', 'E-27 売上高', 'E-27 営業利益 (前期)', 'E-27 営業利益 (当期)', 'E-28']) {
     await expect(page.locator(`.gallery-item[data-variant="${v}"]`)).toHaveCount(1);
   }
   await expect(page.locator('.gallery-item[data-variant="E-22 数字の欄"] .row')).toHaveCount(5);
@@ -136,7 +136,7 @@ test('見え方の一覧 (?mode=gallery): E-21・E-22・E-24〜E-28 の全部が
   await expect(page.locator('.gallery-item[data-variant="E-28"] .period-end')).toContainText('32日');
   await expect(page.locator('.slip .marked')).toHaveCount(0);
   await page.getByLabel('朱書き (答え合わせ) を出す').check();
-  expect(await page.locator('.slip .marked').count()).toBeGreaterThanOrEqual(12);
+  expect(await page.locator('.slip .marked').count()).toBeGreaterThanOrEqual(14);
   const w = await page.evaluate(() => ({ doc: document.documentElement.scrollWidth, view: innerWidth }));
   expect(w.doc).toBeLessThanOrEqual(w.view);
 });

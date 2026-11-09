@@ -97,12 +97,22 @@ describe('A5〜A8 中身の異変', () => {
 });
 
 describe('A9〜A14・A26〜28 表記の異変', () => {
-  it('A9 E-21: 売上高の桁区切りだけが違う', () => {
-    each('E-21', (r, base) => {
-      const n = slotOf(card(r, 'easy'), 'sales'), o = slotOf(normalCard(base, 'easy'), 'sales');
-      expect(n.text).not.toBe(o.text);
-      expect(n.text.replace(/,/g, '')).toBe(o.text.replace(/,/g, '').replace(/,/g, ''));
+  it('A9 E-21: 金額の欄の桁区切りだけが違う (no-comma は 4 桁以上の欄ならどれでも・comma-shift は売上高)', () => {
+    const seen = new Set<string>();
+    NORMALS.forEach((base, i) => {
+      for (let k = 1; k <= 6; k++) {
+        const r = buildAnomaly('E-21', base, mulberry32(i * 10 + k));
+        const c = card(r, 'easy'), o = normalCard(base, 'easy');
+        const diff = c.slots.filter((s, n) => s.text !== o.slots[n]!.text);
+        expect(diff, base.id).toHaveLength(1);
+        expect(diff[0]!.text.replace(/,/g, '')).toBe(o.slots.find((s) => s.key === diff[0]!.key)!.text.replace(/,/g, ''));
+        expect(diff[0]!.kind).toBe('amount');
+        seen.add(`${r.edits[0]!.op === 'format' ? r.edits[0]!.style : ''}:${diff[0]!.key}`);
+      }
     });
+    expect(seen.has('comma-shift:sales')).toBe(true);
+    expect(seen.has('no-comma:opPrev') && seen.has('no-comma:opCurr') && seen.has('no-comma:sales')).toBe(true);
+    expect([...seen].filter((x) => x.startsWith('comma-shift')).every((x) => x === 'comma-shift:sales')).toBe(true);
   });
   it('A10 E-22: 数字 5 つか、見出し語 2 回', () => {
     each('E-22', (r) => {

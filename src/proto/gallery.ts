@@ -20,8 +20,10 @@ const fixed = (...xs: number[]) => {
 };
 
 const VARIANTS: { variant: string; kind: string; rng: number[] }[] = [
-  { variant: 'E-21 no-comma', kind: 'E-21', rng: [0.1] },
+  { variant: 'E-21 no-comma', kind: 'E-21', rng: [0.1, 0.0] }, // 売上高
   { variant: 'E-21 comma-shift', kind: 'E-21', rng: [0.9] },
+  { variant: 'E-21 no-comma 営業利益 (前期)', kind: 'E-21', rng: [0.1, 0.4] }, // 4 桁の欄 (いちばん見落としやすい)
+  { variant: 'E-21 no-comma 営業利益 (当期)', kind: 'E-21', rng: [0.1, 0.7] },
   { variant: 'E-22 数字の欄', kind: 'E-22', rng: [0.9, 0.5] }, // 0.5 → 営業利益 (当期)
   { variant: 'E-22 見出し語', kind: 'E-22', rng: [0.1] },
   { variant: 'E-24', kind: 'E-24', rng: [] },

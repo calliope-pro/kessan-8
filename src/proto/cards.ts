@@ -184,7 +184,8 @@ const HARD_SLOTS: SlotDef[] = [
   ir('irCashCur', '現金 (当期)', 'ir.supplement.cash.current'),
   ir('irCashPrev', '現金 (前期)', 'ir.supplement.cash.previous'),
   ir('irDebtPrev', '有利子負債 (前期)', 'ir.supplement.interestBearingDebt.previous'),
-  ir('irNetDebtPrev', '純有利子負債 (前期) = 有利子負債 − 現金', 'ir.supplement.netDebt.previous'),
+  // 純有利子負債は、表示する (丸めた) 有利子負債 − 丸めた現金で作る (百万円の会社は 100 で割って丸めるので、セルを丸めると表示の引き算と 0.1 ずれる。設計 §3.2 #139-3 と同じ順)。セルとの差は C6 が見る
+  { ...ir('irNetDebtPrev', '純有利子負債 (前期) = 有利子負債 − 現金', 'ir.supplement.netDebt.previous'), get: (p, c) => Math.round((irOku(getCell(p, 'ir.supplement.interestBearingDebt.previous') as number, c) - irOku(getCell(p, 'ir.supplement.cash.previous') as number, c)) * 10) / 10 },
   text('irOcf', 'ir', '営業キャッシュ・フロー', ['ir.statements'], (p) => {
     const n = ocfClaimIndex(p);
     const d = p.ir.statements[n]?.claims.find((c) => c.metric === 'operatingCashFlow')?.direction;
