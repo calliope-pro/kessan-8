@@ -8,6 +8,7 @@ import { loadRecords, recordTransition, saveRecords, type KeyValueStore } from '
 import { mulberry32 } from '../domain/rng';
 import type { Sample } from '../domain/sample';
 import { loadState, saveState } from '../domain/session';
+import { safeGet, safeSet } from '../domain/storage';
 import { ROUNDS_TO_CLEAR } from '../domain/config';
 import { judge, type Answer } from '../domain/answer';
 import type { AnomalyKind, Company, Difficulty, Problem, Round } from '../domain/types';
@@ -37,7 +38,17 @@ export function mountApp(root: HTMLElement, env: AppEnv): void {
   let state: GameState = loadState(env.session, (id) => env.pools.byId(id)) ?? initialState;
   let view: 'records' | null = null;
   const startKinds = (d: Difficulty) => [...records[d].kinds];
-  let kindsAtStart: string[] = 'difficulty' in state ? startKinds(state.difficulty) : [];
+  // 「今回 + k」の起点 = 周の始まり (0 社目 → 1 社目の BEGIN) の、見つけた種類。読み直しても残るよう、走行と一緒に sessionStorage に持つ
+  const START_KEY = 'kessan8.runStart';
+  const loadStart = (): string[] | null => {
+    try {
+      const v: unknown = JSON.parse(safeGet(env.session, START_KEY) ?? 'null');
+      return Array.isArray(v) && v.every((x) => typeof x === 'string') ? (v as string[]) : null;
+    } catch {
+      return null;
+    }
+  };
+  let kindsAtStart: string[] = loadStart() ?? ('difficulty' in state ? startKinds(state.difficulty) : []);
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const stage = h('div', { class: 'stage' });
@@ -62,7 +73,10 @@ export function mountApp(root: HTMLElement, env: AppEnv): void {
       records = rec;
       storable = saveRecords(env.local, records);
     }
-    if (action.type === 'PICK' && 'difficulty' in next) kindsAtStart = startKinds(next.difficulty);
+    if (action.type === 'BEGIN' && 'difficulty' in next) {
+      kindsAtStart = startKinds(next.difficulty);
+      safeSet(env.session, START_KEY, JSON.stringify(kindsAtStart));
+    }
     state = next;
     view = null;
     saveState(env.session, state);
@@ -117,7 +131,7 @@ export function mountApp(root: HTMLElement, env: AppEnv): void {
       h('p', { class: 'lead' }, v.allUnavailable ? MESSAGES.allUnavailable : MESSAGES.tagline),
       h('div', { class: 'diffs' }, btn('easy'), btn('hard')));
     const actions = h('footer', { class: 'actions single' }, seal(MESSAGES.records, 'quiet', () => { view = 'records'; render(); }));
-    return [h('span', { class: 'sr' }), main, actions];
+    return [h('div', { class: 'head-none', 'aria-hidden': 'true' }), main, actions]; // 頭の行 (高さ 0)。grid の 3 行 (auto 1fr auto) にそろえ、記録の札が伸びないように
   }
 
   function recordsScreen(): [HTMLElement, HTMLElement, HTMLElement] {

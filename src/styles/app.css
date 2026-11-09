@@ -237,6 +237,7 @@ a.seal { text-decoration: none; }
 .kinds li { padding: 0 var(--step); border: 2px solid var(--rule-soft); color: var(--ink-soft); }
 .kinds li.found { border-color: var(--ink); color: var(--ink); font-weight: 800; }
 .head-left + .boxes { flex: none; }
+.head-none { height: 0; }
 
 /* 0 社目の下端: 左に小さな「難易度を変える」、右に「1 社目へ」。高さを増やさない */
 .actions.sample-actions { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }

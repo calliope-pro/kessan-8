@@ -1,6 +1,6 @@
 // 受け入れ条件 2・3 (S4〜S9b・S11・S11b)・S6・S6 の桁マス。ケース表 docs/test-cases/screens-v3.md §2.2・§2.3。
 import { expect, test } from '@playwright/test';
-import { answerRound, correct, recordsOf, roundsFor, seal, start, tap } from './support';
+import { answerRound, correct, recordsOf, REJECT_WAIT, roundsFor, seal, start, tap } from './support';
 
 const SEED = 21;
 
@@ -65,6 +65,32 @@ test('S8・S9・S9b: 8 社とも正しく答えるとクリア。進み具合の
   await tap(page, '難易度を変える');
   await page.getByRole('button', { name: 'むずかしい' }).click();
   await expect(page.getByTestId('progress')).toContainText('0 社目');
+});
+
+test('S9c: 「今回 + k」は、最後の周 (BEGIN から) で新しく見つけた種類だけ。前の周で見つけた種類・読み直す前の分も、周の中なら数える', async ({ page }) => {
+  const SEED = 21;
+  const first = roundsFor(SEED, 'easy', 0);
+  await start(page, SEED);
+  await tap(page, '1 社目へ');
+  // 1 周目: 1 社目を正しく答えて、2 社目でわざと間違える (1 社目の異変の種類があれば、それは前の周で見つけた種類)
+  await answerRound(page, first[0]!);
+  await tap(page, '次へ');
+  await answerRound(page, first[1]!, false);
+  await expect(page.getByTestId('progress')).toContainText('0 社目', { timeout: REJECT_WAIT });
+  const before = (await recordsOf(page)).easy;
+  // 2 周目: 8 社とも正しく答える。途中 (4 社目) でページを読み直す
+  const second = roundsFor(SEED, 'easy', 1, { easy: before, hard: (await recordsOf(page)).hard });
+  await tap(page, '1 社目へ');
+  for (let i = 0; i < 8; i++) {
+    if (i === 3) { await page.reload(); await expect(page.getByTestId('progress')).toContainText('4 社目'); }
+    await answerRound(page, second[i]!);
+    await tap(page, i === 7 ? '完了票へ' : '次へ');
+  }
+  const kindsOf = (rs: typeof second) => new Set(rs.flatMap((r) => (r.problem.anomaly ? [r.problem.anomaly.kind] : [])));
+  const k = [...kindsOf(second)].filter((x) => !before.kinds.includes(x)).length; // 2 周目の周で、前の周までに無かった種類
+  const text = await page.getByTestId('cleared').innerText();
+  if (k > 0) expect(text).toContain(`今回 + ${k}`);
+  else expect(text).not.toContain('今回 +');
 });
 
 test('S11: 差し戻しで「すぐ 0 社目へ」。動きを減らす設定でも同じ流れ', async ({ page }) => {

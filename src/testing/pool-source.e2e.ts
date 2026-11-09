@@ -3,10 +3,12 @@ import type { Sample } from '../domain/sample';
 import type { AnomalyKind, Company, Problem } from '../domain/types';
 import { FORM_KINDS, TEST_KINDS, makeCompanies, makeFormProblems, makePool, makeProblem } from './fixtures';
 
-// `?e2ePool=thin` (E2E のビルドだけ): むずかしいの会社を 5 社にして、出題できない (canDraw が false) 難易度を作る (S22)
-const thin = typeof location !== 'undefined' && new URLSearchParams(location.search).get('e2ePool') === 'thin';
+// `?e2ePool=thin` (E2E のビルドだけ): むずかしいの会社を 5 社にして、出題できない (canDraw が false) 難易度を作る (S22)。`none` は両方を 5 社にする (両方が準備中)
+const pooled = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('e2ePool') : null;
+const thin = pooled === 'thin' || pooled === 'none';
+const easyCompanies = pooled === 'none' ? 5 : 12;
 export const problems: Problem[] = [
-  makePool({ difficulty: 'easy', companies: 12 }),
+  makePool({ difficulty: 'easy', companies: easyCompanies }),
   makeFormProblems('easy'),
   makePool({ difficulty: 'hard', companies: thin ? 5 : 12 }),
 ].flat();

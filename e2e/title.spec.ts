@@ -10,6 +10,9 @@ test('S1〜S3: 開くとタイトル。難易度のボタンを 1 回押すと 0
   await expect(page.getByRole('button', { name: '記録' })).toBeVisible();
   await expect(page.locator('main p')).toHaveCount(1); // 掲示 1 行だけ。説明の段落が無い
   await expect(page.getByText('最高')).toHaveCount(0); // 初めて
+  const rec = (await page.getByRole('button', { name: '記録' }).boundingBox())!;
+  expect(rec.height, '「記録」は小さな札 (画面の下半分を埋める箱にならない)').toBeLessThanOrEqual(80);
+  expect((await page.locator('footer').boundingBox())!.height).toBeLessThanOrEqual(100);
   await page.getByRole('button', { name: 'やさしい' }).click();
   await expect(page.getByTestId('progress')).toContainText('0 社目');
   await expect(page.getByTestId('boxes').locator('li')).toHaveCount(8);
@@ -35,6 +38,13 @@ test('S22: 出題できない難易度は押せず「準備中」。もう一方
   await expect(page.getByRole('button', { name: /むずかしい/ })).toBeDisabled();
   await expect(page.getByRole('button', { name: /むずかしい/ })).toContainText('準備中');
   await expect(page.getByRole('button', { name: /やさしい/ })).toBeEnabled();
+});
+
+test('S22b: 両方とも出題できないと、両方が「準備中」で、掲示が「準備中です」', async ({ page }) => {
+  await page.goto('/?seed=1&e2ePool=none');
+  await expect(page.getByRole('button', { name: /やさしい/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /むずかしい/ })).toBeDisabled();
+  await expect(page.locator('main p')).toHaveText('準備中です');
 });
 
 test('S24: 同じ種は同じ出題 (同じ会社の並び)', async ({ browser }) => {
