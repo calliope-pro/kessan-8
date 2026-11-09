@@ -1,5 +1,7 @@
 # 問題の設計表: やさしい 25 問 + 見本 1 つ
 
+> **置き換えられた (2026-11-09)**: これは第 1 版 (要件 第 1 版・25 問)。第 3 版の要件の設計表は [problems-easy-v3.md](problems-easy-v3.md)。元データ spec.json・異変を入れる anomalies.py・確認の check.py は v3 で外した (commit 履歴に残る)。
+
 Sub-task #69 (Task #25)。作成: 2026-11-04。要件: [requirements.md](../requirements.md) 受け入れ条件 5・6。設計: [design.md](../design.md) §4.3・§4.5。材料: [companies.md](companies.md) (10 社)・[anomalies.md](anomalies.md) (異変の定義)・[experience.md](experience.md) §6.7 (`tier` の基準)。
 一覧の元は `docs/plans/problems-easy/spec.json` (生成器 `gen.py` がこれを読む。表は同じデータから作った)。
 

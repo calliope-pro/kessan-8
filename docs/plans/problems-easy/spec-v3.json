@@ -1,0 +1,1265 @@
+{
+ "version": 3,
+ "note": "docs/plans/problems-easy-v3.md の元データ。make-spec-v3.py が作る (手で直さない)",
+ "sample": {
+  "company": "c09",
+  "fiscalYear": 2023
+ },
+ "problems": [
+  {
+   "id": "easy-001",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": null,
+   "tier": null,
+   "op": "up",
+   "omTarget": 0.09,
+   "salesRange": [
+    34000,
+    44030
+   ],
+   "opRange": [
+    2918,
+    4231
+   ],
+   "omRange": [
+    0.086,
+    0.096
+   ]
+  },
+  {
+   "id": "easy-002",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-17",
+   "tier": 1,
+   "base": "easy-001",
+   "edit": {
+    "op": "claim",
+    "metric": "operatingIncome",
+    "to": "down"
+   }
+  },
+  {
+   "id": "easy-003",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-24",
+   "tier": 1,
+   "base": "easy-001",
+   "edit": {
+    "op": "scale-sales",
+    "cell": "tanshin.incomeStatement.current.netSales",
+    "of": "operatingIncome",
+    "ratio": 0.5
+   }
+  },
+  {
+   "id": "easy-004",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-22",
+   "tier": 1,
+   "base": "easy-001",
+   "edit": {
+    "op": "dup",
+    "slot": "headline"
+   }
+  },
+  {
+   "id": "easy-005",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-25",
+   "tier": 1,
+   "base": "easy-001",
+   "edit": {
+    "op": "sign",
+    "slot": "sales"
+   }
+  },
+  {
+   "id": "easy-006",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-26",
+   "tier": 1,
+   "base": "easy-001",
+   "edit": {
+    "op": "suffix",
+    "slot": "opPrev",
+    "word": "当期"
+   }
+  },
+  {
+   "id": "easy-007",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-23",
+   "tier": 2,
+   "base": "easy-001",
+   "edit": {
+    "op": "headline",
+    "word": "増収"
+   }
+  },
+  {
+   "id": "easy-008",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-28",
+   "tier": 2,
+   "base": "easy-001",
+   "edit": {
+    "op": "day",
+    "slot": "period",
+    "day": 32
+   }
+  },
+  {
+   "id": "easy-009",
+   "company": "c01",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-12",
+   "tier": 3,
+   "base": "easy-001",
+   "edit": {
+    "op": "scale-margin",
+    "factor": 2.2
+   }
+  },
+  {
+   "id": "easy-010",
+   "company": "c02",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": null,
+   "tier": null,
+   "op": "down",
+   "omTarget": 0.042,
+   "salesRange": [
+    20706,
+    26950
+   ],
+   "opRange": [
+    657,
+    1298
+   ],
+   "omRange": [
+    0.032,
+    0.048
+   ]
+  },
+  {
+   "id": "easy-011",
+   "company": "c02",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-02",
+   "tier": 1,
+   "base": "easy-010",
+   "edit": {
+    "op": "scale",
+    "cell": "tanshin.incomeStatement.current.operatingIncome",
+    "factor": 0.1
+   }
+  },
+  {
+   "id": "easy-012",
+   "company": "c02",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-03",
+   "tier": 1,
+   "base": "easy-010",
+   "edit": {
+    "op": "unit",
+    "slot": "sales",
+    "unit": "億円"
+   }
+  },
+  {
+   "id": "easy-013",
+   "company": "c02",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-05",
+   "tier": 1,
+   "base": "easy-010",
+   "edit": {
+    "op": "label",
+    "target": "sales",
+    "itemKey": "tanshin.incomeStatement.netSales",
+    "word": "売上商"
+   }
+  },
+  {
+   "id": "easy-014",
+   "company": "c02",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-21",
+   "tier": 1,
+   "base": "easy-010",
+   "edit": {
+    "op": "format",
+    "slot": "sales",
+    "style": "comma-shift"
+   }
+  },
+  {
+   "id": "easy-015",
+   "company": "c02",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-26",
+   "tier": 1,
+   "base": "easy-010",
+   "edit": {
+    "op": "suffix",
+    "slot": "opCurr",
+    "word": "前期"
+   }
+  },
+  {
+   "id": "easy-016",
+   "company": "c02",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-19",
+   "tier": 2,
+   "base": "easy-010",
+   "edit": {
+    "op": "drop",
+    "slot": "opPrev"
+   }
+  },
+  {
+   "id": "easy-017",
+   "company": "c02",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-04",
+   "tier": 3,
+   "base": "easy-010",
+   "edit": {
+    "op": "shift-year",
+    "cell": "tanshin.columnDates.incomeStatement.current",
+    "years": 1
+   }
+  },
+  {
+   "id": "easy-018",
+   "company": "c03",
+   "fiscalYear": 2024,
+   "month": 2,
+   "kind": null,
+   "tier": null,
+   "op": "up",
+   "omTarget": 0.036,
+   "salesRange": [
+    137214,
+    157304
+   ],
+   "opRange": [
+    4385,
+    6611
+   ],
+   "omRange": [
+    0.032,
+    0.042
+   ]
+  },
+  {
+   "id": "easy-019",
+   "company": "c03",
+   "fiscalYear": 2024,
+   "month": 2,
+   "kind": "E-02",
+   "tier": 1,
+   "base": "easy-018",
+   "edit": {
+    "op": "scale",
+    "cell": "tanshin.incomeStatement.current.operatingIncome",
+    "factor": 10
+   }
+  },
+  {
+   "id": "easy-020",
+   "company": "c03",
+   "fiscalYear": 2024,
+   "month": 2,
+   "kind": "E-24",
+   "tier": 1,
+   "base": "easy-018",
+   "edit": {
+    "op": "scale-sales",
+    "cell": "tanshin.incomeStatement.current.netSales",
+    "of": "operatingIncome",
+    "ratio": 0.6
+   }
+  },
+  {
+   "id": "easy-021",
+   "company": "c03",
+   "fiscalYear": 2024,
+   "month": 2,
+   "kind": "E-05",
+   "tier": 1,
+   "base": "easy-018",
+   "edit": {
+    "op": "label",
+    "target": "sales",
+    "itemKey": "tanshin.incomeStatement.netSales",
+    "word": "売上局"
+   }
+  },
+  {
+   "id": "easy-022",
+   "company": "c03",
+   "fiscalYear": 2024,
+   "month": 2,
+   "kind": "E-21",
+   "tier": 1,
+   "base": "easy-018",
+   "edit": {
+    "op": "format",
+    "slot": "sales",
+    "style": "no-comma"
+   }
+  },
+  {
+   "id": "easy-023",
+   "company": "c03",
+   "fiscalYear": 2024,
+   "month": 2,
+   "kind": "E-26",
+   "tier": 1,
+   "base": "easy-018",
+   "edit": {
+    "op": "suffix",
+    "slot": "opCurr",
+    "word": "前期"
+   }
+  },
+  {
+   "id": "easy-024",
+   "company": "c03",
+   "fiscalYear": 2024,
+   "month": 2,
+   "kind": "E-23",
+   "tier": 2,
+   "base": "easy-018",
+   "edit": {
+    "op": "headline",
+    "word": "増収"
+   }
+  },
+  {
+   "id": "easy-025",
+   "company": "c03",
+   "fiscalYear": 2024,
+   "month": 2,
+   "kind": "E-04",
+   "tier": 3,
+   "base": "easy-018",
+   "edit": {
+    "op": "shift-year",
+    "cell": "tanshin.columnDates.incomeStatement.current",
+    "years": 1
+   }
+  },
+  {
+   "id": "easy-026",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": null,
+   "tier": null,
+   "op": "up",
+   "omTarget": 0.14,
+   "salesRange": [
+    11461,
+    15173
+   ],
+   "opRange": [
+    1553,
+    2220
+   ],
+   "omRange": [
+    0.136,
+    0.146
+   ]
+  },
+  {
+   "id": "easy-027",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": "E-17",
+   "tier": 1,
+   "base": "easy-026",
+   "edit": {
+    "op": "claim",
+    "metric": "operatingIncome",
+    "to": "down"
+   }
+  },
+  {
+   "id": "easy-028",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": "E-03",
+   "tier": 1,
+   "base": "easy-026",
+   "edit": {
+    "op": "unit",
+    "slot": "opCurr",
+    "unit": "億円"
+   }
+  },
+  {
+   "id": "easy-029",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": "E-05",
+   "tier": 1,
+   "base": "easy-026",
+   "edit": {
+    "op": "label",
+    "target": "op",
+    "itemKey": "tanshin.incomeStatement.operatingIncome",
+    "word": "営業判益"
+   }
+  },
+  {
+   "id": "easy-030",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": "E-25",
+   "tier": 1,
+   "base": "easy-026",
+   "edit": {
+    "op": "sign",
+    "slot": "sales"
+   }
+  },
+  {
+   "id": "easy-031",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": "E-27",
+   "tier": 1,
+   "base": "easy-026",
+   "edit": {
+    "op": "glyph",
+    "slot": "opCurr",
+    "digit": "first"
+   }
+  },
+  {
+   "id": "easy-032",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": "E-19",
+   "tier": 2,
+   "base": "easy-026",
+   "edit": {
+    "op": "drop",
+    "slot": "margin"
+   }
+  },
+  {
+   "id": "easy-033",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": "E-23",
+   "tier": 2,
+   "base": "easy-026",
+   "edit": {
+    "op": "headline",
+    "word": "増収"
+   }
+  },
+  {
+   "id": "easy-034",
+   "company": "c04",
+   "fiscalYear": 2025,
+   "month": 9,
+   "kind": "E-04",
+   "tier": 3,
+   "base": "easy-026",
+   "edit": {
+    "op": "shift-year",
+    "cell": "tanshin.columnDates.incomeStatement.current",
+    "years": 1
+   }
+  },
+  {
+   "id": "easy-035",
+   "company": "c05",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": null,
+   "tier": null,
+   "op": "down",
+   "omTarget": 0.11,
+   "salesRange": [
+    42000,
+    52907
+   ],
+   "opRange": [
+    4195,
+    6142
+   ],
+   "omRange": [
+    0.1,
+    0.116
+   ]
+  },
+  {
+   "id": "easy-036",
+   "company": "c05",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-17",
+   "tier": 1,
+   "base": "easy-035",
+   "edit": {
+    "op": "claim",
+    "metric": "operatingIncome",
+    "to": "up"
+   }
+  },
+  {
+   "id": "easy-037",
+   "company": "c05",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-03",
+   "tier": 1,
+   "base": "easy-035",
+   "edit": {
+    "op": "unit",
+    "slot": "opPrev",
+    "unit": "億円"
+   }
+  },
+  {
+   "id": "easy-038",
+   "company": "c05",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-22",
+   "tier": 1,
+   "base": "easy-035",
+   "edit": {
+    "op": "dup",
+    "slot": "sales"
+   }
+  },
+  {
+   "id": "easy-039",
+   "company": "c05",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-25",
+   "tier": 1,
+   "base": "easy-035",
+   "edit": {
+    "op": "sign",
+    "slot": "sales"
+   }
+  },
+  {
+   "id": "easy-040",
+   "company": "c05",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-27",
+   "tier": 1,
+   "base": "easy-035",
+   "edit": {
+    "op": "glyph",
+    "slot": "opPrev",
+    "digit": "middle"
+   }
+  },
+  {
+   "id": "easy-041",
+   "company": "c05",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-23",
+   "tier": 2,
+   "base": "easy-035",
+   "edit": {
+    "op": "headline",
+    "word": "減収"
+   }
+  },
+  {
+   "id": "easy-042",
+   "company": "c05",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-12",
+   "tier": 3,
+   "base": "easy-035",
+   "edit": {
+    "op": "scale-margin",
+    "factor": 0.4
+   }
+  },
+  {
+   "id": "easy-043",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": null,
+   "tier": null,
+   "op": "up",
+   "omTarget": 0.05,
+   "salesRange": [
+    84707,
+    113374
+   ],
+   "opRange": [
+    3891,
+    6353
+   ],
+   "omRange": [
+    0.046,
+    0.056
+   ]
+  },
+  {
+   "id": "easy-044",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-02",
+   "tier": 1,
+   "base": "easy-043",
+   "edit": {
+    "op": "scale",
+    "cell": "tanshin.incomeStatement.current.operatingIncome",
+    "factor": 10
+   }
+  },
+  {
+   "id": "easy-045",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-03",
+   "tier": 1,
+   "base": "easy-043",
+   "edit": {
+    "op": "unit",
+    "slot": "sales",
+    "unit": "億円"
+   }
+  },
+  {
+   "id": "easy-046",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-05",
+   "tier": 1,
+   "base": "easy-043",
+   "edit": {
+    "op": "label",
+    "target": "op",
+    "itemKey": "tanshin.incomeStatement.operatingIncome",
+    "word": "営業和益"
+   }
+  },
+  {
+   "id": "easy-047",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-25",
+   "tier": 1,
+   "base": "easy-043",
+   "edit": {
+    "op": "sign",
+    "slot": "sales"
+   }
+  },
+  {
+   "id": "easy-048",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-26",
+   "tier": 1,
+   "base": "easy-043",
+   "edit": {
+    "op": "suffix",
+    "slot": "opPrev",
+    "word": "当期"
+   }
+  },
+  {
+   "id": "easy-049",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-19",
+   "tier": 2,
+   "base": "easy-043",
+   "edit": {
+    "op": "drop",
+    "slot": "opCurr"
+   }
+  },
+  {
+   "id": "easy-050",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-28",
+   "tier": 2,
+   "base": "easy-043",
+   "edit": {
+    "op": "day",
+    "slot": "period",
+    "day": 32
+   }
+  },
+  {
+   "id": "easy-051",
+   "company": "c06",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-12",
+   "tier": 3,
+   "base": "easy-043",
+   "edit": {
+    "op": "scale-margin",
+    "factor": 2.2
+   }
+  },
+  {
+   "id": "easy-052",
+   "company": "c07",
+   "fiscalYear": 2025,
+   "month": 6,
+   "kind": null,
+   "tier": null,
+   "op": "up",
+   "omTarget": 0.026,
+   "salesRange": [
+    53647,
+    67887
+   ],
+   "opRange": [
+    1175,
+    2177
+   ],
+   "omRange": [
+    0.022,
+    0.032
+   ]
+  },
+  {
+   "id": "easy-053",
+   "company": "c07",
+   "fiscalYear": 2025,
+   "month": 6,
+   "kind": "E-02",
+   "tier": 1,
+   "base": "easy-052",
+   "edit": {
+    "op": "scale",
+    "cell": "tanshin.incomeStatement.current.operatingIncome",
+    "factor": 10
+   }
+  },
+  {
+   "id": "easy-054",
+   "company": "c07",
+   "fiscalYear": 2025,
+   "month": 6,
+   "kind": "E-24",
+   "tier": 1,
+   "base": "easy-052",
+   "edit": {
+    "op": "scale-sales",
+    "cell": "tanshin.incomeStatement.current.netSales",
+    "of": "operatingIncome",
+    "ratio": 0.6
+   }
+  },
+  {
+   "id": "easy-055",
+   "company": "c07",
+   "fiscalYear": 2025,
+   "month": 6,
+   "kind": "E-22",
+   "tier": 1,
+   "base": "easy-052",
+   "edit": {
+    "op": "dup",
+    "slot": "opCurr"
+   }
+  },
+  {
+   "id": "easy-056",
+   "company": "c07",
+   "fiscalYear": 2025,
+   "month": 6,
+   "kind": "E-25",
+   "tier": 1,
+   "base": "easy-052",
+   "edit": {
+    "op": "sign",
+    "slot": "sales"
+   }
+  },
+  {
+   "id": "easy-057",
+   "company": "c07",
+   "fiscalYear": 2025,
+   "month": 6,
+   "kind": "E-26",
+   "tier": 1,
+   "base": "easy-052",
+   "edit": {
+    "op": "suffix",
+    "slot": "opPrev",
+    "word": "当期"
+   }
+  },
+  {
+   "id": "easy-058",
+   "company": "c07",
+   "fiscalYear": 2025,
+   "month": 6,
+   "kind": "E-19",
+   "tier": 2,
+   "base": "easy-052",
+   "edit": {
+    "op": "drop",
+    "slot": "margin"
+   }
+  },
+  {
+   "id": "easy-059",
+   "company": "c07",
+   "fiscalYear": 2025,
+   "month": 6,
+   "kind": "E-12",
+   "tier": 3,
+   "base": "easy-052",
+   "edit": {
+    "op": "scale-margin",
+    "factor": 0.4
+   }
+  },
+  {
+   "id": "easy-060",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": null,
+   "tier": null,
+   "op": "down",
+   "omTarget": 0.17,
+   "salesRange": [
+    25227,
+    31851
+   ],
+   "opRange": [
+    4031,
+    5610
+   ],
+   "omRange": [
+    0.16,
+    0.176
+   ]
+  },
+  {
+   "id": "easy-061",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-17",
+   "tier": 1,
+   "base": "easy-060",
+   "edit": {
+    "op": "claim",
+    "metric": "operatingIncome",
+    "to": "up"
+   }
+  },
+  {
+   "id": "easy-062",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-03",
+   "tier": 1,
+   "base": "easy-060",
+   "edit": {
+    "op": "unit",
+    "slot": "opPrev",
+    "unit": "億円"
+   }
+  },
+  {
+   "id": "easy-063",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-22",
+   "tier": 1,
+   "base": "easy-060",
+   "edit": {
+    "op": "dup",
+    "slot": "margin"
+   }
+  },
+  {
+   "id": "easy-064",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-21",
+   "tier": 1,
+   "base": "easy-060",
+   "edit": {
+    "op": "format",
+    "slot": "opCurr",
+    "style": "no-comma"
+   }
+  },
+  {
+   "id": "easy-065",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-27",
+   "tier": 1,
+   "base": "easy-060",
+   "edit": {
+    "op": "glyph",
+    "slot": "opCurr",
+    "digit": "last"
+   }
+  },
+  {
+   "id": "easy-066",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-23",
+   "tier": 2,
+   "base": "easy-060",
+   "edit": {
+    "op": "headline",
+    "word": "減収"
+   }
+  },
+  {
+   "id": "easy-067",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-28",
+   "tier": 2,
+   "base": "easy-060",
+   "edit": {
+    "op": "day",
+    "slot": "period",
+    "day": 32
+   }
+  },
+  {
+   "id": "easy-068",
+   "company": "c08",
+   "fiscalYear": 2025,
+   "month": 12,
+   "kind": "E-04",
+   "tier": 3,
+   "base": "easy-060",
+   "edit": {
+    "op": "shift-year",
+    "cell": "tanshin.columnDates.incomeStatement.current",
+    "years": -1
+   }
+  },
+  {
+   "id": "easy-069",
+   "company": "c09",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": null,
+   "tier": null,
+   "op": "up",
+   "omTarget": 0.08,
+   "salesRange": [
+    7600,
+    9842
+   ],
+   "opRange": [
+    572,
+    851
+   ],
+   "omRange": [
+    0.076,
+    0.086
+   ]
+  },
+  {
+   "id": "easy-070",
+   "company": "c09",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-17",
+   "tier": 1,
+   "base": "easy-069",
+   "edit": {
+    "op": "claim",
+    "metric": "operatingIncome",
+    "to": "down"
+   }
+  },
+  {
+   "id": "easy-071",
+   "company": "c09",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-24",
+   "tier": 1,
+   "base": "easy-069",
+   "edit": {
+    "op": "scale-sales",
+    "cell": "tanshin.incomeStatement.current.netSales",
+    "of": "operatingIncome",
+    "ratio": 0.5
+   }
+  },
+  {
+   "id": "easy-072",
+   "company": "c09",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-05",
+   "tier": 1,
+   "base": "easy-069",
+   "edit": {
+    "op": "label",
+    "target": "margin",
+    "itemKey": "tanshin.summary.operatingMargin",
+    "word": "売上高営業利益卒"
+   }
+  },
+  {
+   "id": "easy-073",
+   "company": "c09",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-21",
+   "tier": 1,
+   "base": "easy-069",
+   "edit": {
+    "op": "format",
+    "slot": "sales",
+    "style": "no-comma"
+   }
+  },
+  {
+   "id": "easy-074",
+   "company": "c09",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-27",
+   "tier": 1,
+   "base": "easy-069",
+   "edit": {
+    "op": "glyph",
+    "slot": "sales",
+    "digit": "last"
+   }
+  },
+  {
+   "id": "easy-075",
+   "company": "c09",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-28",
+   "tier": 2,
+   "base": "easy-069",
+   "edit": {
+    "op": "day",
+    "slot": "period",
+    "day": 32
+   }
+  },
+  {
+   "id": "easy-076",
+   "company": "c09",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-04",
+   "tier": 3,
+   "base": "easy-069",
+   "edit": {
+    "op": "shift-year",
+    "cell": "tanshin.columnDates.incomeStatement.current",
+    "years": -1
+   }
+  },
+  {
+   "id": "easy-077",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": null,
+   "tier": null,
+   "op": "down",
+   "omTarget": 0.018,
+   "salesRange": [
+    188238,
+    238203
+   ],
+   "opRange": [
+    1500,
+    5721
+   ],
+   "omRange": [
+    0.008,
+    0.024
+   ]
+  },
+  {
+   "id": "easy-078",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-02",
+   "tier": 1,
+   "base": "easy-077",
+   "edit": {
+    "op": "scale",
+    "cell": "tanshin.incomeStatement.current.operatingIncome",
+    "factor": 0.1
+   }
+  },
+  {
+   "id": "easy-079",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-24",
+   "tier": 1,
+   "base": "easy-077",
+   "edit": {
+    "op": "scale-sales",
+    "cell": "tanshin.incomeStatement.current.netSales",
+    "of": "operatingIncome",
+    "ratio": 0.6
+   }
+  },
+  {
+   "id": "easy-080",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-22",
+   "tier": 1,
+   "base": "easy-077",
+   "edit": {
+    "op": "dup",
+    "slot": "opPrev"
+   }
+  },
+  {
+   "id": "easy-081",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-21",
+   "tier": 1,
+   "base": "easy-077",
+   "edit": {
+    "op": "format",
+    "slot": "opPrev",
+    "style": "no-comma"
+   }
+  },
+  {
+   "id": "easy-082",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-27",
+   "tier": 1,
+   "base": "easy-077",
+   "edit": {
+    "op": "glyph",
+    "slot": "sales",
+    "digit": "first"
+   }
+  },
+  {
+   "id": "easy-083",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-19",
+   "tier": 2,
+   "base": "easy-077",
+   "edit": {
+    "op": "drop",
+    "slot": "sales"
+   }
+  },
+  {
+   "id": "easy-084",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-28",
+   "tier": 2,
+   "base": "easy-077",
+   "edit": {
+    "op": "day",
+    "slot": "period",
+    "day": 32
+   }
+  },
+  {
+   "id": "easy-085",
+   "company": "c10",
+   "fiscalYear": 2025,
+   "month": 3,
+   "kind": "E-12",
+   "tier": 3,
+   "base": "easy-077",
+   "edit": {
+    "op": "scale-margin",
+    "factor": 2.2
+   }
+  }
+ ]
+}

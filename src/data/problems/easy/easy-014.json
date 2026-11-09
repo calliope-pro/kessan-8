@@ -1,189 +1,189 @@
 {
  "id": "easy-014",
  "difficulty": "easy",
- "companyId": "c05",
- "fiscalYear": 2024,
- "tier": 3,
+ "companyId": "c02",
+ "fiscalYear": 2025,
+ "tier": 1,
  "tanshin": {
   "header": {
-   "companyName": "ブルネラ製薬株式会社",
-   "securitiesCode": "0805",
-   "periodLabel": "2024年12月期",
+   "companyName": "クレセラ食品株式会社",
+   "securitiesCode": "0802",
+   "periodLabel": "2025年3月期",
    "unit": "百万円"
   },
   "summary": {
    "netSales": {
-    "current": 45390,
-    "previous": 44460,
-    "changeRate": 2.1
+    "current": 24440,
+    "previous": 24220,
+    "changeRate": 0.9
    },
    "operatingIncome": {
-    "current": 5220,
-    "previous": 5150,
-    "changeRate": 1.4
+    "current": 940,
+    "previous": 1060,
+    "changeRate": -11.3
    },
    "ordinaryIncome": {
-    "current": 5350,
-    "previous": 5270,
-    "changeRate": 1.5
+    "current": 930,
+    "previous": 1040,
+    "changeRate": -10.6
    },
    "netIncomeParent": {
-    "current": 3690,
-    "previous": 3940,
-    "changeRate": -6.3
+    "current": 640,
+    "previous": 720,
+    "changeRate": -11.1
    },
-   "operatingMargin": 11.5,
-   "roe": 12.6,
-   "eps": 147.6,
-   "totalAssets": 41480,
-   "netAssets": 30570,
-   "equity": 30570,
-   "equityRatio": 65.7,
-   "bps": 1222.8,
-   "annualDividend": 44,
+   "operatingMargin": 3.8,
+   "roe": 8.2,
+   "eps": 53.33,
+   "totalAssets": 15260,
+   "netAssets": 8070,
+   "equity": 8070,
+   "equityRatio": 52.9,
+   "bps": 672.5,
+   "annualDividend": 16,
    "interimDividend": 0,
-   "annualDividendPrevious": 43,
+   "annualDividendPrevious": 16,
    "interimDividendPrevious": 0,
-   "dividendTotal": 1100,
-   "payoutRatio": 29.8,
+   "dividendTotal": 192,
+   "payoutRatio": 30,
    "accountingPolicyChange": false,
    "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
   },
   "dates": {
-   "periodEnd": "2024-12-31",
-   "previousPeriodEnd": "2023-12-31",
-   "disclosure": "2025-02-14",
-   "shareholdersMeeting": "2025-03-29"
+   "periodEnd": "2025-03-31",
+   "previousPeriodEnd": "2024-03-31",
+   "disclosure": "2025-05-15",
+   "shareholdersMeeting": "2025-06-27"
   },
   "columnDates": {
    "balanceSheet": {
-    "previous": "2023-12-31",
-    "current": "2024-12-31"
+    "previous": "2024-03-31",
+    "current": "2025-03-31"
    },
    "incomeStatement": {
-    "previous": "2023-12-31",
-    "current": "2024-12-31"
+    "previous": "2024-03-31",
+    "current": "2025-03-31"
    },
    "cashFlow": {
-    "previous": "2023-12-31",
-    "current": "2024-12-31"
+    "previous": "2024-03-31",
+    "current": "2025-03-31"
    }
   },
   "balanceSheet": {
    "previous": {
-    "cash": 9545,
-    "receivables": 9740,
-    "inventories": 4210,
-    "otherCurrentAssets": 670,
-    "totalCurrentAssets": 24165,
-    "tangibleAssets": 12690,
-    "investments": 2140,
-    "totalFixedAssets": 14830,
-    "totalAssets": 38995,
-    "payables": 1870,
-    "shortTermDebt": 1760,
-    "incomeTaxesPayable": 880,
-    "otherCurrentLiabilities": 3780,
-    "totalCurrentLiabilities": 8290,
-    "longTermDebt": 2750,
-    "totalLiabilities": 11040,
-    "capitalStock": 4000,
-    "capitalSurplus": 3000,
-    "retainedEarnings": 20955,
-    "totalShareholdersEquity": 27955,
+    "cash": 2662,
+    "receivables": 2650,
+    "inventories": 1170,
+    "otherCurrentAssets": 360,
+    "totalCurrentAssets": 6842,
+    "tangibleAssets": 7140,
+    "investments": 1140,
+    "totalFixedAssets": 8280,
+    "totalAssets": 15122,
+    "payables": 1400,
+    "shortTermDebt": 430,
+    "incomeTaxesPayable": 160,
+    "otherCurrentLiabilities": 730,
+    "totalCurrentLiabilities": 2720,
+    "longTermDebt": 4780,
+    "totalLiabilities": 7500,
+    "capitalStock": 1060,
+    "capitalSurplus": 790,
+    "retainedEarnings": 5772,
+    "totalShareholdersEquity": 7622,
     "nonControllingInterests": 0,
-    "totalNetAssets": 27955,
-    "totalLiabilitiesAndNetAssets": 38995
+    "totalNetAssets": 7622,
+    "totalLiabilitiesAndNetAssets": 15122
    },
    "current": {
-    "cash": 11610,
-    "receivables": 9950,
-    "inventories": 4280,
-    "otherCurrentAssets": 680,
-    "totalCurrentAssets": 26520,
-    "tangibleAssets": 12780,
-    "investments": 2180,
-    "totalFixedAssets": 14960,
-    "totalAssets": 41480,
-    "payables": 1900,
-    "shortTermDebt": 1760,
-    "incomeTaxesPayable": 830,
-    "otherCurrentLiabilities": 3860,
-    "totalCurrentLiabilities": 8350,
-    "longTermDebt": 2560,
-    "totalLiabilities": 10910,
-    "capitalStock": 4000,
-    "capitalSurplus": 3000,
-    "retainedEarnings": 23570,
-    "totalShareholdersEquity": 30570,
+    "cash": 2690,
+    "receivables": 2680,
+    "inventories": 1170,
+    "otherCurrentAssets": 370,
+    "totalCurrentAssets": 6910,
+    "tangibleAssets": 7190,
+    "investments": 1160,
+    "totalFixedAssets": 8350,
+    "totalAssets": 15260,
+    "payables": 1400,
+    "shortTermDebt": 430,
+    "incomeTaxesPayable": 140,
+    "otherCurrentLiabilities": 730,
+    "totalCurrentLiabilities": 2700,
+    "longTermDebt": 4490,
+    "totalLiabilities": 7190,
+    "capitalStock": 1060,
+    "capitalSurplus": 790,
+    "retainedEarnings": 6220,
+    "totalShareholdersEquity": 8070,
     "nonControllingInterests": 0,
-    "totalNetAssets": 30570,
-    "totalLiabilitiesAndNetAssets": 41480
+    "totalNetAssets": 8070,
+    "totalLiabilitiesAndNetAssets": 15260
    }
   },
   "incomeStatement": {
    "previous": {
-    "netSales": 44460,
-    "costOfSales": 17070,
-    "grossProfit": 27390,
-    "sga": 22240,
-    "operatingIncome": 5150,
-    "nonOperatingIncome": 180,
-    "nonOperatingExpenses": 60,
-    "ordinaryIncome": 5270,
-    "extraordinaryGain": 440,
-    "extraordinaryLoss": 0,
-    "incomeBeforeTax": 5710,
-    "incomeTaxes": 1770,
-    "netIncome": 3940,
-    "netIncomeNonControlling": 0,
-    "netIncomeParent": 3940
-   },
-   "current": {
-    "netSales": 45390,
-    "costOfSales": 17370,
-    "grossProfit": 28020,
-    "sga": 22800,
-    "operatingIncome": 5220,
-    "nonOperatingIncome": 180,
-    "nonOperatingExpenses": 50,
-    "ordinaryIncome": 5350,
+    "netSales": 24220,
+    "costOfSales": 17010,
+    "grossProfit": 7210,
+    "sga": 6150,
+    "operatingIncome": 1060,
+    "nonOperatingIncome": 50,
+    "nonOperatingExpenses": 70,
+    "ordinaryIncome": 1040,
     "extraordinaryGain": 0,
     "extraordinaryLoss": 0,
-    "incomeBeforeTax": 5350,
-    "incomeTaxes": 1660,
-    "netIncome": 3690,
+    "incomeBeforeTax": 1040,
+    "incomeTaxes": 320,
+    "netIncome": 720,
     "netIncomeNonControlling": 0,
-    "netIncomeParent": 3690
+    "netIncomeParent": 720
+   },
+   "current": {
+    "netSales": 24440,
+    "costOfSales": 17020,
+    "grossProfit": 7420,
+    "sga": 6480,
+    "operatingIncome": 940,
+    "nonOperatingIncome": 50,
+    "nonOperatingExpenses": 60,
+    "ordinaryIncome": 930,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 930,
+    "incomeTaxes": 290,
+    "netIncome": 640,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 640
    }
   },
   "cashFlow": {
-   "incomeBeforeTax": 5350,
-   "depreciation": 1140,
-   "interestDividendIncome": -180,
-   "interestExpense": 50,
-   "receivablesChange": -210,
-   "inventoriesChange": -70,
-   "payablesChange": 30,
+   "incomeBeforeTax": 930,
+   "depreciation": 640,
+   "interestDividendIncome": -50,
+   "interestExpense": 60,
+   "receivablesChange": -30,
+   "inventoriesChange": 0,
+   "payablesChange": 0,
    "otherAssetsChange": -10,
-   "otherLiabilitiesChange": 80,
-   "subtotal": 6180,
-   "interestDividendReceived": 180,
-   "interestPaid": -50,
-   "incomeTaxesPaid": -1710,
-   "operatingCashFlow": 4600,
-   "capex": -1230,
-   "otherInvestingChange": -40,
-   "investingCashFlow": -1270,
+   "otherLiabilitiesChange": 0,
+   "subtotal": 1540,
+   "interestDividendReceived": 50,
+   "interestPaid": -60,
+   "incomeTaxesPaid": -310,
+   "operatingCashFlow": 1220,
+   "capex": -690,
+   "otherInvestingChange": -20,
+   "investingCashFlow": -710,
    "shortTermDebtChange": 0,
-   "longTermBorrowings": 0,
-   "longTermRepayments": -190,
-   "dividendsPaid": -1075,
-   "financingCashFlow": -1265,
+   "longTermBorrowings": 40,
+   "longTermRepayments": -330,
+   "dividendsPaid": -192,
+   "financingCashFlow": -482,
    "fxEffect": 0,
-   "netChangeInCash": 2065,
-   "cashBeginning": 9545,
-   "cashEnding": 11610
+   "netChangeInCash": 28,
+   "cashBeginning": 2662,
+   "cashEnding": 2690
   },
   "notes": {
    "goingConcern": "該当事項はありません。",
@@ -192,191 +192,191 @@
     "previous": {
      "segments": [
       {
-       "name": "医療用医薬品事業",
-       "netSales": 28560,
-       "profit": 3770
+       "name": "家庭用事業",
+       "netSales": 14720,
+       "profit": 660
       },
       {
-       "name": "一般用医薬品事業",
-       "netSales": 15900,
-       "profit": 1530
+       "name": "業務用事業",
+       "netSales": 9500,
+       "profit": 430
       }
      ],
-     "adjustment": -150,
-     "consolidatedNetSales": 44460,
-     "consolidatedOperatingIncome": 5150
+     "adjustment": -30,
+     "consolidatedNetSales": 24220,
+     "consolidatedOperatingIncome": 1060
     },
     "current": {
      "segments": [
       {
-       "name": "医療用医薬品事業",
-       "netSales": 29700,
-       "profit": 3890
+       "name": "家庭用事業",
+       "netSales": 15050,
+       "profit": 600
       },
       {
-       "name": "一般用医薬品事業",
-       "netSales": 15690,
-       "profit": 1490
+       "name": "業務用事業",
+       "netSales": 9390,
+       "profit": 370
       }
      ],
-     "adjustment": -160,
-     "consolidatedNetSales": 45390,
-     "consolidatedOperatingIncome": 5220
+     "adjustment": -30,
+     "consolidatedNetSales": 24440,
+     "consolidatedOperatingIncome": 940
     }
    },
-   "averageSharesThousand": 25000,
-   "bps": 1222.8,
-   "eps": 147.6,
+   "averageSharesThousand": 12000,
+   "bps": 672.5,
+   "eps": 53.33,
    "subsequentEvents": "該当事項はありません。",
    "accountingPolicyNote": "該当事項はありません。"
   }
  },
  "ir": {
   "header": {
-   "companyName": "ブルネラ製薬株式会社",
-   "securitiesCode": "0805",
-   "periodLabel": "2024年12月期",
+   "companyName": "クレセラ食品株式会社",
+   "securitiesCode": "0802",
+   "periodLabel": "2025年3月期",
    "unit": "億円"
   },
   "highlights": {
    "netSales": {
-    "amount": 453.9,
-    "changeRate": 2.1
+    "amount": 244.4,
+    "changeRate": 0.9
    },
    "operatingIncome": {
-    "amount": 52.2,
-    "changeRate": 1.4
+    "amount": 9.4,
+    "changeRate": -11.3
    },
    "ordinaryIncome": {
-    "amount": 53.5,
-    "changeRate": 1.5
+    "amount": 9.3,
+    "changeRate": -10.6
    },
    "netIncomeParent": {
-    "amount": 36.9,
-    "changeRate": -6.3
+    "amount": 6.4,
+    "changeRate": -11.1
    },
-   "annualDividend": 44,
-   "payoutRatio": 29.8
+   "annualDividend": 16,
+   "payoutRatio": 30
   },
   "results": {
    "netSales": {
-    "previous": 444.6,
-    "current": 453.9
+    "previous": 242.2,
+    "current": 244.4
    },
    "grossProfit": {
-    "previous": 273.9,
-    "current": 280.2
+    "previous": 72.1,
+    "current": 74.2
    },
    "grossMargin": {
-    "previous": 61.6,
-    "current": 61.7
+    "previous": 29.8,
+    "current": 30.4
    },
    "operatingIncome": {
-    "previous": 51.5,
-    "current": 52.2
+    "previous": 10.6,
+    "current": 9.4
    },
    "operatingMargin": {
-    "previous": 11.6,
-    "current": 11.5
+    "previous": 4.4,
+    "current": 3.8
    },
    "chart": {
     "netSales": {
      "axisMin": 0,
-     "previous": 444.6,
-     "current": 453.9
+     "previous": 242.2,
+     "current": 244.4
     },
     "operatingIncome": {
      "axisMin": 0,
-     "previous": 51.5,
-     "current": 52.2
+     "previous": 10.6,
+     "current": 9.4
     }
    }
   },
   "segments": {
    "items": [
     {
-     "name": "医療用医薬品事業",
+     "name": "家庭用事業",
      "netSales": {
-      "previous": 285.6,
-      "current": 297.0,
-      "changeRate": 4.0
+      "previous": 147.2,
+      "current": 150.5,
+      "changeRate": 2.2
      },
      "profit": {
-      "previous": 37.7,
-      "current": 38.9,
-      "changeRate": 3.2
+      "previous": 6.6,
+      "current": 6,
+      "changeRate": -9.1
      },
-     "salesShare": 65.4
+     "salesShare": 61.6
     },
     {
-     "name": "一般用医薬品事業",
+     "name": "業務用事業",
      "netSales": {
-      "previous": 159.0,
-      "current": 156.9,
-      "changeRate": -1.3
+      "previous": 95,
+      "current": 93.9,
+      "changeRate": -1.2
      },
      "profit": {
-      "previous": 15.3,
-      "current": 14.9,
-      "changeRate": -2.6
+      "previous": 4.3,
+      "current": 3.7,
+      "changeRate": -14
      },
-     "salesShare": 34.6
+     "salesShare": 38.4
     }
    ],
    "adjustment": {
-    "previous": -1.5,
-    "current": -1.6
+    "previous": -0.3,
+    "current": -0.3
    },
    "consolidatedOperatingIncome": {
-    "previous": 51.5,
-    "current": 52.2
+    "previous": 10.6,
+    "current": 9.4
    }
   },
   "outlook": {
    "forecast": {
-    "netSales": 474.3,
-    "netSalesChangeRate": 4.5,
-    "operatingIncome": 54.6,
-    "operatingIncomeChangeRate": 4.6,
-    "capex": 12.9,
-    "depreciation": 11.9,
-    "annualDividend": 44
+    "netSales": 252.4,
+    "netSalesChangeRate": 3.3,
+    "operatingIncome": 9,
+    "operatingIncomeChangeRate": -4.3,
+    "capex": 7.2,
+    "depreciation": 6.7,
+    "annualDividend": 16
    },
    "actual": {
-    "netSales": 453.9,
-    "operatingIncome": 52.2,
-    "capex": 12.3,
-    "depreciation": 11.4
+    "netSales": 244.4,
+    "operatingIncome": 9.4,
+    "capex": 6.9,
+    "depreciation": 6.4
    },
    "subsequentEvent": null
   },
   "supplement": {
    "capex": {
     "previous": null,
-    "current": 12.3
+    "current": 6.9
    },
    "depreciation": {
     "previous": null,
-    "current": 11.4
+    "current": 6.4
    },
    "interestBearingDebt": {
-    "previous": 45.1,
-    "current": 43.2
+    "previous": 52.1,
+    "current": 49.2
    },
    "cash": {
-    "previous": 95.5,
-    "current": 116.1
+    "previous": 26.6,
+    "current": 26.9
    },
    "netDebt": {
-    "previous": -50.4,
-    "current": -72.9
+    "previous": 25.5,
+    "current": 22.3
    },
-   "equityRatio": 73.7
+   "equityRatio": 52.9
   },
   "statements": [
    {
     "slide": "highlights",
-    "text": "売上高は前期を上回った。営業利益は前期を上回った。研究開発の進捗はリスクとあわせて別に示す。",
+    "text": "おかげさまで、売上高は前期を上回りました。営業利益は前期を下回りました。",
     "claims": [
      {
       "metric": "netSales",
@@ -384,13 +384,13 @@
      },
      {
       "metric": "operatingIncome",
-      "direction": "up"
+      "direction": "down"
      }
     ]
    },
    {
     "slide": "outlook",
-    "text": "次期は増収増益となる見込みであるが、承認の時期により変動する可能性がある。",
+    "text": "次期は増収減益を見込んでいます。",
     "claims": [
      {
       "metric": "forecastNetSales",
@@ -398,13 +398,13 @@
      },
      {
       "metric": "forecastOperatingIncome",
-      "direction": "up"
+      "direction": "down"
      }
     ]
    },
    {
     "slide": "supplement",
-    "text": "営業キャッシュ・フローは黒字を確保した。",
+    "text": "営業キャッシュ・フローは安定しました。",
     "claims": [
      {
       "metric": "operatingCashFlow",
@@ -414,18 +414,28 @@
    }
   ]
  },
+ "cardEdits": [
+  {
+   "card": 0,
+   "slot": "sales",
+   "op": "format",
+   "style": "comma-shift"
+  }
+ ],
  "anomaly": {
-  "kind": "E-12",
+  "kind": "E-21",
   "places": [
    {
-    "doc": "tanshin",
-    "path": "summary.equityRatio"
+    "doc": "card",
+    "card": 0,
+    "slot": "sales"
    }
   ],
-  "explanation": "自己資本比率は 自己資本 30,570 ÷ 総資産 41,480 × 100 = 73.7% になるはずですが、65.7% と書かれています。",
+  "explanation": "「売上高」の数字が 2,4440 と書かれています。正しくは 24,440 です。",
   "expectedRules": [
-   "ratio-equity-ratio",
-   "xdoc-supp-equity-ratio"
-  ]
+   "card-format"
+  ],
+  "base": "easy-010",
+  "changed": []
  }
 }

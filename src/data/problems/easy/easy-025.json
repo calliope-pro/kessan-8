@@ -1,189 +1,189 @@
 {
  "id": "easy-025",
  "difficulty": "easy",
- "companyId": "c10",
+ "companyId": "c03",
  "fiscalYear": 2024,
- "tier": 1,
+ "tier": 3,
  "tanshin": {
   "header": {
-   "companyName": "ヨクトス商事株式会社",
-   "securitiesCode": "0810",
-   "periodLabel": "2024年3月期",
+   "companyName": "ソルベリマート株式会社",
+   "securitiesCode": "0803",
+   "periodLabel": "2024年2月期",
    "unit": "百万円"
   },
   "summary": {
    "netSales": {
-    "current": 214640,
-    "previous": 205480,
-    "changeRate": 4.5
+    "current": 152530,
+    "previous": 148070,
+    "changeRate": 3
    },
    "operatingIncome": {
-    "current": 4730,
-    "previous": 4110,
-    "changeRate": 15.1
+    "current": 6200,
+    "previous": 5810,
+    "changeRate": 6.7
    },
    "ordinaryIncome": {
-    "current": 4580,
-    "previous": 3950,
-    "changeRate": 15.9
+    "current": 6070,
+    "previous": 5650,
+    "changeRate": 7.4
    },
    "netIncomeParent": {
-    "current": 3160,
-    "previous": 2730,
-    "changeRate": 15.8
+    "current": 4190,
+    "previous": 3900,
+    "changeRate": 7.4
    },
-   "operatingMargin": 2.2,
-   "roe": 10.3,
-   "eps": 52.67,
-   "totalAssets": 104380,
-   "netAssets": 32020,
-   "equity": 32020,
-   "equityRatio": 30.7,
-   "bps": 533.67,
-   "annualDividend": 13,
+   "operatingMargin": 4.1,
+   "roe": 13.3,
+   "eps": 69.83,
+   "totalAssets": 74430,
+   "netAssets": 32990,
+   "equity": 32990,
+   "equityRatio": 44.3,
+   "bps": 549.83,
+   "annualDividend": 19,
    "interimDividend": 0,
-   "annualDividendPrevious": 12,
+   "annualDividendPrevious": 18,
    "interimDividendPrevious": 0,
-   "dividendTotal": 780,
-   "payoutRatio": 24.7,
+   "dividendTotal": 1140,
+   "payoutRatio": 27.2,
    "accountingPolicyChange": false,
    "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
   },
   "dates": {
-   "periodEnd": "2024-03-31",
-   "previousPeriodEnd": "2023-03-31",
-   "disclosure": "2024-05-15",
-   "shareholdersMeeting": "2024-06-27"
+   "periodEnd": "2024-02-29",
+   "previousPeriodEnd": "2023-02-28",
+   "disclosure": "2024-04-14",
+   "shareholdersMeeting": "2024-05-27"
   },
   "columnDates": {
    "balanceSheet": {
-    "previous": "2023-03-31",
-    "current": "2024-03-31"
+    "previous": "2023-02-28",
+    "current": "2024-02-29"
    },
    "incomeStatement": {
-    "previous": "2023-03-31",
-    "current": "2024-03-31"
+    "previous": "2023-02-28",
+    "current": "2025-02-28"
    },
    "cashFlow": {
-    "previous": "2023-03-31",
-    "current": "2024-03-31"
+    "previous": "2023-02-28",
+    "current": "2024-02-29"
    }
   },
   "balanceSheet": {
    "previous": {
-    "cash": 10270,
-    "receivables": 42220,
-    "inventories": 20660,
-    "otherCurrentAssets": 3080,
-    "totalCurrentAssets": 76230,
-    "tangibleAssets": 14100,
-    "investments": 10200,
-    "totalFixedAssets": 24300,
-    "totalAssets": 100530,
-    "payables": 28410,
-    "shortTermDebt": 2950,
-    "incomeTaxesPayable": 610,
-    "otherCurrentLiabilities": 3080,
-    "totalCurrentLiabilities": 35050,
-    "longTermDebt": 35900,
-    "totalLiabilities": 70950,
-    "capitalStock": 4400,
-    "capitalSurplus": 3300,
-    "retainedEarnings": 21880,
-    "totalShareholdersEquity": 29580,
+    "cash": 8880,
+    "receivables": 2030,
+    "inventories": 13150,
+    "otherCurrentAssets": 2220,
+    "totalCurrentAssets": 26280,
+    "tangibleAssets": 39450,
+    "investments": 7140,
+    "totalFixedAssets": 46590,
+    "totalAssets": 72870,
+    "payables": 9350,
+    "shortTermDebt": 2130,
+    "incomeTaxesPayable": 880,
+    "otherCurrentLiabilities": 2960,
+    "totalCurrentLiabilities": 15320,
+    "longTermDebt": 27670,
+    "totalLiabilities": 42990,
+    "capitalStock": 4320,
+    "capitalSurplus": 3240,
+    "retainedEarnings": 22320,
+    "totalShareholdersEquity": 29880,
     "nonControllingInterests": 0,
-    "totalNetAssets": 29580,
-    "totalLiabilitiesAndNetAssets": 100530
+    "totalNetAssets": 29880,
+    "totalLiabilitiesAndNetAssets": 72870
    },
    "current": {
-    "cash": 10730,
-    "receivables": 44100,
-    "inventories": 21730,
-    "otherCurrentAssets": 3220,
-    "totalCurrentAssets": 79780,
-    "tangibleAssets": 14200,
-    "investments": 10400,
-    "totalFixedAssets": 24600,
-    "totalAssets": 104380,
-    "payables": 29880,
-    "shortTermDebt": 2950,
-    "incomeTaxesPayable": 710,
-    "otherCurrentLiabilities": 3220,
-    "totalCurrentLiabilities": 36760,
-    "longTermDebt": 35600,
-    "totalLiabilities": 72360,
-    "capitalStock": 4400,
-    "capitalSurplus": 3300,
-    "retainedEarnings": 24320,
-    "totalShareholdersEquity": 32020,
+    "cash": 9590,
+    "receivables": 2090,
+    "inventories": 13480,
+    "otherCurrentAssets": 2290,
+    "totalCurrentAssets": 27450,
+    "tangibleAssets": 39700,
+    "investments": 7280,
+    "totalFixedAssets": 46980,
+    "totalAssets": 74430,
+    "payables": 9590,
+    "shortTermDebt": 2130,
+    "incomeTaxesPayable": 940,
+    "otherCurrentLiabilities": 3050,
+    "totalCurrentLiabilities": 15710,
+    "longTermDebt": 25730,
+    "totalLiabilities": 41440,
+    "capitalStock": 4320,
+    "capitalSurplus": 3240,
+    "retainedEarnings": 25430,
+    "totalShareholdersEquity": 32990,
     "nonControllingInterests": 0,
-    "totalNetAssets": 32020,
-    "totalLiabilitiesAndNetAssets": 104380
+    "totalNetAssets": 32990,
+    "totalLiabilitiesAndNetAssets": 74430
    }
   },
   "incomeStatement": {
    "previous": {
-    "netSales": 205480,
-    "costOfSales": 188550,
-    "grossProfit": 16930,
-    "sga": 12820,
-    "operatingIncome": 4110,
-    "nonOperatingIncome": 310,
-    "nonOperatingExpenses": 470,
-    "ordinaryIncome": 3950,
+    "netSales": 148070,
+    "costOfSales": 106630,
+    "grossProfit": 41440,
+    "sga": 35630,
+    "operatingIncome": 5810,
+    "nonOperatingIncome": 220,
+    "nonOperatingExpenses": 380,
+    "ordinaryIncome": 5650,
     "extraordinaryGain": 0,
     "extraordinaryLoss": 0,
-    "incomeBeforeTax": 3950,
-    "incomeTaxes": 1220,
-    "netIncome": 2730,
+    "incomeBeforeTax": 5650,
+    "incomeTaxes": 1750,
+    "netIncome": 3900,
     "netIncomeNonControlling": 0,
-    "netIncomeParent": 2730
+    "netIncomeParent": 3900
    },
    "current": {
-    "netSales": 214640,
-    "costOfSales": 198300,
-    "grossProfit": 16340,
-    "sga": 11610,
-    "operatingIncome": 4730,
-    "nonOperatingIncome": 320,
-    "nonOperatingExpenses": 470,
-    "ordinaryIncome": 4580,
+    "netSales": 152530,
+    "costOfSales": 109350,
+    "grossProfit": 43180,
+    "sga": 36980,
+    "operatingIncome": 6200,
+    "nonOperatingIncome": 230,
+    "nonOperatingExpenses": 360,
+    "ordinaryIncome": 6070,
     "extraordinaryGain": 0,
     "extraordinaryLoss": 0,
-    "incomeBeforeTax": 4580,
-    "incomeTaxes": 1420,
-    "netIncome": 3160,
+    "incomeBeforeTax": 6070,
+    "incomeTaxes": 1880,
+    "netIncome": 4190,
     "netIncomeNonControlling": 0,
-    "netIncomeParent": 3160
+    "netIncomeParent": 4190
    }
   },
   "cashFlow": {
-   "incomeBeforeTax": 4580,
-   "depreciation": 1270,
-   "interestDividendIncome": -320,
-   "interestExpense": 470,
-   "receivablesChange": -1880,
-   "inventoriesChange": -1070,
-   "payablesChange": 1470,
-   "otherAssetsChange": -140,
-   "otherLiabilitiesChange": 140,
-   "subtotal": 4520,
-   "interestDividendReceived": 320,
-   "interestPaid": -470,
-   "incomeTaxesPaid": -1320,
-   "operatingCashFlow": 3050,
-   "capex": -1370,
-   "otherInvestingChange": -200,
-   "investingCashFlow": -1570,
+   "incomeBeforeTax": 6070,
+   "depreciation": 3160,
+   "interestDividendIncome": -230,
+   "interestExpense": 360,
+   "receivablesChange": -60,
+   "inventoriesChange": -330,
+   "payablesChange": 240,
+   "otherAssetsChange": -70,
+   "otherLiabilitiesChange": 90,
+   "subtotal": 9230,
+   "interestDividendReceived": 230,
+   "interestPaid": -360,
+   "incomeTaxesPaid": -1820,
+   "operatingCashFlow": 7280,
+   "capex": -3410,
+   "otherInvestingChange": -140,
+   "investingCashFlow": -3550,
    "shortTermDebtChange": 0,
-   "longTermBorrowings": 2210,
-   "longTermRepayments": -2510,
-   "dividendsPaid": -720,
-   "financingCashFlow": -1020,
+   "longTermBorrowings": 0,
+   "longTermRepayments": -1940,
+   "dividendsPaid": -1080,
+   "financingCashFlow": -3020,
    "fxEffect": 0,
-   "netChangeInCash": 460,
-   "cashBeginning": 10270,
-   "cashEnding": 10730
+   "netChangeInCash": 710,
+   "cashBeginning": 8880,
+   "cashEnding": 9590
   },
   "notes": {
    "goingConcern": "該当事項はありません。",
@@ -192,215 +192,215 @@
     "previous": {
      "segments": [
       {
-       "name": "機械・資材事業",
-       "netSales": 99310,
-       "profit": 1820
+       "name": "食品小売事業",
+       "netSales": 87180,
+       "profit": 2710
       },
       {
-       "name": "食品原料事業",
-       "netSales": 61670,
-       "profit": 1510
+       "name": "衣料・生活雑貨事業",
+       "netSales": 43540,
+       "profit": 1520
       },
       {
-       "name": "化成品事業",
-       "netSales": 44500,
-       "profit": 900
+       "name": "テナント・金融事業",
+       "netSales": 17350,
+       "profit": 1750
       }
      ],
-     "adjustment": -120,
-     "consolidatedNetSales": 205480,
-     "consolidatedOperatingIncome": 4110
+     "adjustment": -170,
+     "consolidatedNetSales": 148070,
+     "consolidatedOperatingIncome": 5810
     },
     "current": {
      "segments": [
       {
-       "name": "機械・資材事業",
-       "netSales": 100130,
-       "profit": 2010
+       "name": "食品小売事業",
+       "netSales": 89020,
+       "profit": 2850
       },
       {
-       "name": "食品原料事業",
-       "netSales": 66200,
-       "profit": 1780
+       "name": "衣料・生活雑貨事業",
+       "netSales": 45020,
+       "profit": 1620
       },
       {
-       "name": "化成品事業",
-       "netSales": 48310,
-       "profit": 1080
+       "name": "テナント・金融事業",
+       "netSales": 18490,
+       "profit": 1920
       }
      ],
-     "adjustment": -140,
-     "consolidatedNetSales": 214640,
-     "consolidatedOperatingIncome": 4730
+     "adjustment": -190,
+     "consolidatedNetSales": 152530,
+     "consolidatedOperatingIncome": 6200
     }
    },
    "averageSharesThousand": 60000,
-   "bps": 533.67,
-   "eps": 52.67,
+   "bps": 549.83,
+   "eps": 69.83,
    "subsequentEvents": "該当事項はありません。",
    "accountingPolicyNote": "該当事項はありません。"
   }
  },
  "ir": {
   "header": {
-   "companyName": "ヨクトス商事株式会社",
-   "securitiesCode": "0810",
-   "periodLabel": "2024年3月期",
+   "companyName": "ソルベリマート株式会社",
+   "securitiesCode": "0803",
+   "periodLabel": "2024年2月期",
    "unit": "億円"
   },
   "highlights": {
    "netSales": {
-    "amount": 2146.4,
-    "changeRate": 4.5
+    "amount": 1525.3,
+    "changeRate": 3
    },
    "operatingIncome": {
-    "amount": 47.3,
-    "changeRate": 15.1
+    "amount": 62,
+    "changeRate": 6.7
    },
    "ordinaryIncome": {
-    "amount": 45.8,
-    "changeRate": 15.9
+    "amount": 60.7,
+    "changeRate": 7.4
    },
    "netIncomeParent": {
-    "amount": 31.6,
-    "changeRate": 15.8
+    "amount": 41.9,
+    "changeRate": 7.4
    },
-   "annualDividend": 13,
-   "payoutRatio": 24.7
+   "annualDividend": 19,
+   "payoutRatio": 27.2
   },
   "results": {
    "netSales": {
-    "previous": 2054.8,
-    "current": 2146.4
+    "previous": 1480.7,
+    "current": 1525.3
    },
    "grossProfit": {
-    "previous": 169.3,
-    "current": 163.4
+    "previous": 414.4,
+    "current": 431.8
    },
    "grossMargin": {
-    "previous": 8.2,
-    "current": 7.6
+    "previous": 28,
+    "current": 28.3
    },
    "operatingIncome": {
-    "previous": 41.1,
-    "current": 47.3
+    "previous": 58.1,
+    "current": 62
    },
    "operatingMargin": {
-    "previous": 2.0,
-    "current": 2.2
+    "previous": 3.9,
+    "current": 4.1
    },
    "chart": {
     "netSales": {
      "axisMin": 0,
-     "previous": 2054.8,
-     "current": 2146.4
+     "previous": 1480.7,
+     "current": 1525.3
     },
     "operatingIncome": {
      "axisMin": 0,
-     "previous": 41.1,
-     "current": 47.3
+     "previous": 58.1,
+     "current": 62
     }
    }
   },
   "segments": {
    "items": [
     {
-     "name": "機械・資材事業",
+     "name": "食品小売事業",
      "netSales": {
-      "previous": 993.1,
-      "current": 1001.3,
-      "changeRate": 0.8
+      "previous": 871.8,
+      "current": 890.2,
+      "changeRate": 2.1
      },
      "profit": {
-      "previous": 18.2,
-      "current": 20.1,
-      "changeRate": 10.4
+      "previous": 27.1,
+      "current": 28.5,
+      "changeRate": 5.2
      },
-     "salesShare": 46.7
+     "salesShare": 58.4
     },
     {
-     "name": "食品原料事業",
+     "name": "衣料・生活雑貨事業",
      "netSales": {
-      "previous": 616.7,
-      "current": 662.0,
-      "changeRate": 7.3
+      "previous": 435.4,
+      "current": 450.2,
+      "changeRate": 3.4
      },
      "profit": {
-      "previous": 15.1,
-      "current": 17.8,
-      "changeRate": 17.9
+      "previous": 15.2,
+      "current": 16.2,
+      "changeRate": 6.6
      },
-     "salesShare": 30.8
+     "salesShare": 29.5
     },
     {
-     "name": "化成品事業",
+     "name": "テナント・金融事業",
      "netSales": {
-      "previous": 445.0,
-      "current": 483.1,
-      "changeRate": 8.6
+      "previous": 173.5,
+      "current": 184.9,
+      "changeRate": 6.6
      },
      "profit": {
-      "previous": 9.0,
-      "current": 10.8,
-      "changeRate": 20.0
+      "previous": 17.5,
+      "current": 19.2,
+      "changeRate": 9.7
      },
-     "salesShare": 22.5
+     "salesShare": 12.1
     }
    ],
    "adjustment": {
-    "previous": -1.2,
-    "current": -1.4
+    "previous": -1.7,
+    "current": -1.9
    },
    "consolidatedOperatingIncome": {
-    "previous": 41.1,
-    "current": 47.3
+    "previous": 58.1,
+    "current": 62
    }
   },
   "outlook": {
    "forecast": {
-    "netSales": 2187.0,
-    "netSalesChangeRate": 1.9,
-    "operatingIncome": 47.5,
-    "operatingIncomeChangeRate": 0.4,
-    "capex": 14.4,
-    "depreciation": 13.2,
-    "annualDividend": 13
+    "netSales": 1550.2,
+    "netSalesChangeRate": 1.6,
+    "operatingIncome": 65.3,
+    "operatingIncomeChangeRate": 5.3,
+    "capex": 35.8,
+    "depreciation": 32.9,
+    "annualDividend": 19
    },
    "actual": {
-    "netSales": 2146.4,
-    "operatingIncome": 47.3,
-    "capex": 13.7,
-    "depreciation": 12.7
+    "netSales": 1525.3,
+    "operatingIncome": 62,
+    "capex": 34.1,
+    "depreciation": 31.6
    },
    "subsequentEvent": null
   },
   "supplement": {
    "capex": {
     "previous": null,
-    "current": 13.7
+    "current": 34.1
    },
    "depreciation": {
     "previous": null,
-    "current": 12.7
+    "current": 31.6
    },
    "interestBearingDebt": {
-    "previous": 388.5,
-    "current": 385.5
+    "previous": 298,
+    "current": 278.6
    },
    "cash": {
-    "previous": 102.7,
-    "current": 107.3
+    "previous": 88.8,
+    "current": 95.9
    },
    "netDebt": {
-    "previous": 285.8,
-    "current": 278.2
+    "previous": 209.2,
+    "current": 182.7
    },
-   "equityRatio": 30.7
+   "equityRatio": 44.3
   },
   "statements": [
    {
     "slide": "highlights",
-    "text": "取扱高は前期比増加。営業利益は前期比増加。",
+    "text": "売上高 前期比増。営業利益 前期比増。",
     "claims": [
      {
       "metric": "netSales",
@@ -428,7 +428,7 @@
    },
    {
     "slide": "supplement",
-    "text": "営業キャッシュ・フローは黒字。",
+    "text": "営業 CF は黒字。",
     "claims": [
      {
       "metric": "operatingCashFlow",
@@ -438,5 +438,26 @@
    }
   ]
  },
- "anomaly": null
+ "anomaly": {
+  "kind": "E-04",
+  "places": [
+   {
+    "doc": "tanshin",
+    "path": "columnDates.incomeStatement.current"
+   },
+   {
+    "doc": "tanshin",
+    "path": "header.periodLabel"
+   }
+  ],
+  "explanation": "表題は 2024年2月期 ですが、足元の期末日は 2025年2月28日 です。2024年2月期の期末日は 2024年2月29日 です。",
+  "expectedRules": [
+   "card-period",
+   "dates-column-headings"
+  ],
+  "base": "easy-018",
+  "changed": [
+   "tanshin.columnDates.incomeStatement.current"
+  ]
+ }
 }
