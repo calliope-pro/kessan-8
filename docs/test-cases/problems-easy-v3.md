@@ -26,7 +26,7 @@ Task #139。設計表: [docs/plans/problems-easy-v3.md](../plans/problems-easy-v
 | N8 | 金額は 6 桁以内: `tanshin` の数値のセル (百万円) の絶対値がすべて < 1,000,000。売上高の範囲は spec の `salesRange` の中、営業利益は `opRange` の中 |
 | N9 | 検証器: `verifyProblem` の hard・soft の違反が 0 件、`verifyIrDisplay` が空。`deriveCards` の `cardStructureIssues`・`cardRelationIssues`・`cardTextLengthIssues` が空。`claims-count` (営業利益・営業 CF の主張がちょうど 1 つ)・`cash-scope` が成り立つ |
 | N10 | 見出し語の向き: 営業利益の主張 (`ir.statements` の `claims` の `operatingIncome`) の向き = 営業利益の前期 → 当期の向き |
-| N11 | 見本 c09 2023 は、commit 9b9e08a の `src/data/samples/sample.json` と**同一** (生成し直しても見本が変わらない。回帰) |
+| N11 | 見本 c09 2023 は、commit 9b9e08a の `src/data/samples/sample.json` の `problem` と**同一** (生成し直しても見本が変わらない。回帰)。`notes` は main の #165 で除かれたので、`sample.json` は `{ problem }` だけ (追記: origin/main の取り込みで合わせた) |
 | N12 | 同じ入力で `gen.py` を 2 回回す → 出力 (全ファイル) がバイト単位で同じ。1 回目と 2 回目を別の `--out` に書いて比べる |
 
 ## 2. 異変の問題 75 問 (A 群。コミットした `src/data` に当てる)
