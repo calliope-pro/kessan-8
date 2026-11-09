@@ -62,7 +62,8 @@
       "sign-consistency",
       "unit-consistency"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "unit"
   },
   {
     "id": "E-04",
@@ -337,7 +338,8 @@
     "allowedRules": [
       "card-slots"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "drop"
   },
   {
     "id": "E-21",
@@ -349,7 +351,8 @@
     "allowedRules": [
       "card-format"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "format"
   },
   {
     "id": "E-22",
@@ -361,7 +364,8 @@
     "allowedRules": [
       "card-slots"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "dup"
   },
   {
     "id": "E-23",
@@ -376,7 +380,8 @@
     "relationChecks": [
       "R-dir"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "headline"
   },
   {
     "id": "E-24",
@@ -404,7 +409,8 @@
     "allowedRules": [
       "card-sign"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "sign"
   },
   {
     "id": "E-26",
@@ -416,7 +422,8 @@
     "allowedRules": [
       "card-column-suffix"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "suffix"
   },
   {
     "id": "E-27",
@@ -428,7 +435,8 @@
     "allowedRules": [
       "card-digits"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "glyph"
   },
   {
     "id": "E-28",
@@ -440,7 +448,8 @@
     "allowedRules": [
       "card-date-valid"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "day"
   },
   {
     "id": "H-01",
@@ -905,7 +914,8 @@
     "allowedRules": [
       "card-unit"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "unit"
   },
   {
     "id": "H-30",
@@ -929,7 +939,8 @@
     "allowedRules": [
       "card-slots"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "drop"
   },
   {
     "id": "H-32",
@@ -941,7 +952,8 @@
     "allowedRules": [
       "card-format"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "format"
   },
   {
     "id": "H-33",
@@ -953,7 +965,8 @@
     "allowedRules": [
       "card-slots"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "dup"
   },
   {
     "id": "H-34",
@@ -965,7 +978,8 @@
     "allowedRules": [
       "card-sign"
     ],
-    "ledger": "v3"
+    "ledger": "v3",
+    "editOp": "sign"
   },
   {
     "id": "H-35",

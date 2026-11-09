@@ -172,6 +172,9 @@ export type CardEdit =
   | { card: 0; slot: 'period'; op: 'day'; day: 32 }
   | { card: 0; op: 'headline'; word: string };
 
+/** CardEdit の op の一覧。 */
+export const CARD_EDIT_OPS = ['drop', 'format', 'unit', 'dup', 'suffix', 'glyph', 'sign', 'day', 'headline'] as const;
+
 /** card-relation の 5 つの検査の名前 (docs/design-v3.md §1.2)。 */
 export const RELATION_CHECKS = ['R-dir', 'R-margin', 'R-range', 'R-ne', 'R-lt'] as const;
 export type RelationCheck = (typeof RELATION_CHECKS)[number];
@@ -224,6 +227,8 @@ export interface AnomalyKind {
   relationChecks?: RelationCheck[];
   /** 台帳 v3 の種類の印 (docs/design-v3.md §2)。印のある種類だけを、種類ごとの問題の数 (5 問・会計と資料間は 7 問) の検査で数える。 */
   ledger?: 'v3';
+  /** この種類の異変が使う cardEdits の op (docs/design-v3.md §2.2 の「変えるもの」。E-19・H-31 = drop、E-22・H-33 = dup ほか)。cardEdits を持つ異変の問題は、種類の editOp と同じ op だけを持つ。cardEdits を使わない種類は持たない。 */
+  editOp?: CardEdit['op'];
 }
 
 /** 資料の見出し。見た目の異変 (社名の誤植・単位違い・期の表記違い) はここに入る。 */
