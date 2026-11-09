@@ -174,52 +174,43 @@ export function roundedSalesNormal(): Problem {
   return set(p, 'ir.highlights.netSales.changeRate', 5.9);
 }
 
-// ---- カードのテスト (docs/test-cases/cards.md §4・§5・§9) 用 ----
+// ---- カードのテスト (docs/test-cases/cards.md §5〜§7・§12) 用 ----
 import { verifyProblem } from './index.ts';
-import type { ShapeId } from '../domain/types.ts';
 
-/** 形 shape の V1・V2 を満たす異変の問題 (基準問題 A から作る)。種類は primaryRules = 主な規則・allowedRules = 実際に落ちた規則。期待集合は実際に落ちた規則。 */
-export function shapeAnomaly(shape: ShapeId, id: string, companyId: string): { problem: Problem; kind: AnomalyKind } {
-  const difficulty: Difficulty = shape.startsWith('E') ? 'easy' : 'hard';
-  let p = normalVariant(id, difficulty, companyId);
-  let places: Problem['anomaly'] extends infer A ? (A extends { places: infer P } ? P : never) : never = [];
-  let primary: string[] = [];
-  switch (shape) {
-    case 'E1':
-      p = set(p, 'tanshin.summary.operatingMargin', 20);
-      places = [{ doc: 'tanshin', path: 'summary.operatingMargin' }];
-      primary = ['ratio-operating-margin'];
-      break;
-    case 'E2':
-      p = set(p, 'ir.results.chart.netSales.current', 8000);
-      places = [{ doc: 'ir', path: 'results.chart.netSales.current' }];
-      primary = ['chart-bars'];
-      break;
-    case 'E3':
-      p = set(p, 'tanshin.balanceSheet.current.totalCurrentAssets', 9220);
-      places = [{ doc: 'tanshin', path: 'balanceSheet.current.totalCurrentAssets' }];
-      primary = ['bs-total-assets'];
-      break;
-    case 'H1':
-      p = set(p, 'ir.statements.0.claims.0.direction', 'down');
-      places = [{ doc: 'ir', path: 'statements.0' }];
-      primary = ['claims-direction'];
-      break;
-    case 'H2':
-      p = set(p, 'ir.statements.2.claims.0.direction', 'down');
-      places = [{ doc: 'ir', path: 'statements.2' }];
-      primary = ['claims-direction'];
-      break;
-    case 'H3':
-      p = set(p, 'tanshin.summary.auditNote', '決算短信は監査済みです');
-      places = [{ doc: 'tanshin', path: 'summary.auditNote' }];
-      primary = ['audit-note'];
-      break;
-  }
-  const actual = [...new Set(verifyProblem(p, companyA()).hard.map((v) => v.rule))].sort();
-  const kind = kindOf(`k-${shape}`, difficulty === 'easy' ? 'calculation' : 'accounting', primary, actual);
-  return { problem: set(p, 'anomaly', { kind: kind.id, places, explanation: '説明', expectedRules: actual }), kind };
+/** 基準問題 B (IR が億円) を ID・会社・難易度だけ変えた正常な問題 (v3 の基準)。 */
+export function normalOf(id: string, difficulty: Difficulty, companyId: string): Problem {
+  return { ...clone(normalB()), id, difficulty, companyId };
 }
+
+type Maker = { place: Problem['anomaly'] extends infer A ? (A extends { places: infer P } ? P : never) : never; primary: string[]; relationChecks?: string[]; change: (p: Problem) => Problem };
+const T = (path: string) => ({ doc: 'tanshin' as const, path });
+/** 台帳 v3 の種類のうち、データ全件のテストに使う 4 つ。見える・二重の食い違いが無い・許す検査だけが落ちる。 */
+const MAKERS: Record<string, Maker & { family: AnomalyKind['family']; difficulty: Difficulty }> = {
+  'E-12': { family: 'calculation', difficulty: 'easy', place: [T('summary.operatingMargin')], primary: ['ratio-operating-margin'], relationChecks: ['R-margin'], change: (p) => set(p, 'tanshin.summary.operatingMargin', 22) },
+  'E-24': { family: 'calculation', difficulty: 'easy', place: [T('incomeStatement.current.netSales')], primary: ['ratio-operating-margin'], relationChecks: ['R-margin', 'R-lt'], change: (p) => set(p, 'tanshin.incomeStatement.current.netSales', 744) },
+  'H-22': { family: 'notes', difficulty: 'hard', place: [T('summary.auditNote')], primary: ['audit-note'], change: (p) => set(p, 'tanshin.summary.auditNote', '決算短信は監査済みです') },
+  'H-33': { family: 'card-form', difficulty: 'hard', place: [{ doc: 'card', card: 0, slot: 'audit' }], primary: ['card-slots'], change: (p) => ({ ...p, cardEdits: [{ card: 0, slot: 'audit', op: 'dup' }] }) },
+};
+
+/** 台帳 v3 の種類の定義 (ledger: 'v3')。allowedRules は実際に落ちた規則。 */
+export function ledgerKind(id: string, extra: Partial<AnomalyKind> = {}): AnomalyKind {
+  const m = MAKERS[id];
+  if (!m) throw new Error(`作り方が無い: ${id}`);
+  const sample = m.change(normalOf('x', m.difficulty, 'c1'));
+  const actual = [...new Set(verifyProblem(sample, companyB()).hard.map((v) => v.rule))].sort();
+  return { ...kindOf(id, m.family, m.primary, [...new Set([...m.primary, ...actual])]), ledger: 'v3', ...(m.relationChecks ? { relationChecks: m.relationChecks as AnomalyKind['relationChecks'] } : {}), ...extra };
+}
+
+/** 基の正常な問題 base から、種類 id の異変を 1 つ作る (base・changed つき。tier は任意)。 */
+export function ledgerAnomaly(id: string, newId: string, base: Problem, tier?: 1 | 2 | 3, withBase = true): Problem {
+  const m = MAKERS[id];
+  if (!m) throw new Error(`作り方が無い: ${id}`);
+  const q = { ...m.change({ ...clone(base), id: newId }), ...(tier ? { tier } : {}) };
+  const actual = [...new Set(verifyProblem(q, companyB()).hard.map((v) => v.rule))].sort();
+  const anomaly = { kind: id, places: m.place, explanation: '説明', expectedRules: actual, ...(withBase ? { base: base.id, changed: changedCells(base, q) } : {}) };
+  return set(q, 'anomaly', anomaly);
+}
+import { changedCells } from './path.ts';
 
 /** 問題を別の決算期 (年) にする: 年・期の表記・日付をそろえる (正常な問題のまま)。 */
 export function inYear(p: Problem, year: number): Problem {
