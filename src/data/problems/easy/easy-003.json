@@ -450,7 +450,7 @@
     "path": "incomeStatement.current.operatingIncome"
    }
   ],
-  "explanation": "売上高 1,700 が、営業利益 3,390 より小さくなっています。売上高は営業利益より大きいはずです。",
+  "explanation": "売上高 1,700 が、営業利益 3,390 より小さくなっています。営業利益は、売上高から費用を引いた残りなので、売上高より大きくなりません。",
   "expectedRules": [
    "claims-direction",
    "ir-hl-change-net-sales",

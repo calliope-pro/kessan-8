@@ -98,7 +98,13 @@ export interface ExplainCtx {
   edit: Record<string, unknown>;
 }
 
-const nameOf = (label: string): string => label.replace(/ \(.*\)$/, '');
+/** 表題の期 (例 2025年3月期) の期末日の表示 (例 2025年3月31日)。2 月は閏年なら 29 日。 */
+function periodEndText(periodLabel: string): string {
+  const m = /^(\d{4})年(\d{1,2})月期$/.exec(periodLabel);
+  if (m === null) throw new RangeError(`期の表記 ${periodLabel} が読めない`);
+  const [y, mo] = [Number(m[1]), Number(m[2])];
+  return `${y}年${mo}月${new Date(Date.UTC(y, mo, 0)).getUTCDate()}日`;
+}
 const text = (card: Card, key: string): string => card.slots.find((s) => s.key === key)?.text ?? '';
 const label = (card: Card, key: string): string => card.slots.find((s) => s.key === key)?.label ?? '';
 
@@ -117,27 +123,27 @@ export function explanationFor(kind: string, c: ExplainCtx): string {
     case 'E-02':
       return `営業利益 (当期) が ${cur} で、前期の ${prev} から桁が 1 つ${e.factor === 10 ? '増えて' : '減って'}います。`;
     case 'E-24':
-      return `売上高 ${sales} が、営業利益 ${cur} より小さくなっています。売上高は営業利益より大きいはずです。`;
+      return `売上高 ${sales} が、営業利益 ${cur} より小さくなっています。営業利益は、売上高から費用を引いた残りなので、売上高より大きくなりません。`;
     case 'E-12':
-      return `営業利益率は ${text(card, 'margin')}% と書かれていますが、営業利益 ÷ 売上高では ${text(bc, 'margin')}% です。`;
+      return `営業利益率は ${text(card, 'margin')}% と書かれていますが、${cur} ÷ ${sales} では ${text(bc, 'margin')}% です。`;
     case 'E-04':
-      return `表題は ${card.frame.periodLabel} ですが、足元の期末日は ${card.footer?.periodEnd} です。期末日は、その期の末日のはずです。`;
+      return `表題は ${card.frame.periodLabel} ですが、足元の期末日は ${card.footer?.periodEnd} です。${card.frame.periodLabel}の期末日は ${periodEndText(card.frame.periodLabel)} です。`;
     case 'E-03':
-      return `「${nameOf(label(card, slot))}」だけ単位が「億円」で、ほかの欄は「百万円」です。`;
+      return `「${label(card, slot)}」だけ単位が「億円」で、ほかの金額の欄は「百万円」です。`;
     case 'E-05':
       return `科目名が「${String(e.word)}」になっています。正しくは「${LABELS[String(e.itemKey)]}」です。`;
     case 'E-19':
       return `「${label(bc, slot)}」の欄がありません。どのカードにも、この欄があるはずです。`;
     case 'E-22':
-      return slot === 'headline' ? `見出し「${card.headline?.word}」が 2 回出ています。見出しは 1 つのはずです。` : `「${nameOf(label(card, slot))}」の欄が 2 回出ています。同じ欄は 1 つのはずです。`;
+      return slot === 'headline' ? `見出し「${card.headline?.word}」が 2 回出ています。見出しは 1 つのはずです。` : `「${label(card, slot)}」の欄が 2 回出ています。同じ欄は 1 つのはずです。`;
     case 'E-21':
-      return `${nameOf(label(card, slot))}の数字が ${text(card, slot)} と書かれています。正しくは ${text(bc, slot)} です。`;
+      return `「${label(card, slot)}」の数字が ${text(card, slot)} と書かれています。正しくは ${text(bc, slot)} です。`;
     case 'E-25':
       return `売上高が ${sales} と、マイナスで書かれています。売上高はマイナスになりません。`;
     case 'E-26':
       return `「${label(card, slot)}」の行が 2 つあり、${prev} と ${cur} が入っています。同じ期の数字が 2 つあるはずはありません。`;
     case 'E-27':
-      return `${text(card, slot)} の数字に「X」が混じっています。数字の欄に、数字以外の字は入りません。`;
+      return `「${label(card, slot)}」の数字 ${text(card, slot)} に「X」が混じっています。数字の欄に、数字以外の字は入りません。`;
     case 'E-23':
       return `見出しが「${String(e.word)}」ですが、このカードの見出しは「${bc.headline?.word}」のように、もうけで書きます。営業利益は前期 ${prev} から当期 ${cur} で、向きは合っています。`;
     case 'E-28': {

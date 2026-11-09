@@ -431,7 +431,7 @@
     "slot": "sales"
    }
   ],
-  "explanation": "売上高の数字が 2,4440 と書かれています。正しくは 24,440 です。",
+  "explanation": "「売上高」の数字が 2,4440 と書かれています。正しくは 24,440 です。",
   "expectedRules": [
    "card-format"
   ],

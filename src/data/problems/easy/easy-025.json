@@ -450,7 +450,7 @@
     "path": "header.periodLabel"
    }
   ],
-  "explanation": "表題は 2024年2月期 ですが、足元の期末日は 2025年2月28日 です。期末日は、その期の末日のはずです。",
+  "explanation": "表題は 2024年2月期 ですが、足元の期末日は 2025年2月28日 です。2024年2月期の期末日は 2024年2月29日 です。",
   "expectedRules": [
    "card-period",
    "dates-column-headings"

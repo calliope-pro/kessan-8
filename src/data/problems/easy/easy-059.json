@@ -422,7 +422,7 @@
     "path": "summary.operatingMargin"
    }
   ],
-  "explanation": "営業利益率は 1.0% と書かれていますが、営業利益 ÷ 売上高では 2.4% です。",
+  "explanation": "営業利益率は 1.0% と書かれていますが、1,520 ÷ 63,780 では 2.4% です。",
   "expectedRules": [
    "ratio-operating-margin"
   ],

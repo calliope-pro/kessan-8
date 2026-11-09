@@ -455,7 +455,7 @@
     "slot": "sales"
    }
   ],
-  "explanation": "X11,980 の数字に「X」が混じっています。数字の欄に、数字以外の字は入りません。",
+  "explanation": "「売上高」の数字 X11,980 に「X」が混じっています。数字の欄に、数字以外の字は入りません。",
   "expectedRules": [
    "card-digits"
   ],

@@ -430,7 +430,7 @@
     "slot": "opCurr"
    }
   ],
-  "explanation": "「営業利益」の欄が 2 回出ています。同じ欄は 1 つのはずです。",
+  "explanation": "「営業利益 (当期)」の欄が 2 回出ています。同じ欄は 1 つのはずです。",
   "expectedRules": [
    "card-slots"
   ],

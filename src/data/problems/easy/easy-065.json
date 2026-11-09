@@ -455,7 +455,7 @@
     "slot": "opCurr"
    }
   ],
-  "explanation": "4,53X の数字に「X」が混じっています。数字の欄に、数字以外の字は入りません。",
+  "explanation": "「営業利益 (当期)」の数字 4,53X に「X」が混じっています。数字の欄に、数字以外の字は入りません。",
   "expectedRules": [
    "card-digits"
   ],
