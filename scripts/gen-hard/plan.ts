@@ -65,7 +65,7 @@ const FORMS: Record<string, (i: number, company: CompanyId) => string> = {
   'H-35': (_i, company) => `社名=${COMPANY_IDS[(COMPANY_IDS.indexOf(company) + 1) % COMPANY_IDS.length]}`,
   'H-22': (i) => `文言=${(i % 3) + 1}`,
   'H-29': (i) => `欄=${['opCurr', 'irSales', 'ta', 'irCashCur', 'ocf'][i]}`,
-  'H-30': (i) => `欄=${['ocf', 'ta', 'pbt', 'cash', 'sales'][i]}`,
+  'H-30': (i) => `欄=${['ocf', 'ta', 'pbt', 'cash', 'cfEnd'][i]}`,
   'H-32': (i, company) => {
     const slot = ['sales', 'ta', 'cash', 'sales', 'tlna'][i] as string;
     // comma-shift は整数部が 5 桁以上の欄だけ。c09 の売上高は 4 桁なので no-comma
@@ -78,7 +78,8 @@ const FORMS: Record<string, (i: number, company: CompanyId) => string> = {
   'H-28': (i) => `科目名=${['買掛金', '買掛金', '短期借入金', '買掛金', '短期借入金', '買掛金', '短期借入金'][i]}`,
   'H-23': (i) => `反転=${['flag', 'note'][i % 2]}`,
   'H-31': (i) => `欄=${['margin', 'cash', 'ocf', 'audit', 'irOcf'][i]}`,
-  'H-05': (i) => `作り方=${['符号を逆に', '20% ずらす'][i % 2]}`,
+  // 20% ずらすは G3 (5 百万円以上) を満たす基だけ。売上債権の増減が小さい会社 (c03・c08。今の正常で −4〜−34・−20) は符号を逆に (#170 レビュー B2)
+  'H-05': (i, company) => `作り方=${company === 'c03' || company === 'c08' || i % 2 === 0 ? '符号を逆に' : '20% ずらす'}`,
 };
 
 export interface PlanRow {

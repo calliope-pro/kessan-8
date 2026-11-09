@@ -1,10 +1,11 @@
-// むずかしい 132 問の設計表 (docs/plans/problems-hard.md §4) が、ケース表 docs/test-cases/problems-hard.md §1 (P1〜P17) を満たすことの確かめ (Sub-task #170)。
+// むずかしい 132 問の設計表 (docs/plans/problems-hard.md §4) が、ケース表 docs/test-cases/problems-hard.md §1 (P1〜P19) を満たすことの確かめ (Sub-task #170)。
 // 問題の JSON の確かめ (表との一致・検証器) は、#171 のテスト (problems-hard.test.ts) に足す。
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import companies from './companies.json';
 import kinds from './anomaly-kinds.json';
 import { CLAIM_DOWN_MIN_COMPANIES, FAMILY_SHARE_MIN, KIND_MIN_COMPANIES, KIND_PROBLEMS, TIER_BALANCE_MAX_GAP } from '../domain/config';
+import { LABELS } from '../domain/labels';
 import { FAMILY_DIFFICULTY } from '../domain/types';
 import type { AnomalyFamily } from '../domain/types';
 
@@ -207,6 +208,33 @@ describe('むずかしいの設計表 v3 — 形と、種類と会社の適合',
     });
     anomalies.filter((r) => r.kind === 'H-31' || r.kind === 'H-33').forEach((r) => expect(['frame', 'period'], r.id).not.toContain(slotOf(r.last)));
     anomalies.filter((r) => r.kind === 'H-31').forEach((r) => expect(slotOf(r.last), r.id).not.toBe('headline'));
+  });
+
+  it('P18: H-05 の「20% ずらす」は、売上債権の増減が小さい会社 (c03・c08) に当てない (G3: 5 百万円以上。20% が 5 に届かず端数と見分けられない。#170 レビュー B2)。その会社は符号を逆に', () => {
+    const h05 = anomalies.filter((r) => r.kind === 'H-05');
+    expect(h05.length).toBe(7);
+    expect(h05.some((r) => r.last === '作り方=20% ずらす')).toBe(true);
+    h05.filter((r) => r.company === 'c03' || r.company === 'c08').forEach((r) => expect(r.last, r.id).toBe('作り方=符号を逆に'));
+  });
+
+  it('P19: H-30 の欄は誤字の表 (§5) にある 5 欄で、誤字は標準の科目名の末尾 1 字を落とした形 (1 画の違いでなく、読めば欠けている。#170 レビュー N2)', () => {
+    const ITEM_KEY: Record<string, string> = {
+      ocf: 'tanshin.cashFlow.operatingCashFlow',
+      ta: 'tanshin.balanceSheet.totalAssets',
+      pbt: 'tanshin.incomeStatement.incomeBeforeTax',
+      cash: 'tanshin.balanceSheet.cash',
+      cfEnd: 'tanshin.cashFlow.cashEnding',
+    };
+    const typos = new Map<string, string>();
+    for (const m of doc.matchAll(/^\| `([A-Za-z]+)` \| ([^|]+?) \| ([^|]+?) \|$/gm)) typos.set(m[1] as string, `${m[2]}→${m[3]}`);
+    expect([...typos.keys()].sort()).toEqual(Object.keys(ITEM_KEY).sort());
+    for (const [slot, key] of Object.entries(ITEM_KEY)) {
+      const standard = LABELS[key] as string;
+      expect(typos.get(slot), slot).toBe(`${standard}→${standard.slice(0, -1)}`);
+    }
+    const h30 = anomalies.filter((r) => r.kind === 'H-30');
+    expect(h30.length).toBe(5);
+    h30.forEach((r) => expect(Object.keys(ITEM_KEY), r.id).toContain(slotOf(r.last)));
   });
 
   it('P16: H-24 は、後発事象 (E) を持つ正常の会社に当てない', () => {
