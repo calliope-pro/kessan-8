@@ -104,3 +104,11 @@ describe('.github/workflows/ci.yml', () => {
     for (const s of used) expect(pkg.scripts, s).toHaveProperty(s);
   });
 });
+
+describe('カード v3 の検証 (docs/test-cases/cards.md L4・L5)', () => {
+  it('L5: check ジョブが verify:data --require-complete を回し、--require-cards をデータの Task が足すと書いてある', () => {
+    const check = jobs().check ?? '';
+    expect(check).toContain('npm run verify:data -- --require-complete');
+    expect(check).toContain('--require-cards');
+  });
+});

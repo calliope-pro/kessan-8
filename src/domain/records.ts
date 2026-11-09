@@ -1,4 +1,5 @@
-// 記録 (P5)・答えた問題の履歴 (P3)・見本の済 (P0)。ブラウザ内 (localStorage) だけに保存する。更新は判定の書き込みと同時に 1 回だけ。
+// 記録 (P5)・答えた問題の履歴 (P3)・見つけた種類。ブラウザ内 (localStorage) だけに保存する。更新は判定の書き込みと同時に 1 回だけ。見本の済は持たない (見本は毎周出る)。
+// ケース表: docs/test-cases/domain-v3.md §4。
 import { ROUNDS_TO_CLEAR } from './config';
 import type { Answer } from './answer';
 import type { GameState } from './game';
@@ -7,7 +8,8 @@ import type { Difficulty, Problem } from './types';
 
 export type { KeyValueStore } from './storage';
 export const RECORDS_KEY = 'kessan8.records';
-export const RECORDS_VERSION = 1;
+/** 2 = 見本の済 (`sampleSeen`) を持たない。今の版 (1) は捨てる。 */
+export const RECORDS_VERSION = 2;
 
 export interface DifficultyRecord {
   /** 最高の到達社数 (`round + 1` の最大)。 */
@@ -23,12 +25,10 @@ export interface DifficultyRecord {
 export interface Records {
   easy: DifficultyRecord;
   hard: DifficultyRecord;
-  /** 見本の済。難易度ごとに数える (見本のファイルは共有)。 */
-  sampleSeen: Record<Difficulty, boolean>;
 }
 
 const emptyDifficulty = (): DifficultyRecord => ({ best: 0, bestBefore: 0, clears: 0, kinds: [], history: [] });
-export const emptyRecords = (): Records => ({ easy: emptyDifficulty(), hard: emptyDifficulty(), sampleSeen: { easy: false, hard: false } });
+export const emptyRecords = (): Records => ({ easy: emptyDifficulty(), hard: emptyDifficulty() });
 
 export interface AnswerEvent {
   difficulty: Difficulty;
@@ -55,13 +55,9 @@ export function recordAnswer(rec: Records, e: AnswerEvent): Records {
 /** 状態の遷移 1 回につき、記録を更新する。更新するのは reading → revealed (判定の書き込み) だけ。それ以外は同じ値を返す。 */
 export function recordTransition(rec: Records, prev: GameState, next: GameState): Records {
   if (prev.phase !== 'reading' || next.phase !== 'revealed') return rec;
-  const problem = prev.problems[prev.round];
+  const problem = prev.rounds[prev.round]?.problem;
   if (!problem) return rec;
   return recordAnswer(rec, { difficulty: prev.difficulty, round: prev.round, problem, answer: next.answer, correct: next.correct });
-}
-
-export function markSampleSeen(rec: Records, difficulty: Difficulty): Records {
-  return { ...rec, sampleSeen: { ...rec.sampleSeen, [difficulty]: true } };
 }
 
 const isCount = (x: unknown): x is number => typeof x === 'number' && Number.isInteger(x) && x >= 0;
@@ -84,15 +80,14 @@ export function parseRecords(raw: string | null): Records {
     const o = v as Record<string, unknown>;
     const easy = parseDifficulty(o.easy);
     const hard = parseDifficulty(o.hard);
-    const seen = o.sampleSeen as Record<string, unknown> | undefined;
-    if (o.version !== RECORDS_VERSION || !easy || !hard || typeof seen !== 'object' || seen === null) return emptyRecords();
-    return { easy, hard, sampleSeen: { easy: seen.easy === true, hard: seen.hard === true } };
+    if (o.version !== RECORDS_VERSION || !easy || !hard) return emptyRecords();
+    return { easy, hard };
   } catch {
     return emptyRecords();
   }
 }
 
-export const stringifyRecords = (rec: Records): string => JSON.stringify({ version: RECORDS_VERSION, ...rec });
+export const stringifyRecords = (rec: Records): string => JSON.stringify({ version: RECORDS_VERSION, easy: rec.easy, hard: rec.hard });
 
 export function loadRecords(store: KeyValueStore): Records {
   return parseRecords(safeGet(store, RECORDS_KEY));

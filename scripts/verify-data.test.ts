@@ -84,7 +84,7 @@ describe('npm run verify:data', () => {
   it('L7: --dir なし (既定の src/data) は、問題が揃った今のデータ (やさしい・むずかしい 25 問以上) → 終了コード 0。--require-complete を付けても 0 で、数が足りない警告 (pool-size) が出ない', () => {
     const r = run('--require-complete');
     expect(r.code).toBe(0);
-    expect(r.out).not.toContain('pool-size');
+    expect(r.out).not.toContain('[pool-size]'); // card-pool-size (v3 の問題数 85・132。card- の警告) とは別のコード
     expect(r.out).not.toContain('致命');
   });
 
@@ -147,5 +147,32 @@ describe('npm run verify:data', () => {
 
   it('L13: samples/ が無ければ 0 件として扱う', () => {
     expect(run('--dir', dataDir()).out).toContain('見本 0 件');
+  });
+
+  // ケース表 docs/test-cases/cards.md §6 (L1〜L3 の cards)
+  describe('--require-cards (カード v3)', () => {
+    const hidden = () => [normalVariant('easy-001', 'easy', 'fixture-c01'), anomalyVariant('easy-002', 'easy', 'fixture-c01')];
+    it('Lc1: card-* の shortfalls があっても --require-complete は致命にしない (pool-size だけの致命は今のまま)', () => {
+      const r = run('--dir', dataDir({ problems: hidden() }));
+      expect(r.code).toBe(0);
+      expect(r.out).toContain('card-invisible');
+    });
+    it('Lc2: --require-cards は card-* を致命にする。=easy・=hard はその難易度だけ', () => {
+      const dir = dataDir({ problems: hidden() });
+      expect(run('--dir', dir, '--require-cards').code).toBe(1);
+      expect(run('--dir', dir, '--require-cards=easy').code).toBe(1);
+      expect(run('--dir', dir, '--require-cards=hard').code).toBe(0);
+    });
+    it('Lc3: 値が easy・hard 以外なら終了コード 2。--require-complete は card-* を数えない', () => {
+      expect(run('--dir', dataDir({ problems: hidden() }), '--require-cards=normal').code).toBe(2);
+      const r = run('--dir', dataDir({ problems: hidden() }), '--require-complete=easy');
+      expect(r.out).toContain('card-invisible');
+    });
+    it('Lc4: 今のデータ (src/data) は --require-complete で終了コード 0、card-* は警告として出る', () => {
+      const r = run('--require-complete');
+      expect(r.code).toBe(0);
+      expect(r.out).toContain('card-');
+      expect(run('--require-cards').code).toBe(1);
+    });
   });
 });

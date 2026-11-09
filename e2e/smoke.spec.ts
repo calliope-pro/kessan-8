@@ -15,6 +15,12 @@ test('E1: 開くと日本語のページに app が見える', async ({ page }) 
   expect(await page.title()).not.toBe('');
 });
 
+test('DX3: 仮画面に題名と「作り直し中」の旨が見える (画面は #141 が作り直す)', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: '８期連続' })).toBeVisible();
+  await expect(page.getByText('作り直し中')).toBeVisible();
+});
+
 test('E2: 同じ生成元以外へ通信せず、コンソールにエラーが無い', async ({ page, baseURL }) => {
   const origin = new URL(baseURL!).origin;
   const foreign: string[] = [];

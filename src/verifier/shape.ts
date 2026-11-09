@@ -1,5 +1,5 @@
 // 型の形の検証 (実行時)。記述子は型から機械的に写し、キーの漏れ・余りは tsc が止める。
-import { ANOMALY_FAMILIES, CLAIM_METRICS, IR_SLIDES } from '../domain/types.ts';
+import { ANOMALY_FAMILIES, CARD_EDIT_OPS, CLAIM_METRICS, IR_SLIDES, RELATION_CHECKS } from '../domain/types.ts';
 import type {
   Anomaly,
   AnomalyKind,
@@ -29,6 +29,7 @@ type Desc =
   | 'boolean'
   | 'place'
   | 'anomalyOrNull'
+  | 'cardEdit'
   | { enum: readonly (string | number)[] }
   | { array: Desc; min: number; max: number }
   | { record: Desc }
@@ -114,10 +115,10 @@ const IR = obj<IrDeck>({
   }),
   statements: list(STATEMENT),
 });
-const ANOMALY = obj<Anomaly>({ kind: S, places: list('place', 1), explanation: S, expectedRules: list(S) });
+const ANOMALY = obj<Anomaly>({ kind: S, places: list('place', 1), explanation: S, expectedRules: list(S) }, { base: S, changed: list(S) });
 const PROBLEM = obj<Problem>(
   { id: S, difficulty: { enum: ['easy', 'hard'] }, companyId: S, fiscalYear: N, tanshin: TANSHIN, ir: IR, anomaly: 'anomalyOrNull' },
-  { tier: { enum: [1, 2, 3] }, labelOverrides: { record: S }, unitOverrides: { record: S }, signOverrides: { record: S } },
+  { tier: { enum: [1, 2, 3] }, labelOverrides: { record: S }, unitOverrides: { record: S }, signOverrides: { record: S }, cardEdits: list('cardEdit') },
 );
 const COMPANY = obj<Company>(
   {
@@ -126,7 +127,7 @@ const COMPANY = obj<Company>(
   },
   { business: S },
 );
-const KIND = obj<AnomalyKind>({ id: S, family: { enum: ANOMALY_FAMILIES }, name: S, primaryRules: list(S), allowedRules: list(S) }, { tip: S });
+const KIND = obj<AnomalyKind>({ id: S, family: { enum: ANOMALY_FAMILIES }, name: S, primaryRules: list(S), allowedRules: list(S) }, { tip: S, relationChecks: list({ enum: RELATION_CHECKS }), ledger: { enum: ['v3'] }, editOp: { enum: CARD_EDIT_OPS } });
 
 const typeName = (v: unknown): string => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
 
@@ -134,6 +135,7 @@ function check(value: unknown, desc: Desc, path: string, out: string[]): void {
   const where = path || '(ルート)';
   if (typeof desc === 'string') {
     if (desc === 'place') return checkPlace(value, where, out);
+    if (desc === 'cardEdit') return checkCardEdit(value, where, out);
     if (desc === 'anomalyOrNull') return value === null ? undefined : check(value, ANOMALY, path, out);
     const okays: Record<string, boolean> = {
       number: typeof value === 'number' && Number.isFinite(value),
@@ -174,12 +176,54 @@ function checkObject(value: unknown, desc: { object: Record<string, Desc>; optio
 function checkPlace(value: unknown, where: string, out: string[]): void {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return void out.push(`${where}: 型が違う (期待 object、実際 ${typeName(value)})`);
   const r = value as Record<string, unknown>;
-  if (r.doc !== 'tanshin' && r.doc !== 'ir') out.push(`${where}.doc: ${JSON.stringify(r.doc)} は tanshin か ir`);
+  if (r.doc === 'card') {
+    if (r.card !== 0) out.push(`${where}.card: 0 でない (カードと資料は 1 つの欄の並び)`);
+    if (typeof r.slot !== 'string') out.push(`${where}.slot: 文字列でない`);
+    for (const k of Object.keys(r)) if (!['doc', 'card', 'slot'].includes(k)) out.push(`${where}.${k}: 未知のキー`);
+    return;
+  }
+  if (r.doc !== 'tanshin' && r.doc !== 'ir') out.push(`${where}.doc: ${JSON.stringify(r.doc)} は tanshin・ir・card のどれか`);
   const hasPath = 'path' in r;
   const hasKey = 'itemKey' in r;
   if (hasPath === hasKey) out.push(`${where}: path か itemKey のどちらか 1 つだけ`);
   else if (typeof (hasPath ? r.path : r.itemKey) !== 'string') out.push(`${where}: path / itemKey が文字列でない`);
   for (const k of Object.keys(r)) if (!['doc', 'path', 'itemKey'].includes(k)) out.push(`${where}.${k}: 未知のキー`);
+}
+
+/** 形のずれの編集 (CardEdit)。op ごとに、持つキーが決まっている (docs/design-v3.md §1.6)。 */
+const EDIT_KEYS: Record<string, string[]> = {
+  drop: ['slot'],
+  format: ['slot', 'style'],
+  unit: ['slot', 'unit'],
+  dup: ['slot'],
+  suffix: ['slot', 'word'],
+  glyph: ['slot', 'at'],
+  sign: ['slot'],
+  day: ['slot', 'day'],
+  headline: ['word'],
+};
+
+function checkCardEdit(value: unknown, where: string, out: string[]): void {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return void out.push(`${where}: 型が違う (期待 object、実際 ${typeName(value)})`);
+  const r = value as Record<string, unknown>;
+  const op = typeof r.op === 'string' ? r.op : '';
+  const needed = EDIT_KEYS[op];
+  if (needed === undefined) out.push(`${where}.op: ${JSON.stringify(r.op)} は ${JSON.stringify(Object.keys(EDIT_KEYS))} のどれでもない`);
+  if (r.card !== 0) out.push(`${where}.card: 0 でない (カードと資料は 1 つの欄の並び)`);
+  for (const k of needed ?? []) {
+    if (!(k in r)) out.push(`${where}.${k}: 欠けている`);
+    else if (k === 'style') {
+      if (r.style !== 'no-comma' && r.style !== 'comma-shift') out.push(`${where}.style: ${JSON.stringify(r.style)} は no-comma か comma-shift`);
+    } else if (k === 'at') {
+      if (typeof r.at !== 'number' || !Number.isInteger(r.at)) out.push(`${where}.at: 整数でない`);
+    } else if (k === 'day') {
+      if (r.day !== 32) out.push(`${where}.day: ${JSON.stringify(r.day)} は 32 でない`);
+    } else if (typeof r[k] !== 'string') out.push(`${where}.${k}: 文字列でない`);
+    else if (op === 'suffix' && k === 'word' && r.word !== '前期' && r.word !== '当期') out.push(`${where}.word: ${JSON.stringify(r.word)} は 前期 か 当期`);
+    else if (op === 'suffix' && k === 'slot' && r.slot !== 'opPrev' && r.slot !== 'opCurr') out.push(`${where}.slot: ${JSON.stringify(r.slot)} は opPrev か opCurr`);
+    else if (op === 'day' && k === 'slot' && r.slot !== 'period') out.push(`${where}.slot: ${JSON.stringify(r.slot)} は period`);
+  }
+  for (const k of Object.keys(r)) if (!['card', 'op', ...(needed ?? [])].includes(k)) out.push(`${where}.${k}: 未知のキー`);
 }
 
 /** 未検証の JSON が Problem の形か。誤りの配列 (空 = 形は正しい)。 */

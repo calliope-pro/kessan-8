@@ -15,6 +15,14 @@ if (requireArg !== undefined && requireArg.includes('=') && !['easy', 'hard'].in
   console.error('使いかた: --require-complete[=easy|hard] (値は easy か hard)');
   process.exit(2);
 }
+// --require-cards (全難易度) / --require-cards=easy / =hard: カード v3 の検査 (shortfalls の card-*・anomaly-min-deviation) を致命にする。--require-complete の致命には数えない
+const cardsArg = args.find((a) => a === '--require-cards' || a.startsWith('--require-cards='));
+const cardsScope = cardsArg?.split('=')[1];
+if (cardsArg !== undefined && cardsArg.includes('=') && !['easy', 'hard'].includes(cardsScope ?? '')) {
+  console.error('使いかた: --require-cards[=easy|hard] (値は easy か hard)');
+  process.exit(2);
+}
+const isCardCode = (code: string) => code.startsWith('card-') || code === 'anomaly-min-deviation';
 const dirAt = args.indexOf('--dir');
 const explicitDir = dirAt >= 0;
 const dir = explicitDir ? (args[dirAt + 1] ?? '') : 'src/data';
@@ -66,7 +74,11 @@ const { easy, hard } = result.stats;
 console.log(`${dir}: ${easy.total + hard.total} 問を検証 (easy ${easy.total}: 異変 ${easy.anomaly}・正常 ${easy.normal} / hard ${hard.total}: 異変 ${hard.anomaly}・正常 ${hard.normal} / 見本 ${result.samples} 件)`);
 if (!explicitDir && !existsSync(dir)) console.log('  データのディレクトリがまだ無い (0 件として扱う)');
 if (errors.length > 0) console.error(`致命 ${errors.length} 件:\n${errors.map(line).join('\n')}`);
-const fatalShortfalls = requireArg === undefined ? [] : result.shortfalls.filter((e) => requireScope === undefined || e.difficulty === requireScope);
+const inScope = (e: Entry, scope: string | undefined) => scope === undefined || e.difficulty === scope;
+const fatalShortfalls = [
+  ...(requireArg === undefined ? [] : result.shortfalls.filter((e) => !isCardCode(e.code) && inScope(e, requireScope))),
+  ...(cardsArg === undefined ? [] : result.shortfalls.filter((e) => isCardCode(e.code) && inScope(e, cardsScope))),
+];
 if (result.shortfalls.length > 0) console.log(`数が足りない ${result.shortfalls.length} 件${fatalShortfalls.length > 0 ? ` (うち致命 ${fatalShortfalls.length})` : ' (警告)'}:\n${result.shortfalls.map(line).join('\n')}`);
 if (result.soft.length > 0) console.log(`参考の規則 ${result.soft.length} 件${flag('--fail-on-soft') ? ' (致命)' : ' (警告)'}:\n${result.soft.map(line).join('\n')}`);
 

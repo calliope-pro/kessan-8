@@ -105,7 +105,7 @@ describe('verifyDataset', () => {
   it('D15: 満たすデータ (各難易度 25 件・両面の会社 8 社・異変 12) は shortfalls も errors も空', () => {
     const r = verifyDataset(completePool());
     expect(r.errors).toEqual([]);
-    expect(r.shortfalls).toEqual([]);
+    expect(r.shortfalls.filter((s) => !s.code.startsWith('card-') && s.code !== 'anomaly-min-deviation')).toEqual([]);
     expect(r.stats.easy).toEqual({ total: 25, anomaly: 12, normal: 13 });
   });
 
@@ -121,7 +121,7 @@ describe('verifyDataset', () => {
     expect(r.shortfalls.some((s) => s.code === 'family-balance' && s.message.includes('easy'))).toBe(true);
   });
 
-  it('D18: 異変の数が比の外 (5 件) → anomaly-ratio', () => {
+  it('D18 (S9): 異変の数が比の外 (5 件) でも anomaly-ratio は出ない (R-S5 (e): 出題の割合は draw の抽選が決める)', () => {
     const input = completePool();
     let kept = 0;
     input.problems = input.problems.map((p) => {
@@ -129,7 +129,7 @@ describe('verifyDataset', () => {
       if (q.difficulty === 'easy' && q.anomaly && ++kept > 5) return { file: p.file, value: normalVariant(q.id, 'easy', q.companyId) };
       return p;
     });
-    expect(shortCodes(verifyDataset(input))).toContain('anomaly-ratio');
+    expect(shortCodes(verifyDataset(input))).not.toContain('anomaly-ratio');
   });
 
   it('D19: primaryRules が空 → kind-no-primary', () => {
@@ -212,7 +212,7 @@ describe('verifyDataset', () => {
       samples: [{ file: 'samples/sample.json', value }],
       ...extra,
     });
-    const goodSample = () => ({ problem: normalVariant('sample', 'easy', 'c-sample'), notes: { summary: 'これが正常です' } });
+    const goodSample = () => ({ problem: normalVariant('sample', 'easy', 'c-sample') });
 
     it('D28: 正常な見本は errors 空で、プールの数には入らない', () => {
       const r = verifyDataset(withSample(goodSample()));
@@ -233,29 +233,29 @@ describe('verifyDataset', () => {
       const r = verifyDataset({
         ...base(),
         companies: [{ ...companyB(), id: 'c-sample' }, companyA()],
-        samples: [{ file: 'samples/sample.json', value: { problem: { ...p, id: 'sample', companyId: 'c-sample' }, notes: {} } }],
+        samples: [{ file: 'samples/sample.json', value: { problem: { ...p, id: 'sample', companyId: 'c-sample' } } }],
       });
       expect(r.errors.some((e) => e.code === 'ir-display-mismatch')).toBe(true);
     });
 
     it('D31: 見本が異変の問題 → sample-anomaly', () => {
       const a = anomalyVariant('sample', 'easy', 'c-sample');
-      expect(codes(verifyDataset(withSample({ problem: a, notes: {} })))).toContain('sample-anomaly');
+      expect(codes(verifyDataset(withSample({ problem: a })))).toContain('sample-anomaly');
     });
 
     it('D32: 見本がプールの問題と同じ会社 × 期 → sample-overlaps-pool', () => {
       // 基準問題 (easy-001) は fixture-c01 × 2027。見本を同じ会社 × 期にする
       const p = normalVariant('sample', 'easy', 'fixture-c01');
-      const r = verifyDataset(withSample({ problem: p, notes: {} }));
+      const r = verifyDataset(withSample({ problem: p }));
       expect(codes(r)).toContain('sample-overlaps-pool');
     });
 
-    it('D33: 見本の形の誤り (problem が無い・notes が文字列の record でない・問題の形の誤り) → sample-shape', () => {
-      expect(codes(verifyDataset(withSample({ notes: {} })))).toContain('sample-shape');
-      expect(codes(verifyDataset(withSample({ problem: goodSample().problem, notes: { summary: 1 } })))).toContain('sample-shape');
+    it('D33: 見本の形の誤り (problem が無い・問題の形の誤り) → sample-shape。notes (画面ごとの注釈) は検査しない', () => {
+      expect(codes(verifyDataset(withSample({})))).toContain('sample-shape');
+      expect(codes(verifyDataset(withSample({ problem: goodSample().problem, notes: { summary: 1 } })))).not.toContain('sample-shape');
       const broken = goodSample().problem as unknown as Record<string, Record<string, unknown>>;
       delete broken.tanshin!.cashFlow;
-      expect(codes(verifyDataset(withSample({ problem: broken, notes: {} })))).toContain('sample-shape');
+      expect(codes(verifyDataset(withSample({ problem: broken })))).toContain('sample-shape');
     });
 
     it('D35: 見本に見た目の差し替え (同じ部の別の科目名・単位が header と同じ・記号が △) がある → override-on-normal (正常な問題と同じ)', () => {
@@ -269,16 +269,17 @@ describe('verifyDataset', () => {
       }
     });
 
-    it('D36: 見本の notes のキーが画面の ID でない (打ち間違い) → sample-shape。画面の ID なら通る', () => {
+    it('D36: 見本は notes (画面ごとの注釈) を持たず、検証器は notes を検査しない (DM2。古い notes があっても形の誤りにしない)', () => {
       const g = goodSample();
-      expect(codes(verifyDataset(withSample({ ...g, notes: { incomeStatment: '注釈' } })))).toContain('sample-shape');
-      expect(verifyDataset(withSample({ ...g, notes: { incomeStatement: '注釈', highlights: '注釈' } })).errors).toEqual([]);
+      expect(Object.keys(g)).toEqual(['problem']);
+      expect(verifyDataset(withSample(g)).errors).toEqual([]);
+      expect(codes(verifyDataset(withSample({ ...g, notes: { incomeStatment: '注釈' } })))).not.toContain('sample-shape');
     });
 
     it('D34: 見本の会社が一覧に無い → unknown-company。見本の id がプールの id と同じ → duplicate-id', () => {
       const p = normalVariant('sample', 'easy', 'nobody');
-      expect(codes(verifyDataset(withSample({ problem: p, notes: {} })))).toContain('unknown-company');
-      const dup = { problem: normalVariant('easy-001', 'easy', 'c-sample'), notes: {} };
+      expect(codes(verifyDataset(withSample({ problem: p })))).toContain('unknown-company');
+      const dup = { problem: normalVariant('easy-001', 'easy', 'c-sample') };
       expect(codes(verifyDataset(withSample(dup)))).toContain('duplicate-id');
     });
   });
