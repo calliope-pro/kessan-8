@@ -13,6 +13,7 @@ export interface MarkMatch {
 }
 
 function markHitsPlace(mark: string, place: AnomalyPlace): boolean {
+  if (place.doc === 'card') return false; // v2 のカードの場所。第 1 版の資料の印には当たらない (この画面は #141 で作り直す)
   if ('path' in place) {
     // 同じキー・祖先・子孫 (. 区切りの前方一致) で当たり。行の名前の印は当たりにしない (#57 の強調 data-highlight と同じ規則)
     const key = `${place.doc}.${place.path}`;

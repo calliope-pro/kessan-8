@@ -13,6 +13,7 @@ export interface ElementRef {
  * place の itemKey の場所は、同じ項目キーの行の名前の要素だけ。path の場所は行の名前の要素を強調しない。
  */
 export function placeHitsElement(place: AnomalyPlace, el: ElementRef): boolean {
+  if (place.doc === 'card') return false; // v2 のカードの場所。第 1 版の資料の要素には当たらない (この画面は #141 で作り直す)
   if ('itemKey' in place) return el.itemKey !== undefined && el.itemKey === place.itemKey;
   if (el.path === undefined) return false;
   const target = `${place.doc}.${place.path}`;

@@ -105,7 +105,7 @@ describe('verifyDataset', () => {
   it('D15: 満たすデータ (各難易度 25 件・両面の会社 8 社・異変 12) は shortfalls も errors も空', () => {
     const r = verifyDataset(completePool());
     expect(r.errors).toEqual([]);
-    expect(r.shortfalls).toEqual([]);
+    expect(r.shortfalls.filter((s) => !s.code.startsWith('card-') && s.code !== 'anomaly-min-deviation')).toEqual([]);
     expect(r.stats.easy).toEqual({ total: 25, anomaly: 12, normal: 13 });
   });
 
@@ -121,7 +121,7 @@ describe('verifyDataset', () => {
     expect(r.shortfalls.some((s) => s.code === 'family-balance' && s.message.includes('easy'))).toBe(true);
   });
 
-  it('D18: 異変の数が比の外 (5 件) → anomaly-ratio', () => {
+  it('D18 (S9): 異変の数が比の外 (5 件) でも anomaly-ratio は出ない (R-S5 (e): 出題の割合は draw の抽選が決める)', () => {
     const input = completePool();
     let kept = 0;
     input.problems = input.problems.map((p) => {
@@ -129,7 +129,7 @@ describe('verifyDataset', () => {
       if (q.difficulty === 'easy' && q.anomaly && ++kept > 5) return { file: p.file, value: normalVariant(q.id, 'easy', q.companyId) };
       return p;
     });
-    expect(shortCodes(verifyDataset(input))).toContain('anomaly-ratio');
+    expect(shortCodes(verifyDataset(input))).not.toContain('anomaly-ratio');
   });
 
   it('D19: primaryRules が空 → kind-no-primary', () => {

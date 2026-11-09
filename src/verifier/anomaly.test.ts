@@ -199,13 +199,17 @@ describe('checkAnomaly', () => {
   describe('H-19 (セグメントが IR から欠けている) の自然な場所', () => {
     const h19 = (places: AnomalyPlace[]) => {
       const p0 = set(mutate(normalB(), 'ir.segments.items', (items) => (items as unknown[]).slice(0, 2)), 'difficulty', 'hard');
-      return withAnomaly(p0, { kind: 'k-h19', expectedRules: ['seg-count', 'segment-names', 'ir-seg-reconcile'], places });
+      return withAnomaly(p0, { kind: 'k-h19', expectedRules: ['seg-count', 'segment-names', 'ir-seg-reconcile', 'xdoc-seg-names'], places });
     };
-    const kinds = [...KINDS, kind('k-h19', 'cross-document', ['seg-count'], ['seg-count', 'segment-names', 'ir-seg-reconcile'])];
+    // 設計 v2 §2.3: H-19 の主な規則は xdoc-seg-names (短信の報告セグメントの名前の並びと IR の並びを直接比べる)
+    const kinds = [...KINDS, kind('k-h19', 'cross-document', ['xdoc-seg-names'], ['seg-count', 'segment-names', 'ir-seg-reconcile', 'xdoc-seg-names'])];
     const run = (p: Problem) => checkAnomaly(p, kinds, verifyProblem(p, companyB()));
 
-    it('A25: places = IR のセグメント別 (ir.segments.items、入れ物) → 0 件', () => {
-      expect(run(h19([{ doc: 'ir', path: 'segments.items' }]))).toEqual([]);
+    it('A25: places = 入れ物 (ir.segments.items。seg-count・segment-names が読む) + 欠けたセグメントの短信側の名前のセル (xdoc-seg-names が読む) → 0 件', () => {
+      expect(run(h19([{ doc: 'ir', path: 'segments.items' }, { doc: 'tanshin', path: 'notes.segments.current.segments.2.name' }]))).toEqual([]);
+    });
+    it('A25b: 入れ物の場所だけでは、xdoc-seg-names の違反 (paths は名前のセルだけ。入れ物を含まない。設計 v2 §2.3) に触れない', () => {
+      expect(has(run(h19([{ doc: 'ir', path: 'segments.items' }])), '場所に触れない違反: xdoc-seg-names')).toBe(true);
     });
   });
 });

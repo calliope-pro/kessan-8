@@ -1,6 +1,7 @@
 // SH1〜SH19 (docs/test-cases/validator.md §2.7): 型の形。
 import { describe, expect, it } from 'vitest';
 import { shapeErrors } from './index.ts';
+import { kindShapeErrors } from './shape.ts';
 import { clone, mutate, normalA, normalB, set } from './test-utils.ts';
 
 const errs = (v: unknown) => shapeErrors(v);
@@ -107,5 +108,86 @@ describe('shapeErrors', () => {
     const e = errs(p);
     expect(e.some((m) => m.includes('longTermBorrowings'))).toBe(true);
     expect(e.some((m) => m.includes('longTermDebtChange'))).toBe(true);
+  });
+
+  // SE1〜SE3 (docs/test-cases/cards.md §8): cardEdits・card の場所・base・changed の形
+  describe('SE1・SE2: cardEdits', () => {
+    const withEdits = (edits: unknown) => set(normalA(), 'cardEdits', edits);
+    const good = [
+      { card: 0, slot: 'margin', op: 'drop' },
+      { card: 0, slot: 'sales', op: 'format', style: 'no-comma' },
+      { card: 0, slot: 'sales', op: 'format', style: 'comma-shift' },
+      { card: 0, slot: 'sales', op: 'unit', unit: '億円' },
+      { card: 0, slot: 'opCurr', op: 'dup' },
+      { card: 0, slot: 'headline', op: 'dup' },
+      { card: 0, slot: 'opPrev', op: 'suffix', word: '当期' },
+      { card: 0, slot: 'opCurr', op: 'glyph', at: 2 },
+      { card: 0, slot: 'sales', op: 'sign' },
+      { card: 0, slot: 'period', op: 'day', day: 32 },
+      { card: 0, op: 'headline', word: '増収' },
+    ];
+    it.each(good)('正しい編集は誤りなし (%j)', (edit) => expect(errs(withEdits([edit]))).toEqual([]));
+    it('編集なし・空の配列は誤りなし', () => {
+      expect(errs(normalA())).toEqual([]);
+      expect(errs(withEdits([]))).toEqual([]);
+    });
+    const bad: [string, unknown][] = [
+      ['op が未知', { card: 0, slot: 'margin', op: 'erase' }],
+      ['swap (v2 の op。v3 には無い)', { card: 0, op: 'swap', slots: ['sales', 'margin'] }],
+      ['shape を持つ (v2 の型)', { shape: 'E1', card: 0, slot: 'margin', op: 'drop' }],
+      ['card が 0 でない', { card: 1, slot: 'margin', op: 'drop' }],
+      ['card が数でない', { card: '0', slot: 'margin', op: 'drop' }],
+      ['slot が文字列でない', { card: 0, slot: 3, op: 'drop' }],
+      ['format の style が未知', { card: 0, slot: 'sales', op: 'format', style: 'rounded' }],
+      ['suffix の word が前期・当期でない', { card: 0, slot: 'opPrev', op: 'suffix', word: '前期末' }],
+      ['suffix の slot が opPrev・opCurr でない', { card: 0, slot: 'sales', op: 'suffix', word: '前期' }],
+      ['day が 32 でない', { card: 0, slot: 'period', op: 'day', day: 31 }],
+      ['day の slot が period でない', { card: 0, slot: 'sales', op: 'day', day: 32 }],
+      ['glyph の at が整数でない', { card: 0, slot: 'opCurr', op: 'glyph', at: 1.5 }],
+      ['drop に slot が無い', { card: 0, op: 'drop' }],
+      ['未知のキー', { card: 0, slot: 'margin', op: 'drop', extra: 1 }],
+      ['unit に unit が無い', { card: 0, slot: 'sales', op: 'unit' }],
+      ['headline に word が無い', { card: 0, op: 'headline' }],
+    ];
+    it.each(bad)('誤り: %s', (_name, edit) => expect(errs(withEdits([edit])).length).toBeGreaterThan(0));
+    it('cardEdits が配列でない', () => expect(errs(withEdits({ op: 'drop' })).length).toBeGreaterThan(0));
+  });
+
+  describe('SE3: card の場所と base・changed', () => {
+    const place = (value: unknown) => errs(set(normalA(), 'anomaly', { kind: 'k', places: [value], explanation: 'x', expectedRules: [] }));
+    it('{doc: card, card: 0, slot} は誤りなし', () => expect(place({ doc: 'card', card: 0, slot: 'margin' })).toEqual([]));
+    it.each<[string, unknown]>([
+      ['shape を持つ', { doc: 'card', shape: 'E1', card: 0, slot: 'margin' }],
+      ['card が 0 でない', { doc: 'card', card: 1, slot: 'margin' }],
+      ['card が数でない', { doc: 'card', card: '0', slot: 'margin' }],
+      ['slot が無い', { doc: 'card', card: 0 }],
+      ['path も持つ', { doc: 'card', card: 0, slot: 'margin', path: 'x' }],
+      ['未知のキー', { doc: 'card', card: 0, slot: 'margin', extra: 1 }],
+    ])('誤り: %s', (_n, value) => expect(place(value).length).toBeGreaterThan(0));
+    it('base・changed (任意)', () => {
+      const ok = set(normalA(), 'anomaly', { kind: 'k', places: [{ doc: 'tanshin', path: 'summary.eps' }], explanation: 'x', expectedRules: [], base: 'easy-001', changed: ['tanshin.summary.eps'] });
+      expect(errs(ok)).toEqual([]);
+      const bad = set(normalA(), 'anomaly', { kind: 'k', places: [{ doc: 'tanshin', path: 'summary.eps' }], explanation: 'x', expectedRules: [], base: 1, changed: 'x' });
+      expect(errs(bad).length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('SE4: 種類の relationChecks・ledger', () => {
+    const kind = (extra: Record<string, unknown>) => kindShapeErrors({ id: 'E-24', family: 'calculation', name: 'x', primaryRules: ['ratio-operating-margin'], allowedRules: ['ratio-operating-margin'], ...extra });
+    it('どちらも無い・正しい値は誤りなし', () => {
+      expect(kind({})).toEqual([]);
+      expect(kind({ relationChecks: ['R-margin', 'R-lt'], ledger: 'v3' })).toEqual([]);
+      expect(kind({ relationChecks: [] })).toEqual([]);
+      for (const op of ['drop', 'format', 'unit', 'dup', 'suffix', 'glyph', 'sign', 'day', 'headline']) expect(kind({ editOp: op }), op).toEqual([]);
+    });
+    it.each<[string, Record<string, unknown>]>([
+      ['relationChecks に未知の名前', { relationChecks: ['R-margin', 'R-x'] }],
+      ['relationChecks が配列でない', { relationChecks: 'R-margin' }],
+      ['ledger が v3 以外 (V3)', { ledger: 'V3' }],
+      ['ledger が v3 以外 (v2)', { ledger: 'v2' }],
+      ['ledger が真偽値', { ledger: true }],
+      ['editOp が未知', { editOp: 'swap' }],
+      ['editOp が配列', { editOp: ['drop'] }],
+    ])('誤り: %s', (_n, extra) => expect(kind(extra).length).toBeGreaterThan(0));
   });
 });
