@@ -67,6 +67,8 @@ describe('.github/workflows/ci.yml', () => {
   it('C3c: verify:data は --require-cards=easy (または値なしの --require-cards) も付ける。やさしいのカード v3 の検査 (card-*) を致命にする (#139 の受け入れ条件。むずかしいの =hard だけにしない)', () => {
     const line = (jobs()['check'] ?? '').split('\n').find((l) => l.includes('npm run verify:data')) ?? '';
     expect(line).toMatch(/--require-cards(=easy)?(\s|$)/);
+    // CLI は最初の --require-cards だけを読む (scripts/verify-data.ts の cardsArg)。2 つ並べると後ろが黙って外れる。むずかしいを足すときは =easy を値なしの --require-cards に置き換える
+    expect((line.match(/--require-cards/g) ?? []).length).toBe(1);
   });
 
   it('C4: Node 22 と npm のキャッシュ (engines と整合)', () => {
