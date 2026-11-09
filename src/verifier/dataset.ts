@@ -2,7 +2,7 @@
 import { LABELS } from '../domain/labels.ts';
 import { CARD_POOL_SIZE, CLAIMS_SHOWN, CLAIM_DOWN_MIN_COMPANIES, FAMILY_SHARE_MIN, KIND_MIN_COMPANIES, KIND_PROBLEMS, MIN_POOL_PER_DIFFICULTY, ROUNDS_TO_CLEAR, TIER_BALANCE_MAX_GAP } from '../domain/config.ts';
 import { deriveCards } from '../domain/cards.ts';
-import { FAMILY_DIFFICULTY, IR_SLIDES, TANSHIN_SCREENS } from '../domain/types.ts';
+import { FAMILY_DIFFICULTY } from '../domain/types.ts';
 import type { AnomalyKind, Company, Difficulty, Problem } from '../domain/types.ts';
 import { anomalyIssues } from './anomaly.ts';
 import { cardEditIssues, cardLimitIssues, cardRelationIssues, cardStructureIssues, cardTextLengthIssues, cardVisibility, deviationIssues, doubleDiscrepancies, isVisible, relationAllowed } from './cards.ts';
@@ -24,7 +24,7 @@ export interface DatasetInput {
   companies: unknown[];
   kinds: unknown[];
   problems: { file: string; value: unknown }[];
-  /** 見本 (samples/*.json)。`{ problem, notes }`。正常な問題として検証するが、プールには入れない。 */
+  /** 見本 (samples/*.json)。`{ problem }`。正常な問題として検証するが、プールには入れない。 */
   samples?: { file: string; value: unknown }[];
 }
 
@@ -126,12 +126,7 @@ export function verifyDataset(input: DatasetInput, verify: (p: Problem, c: Compa
     const record = typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
     if (record === null) sampleErrors.push('見本がオブジェクトでない');
     else {
-      const notes = record.notes;
-      if (typeof notes !== 'object' || notes === null || Array.isArray(notes) || Object.values(notes).some((v) => typeof v !== 'string')) sampleErrors.push('notes: 文字列の record でない');
-      else {
-        const screens: readonly string[] = [...TANSHIN_SCREENS, ...IR_SLIDES];
-        for (const key of Object.keys(notes)) if (!screens.includes(key)) sampleErrors.push(`notes: ${key} は画面の ID でない`);
-      }
+      // 画面ごとの注釈 (notes) は無い (見本は正常な問題 1 つ。docs/test-cases/domain-v3.md §5 の DM2)
       sampleErrors.push(...shapeErrors(record.problem).map((m) => `problem ${m}`));
     }
     if (sampleErrors.length > 0) {

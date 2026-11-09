@@ -130,7 +130,7 @@ describe('DS3 card-relation-extra・DS4 card-text-length・DS5 card-invisible', 
     const anomaly = anomalyIn(input, 'H-22');
     expect(at('あ'.repeat(41), anomaly).shortfalls.filter((s) => s.code === 'card-text-length' && s.problem === anomaly.id)).toHaveLength(1);
     const sample = set(set(normalOf('sample', 'easy', 'c-sample'), 'tanshin.notes.subsequentEvents', 'あ'.repeat(41)), 'ir.outlook.subsequentEvent', '期末後の出来事 (300 百万円)。');
-    const withSample = { ...pool(), companies: [...pool().companies, { ...companyB(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem: sample, notes: {} } }] };
+    const withSample = { ...pool(), companies: [...pool().companies, { ...companyB(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem: sample } }] };
     const found = verifyDataset(withSample).shortfalls.filter((s) => s.code === 'card-text-length' && s.problem === 'sample');
     expect(found.map((s) => s.difficulty)).toEqual(['hard']);
   });
@@ -304,7 +304,7 @@ describe('DS17・DS18 二重の食い違い・最小のずれ・場所・cashSco
     expect(errCodes(verifyDataset(input))).not.toContain('cash-scope');
     expect(verifyDataset(replace(input, normal.id, set(normal, 'tanshin.notes.cashScope', '現金及び預金・定期預金'))).errors.filter((e) => e.code === 'cash-scope').map((e) => e.problem)).toEqual([normal.id]);
     const sample = set(normalOf('sample', 'easy', 'c-sample'), 'tanshin.notes.cashScope', 'x');
-    const withSample = { ...input, companies: [...input.companies, { ...companyB(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem: sample, notes: {} } }] };
+    const withSample = { ...input, companies: [...input.companies, { ...companyB(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem: sample } }] };
     expect(verifyDataset(withSample).errors.some((e) => e.code === 'cash-scope' && e.problem === 'sample')).toBe(true);
   });
   it('既存: anomaly-ratio は出ない。pool-size・both-sided-companies は今のまま。形ごとの検査 (card-shape-*) は出ない', () => {
@@ -317,7 +317,7 @@ describe('DS17・DS18 二重の食い違い・最小のずれ・場所・cashSco
 });
 
 describe('見本 (S21 の v3 版): claims-count・card-structure・card-relation・card-text-length', () => {
-  const withSample = (problem: Problem): DatasetInput => ({ ...pool(), companies: [...pool().companies, { ...companyB(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem, notes: {} } }] });
+  const withSample = (problem: Problem): DatasetInput => ({ ...pool(), companies: [...pool().companies, { ...companyB(), id: 'c-sample' }], samples: [{ file: 'samples/sample.json', value: { problem } }] });
   const sample = () => normalOf('sample', 'easy', 'c-sample');
   it('基準の見本は errors も shortfalls も出ない', () => {
     const r = verifyDataset(withSample(sample()));

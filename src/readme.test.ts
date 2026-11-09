@@ -1,7 +1,7 @@
 // UD1〜UD7 (docs/test-cases/release.md §1): README の約束
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { MESSAGES } from './ui/messages';
+import { SUBTITLE, TITLE } from './title';
 
 const readme = readFileSync('README.md', 'utf-8');
 
@@ -9,7 +9,7 @@ describe('index.html の <title>', () => {
   it('UD8: 静的な HTML の <title> が題名「８期連続」 (JavaScript が走る前・検索結果・共有でも題名が出る)。「kessan-8」のままにしない', () => {
     const html = readFileSync('index.html', 'utf-8');
     const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '';
-    expect(title).toContain(MESSAGES.title);
+    expect(title).toContain(TITLE);
     expect(title).not.toBe('kessan-8');
     expect(title).not.toMatch(/[8８]番出口/);
   });
@@ -17,9 +17,9 @@ describe('index.html の <title>', () => {
 
 describe('README', () => {
   it('UD1: 題名・リポジトリ名・副題がある', () => {
-    expect(readme).toContain(MESSAGES.title);
+    expect(readme).toContain(TITLE);
     expect(readme).toContain('kessan-8');
-    expect(readme).toContain(MESSAGES.subtitle);
+    expect(readme).toContain(SUBTITLE);
   });
 
   it('UD2: 遊び方の節に、ルールとやさしい・むずかしいがある', () => {

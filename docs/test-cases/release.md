@@ -1,5 +1,7 @@
 # ケース表: 公開の準備と通しの確認 (Task #30)
 
+> **注記 (Task #155。2026-11-09)**: 古い画面 (`src/ui/`)・古い E2E (`e2e/` の flow・viewer・viewer-in-app・live・prod・release の各 spec と `support.ts`)・E2E 用のデモページ (`viewer-demo.html`・`VIEWER_DEMO`) は、#155 の PR で消した (責任者の決定。[domain-v3.md](domain-v3.md) §6)。**この表の手順で、消えたファイルを指すものは、画面を作り直す #141 が新しい画面で置き換える**。残っているのは、仮画面の足場の確かめ (`e2e/smoke.spec.ts`) だけ。題名・副題は `src/title.ts`。
+
 対象: Sub-task #94 (README と画面の断り書き)・#95 (本番ビルドに対する E2E)・#98 (閲覧票の帯の固定)・#101 (答え合わせのスクロール)・#96 (公開 URL での通し。§4)。要件 (docs/requirements.md): 受け入れ条件 1〜4・9 (E2E)、8「実在の企業名・ロゴ・人物が出てこない」、10「MIT の LICENSE がある。秘密がコミットに無い」、題名が入っている (Task #30)。ブラックボックスで書く: 入力・操作 → 期待する観測結果。
 
 ## 1. README と画面の断り書き (#94)
