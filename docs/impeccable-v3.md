@@ -8,7 +8,7 @@
 
 | 評価 | 最初 | 直したあと |
 | --- | --- | --- |
-| detect (CLI。`src/ui`・`src/styles`・`index.html`) | 1 件 (`side-tab`。`.sep` の桁区切りの太罫) | **0 件** (設定の除外なしで。`.sep` の太い縦罫を、border でなく背景の疑似要素で描いた。見た目は同じ) |
+| detect (CLI。`src/ui`・`src/styles`・`index.html`) | 1 件 (`side-tab`。`.sep` の桁区切りの太罫) | **0 件** (設定の除外なしで。`.sep` の太い縦罫を、border でなく背景の線 (linear-gradient) で描いた。見た目は同じ) |
 | detect (ブラウザ。375・1280。5 画面) | advisory 1 ルール (`flat-type-hierarchy`)・`cramped-padding` 1 件 | advisory は意図どおり (§2)。`cramped-padding` は直した |
 | critique A (Nielsen) | 27 / 40。優先する問題 P1 が 1・P2 が 3・P3 が 1 | P1 の 1 件は**データの問題** (§3)。画面の問題は直した |
 | audit | 16 / 20 (Good)。P0 0・P1 5・P2 1・P3 4 | P1 5 件とも直した (§2)。P2・P3 も直したか、直さない理由を書いた |
@@ -37,7 +37,7 @@
 | 16 | audit | 使われない試作の CSS (棒グラフ・一覧・記録の箱・差し戻しの帯・タイトルの伝票)。favicon が無い。`viewport-fit=cover` が無い。`:hover` がタッチで残る | P3 | **直した**: 使われないルールを消し、favicon (朱の円) を足し、`viewport-fit=cover` を足し、`:hover` を `(hover: hover)` に限った |
 | 17 | audit | 札の帯が `<footer>` (contentinfo のランドマーク) | P3 | **直さない (理由)**: 画面の構造として帯は 1 つで、ボタンの入ったランドマークになるだけで読み上げの妨げにならない。E2E (`footer`・`footer.actions`) が頼る目印。人の読み上げの確かめ (未実施) で困るとわかったら `div role="group"` に替える |
 | 18 | audit | 札を押せない 250 ms (誤タップ防止) | P3 | **直さない (理由)**: 意図した設計 (S11b。前の画面の指が次の同じ位置のボタンに当たるのを防ぐ) |
-| 19 | B | `side-tab` (`.sep` の太い縦罫) | — | **誤検出** (桁マスの千の区切りで、DESIGN.md の署名。カードの縁の装飾ではない)。除外の設定は広すぎる (ファイル全体の `side-tab` を消す) ので置かず、border でなく背景の疑似要素で描いて、検出されないようにした。見た目は同じ |
+| 19 | B | `side-tab` (`.sep` の太い縦罫) | — | **誤検出** (桁マスの千の区切りで、DESIGN.md の署名。カードの縁の装飾ではない)。除外の設定は広すぎる (ファイル全体の `side-tab` を消す) ので置かず、border でなく背景の線 (linear-gradient) で描いて、検出されないようにした。見た目は同じ |
 | 20 | B | `flat-type-hierarchy` (advisory) | P3 | **意図どおり**: DESIGN.md は「階層は字の大きさと太さと罫線の太さで作る」。本文を 18 px 以上にそろえるのは要件 7。見出しは太さ 800〜900 と太罫で区別 |
 | 21 | audit | 明るい紙だけで dark mode が無い・差し戻しの 1 秒の動き・薄い装飾罫 (1.93:1) | — | **意図どおり**: DESIGN.md (「暗い地にしない」)・screens-v3 §2 (差し戻し)・情報を載せない装飾罫 |
 
