@@ -67,7 +67,8 @@ export function draw(pool: readonly Problem[], opts: DrawOptions): Round[] {
   const matching = (companyId: string, slot: number, tiers: TierSet): Problem[] =>
     (byCompany.get(companyId) ?? []).filter((p) => (p.anomaly !== null) === flags[slot] && (tiers === null || p.tier === undefined || tiers.has(p.tier)));
   const best = (ps: Problem[]): Problem => [...ps].sort(order)[0]!;
-  // 会社の並び: (その会社の最優先の問題が見つけた種類か → その問題の履歴の順位 → 会社の乱数)。問題の乱数では並べない (種類の出方が偏る。ケース表 §0)
+  // 会社の並び: (その会社の最優先の問題が見つけた種類か → 会社の乱数)。**履歴の順位は会社の並べ方に使わない** (使うと、正常な問題が 1 問しか無い会社は、前の周で正常を見たあと
+  // 「答えた」側に並び、また出るのは異変の枠になって、会社から答えが漏れる。責任者の決定。ケース表 §0・DW34)。問題の乱数でも並べない (種類の出方が偏る)
   const candidates = (slot: number, tiers: TierSet): string[] => {
     const top = new Map<string, Problem>();
     for (const id of byCompany.keys()) {
@@ -77,7 +78,7 @@ export function draw(pool: readonly Problem[], opts: DrawOptions): Round[] {
     return [...top.keys()].sort((a, b) => {
       const pa = top.get(a)!;
       const pb = top.get(b)!;
-      return foundOf(pa) - foundOf(pb) || rankOf(pa) - rankOf(pb) || (tieOfCompany.get(a) ?? 0) - (tieOfCompany.get(b) ?? 0);
+      return foundOf(pa) - foundOf(pb) || (tieOfCompany.get(a) ?? 0) - (tieOfCompany.get(b) ?? 0);
     });
   };
 

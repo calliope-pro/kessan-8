@@ -94,3 +94,15 @@ export function checkGroups(result: SimResult, kinds: readonly KindSpec[]): Grou
     };
   });
 }
+
+/** プールの異変の種類 ID と段 (本番のプールに rs6 の検査を当てるとき)。`count` はプールでの問題の数。 */
+export function kindsOfPool(pool: Problem[], difficulty: Difficulty): KindSpec[] {
+  const found = new Map<string, KindSpec>();
+  for (const p of pool) {
+    if (p.difficulty !== difficulty || p.anomaly === null) continue;
+    const k = found.get(p.anomaly.kind);
+    if (k) k.count++;
+    else found.set(p.anomaly.kind, { id: p.anomaly.kind, tier: p.tier ?? 3, count: 1 });
+  }
+  return [...found.values()];
+}

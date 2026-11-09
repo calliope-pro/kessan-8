@@ -157,28 +157,35 @@ describe('履歴と見つけた種類', () => {
     }
   });
 
-  it('DW14: 履歴が n1 ×12・n2 ×12 (24 件) なら、窓の外の n1 の c01〜c08 を引く', () => {
+  it('DW14: 履歴が n1 ×12・n2 ×12 (24 件) なら、会社の中では窓の外の n1 (c01〜c08) と窓の中でも古い n1 (c09〜c12) を選び (n2 は選ばない)、会社の並びは履歴に依らない (c09〜c12 も選ばれる)', () => {
     const history = [...n1(range(1, 12)), ...n2(range(1, 12))];
-    for (const seed of seeds(50)) {
-      expect(new Set(ids(run(historyPool, 'easy', seed, { ...normalOnly, history })))).toEqual(new Set(n1(range(1, 8))));
+    const chosen = new Set<number>();
+    for (const seed of seeds(200)) {
+      const rs = run(historyPool, 'easy', seed, { ...normalOnly, history });
+      expect(rs.every((r) => r.problem.id.endsWith('-n1')), `seed ${seed}`).toBe(true);
+      rs.forEach((r) => chosen.add(companyNumber(r)));
     }
+    // 会社の並べ方に履歴の順位を使うと、窓の外の c01〜c08 に固定される (会社から答えが漏れる。#155 包括レビュー B1)
+    expect([...chosen].some((c) => c >= 9)).toBe(true);
+    expect(chosen.size).toBe(12);
   });
 
-  it(`DW14b: 履歴が窓の 2.5 倍あるとき、窓の中の問題は選ばれず、窓の外はすべて同順位 (選ばれる会社が古い順に固定されない)`, () => {
+  it('DW14b: 履歴が窓の 3.75 倍あるとき、窓の中の問題は選ばれず、窓の外の問題はすべて同順位 (会社の中でも古い順に固定されない)', () => {
     expect(HISTORY_WINDOW).toBe(16);
-    const companies = (HISTORY_WINDOW * 5) / 4; // 20 社 → 履歴 40 件 = 窓の 2.5 倍
-    const pool = buildPool('easy', range(1, companies), () => [{ tag: 'n1' }, { tag: 'n2' }]);
+    const companies = (HISTORY_WINDOW * 5) / 4; // 20 社 × 3 問 → 履歴 60 件
+    const pool = buildPool('easy', range(1, companies), () => [{ tag: 'n1' }, { tag: 'n2' }, { tag: 'n3' }]);
     const all = range(1, companies);
-    const history = [...n1(all), ...n2(all)];
-    const windowIds = new Set(history.slice(-HISTORY_WINDOW));
+    const history = [...all.map((c) => `easy-${c}-n1`), ...all.map((c) => `easy-${c}-n2`), ...all.map((c) => `easy-${c}-n3`)];
+    const windowIds = new Set(history.slice(-HISTORY_WINDOW)); // n3 の c05〜c20
     expect(windowIds.size).toBe(HISTORY_WINDOW);
-    const chosenCompanies = new Set<number>();
+    const chosenTags = new Set<string>();
     for (const seed of seeds(200)) {
       const rs = run(pool, 'easy', seed, { ...normalOnly, history });
       expect(rs.filter((r) => windowIds.has(r.problem.id)).map((r) => r.problem.id), `seed ${seed}`).toEqual([]);
-      rs.forEach((r) => chosenCompanies.add(companyNumber(r)));
+      rs.forEach((r) => chosenTags.add(r.problem.id.split('-')[2]!));
     }
-    expect([...chosenCompanies].some((c) => c >= 9)).toBe(true);
+    // 履歴の全部を数えると、会社の中で最も古い n1 に固定される。窓の外はすべて「答えていない」で同順位なので、n2 も選ばれる
+    expect([...chosenTags].sort()).toEqual(['n1', 'n2', 'n3']);
   });
 
   const kindPool = buildPool('easy', range(1, 12), () => [
