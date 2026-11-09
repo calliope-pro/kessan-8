@@ -1,20 +1,21 @@
 // S19〜S21・S23。ケース表 docs/test-cases/screens-v3.md §2.7。
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { answerRound, recordsOf, roundsFor, start } from './support';
+import { answerRound, recordsOf, roundsFor, start, tap } from './support';
 
 test('S19: 1 周遊んでから「記録」。最高の到達・クリア回数・見つけた異変 n / N。完了票と同じ数', async ({ page }) => {
   const SEED = 21;
   const rounds = roundsFor(SEED, 'easy', 0);
   await start(page, SEED);
-  await page.getByRole('button', { name: '1 社目へ' }).click();
+  await tap(page, '1 社目へ');
   for (let i = 0; i < 8; i++) {
     await answerRound(page, rounds[i]!);
-    await page.getByRole('button', { name: i === 7 ? '完了票へ' : '次へ', exact: true }).click();
+    await tap(page, i === 7 ? '完了票へ' : '次へ');
   }
   const fromCleared = (await page.getByTestId('cleared').innerText()).match(/見つけた異変 (\d+ \/ \d+)/)![1];
-  await page.goto(`/?seed=${SEED}`);
-  await page.getByRole('button', { name: '記録', exact: true }).click();
+  await page.goto(`/?seed=${SEED}`); // 完了票が復元される。別の難易度でタイトルへ
+  await tap(page, '別の難易度');
+  await tap(page, '記録');
   const rec = page.getByTestId('records');
   await expect(rec).toContainText('クリア 1 回');
   await expect(rec).toContainText('8 社目');
@@ -27,10 +28,10 @@ test('S20: 8 社通す途中でページを読み直すと、同じ画面・同�
   const SEED = 21;
   const rounds = roundsFor(SEED, 'easy', 0);
   await start(page, SEED);
-  await page.getByRole('button', { name: '1 社目へ' }).click();
+  await tap(page, '1 社目へ');
   for (let i = 0; i < 2; i++) {
     await answerRound(page, rounds[i]!);
-    await page.getByRole('button', { name: '次へ', exact: true }).click();
+    await tap(page, '次へ');
   }
   const label = await page.getByTestId('card').getAttribute('aria-label');
   await page.reload();
@@ -49,11 +50,11 @@ test('S21: localStorage を使えなくても遊べて、記録の画面に「�
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await start(page, SEED);
-  await page.getByRole('button', { name: '1 社目へ' }).click();
+  await tap(page, '1 社目へ');
   await answerRound(page, rounds[0]!);
   await expect(page.getByTestId('verdict')).toHaveText('正解');
   expect(errors).toEqual([]);
-  await page.getByRole('button', { name: '次へ', exact: true }).click();
+  await tap(page, '次へ');
   await expect(page.getByTestId('progress')).toContainText('2 社目');
 });
 
@@ -62,7 +63,7 @@ test('S21b: 保存できないとき、記録の画面に 1 行の注記', async
     Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('denied', 'SecurityError'); } });
   });
   await page.goto('/?seed=1');
-  await page.getByRole('button', { name: '記録', exact: true }).click();
+  await tap(page, '記録');
   await expect(page.getByTestId('records')).toContainText('この端末では記録を保存できません');
 });
 
@@ -74,7 +75,7 @@ test('S23: 通信は同じ origin だけ。console にエラーが無い (CSP �
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(e.message));
   await start(page, 21);
-  await page.getByRole('button', { name: '1 社目へ' }).click();
+  await tap(page, '1 社目へ');
   expect(foreign).toEqual([]);
   expect(errors).toEqual([]);
   expect(await page.locator('[style]').count()).toBe(0);

@@ -1,6 +1,6 @@
 // 受け入れ条件 1 (S1〜S3)・S18・S22・S24。ケース表 docs/test-cases/screens-v3.md §2.1・§2.7。
 import { expect, test } from '@playwright/test';
-import { findSeed, roundsFor, start } from './support';
+import { findSeed, roundsFor, start, tap } from './support';
 
 test('S1〜S3: 開くとタイトル。難易度のボタンを 1 回押すと 0 社目。「難易度を変える」で戻れる', async ({ page }) => {
   await page.goto('/?seed=1');
@@ -13,20 +13,20 @@ test('S1〜S3: 開くとタイトル。難易度のボタンを 1 回押すと 0
   await page.getByRole('button', { name: 'やさしい' }).click();
   await expect(page.getByTestId('progress')).toContainText('0 社目');
   await expect(page.getByTestId('boxes').locator('li')).toHaveCount(8);
-  await page.getByRole('button', { name: '難易度を変える' }).click();
+  await tap(page, '難易度を変える');
   await expect(page.getByRole('button', { name: 'むずかしい' })).toBeVisible();
   await page.getByRole('button', { name: 'むずかしい' }).click();
   await expect(page.getByTestId('progress')).toContainText('0 社目');
   await expect(page.locator('[data-testid="card"] ~ *, [data-testid="docs"]').first()).toBeVisible(); // むずかしいはカードの下に資料
-  await page.getByRole('button', { name: '1 社目へ' }).click();
+  await tap(page, '1 社目へ');
   await expect(page.getByRole('button', { name: '難易度を変える' })).toHaveCount(0); // n 社目には無い
 });
 
 test('S18: 初めて開く → 記録。「まだ遊んでいません」。戻るでタイトル', async ({ page }) => {
   await page.goto('/?seed=1');
-  await page.getByRole('button', { name: '記録', exact: true }).click();
+  await tap(page, '記録');
   await expect(page.getByTestId('records')).toContainText('まだ遊んでいません。8 社連続で正解するとクリアです');
-  await page.getByRole('button', { name: '戻る' }).click();
+  await tap(page, '戻る');
   await expect(page.getByRole('button', { name: 'やさしい' })).toBeVisible();
 });
 
@@ -43,7 +43,7 @@ test('S24: 同じ種は同じ出題 (同じ会社の並び)', async ({ browser }
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     await start(page, 7);
-    await page.getByRole('button', { name: '1 社目へ' }).click();
+    await tap(page, '1 社目へ');
     names.push([await page.getByTestId('card').getAttribute('aria-label').then((x) => x ?? '')]);
     await ctx.close();
   }

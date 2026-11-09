@@ -24,11 +24,24 @@ export async function recordsOf(page: Page): Promise<Records> {
   return parseRecords(await page.evaluate((k) => localStorage.getItem(k), RECORDS_KEY));
 }
 
+/** 走行 (sessionStorage) を消して、タイトルを開く。走行は読み直しても残るので、新しく始めるときは消す。 */
+export async function fresh(page: Page, seed: number): Promise<void> {
+  await page.goto('/');
+  await page.evaluate(() => sessionStorage.clear());
+  await page.goto(`/?seed=${seed}`);
+}
+
 /** 難易度のボタンを押して 0 社目に着く。 */
 export async function start(page: Page, seed: number, difficulty: Difficulty = 'easy'): Promise<void> {
-  await page.goto(`/?seed=${seed}`);
+  await fresh(page, seed);
   await page.getByRole('button', { name: difficulty === 'easy' ? 'やさしい' : 'むずかしい' }).click();
   await page.getByTestId('progress').filter({ hasText: '0 社目' }).waitFor();
+}
+
+/** 画面が替わった直後の約 250 ms は、札・ボタンが押せない (誤タップ防止。S11b)。押せるようになってから押す。 */
+export async function tap(page: Page, name: string): Promise<void> {
+  await page.locator('footer.actions:not(.arming)').waitFor();
+  await page.getByRole('button', { name, exact: true }).click();
 }
 
 export const seal = (page: Page, anomaly: boolean): Locator => page.getByRole('button', { name: anomaly ? '異変あり' : 'いつも通り', exact: true });
@@ -36,6 +49,7 @@ export const correct = (r: Round): boolean => r.problem.anomaly !== null;
 
 /** 1 社ぶん答える。ok = 正しく答える。 */
 export async function answerRound(page: Page, r: Round, ok = true): Promise<void> {
+  await page.locator('footer.actions:not(.arming)').waitFor();
   await seal(page, ok ? correct(r) : !correct(r)).click();
 }
 
@@ -50,10 +64,11 @@ export function findSeed(kind: string, difficulty: Difficulty = 'easy'): { seed:
 
 /** 0 社目から n 社目 (1 始まり) まで、すべて正しく答えて進める。 */
 export async function playTo(page: Page, rounds: Round[], n: number): Promise<void> {
-  await page.getByRole('button', { name: '1 社目へ' }).click();
+  await tap(page, '1 社目へ');
   for (let i = 1; i < n; i++) {
     await answerRound(page, rounds[i - 1]!);
-    await page.getByRole('button', { name: '次へ', exact: true }).click();
+    await tap(page, '次へ');
+    await page.getByTestId('progress').filter({ hasText: `${i + 1} 社目` }).waitFor(); // 次の社に着いてから
   }
 }
 export { ROUNDS_TO_CLEAR };

@@ -1,6 +1,6 @@
 // 受け入れ条件 4 (S12〜S14)。ケース表 docs/test-cases/screens-v3.md §2.4。
 import { expect, test } from '@playwright/test';
-import { answerRound, correct, findSeed, playTo, roundsFor, start } from './support';
+import { answerRound, correct, findSeed, playTo, roundsFor, start, tap } from './support';
 
 /** kind が出る種で、その社 (index) まで進めて答える (正しく)。 */
 async function reachKind(page: import('@playwright/test').Page, kind: string) {
@@ -15,7 +15,7 @@ test('S12・S13: 押印の字は押した札と同じ言葉。異変は朱で囲
   const SEED = 21;
   const rounds = roundsFor(SEED, 'easy', 0);
   await start(page, SEED);
-  await page.getByRole('button', { name: '1 社目へ' }).click();
+  await tap(page, '1 社目へ');
   let sawAnomaly = false, sawNormal = false;
   for (let i = 0; i < 8; i++) {
     const r = rounds[i]!;
@@ -32,7 +32,7 @@ test('S12・S13: 押印の字は押した札と同じ言葉。異変は朱で囲
       await expect(page.locator('.marked')).toHaveCount(0);
       await expect(page.getByText('異変はありませんでした')).toBeVisible();
     }
-    await page.getByRole('button', { name: i === 7 ? '完了票へ' : '次へ', exact: true }).click();
+    await tap(page, i === 7 ? '完了票へ' : '次へ');
   }
   expect(sawAnomaly && sawNormal).toBe(true);
 });
@@ -41,7 +41,7 @@ test('S14 E-19: 欄が無く、答えたあと「ここに○○の欄がある�
   const { round } = await reachKind(page, 'E-19');
   await expect(page.getByTestId('card').locator('[data-slot="margin"]')).toHaveCount(0);
   await answerRound(page, round);
-  await expect(page.getByTestId('card')).toContainText('ここに「営業利益率」の欄があるはずです');
+  await expect(page.getByTestId('card')).toContainText('ここに「売上高営業利益率」の欄があるはずです');
 });
 
 test('S14 E-21・E-25・E-27: 桁マスの見え方 (カンマが無い・△・X)', async ({ page }) => {

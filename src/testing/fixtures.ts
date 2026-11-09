@@ -65,12 +65,13 @@ export function makeProblem(o: MakeProblemOptions): Problem {
   } else {
     const places =
       o.places ??
+      // 場所は、v3 のカード (やさしいもむずかしいも) に載るセル。答え合わせで朱で囲まれる (E2E の S10a・S12)
       (o.kind === 'k-cross'
         ? [
-            { doc: 'tanshin' as const, path: 'balanceSheet.current.cash' },
-            { doc: 'ir' as const, path: 'supplement.cash.current' },
+            { doc: 'tanshin' as const, path: 'incomeStatement.current.netSales' },
+            { doc: 'tanshin' as const, path: 'summary.operatingMargin' },
           ]
-        : [{ doc: 'tanshin' as const, path: 'incomeStatement.current.ordinaryIncome' }]);
+        : [{ doc: 'tanshin' as const, path: 'incomeStatement.current.operatingIncome' }]);
     p.anomaly = { kind: o.kind, places, explanation: o.explanation ?? `${o.id}: 数字が食い違っています。`, expectedRules: ['r1'] };
     if (o.cardEdits !== undefined) p.cardEdits = o.cardEdits;
     if (o.periodEnd !== undefined) p.tanshin.columnDates.incomeStatement.current = o.periodEnd;
@@ -125,12 +126,12 @@ interface FormSpec {
   periodEnd?: string;
 }
 export const FORM_SPECS: FormSpec[] = [
-  { kind: 'E-19', name: '欄が 1 つ足りない', editOp: 'drop', edits: [{ card: 0, slot: 'margin', op: 'drop' }], places: slotPlace('margin'), explanation: 'いつもある「営業利益率」の欄がありません。' },
+  { kind: 'E-19', name: '欄が 1 つ足りない', editOp: 'drop', edits: [{ card: 0, slot: 'margin', op: 'drop' }], places: slotPlace('margin'), explanation: 'いつもある「売上高営業利益率」の欄がありません。' },
   { kind: 'E-21', name: '数字の桁区切りが違う', editOp: 'format', edits: [{ card: 0, slot: 'sales', op: 'format', style: 'no-comma' }], places: slotPlace('sales'), explanation: '「売上高」の桁区切りの位置が、いつもと違います。カンマがありません。' },
   { kind: 'E-22', name: '同じ欄が 2 回出る', editOp: 'dup', edits: [{ card: 0, slot: 'opCurr', op: 'dup' }], places: slotPlace('opCurr'), explanation: '「営業利益 (当期)」の欄が 2 回出ています。' },
   { kind: 'E-25', name: 'あり得ない符号', editOp: 'sign', edits: [{ card: 0, slot: 'sales', op: 'sign' }], places: slotPlace('sales'), explanation: '売上高に △ (マイナス) が付いています。売上高がマイナスになることはありません。' },
   { kind: 'E-26', name: '添え字が取り違えられている', editOp: 'suffix', edits: [{ card: 0, slot: 'opCurr', op: 'suffix', word: '前期' }], places: [...slotPlace('opPrev'), ...slotPlace('opCurr')], explanation: '「営業利益 (前期)」の行が 2 つ並んでいて、違う数字が入っています。' },
-  { kind: 'E-27', name: '数字に数字でない字が混じる', editOp: 'glyph', edits: [{ card: 0, slot: 'opCurr', op: 'glyph', at: 1 }], places: slotPlace('opCurr'), explanation: '「営業利益 (当期)」の数字に、数字でない字「X」が混じっています。' },
+  { kind: 'E-27', name: '数字に数字でない字が混じる', editOp: 'glyph', edits: [{ card: 0, slot: 'opCurr', op: 'glyph', at: 2 }], places: slotPlace('opCurr'), explanation: '「営業利益 (当期)」の数字に、数字でない字「X」が混じっています。' },
   { kind: 'E-28', name: '期末日が存在しない日付', editOp: 'day', edits: [{ card: 0, slot: 'period', op: 'day', day: 32 }], places: slotPlace('period'), explanation: '期末が 3月32日になっています。3月に 32 日はありません。' },
   { kind: 'E-04', name: '期と期末日が合わない', places: slotPlace('frame.period'), explanation: '2027年3月期なのに、期末日が 1 年前の日付になっています。', periodEnd: '2026-03-31' },
 ];
