@@ -3,14 +3,14 @@
 // **データ v3 の件数 (設計 v3 §1.5: やさしい 85 問・むずかしい 132 問) に達した難易度にだけ当てる**。今のデータ (v2。25 問・32 問) は R-S6 (c) を満たさない (測った: 最大 ÷ 一様 = 2.8 倍) ので、
 // 満たさないことを確かめるのでなく、データ v3 が入ると自動で効き始める。
 import { describe, expect, it } from 'vitest';
+import { CARD_POOL_SIZE } from '../domain/config';
 import { canDraw, draw } from '../domain/draw';
 import { mulberry32 } from '../domain/rng';
-import type { Difficulty } from '../domain/types';
 import { checkGroups, kindsOfPool, simulate } from '../testing/rs6';
 import { pools } from './index';
 
-/** 設計 v3 §1.5 の問題の数。 */
-const V3_SIZE: Record<Difficulty, number> = { easy: 85, hard: 132 };
+/** 設計 v3 §1.5 の問題の数 (config の CARD_POOL_SIZE。検証器 #138 と同じ出所)。 */
+const V3_SIZE = CARD_POOL_SIZE;
 const LAPS = 10_000;
 const LONG = 120_000;
 

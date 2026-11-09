@@ -1,5 +1,5 @@
 // 異変の問題が、指定した所だけ破れているか (ケース表 §2.6)。anomalies.md G1 の 3 条件 + 問題ごとの期待集合。
-import { shapesOf, templateKeys } from '../domain/cards.ts';
+import { templateKeys } from '../domain/cards.ts';
 import { FAMILY_DIFFICULTY, IR_SLIDES, TANSHIN_SCREENS } from '../domain/types.ts';
 import type { AnomalyKind, AnomalyPlace, Problem } from '../domain/types.ts';
 import { LABELS } from '../domain/labels.ts';
@@ -13,7 +13,9 @@ export interface Issue {
 
 const sorted = (xs: string[]) => [...new Set(xs)].sort();
 const inSet = (xs: string[], set: string[]) => xs.filter((x) => !set.includes(x));
-const placeKey = (p: AnomalyPlace): string => (p.doc === 'card' ? `card.${p.shape}.${p.card}.${p.slot}` : 'itemKey' in p ? p.itemKey : `${p.doc}.${p.path}`);
+const placeKey = (p: AnomalyPlace): string => (p.doc === 'card' ? `card.${p.card}.${p.slot}` : 'itemKey' in p ? p.itemKey : `${p.doc}.${p.path}`);
+/** 欄の key のほかに、card の場所に書ける key (見出し語・表題・表題の期と足元・足元・資料 2 の表題)。 */
+const CARD_PLACE_EXTRAS = ['headline', 'frame', 'frame.period', 'period'];
 
 /**
  * 違反が、変えたセルを読むか (docs/design-v2.md §2.8)。changed のパスと、同じ・changed の下 (changed が要素のパスのとき)・changed の入れ物
@@ -58,21 +60,18 @@ export function anomalyIssues(problem: Problem, kinds: AnomalyKind[], result: Ve
     add('anomaly-mismatch', `期待集合が許容集合を越えている、または主な規則を含まない (期待: ${expected.join('、')})`);
   }
 
-  // cardEdits (形のずれ): 1 つの異変は 1 つの編集。形は問題の難易度の形、欄は形にあること (docs/design-v2.md §1.6)
+  // cardEdits (形のずれ): 1 つの異変は 1 つの編集。欄は難易度の形にあること (docs/design-v3.md §1.6。表題・見出し語を消すなどの op ごとの当てかたは cardEditIssues)
   const edits = problem.cardEdits ?? [];
   if (edits.length > 1) add('anomaly-mismatch', `形のずれの編集が 2 件以上ある (1 つの異変は 1 つの編集): ${edits.length} 件`);
+  const templates = templateKeys(problem.difficulty);
   for (const e of edits) {
-    if (!shapesOf(problem.difficulty).includes(e.shape)) {
-      add('anomaly-mismatch', `cardEdits の形 ${e.shape} は、問題 (${problem.difficulty}) の難易度の形でない`);
+    if (e.card !== 0) {
+      add('anomaly-mismatch', `cardEdits: カード ${String(e.card)} が形に無い (card は 0 だけ)`);
       continue;
     }
-    const keys = templateKeys(e.shape)[e.card];
-    if (keys === undefined) {
-      add('anomaly-mismatch', `cardEdits: カード ${e.card} が ${e.shape} に無い`);
-      continue;
-    }
-    for (const slot of e.op === 'swap' ? e.slots : e.op === 'headline' ? [] : [e.slot]) if (!keys.includes(slot)) add('anomaly-mismatch', `cardEdits: ${e.shape} のカード ${e.card} に形に無い欄 ${slot}`);
-    if (e.op === 'headline' && !['E1', 'E2'].includes(e.shape)) add('anomaly-mismatch', `cardEdits: ${e.shape} に見出し語は無い`);
+    if (e.op === 'headline') continue;
+    const known = templates.includes(e.slot) || (e.slot === 'headline' && (e.op === 'dup' || e.op === 'drop')) || e.slot === 'period' || (e.op === 'drop' && e.slot === 'frame');
+    if (!known) add('anomaly-mismatch', `cardEdits: 形に無い欄 ${e.slot}`);
   }
 
   for (const [key, value] of Object.entries(problem.signOverrides ?? {})) {
@@ -90,9 +89,8 @@ export function anomalyIssues(problem: Problem, kinds: AnomalyKind[], result: Ve
   anomaly.places.forEach((place, i) => {
     const key = keys[i] as string;
     if (place.doc === 'card') {
-      const template = shapesOf(problem.difficulty).includes(place.shape) ? templateKeys(place.shape)[place.card] : undefined;
-      const hasHeadline = place.slot === 'headline' && ['E1', 'E2'].includes(place.shape);
-      if (template === undefined || !(template.includes(place.slot) || hasHeadline)) add('anomaly-mismatch', `場所が実在しない: ${key}`);
+      const known = place.card === 0 && (templateKeys(problem.difficulty).includes(place.slot) || CARD_PLACE_EXTRAS.includes(place.slot) || (place.slot === 'irHead' && problem.difficulty === 'hard'));
+      if (!known) add('anomaly-mismatch', `場所が実在しない: ${key}`);
     } else if ('itemKey' in place) {
       if (!(place.itemKey in LABELS)) add('anomaly-mismatch', `項目キーが labels に無い: ${place.itemKey}`);
     } else {

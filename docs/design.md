@@ -156,21 +156,28 @@ export const FAMILY_DIFFICULTY: Record<AnomalyFamily, Difficulty> = {
   'card-form': 'hard',
 };
 
-/** カードの形 (docs/design-v2.md §1)。やさしい = E1〜E3 (カード 1 枚)、むずかしい = H1〜H3 (短信型・IR 型の 2 枚)。 */
-export const SHAPE_IDS = ['E1', 'E2', 'E3', 'H1', 'H2', 'H3'] as const;
-export type ShapeId = (typeof SHAPE_IDS)[number];
-
 /**
- * 形のずれの異変 (欄の欠落・並びの入れ替え・数字の書式・単位の語・欄の重複・見出し語) を、問題データで表す編集 (docs/design-v2.md §1.6)。
- * 1 つの異変は 1 つの編集。shape の形のカードにだけ効く。card は 0 = 短信型 (やさしいは唯一のカード)・1 = IR 型。slot は形の欄の key。
+ * 形のずれの異変 (欄の欠落・数字の書式・単位の語・欄の重複・添え字・数字の字・符号・期末日・見出し語) を、問題データで表す編集 (docs/design-v3.md §1.6)。
+ * 形は難易度ごとに 1 つ。1 つの異変は 1 つの編集。card は常に 0 (カードと資料は 1 つの欄の並び)。slot は形の欄の key。
+ * suffix・glyph・sign・day は表示だけを変える (問題データのセルは変えない)。
  */
 export type CardEdit =
-  | { shape: ShapeId; card: number; slot: string; op: 'drop' }
-  | { shape: ShapeId; card: number; op: 'swap'; slots: [string, string] }
-  | { shape: ShapeId; card: number; slot: string; op: 'format'; style: 'no-comma' | 'comma-shift' }
-  | { shape: ShapeId; card: number; slot: string; op: 'unit'; unit: string }
-  | { shape: ShapeId; card: number; slot: string; op: 'dup' }
-  | { shape: ShapeId; card: number; op: 'headline'; word: string };
+  | { card: 0; slot: string; op: 'drop' }
+  | { card: 0; slot: string; op: 'format'; style: 'no-comma' | 'comma-shift' }
+  | { card: 0; slot: string; op: 'unit'; unit: string }
+  | { card: 0; slot: string; op: 'dup' }
+  | { card: 0; slot: 'opPrev' | 'opCurr'; op: 'suffix'; word: '前期' | '当期' }
+  | { card: 0; slot: string; op: 'glyph'; at: number }
+  | { card: 0; slot: string; op: 'sign' }
+  | { card: 0; slot: 'period'; op: 'day'; day: 32 }
+  | { card: 0; op: 'headline'; word: string };
+
+/** CardEdit の op の一覧。 */
+export const CARD_EDIT_OPS = ['drop', 'format', 'unit', 'dup', 'suffix', 'glyph', 'sign', 'day', 'headline'] as const;
+
+/** card-relation の 5 つの検査の名前 (docs/design-v3.md §1.2)。 */
+export const RELATION_CHECKS = ['R-dir', 'R-margin', 'R-range', 'R-ne', 'R-lt'] as const;
+export type RelationCheck = (typeof RELATION_CHECKS)[number];
 
 /** 前期と当期の組。 */
 export interface Pair {
@@ -216,6 +223,12 @@ export interface AnomalyKind {
   primaryRules: string[];
   /** 許容集合: この種類の異変で落ちてよい規則 ID (primaryRules を含む)。同じ原因で必然的に付随して落ちる規則を含む。 */
   allowedRules: string[];
+  /** この種類の異変で落ちてよい card-relation の検査 (docs/design-v3.md §1.2 の表。欄の drop は、落とした欄を読む検査をコードで足す)。無ければ空。 */
+  relationChecks?: RelationCheck[];
+  /** 台帳 v3 の種類の印 (docs/design-v3.md §2)。印のある種類だけを、種類ごとの問題の数 (5 問・会計と資料間は 7 問) の検査で数える。 */
+  ledger?: 'v3';
+  /** この種類の異変が使う cardEdits の op (docs/design-v3.md §2.2 の「変えるもの」。E-19・H-31 = drop、E-22・H-33 = dup ほか)。cardEdits を持つ異変の問題は、種類の editOp と同じ op だけを持つ。cardEdits を使わない種類は持たない。 */
+  editOp?: CardEdit['op'];
 }
 
 /** 資料の見出し。見た目の異変 (社名の誤植・単位違い・期の表記違い) はここに入る。 */
@@ -479,8 +492,8 @@ export interface IrDeck {
 export type AnomalyPlace =
   | { doc: DocKind; path: string }
   | { doc: DocKind; itemKey: string }
-  /** 形のずれ (cardEdits) の場所: shape の形の card 番号のカードの slot の欄 (docs/design-v2.md §2.8)。欄の欠落 (drop) は、欠けた位置 (テンプレートのカードのその欄の位置)。 */
-  | { doc: 'card'; shape: ShapeId; card: number; slot: string };
+  /** 形のずれ (cardEdits) の場所: カードの slot の欄 (card は常に 0。docs/design-v3.md §1.6)。slot は欄の key か headline・frame・frame.period・period・irHead。欄の欠落 (drop) は、欠けた位置 (テンプレートのカードのその欄の位置)。 */
+  | { doc: 'card'; card: 0; slot: string };
 
 /** 異変の指定と答え合わせの文言。問題データのここが唯一の出所で、画面はこれを表示するだけ。 */
 export interface Anomaly {

@@ -1,189 +1,266 @@
-// カードの整合・構造・見える条件・二重の食い違い・最小のずれ (ケース表 docs/test-cases/cards.md §2・§4・§8・§9.3。設計 docs/design-v2.md §1.5・§2.7・§2.8)。
-import { CARD_LIMITS, CARD_TEXT_MAX, cardCells, deriveCards, difficultyOfShape, headlineWords, placeVisible, shapesOf, templateKeys } from '../domain/cards.ts';
+// カードの整合・構造・許容集合・見える条件・二重の食い違い・最小のずれ (ケース表 docs/test-cases/cards.md §3・§2.2・§5・§6・§9。設計 docs/design-v3.md §1.2・§1.6・§2.8・§2.9)。形は難易度ごとに 1 つ。
+import { CARD_LIMITS, CARD_TEXT_MAX, HEADLINE_WORDS, SIGN_TARGETS, cardCells, deriveCards, limitGroupOf, placeSlots, placeVisible, templateKeys } from '../domain/cards.ts';
 import type { Card } from '../domain/cards.ts';
-import { LABELS, SECTION_OF_ITEM } from '../domain/labels.ts';
-import type { AnomalyKind, AnomalyPlace, Company, IrStatement, Problem, ShapeId } from '../domain/types.ts';
+import { RELATION_CHECKS } from '../domain/types.ts';
+import type { AnomalyKind, AnomalyPlace, Company, Problem, RelationCheck } from '../domain/types.ts';
 import { verifyProblem } from './index.ts';
 import type { VerifyResult } from './index.ts';
-import { irScaled, roundHalfAway, scaled10 } from './math.ts';
+import { roundHalfAway, scaled10 } from './math.ts';
 import { getPath } from './path.ts';
-import { AUDIT_NOTE, NONE_TEXT } from './rules/nonnumeric.ts';
 
 // ---- 構造・文字数 ----
 
-/** 数字・文の数が上限 (やさしい 数字 4 / むずかしい 1 枚 数字 4 + 文 3) を超える、の文。cardEdits を当てたカードにも当てる (E-22 の欄の重複は E3 だけ)。 */
-export function cardLimitIssues(cards: Card[], shape: ShapeId): string[] {
+const GROUP_NAME = { card: 'カード', doc1: '資料 1', doc2: '資料 2' } as const;
+
+/** 数字・文の数が上限を超える、の文。allowance = 欄の重複 (dup) を持つ異変のカードに許す +1 (責任者の決定 2026-11-08 問 1 = (b))。 */
+export function cardLimitIssues(card: Card, allowance = 0): string[] {
   const out: string[] = [];
-  const limits = CARD_LIMITS[difficultyOfShape(shape)];
-  cards.forEach((card, ci) => {
-    const numbers = card.slots.filter((s) => s.kind === 'number').length + (card.bars?.items.length ?? 0);
-    const texts = card.slots.filter((s) => s.kind === 'text').length;
-    if (numbers > limits.numbers) out.push(`${shape} のカード ${ci}: 数字が ${numbers} 個 (上限 ${limits.numbers})`);
-    if (texts > limits.texts) out.push(`${shape} のカード ${ci}: 文欄が ${texts} 個 (上限 ${limits.texts})`);
-  });
+  const limits = CARD_LIMITS[card.difficulty];
+  for (const g of ['card', 'doc1', 'doc2'] as const) {
+    const slots = card.slots.filter((s) => limitGroupOf(s.section) === g);
+    const limit = limits[g];
+    if (limit === undefined) {
+      if (slots.length > 0) out.push(`${GROUP_NAME[g]}: ${card.difficulty} の形に無い欄が ${slots.length} 個`);
+      continue;
+    }
+    const numbers = slots.filter((s) => s.kind === 'number').length;
+    const texts = slots.filter((s) => s.kind === 'text').length;
+    if (numbers > limit.numbers + allowance) out.push(`${GROUP_NAME[g]}: 数字が ${numbers} 個 (上限 ${limit.numbers + allowance})`);
+    if (texts > limit.texts + allowance) out.push(`${GROUP_NAME[g]}: 文欄が ${texts} 個 (上限 ${limit.texts + allowance})`);
+  }
   return out;
 }
 
 /** 欄の並びが形の定義と違う・数字や文の数が上限を超える・見出し語が出ていない、の文 (空 = 構造は正しい)。 */
-export function cardStructureIssues(cards: Card[], shape: ShapeId): string[] {
+export function cardStructureIssues(card: Card): string[] {
   const out: string[] = [];
-  const template = templateKeys(shape);
-  if (cards.length !== template.length) out.push(`${shape}: カードが ${cards.length} 枚 (形は ${template.length} 枚)`);
-  cards.forEach((card, ci) => {
-    const keys = card.slots.map((s) => s.key);
-    const want = template[ci] ?? [];
-    if (keys.join() !== want.join()) out.push(`${shape} のカード ${ci}: 欄の並びが形と違う (形: ${want.join('・')}、実際: ${keys.join('・')})`);
-    if (headlineWords(shape, ci) !== null && card.headline === undefined) out.push(`${shape} のカード ${ci}: 見出し語が出ていない (IR の文章に主張が無い)`);
-  });
-  return [...out, ...cardLimitIssues(cards, shape)];
+  const keys = card.slots.map((s) => s.key);
+  const want = templateKeys(card.difficulty);
+  if (keys.join() !== want.join()) out.push(`欄の並びが形と違う (形: ${want.join('・')}、実際: ${keys.join('・')})`);
+  if (card.headline === undefined) out.push('見出し語が出ていない (IR の文章に営業利益の主張が無い)');
+  return [...out, ...cardLimitIssues(card)];
 }
 
 /** 文欄の text が 40 字 (CARD_TEXT_MAX) を超える欄の文。文字数は [...text].length (サロゲート対を 1 字)。 */
-export function cardTextLengthIssues(cards: Card[]): string[] {
+export function cardTextLengthIssues(card: Card): string[] {
   const out: string[] = [];
-  cards.forEach((card, ci) => {
-    for (const s of card.slots) {
-      const n = [...s.text].length;
-      if (s.kind === 'text' && n > CARD_TEXT_MAX) out.push(`card.${card.shape}.${ci}.${s.key}: ${n} 字 (上限 ${CARD_TEXT_MAX})`);
-    }
-  });
+  for (const s of card.slots) {
+    const n = [...s.text].length;
+    if (s.kind === 'text' && n > CARD_TEXT_MAX) out.push(`card.0.${s.key}: ${n} 字 (上限 ${CARD_TEXT_MAX})`);
+  }
   return out;
 }
 
-// ---- 関係 ----
+// ---- 関係 (card-relation の 5 検査) ----
 
-export interface RelationContext {
-  company: Company;
-  statements: IrStatement[];
+export interface RelationIssue {
+  check: RelationCheck;
+  message: string;
 }
 
-const sign = (x: number): number => Math.sign(x);
-const num = (card: Card | undefined, key: string): number => {
-  const raw = card?.slots.find((s) => s.key === key)?.raw;
-  return typeof raw === 'number' ? raw : Number.NaN;
+/** 検査が読む欄 (欄が無いと値が NaN になり、その欄を読む検査が落ちる)。 */
+const RELATION_READS: Record<RelationCheck, string[]> = {
+  'R-dir': ['headline', 'opPrev', 'opCurr'],
+  'R-margin': ['margin', 'opCurr', 'sales'],
+  'R-range': ['opPrev', 'opCurr'],
+  'R-ne': ['opPrev', 'opCurr'],
+  'R-lt': ['opCurr', 'sales'],
 };
-const val = (card: Card | undefined, key: string): number | string | boolean | undefined => card?.slots.find((s) => s.key === key)?.raw;
 
-/** 文の主張の向き (その文が持つ metric の direction)。文が引けないときは undefined。 */
-function claimDirection(card: Card | undefined, key: string, metric: string, statements: IrStatement[]): string | undefined {
-  const ref = card?.slots.find((s) => s.key === key)?.reads[0] ?? '';
-  const n = /^ir\.statements\.(\d+)$/.exec(ref)?.[1];
-  return n === undefined ? undefined : statements[Number(n)]?.claims.find((c) => c.metric === metric)?.direction;
-}
-
-function headlineIssue(card: Card | undefined, change: number, up: string, down: string, shape: string): string[] {
-  const word = card?.headline?.word;
-  if (word === undefined) return [];
-  const expected = change > 0 ? up : change < 0 ? down : undefined;
-  return word === expected ? [] : [`${shape}: 見出し語 ${word} が数字の向き (${change > 0 ? '増' : change < 0 ? '減' : '同じ'}) と合わない`];
-}
-
-/** 導出したカードの数字・文の関係。カードの raw から独立に再計算する (空 = 整合)。 */
-export function cardRelationIssues(cards: Card[], shape: ShapeId, ctx: RelationContext): string[] {
-  const out: string[] = [];
-  const bad = (cond: boolean, message: string) => {
-    if (!cond) out.push(`${shape}: ${message}`);
+/** 導出したカードの関係 (R-dir・R-margin・R-range・R-ne・R-lt。設計 §1.2)。表示の文字列でなく raw (データの値) と見出し語の語を読む (空 = 整合)。 */
+export function cardRelationIssues(card: Card): RelationIssue[] {
+  const raw = (key: string): number => {
+    const r = card.slots.find((s) => s.key === key)?.raw;
+    return typeof r === 'number' ? r : Number.NaN;
   };
-  const [c0, c1] = cards;
-  const unit = ctx.company.irUnit;
-  switch (shape) {
-    case 'E1': {
-      const [prev, cur, sales] = [num(c0, 'opPrev'), num(c0, 'opCur'), num(c0, 'netSales')];
-      out.push(...headlineIssue(c0, cur - prev, '増益', '減益', shape));
-      bad(sales !== 0 && Math.round(num(c0, 'margin') * 10) === roundHalfAway(cur * 1000, sales), `営業利益率 ${num(c0, 'margin')} が 営業利益 ÷ 売上高 (${cur} ÷ ${sales}) と合わない`);
-      break;
+  const [sales, prev, cur, margin] = [raw('sales'), raw('opPrev'), raw('opCurr'), raw('margin')];
+  const out: RelationIssue[] = [];
+  const bad = (check: RelationCheck, message: string): void => {
+    out.push({ check, message });
+  };
+  const word = card.headline?.word;
+  if (word !== undefined) {
+    const change = cur - prev;
+    const expected = change > 0 ? HEADLINE_WORDS[0] : change < 0 ? HEADLINE_WORDS[1] : undefined;
+    if (word !== expected) bad('R-dir', `見出し語 ${word} が営業利益の向き (${prev} → ${cur}) と合わない`);
+  }
+  const exact = Number.isFinite(sales) && sales !== 0 && Number.isFinite(cur) ? roundHalfAway(cur * 1000, sales) : Number.NaN;
+  if (Math.round(margin * 10) !== exact) bad('R-margin', `営業利益率 ${margin} が 営業利益 ÷ 売上高 (${cur} ÷ ${sales}) の四捨五入と合わない`);
+  if (!(prev > 0 && 2 * cur >= prev && cur <= 2 * prev)) bad('R-range', `営業利益 (当期) ${cur} が前期 ${prev} の 0.5〜2 倍の外`);
+  if (!(Number.isFinite(prev) && Number.isFinite(cur) && cur !== prev)) bad('R-ne', `営業利益 (当期) ${cur} が前期 ${prev} と同じ`);
+  if (!(cur < sales)) bad('R-lt', `営業利益 (当期) ${cur} が売上高 ${sales} 未満でない`);
+  return out;
+}
+
+/** この異変の問題で、落ちてよい card-relation の検査: 種類の relationChecks + 欄の drop で落とした欄を読む検査 (設計 §1.2 の表)。 */
+export function relationAllowed(problem: Problem, kind: AnomalyKind): RelationCheck[] {
+  const allowed = new Set<RelationCheck>(kind.relationChecks ?? []);
+  // 欄の drop で落ちる検査を許すのは、drop の種類 (E-19・H-31) だけ。dup の種類などに drop の問題が来ても許さない (種類の取り違えを通さない)
+  for (const e of kind.editOp === 'drop' ? (problem.cardEdits ?? []) : []) {
+    if (e.op !== 'drop') continue;
+    for (const check of RELATION_CHECKS) if (RELATION_READS[check].includes(e.slot)) allowed.add(check);
+  }
+  return [...allowed];
+}
+
+// ---- cardEdits の当てかた (設計 §1.6) ----
+
+/** cardEdits が、§1.6 の op ごとに当ててよい欄に当たっているか (検査 5 とは別の検査)。形に無い欄の編集は、ここでは数えない (anomalyIssues が拾う)。 */
+export function cardEditIssues(problem: Problem, company: Company, kinds?: AnomalyKind[]): string[] {
+  const edits = problem.cardEdits ?? [];
+  if (edits.length === 0) return [];
+  let card: Card;
+  try {
+    card = deriveCards(problem, company, problem.difficulty, { applyEdits: false });
+  } catch (error) {
+    if (error instanceof RangeError) return [];
+    throw error;
+  }
+  const out: string[] = [];
+  // 種類と op の対応 (kinds を渡したとき): 種類の editOp と違う op・editOp の無い種類の cardEdits は、種類の取り違え (答え合わせの文言とカードの見え方が食い違う)
+  if (kinds !== undefined && problem.anomaly !== null) {
+    const kind = kinds.find((k) => k.id === problem.anomaly?.kind);
+    for (const e of edits) {
+      if (kind === undefined) out.push(`cardEdits (${e.op}): 種類 ${problem.anomaly.kind} が一覧に無い`);
+      else if (kind.editOp === undefined) out.push(`cardEdits (${e.op}): 種類 ${kind.id} は cardEdits を使わない (editOp が無い)`);
+      else if (kind.editOp !== e.op) out.push(`cardEdits (${e.op}): 種類 ${kind.id} が使う op は ${kind.editOp}`);
     }
-    case 'E2': {
-      const [prev, cur] = [num(c0, 'salesPrev'), num(c0, 'salesCur')];
-      out.push(...headlineIssue(c0, cur - prev, '増収', '減収', shape));
-      bad(c0?.bars?.axisMin === 0, `棒の軸の下端 ${c0?.bars?.axisMin} が 0 でない`);
-      for (const [key, millions] of [['previous', prev], ['current', cur]] as const) {
-        const value = c0?.bars?.items.find((i) => i.key === key)?.value ?? Number.NaN;
-        bad(scaled10(value) === irScaled(millions, unit), `棒 (${key}) ${value} が売上高 ${millions} (IR の単位) と合わない`);
+  }
+  const intDigits = (text: string) => (text.replace(/[^\d.]/g, '').split('.')[0] ?? '').length;
+  for (const e of edits) {
+    const at = `cardEdits (${e.op})`;
+    const find = (key: string) => card.slots.find((s) => s.key === key);
+    switch (e.op) {
+      case 'unit': {
+        const s = find(e.slot);
+        if (s === undefined) break;
+        if (s.measure !== 'money') out.push(`${at}: 単位を表示する金額の欄でない (${e.slot})`);
+        else if (s.unit === e.unit) out.push(`${at}: ${e.slot} の単位 ${e.unit} は正常の語と同じで、見た目が変わらない`);
+        break;
       }
-      break;
-    }
-    case 'E3':
-      bad(num(c0, 'totalAssets') === num(c0, 'currentAssets') + num(c0, 'fixedAssets'), '資産合計が 流動資産合計 + 固定資産合計 と合わない');
-      break;
-    case 'H1': {
-      bad(num(c0, 'totalAssets') === num(c0, 'totalLiabNet'), '資産合計 ≠ 負債純資産合計');
-      bad(scaled10(num(c1, 'netSales')) === irScaled(num(c0, 'salesCur'), unit), 'IR の売上高が短信の売上高 (当期) と合わない');
-      const direction = claimDirection(c1, 'claim', 'netSales', ctx.statements);
-      const change = sign(num(c0, 'salesCur') - num(c0, 'salesPrev'));
-      bad(direction === undefined || (direction === 'up' ? change > 0 : direction === 'down' ? change < 0 : true), `IR の文の売上高の向き (${direction}) が数字と合わない`);
-      break;
-    }
-    case 'H2': {
-      bad(num(c0, 'recvChange') + (num(c0, 'recvCur') - num(c0, 'recvPrev')) === 0, '売上債権の増減が 前期末と当期末の差と合わない');
-      bad(val(c0, 'policyChange') === (val(c0, 'policyNote') !== NONE_TEXT), '会計方針の変更の有無と注記が合わない');
-      const name = String(val(c0, 'recvRow') ?? '');
-      const sections = Object.entries(LABELS).filter(([k, label]) => label === name && k in SECTION_OF_ITEM).map(([k]) => SECTION_OF_ITEM[k]);
-      bad(sections.every((s) => s === 'asset'), `資産の部の行に資産でない科目名 ${name} がある`);
-      const direction = claimDirection(c1, 'claim', 'operatingCashFlow', ctx.statements);
-      const cf = num(c0, 'operatingCf');
-      bad(direction === undefined || (direction === 'up' ? cf > 0 : direction === 'down' ? cf < 0 : true), `IR の文の営業 CF の向き (${direction}) が数字と合わない`);
-      break;
-    }
-    case 'H3': {
-      bad(num(c0, 'cfStart') === num(c0, 'plStart'), 'CF の税引前利益 ≠ 損益の税引前利益');
-      bad(num(c0, 'cfEnd') === num(c0, 'cash'), 'CF の期末残高 ≠ 貸借の現金');
-      bad(scaled10(num(c1, 'cashCur')) === irScaled(num(c0, 'cash'), unit), 'IR の現金 (当期) が貸借の現金と合わない');
-      bad(scaled10(num(c1, 'netDebtPrev')) === scaled10(num(c1, 'debtPrev')) - scaled10(num(c1, 'cashPrev')), '純有利子負債 (前期) ≠ 有利子負債 − 現金');
-      bad(val(c0, 'auditNote') === AUDIT_NOTE, '監査の注意書きが標準の文と違う');
-      bad((val(c0, 'subsequent') === NONE_TEXT) === (val(c1, 'subsequent') === 'なし'), '後発事象の有無が短信と IR で合わない');
-      bad(val(c0, 'segments') === val(c1, 'segments'), 'セグメントの名前の並びが短信と IR で合わない');
-      break;
+      case 'format': {
+        const s = find(e.slot);
+        if (s === undefined) break;
+        const need = e.style === 'no-comma' ? 4 : 5;
+        if (s.measure !== 'money') out.push(`${at}: 金額の欄でない (${e.slot})`);
+        else if (intDigits(s.text) < need) out.push(`${at}: ${e.slot} の表示 ${s.text} の整数部が ${need} 桁未満で、書式を変えても見た目が変わらない`);
+        break;
+      }
+      case 'suffix':
+        if (e.slot !== 'opPrev' && e.slot !== 'opCurr') out.push(`${at}: 添え字を取り違えられるのは opPrev・opCurr だけ (${String(e.slot)})`);
+        break;
+      case 'glyph': {
+        const s = find(e.slot);
+        if (s === undefined) break;
+        if (!Number.isInteger(e.at) || !/^\d$/.test([...s.text][e.at] ?? '')) out.push(`${at}: ${e.slot} の表示 ${s.text} の添字 ${e.at} は数字の文字でない`);
+        break;
+      }
+      case 'sign': {
+        const s = find(e.slot);
+        if (s === undefined) break;
+        if (!SIGN_TARGETS.includes(e.slot)) out.push(`${at}: ${e.slot} は符号の異変の対象外 (対象: ${SIGN_TARGETS.join('・')})`);
+        else if (typeof s.raw !== 'number' || s.raw <= 0) out.push(`${at}: ${e.slot} の値 ${String(s.raw)} は正でない (値が 0 や負の欄に △ を付けても、あり得ない符号にならない)`);
+        break;
+      }
+      case 'day':
+        if (e.slot !== 'period') out.push(`${at}: 日を変えられるのは period だけ`);
+        break;
+      case 'headline': {
+        // 向きを変えない語だけ (増益 → 増収、減益 → 減収)。向きが逆の語は E-17 と同時に見える (設計 §2.2 E-23)
+        const original = card.headline?.word;
+        const want = original === HEADLINE_WORDS[0] ? '増収' : original === HEADLINE_WORDS[1] ? '減収' : undefined;
+        if (want === undefined) out.push(`${at}: 元の見出し語が無い (営業利益の主張が無い問題には、見出し語の編集を当てられない)`);
+        else if (e.word !== want) out.push(`${at}: 元の見出し語 ${original} に対して ${e.word} は、向きを変えない語でない (${want} だけ)`);
+        break;
+      }
+      case 'drop':
+        if (e.slot === 'headline' || e.slot === 'frame') out.push(`${at}: 表題・見出し語は消さない (${e.slot})`);
+        break;
+      case 'dup':
+        break;
     }
   }
   return out;
 }
 
-// ---- 見える条件 (R-S4 の V1・V2) ----
+// ---- 見える条件 (R-S4 の V1・V2・検査 5) ----
 
-export interface ShapeCheck {
-  shape: ShapeId;
+/** カードの欄の「見えるもの」だけの表示モデル (検査 5)。出す文字列 (科目名・添え字・資金の範囲を含む)・数字の文字列・単位の語・見える順の位置・欄の有無・見出し語 (語と繰り返し)・表題・足元・資料 2 の表題。編集の印 (op・style)・欄の key・itemKey は入れない。 */
+function viewOf(card: Card, key: string): string {
+  switch (key) {
+    case 'headline':
+      return JSON.stringify(card.headline === undefined ? null : { w: card.headline.word, r: card.headline.repeat });
+    case 'frame':
+      return JSON.stringify({ n: card.frame.companyName, s: card.frame.securitiesCode, e: card.frame.emblem, p: card.frame.periodLabel });
+    case 'frame.period':
+      return JSON.stringify({ p: card.frame.periodLabel, e: card.footer?.periodEnd ?? null });
+    case 'period':
+      return JSON.stringify(card.footer?.periodEnd ?? null);
+    case 'irHead':
+      return JSON.stringify(card.irFrame === undefined ? null : { n: card.irFrame.companyName, p: card.irFrame.periodLabel });
+    default:
+      return JSON.stringify(card.slots.flatMap((s, pos) => (s.key === key ? [{ pos, label: s.label, text: s.text, unit: s.unit }] : [])));
+  }
+}
+
+/** 検査 5: places の欄の表示が基の同じ欄と違うか (どれか 1 つの欄でも違えばよい)。cardEdits の問題は、場所をテンプレートのカードで引く (drop は欠けた位置)。 */
+export function displayChanges(problem: Problem, base: Problem, company: Company): boolean {
+  const anomaly = problem.anomaly;
+  if (anomaly === null) return false;
+  try {
+    const template = deriveCards(problem, company, problem.difficulty, { applyEdits: false });
+    const edited = deriveCards(problem, company, problem.difficulty);
+    const reference = deriveCards({ ...base, difficulty: problem.difficulty }, company, problem.difficulty);
+    return anomaly.places.flatMap((p) => placeSlots(template, p)).some((key) => viewOf(edited, key) !== viewOf(reference, key));
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+export interface Visibility {
   /** V1 を満たさない場所 (カードに載らない)。 */
   missingPlaces: string[];
   /** V2: 主な規則の違反で、paths がすべてカードに載るものがあるか。 */
   v2: boolean;
+  /** 検査 5 (基があるときだけ): places の欄の表示が基と変わるか。基が無いとき null。 */
+  v3: boolean | null;
 }
 
-const placeKey = (p: AnomalyPlace): string => (p.doc === 'card' ? `card.${p.shape}.${p.card}.${p.slot}` : 'itemKey' in p ? p.itemKey : `${p.doc}.${p.path}`);
+const placeKey = (p: AnomalyPlace): string => (p.doc === 'card' ? `card.${p.card}.${p.slot}` : 'itemKey' in p ? p.itemKey : `${p.doc}.${p.path}`);
 
-/** 異変の問題の、難易度の形ごとの V1・V2 (cardEdits の問題はテンプレートのカードで判定する)。 */
-export function shapeChecks(problem: Problem, company: Company, kinds: AnomalyKind[], result: VerifyResult = verifyProblem(problem, company)): ShapeCheck[] {
+/** 異変の問題の V1・V2・検査 5 (cardEdits の問題は V1・V2 をテンプレートのカードで判定する)。種類が引けない・導けない問題は、V1 に全部の場所を載せる。 */
+export function cardVisibility(problem: Problem, company: Company, kinds: AnomalyKind[], result: VerifyResult = verifyProblem(problem, company), base?: Problem): Visibility {
   const anomaly = problem.anomaly;
   const kind = kinds.find((k) => k.id === anomaly?.kind);
-  if (anomaly === null || kind === undefined) return [];
-  return shapesOf(problem.difficulty).map((shape) => {
-    const cells = cardCells(deriveCards(problem, company, shape, { applyEdits: false }));
-    const missingPlaces = anomaly.places.filter((p) => !(p.doc === 'card' || 'itemKey' in p ? cells.has(placeKey(p)) : placeVisible(cells, placeKey(p)))).map(placeKey);
-    const v2 = [...result.hard, ...result.soft].some((v) => kind.primaryRules.includes(v.rule) && v.paths.length > 0 && v.paths.every((path) => cells.has(path)));
-    return { shape, missingPlaces, v2 };
-  });
-}
-
-/** 異変の問題が見える形 (V1 かつ V2)。正常な問題は難易度の全形。種類が引けない異変は空。 */
-export function visibleShapes(problem: Problem, company: Company, kinds: AnomalyKind[], result?: VerifyResult): ShapeId[] {
-  if (problem.anomaly === null) return shapesOf(problem.difficulty);
-  return shapeChecks(problem, company, kinds, result)
-    .filter((c) => c.missingPlaces.length === 0 && c.v2)
-    .map((c) => c.shape);
-}
-
-/** 二重の食い違い (§2.8 の検査 4): 見える形ごとに、paths がカードに収まる hard の違反のうち、種類の primaryRules の外の規則。 */
-export function doubleDiscrepancies(problem: Problem, company: Company, kinds: AnomalyKind[], result: VerifyResult = verifyProblem(problem, company)): { shape: ShapeId; rules: string[] }[] {
-  const kind = kinds.find((k) => k.id === problem.anomaly?.kind);
-  if (kind === undefined) return [];
-  const out: { shape: ShapeId; rules: string[] }[] = [];
-  for (const shape of visibleShapes(problem, company, kinds, result)) {
-    const cells = cardCells(deriveCards(problem, company, shape, { applyEdits: false }));
-    const onCard = result.hard.filter((v) => v.paths.length > 0 && v.paths.every((p) => cells.has(p)));
-    const rules = [...new Set(onCard.map((v) => v.rule).filter((r) => !kind.primaryRules.includes(r)))].sort();
-    if (rules.length > 0) out.push({ shape, rules });
+  if (anomaly === null || kind === undefined) return { missingPlaces: anomaly?.places.map(placeKey) ?? [], v2: false, v3: null };
+  let cells: Set<string>;
+  try {
+    cells = cardCells(deriveCards(problem, company, problem.difficulty, { applyEdits: false }));
+  } catch (error) {
+    if (error instanceof RangeError) return { missingPlaces: anomaly.places.map(placeKey), v2: false, v3: null };
+    throw error;
   }
-  return out;
+  const visible = (p: AnomalyPlace): boolean => (p.doc === 'card' || 'itemKey' in p ? cells.has(placeKey(p)) : placeVisible(cells, placeKey(p)));
+  const v2 = [...result.hard, ...result.soft].some((v) => kind.primaryRules.includes(v.rule) && v.paths.length > 0 && v.paths.every((path) => cells.has(path)));
+  return { missingPlaces: anomaly.places.filter((p) => !visible(p)).map(placeKey), v2, v3: base === undefined ? null : displayChanges(problem, base, company) };
+}
+
+/** 見える (V1 かつ V2 かつ検査 5 が偽でない)。正常な問題は常に見える。種類が引けない異変は見えない。 */
+export function isVisible(problem: Problem, company: Company, kinds: AnomalyKind[], result?: VerifyResult, base?: Problem): boolean {
+  if (problem.anomaly === null) return true;
+  if (!kinds.some((k) => k.id === problem.anomaly?.kind)) return false;
+  const v = cardVisibility(problem, company, kinds, result, base);
+  return v.missingPlaces.length === 0 && v.v2 && v.v3 !== false;
+}
+
+/** 二重の食い違い (§2.8 の検査 4): 見える問題の、paths がカードに収まる hard の違反のうち、種類の primaryRules の外の規則。 */
+export function doubleDiscrepancies(problem: Problem, company: Company, kinds: AnomalyKind[], result: VerifyResult = verifyProblem(problem, company), base?: Problem): string[] {
+  const kind = kinds.find((k) => k.id === problem.anomaly?.kind);
+  if (kind === undefined || !isVisible(problem, company, kinds, result, base)) return [];
+  const cells = cardCells(deriveCards(problem, company, problem.difficulty, { applyEdits: false }));
+  const onCard = result.hard.filter((v) => v.paths.length > 0 && v.paths.every((p) => cells.has(p)));
+  return [...new Set(onCard.map((v) => v.rule).filter((r) => !kind.primaryRules.includes(r)))].sort();
 }
 
 // ---- 道具なしで気づける最小のずれ (§2.7) ----
@@ -196,6 +273,17 @@ const cell = (p: Problem, doc: 'tanshin' | 'ir', path: string): number => {
 const PERIODS = ['previous', 'current'] as const;
 
 const DEVIATIONS: Record<string, Deviation> = {
+  // 売上高 (当期) が営業利益 (当期) の 0.8 倍以下 (「小さい」と一目で分かる。設計 v3 §2.8)
+  'E-24': (p) => {
+    const [sales, op] = [cell(p, 'tanshin', 'incomeStatement.current.netSales'), cell(p, 'tanshin', 'incomeStatement.current.operatingIncome')];
+    return 10 * sales <= 8 * op ? [] : [`E-24: 売上高 ${sales} が営業利益 ${op} の 0.8 倍以下でない (最小のずれ: 0.8 倍)`];
+  },
+  // 営業利益 (当期) が前期の 10 倍以上 (増益) か 1/10 以下 (減益。向きを変えない方。設計 v3 §2.8)
+  'E-02': (p) => {
+    const [prev, cur] = [cell(p, 'tanshin', 'incomeStatement.previous.operatingIncome'), cell(p, 'tanshin', 'incomeStatement.current.operatingIncome')];
+    const ok = cur > prev ? cur >= 10 * prev : 10 * cur <= prev;
+    return ok ? [] : [`E-02: 営業利益 ${prev} → ${cur} が、前期の 10 倍以上か 1/10 以下でない (最小のずれ: 10 倍・1/10)`];
+  },
   // 総資産は元のまま、流動資産の小計をずらす。流動資産合計 + 固定資産合計 と総資産の差が、総資産の 10% 以上
   'E-09': (p) => {
     const out: string[] = [];

@@ -1,27 +1,36 @@
-// カードの導出 (docs/design-v2.md §1・ケース表 docs/test-cases/cards.md §1)。問題データ 1 か所から、1 回の判定で見せるカードを作る純関数。
-// 乱数・時刻・保存・DOM を見ない。異変のカードも、異変の問題データ (数字・文のセル・labelOverrides・unitOverrides・signOverrides・cardEdits) から同じ関数で作る (R-D2)。
-import { itemKey as itemKeyOf, LABELS, SECTION_OF_ITEM } from './labels.ts';
-import { SHAPE_IDS } from './types.ts';
-import type { AnomalyPlace, CardEdit, ClaimMetric, Company, Difficulty, Problem, ShapeId } from './types.ts';
-
-export { SHAPE_IDS } from './types.ts';
-export type { ShapeId } from './types.ts';
-
-/** 難易度ごとの形。 */
-const SHAPES_OF: Record<Difficulty, readonly ShapeId[]> = { easy: ['E1', 'E2', 'E3'], hard: ['H1', 'H2', 'H3'] };
-export const shapesOf = (difficulty: Difficulty): ShapeId[] => [...SHAPES_OF[difficulty]];
-export const difficultyOfShape = (shape: ShapeId): Difficulty => (shape.startsWith('E') ? 'easy' : 'hard');
+// カードの導出 (docs/design-v3.md §1・ケース表 docs/test-cases/cards.md §1〜§2)。問題データ 1 か所から、1 回の判定で見せるカード (やさしい = カード、むずかしい = カード + 資料) を作る純関数。
+// 乱数・時刻・保存・DOM を見ない。形は難易度ごとに 1 つ。異変のカードも、異変の問題データ (数字・文のセル・labelOverrides・cardEdits) から同じ関数で作る (R-D2)。
+import { itemKey as itemKeyOf, LABELS } from './labels.ts';
+import type { AnomalyPlace, CardEdit, ClaimMetric, Company, Difficulty, Problem } from './types.ts';
 
 /** 文欄の 1 行の上限 (design-v2 §1.1。CJK の 1 行の幅 40 字)。 */
 export const CARD_TEXT_MAX = 40;
-/** 1 枚のカードに載せる数字・文欄の上限 (要件。やさしいは文欄を持たない)。 */
-export const CARD_LIMITS: Record<Difficulty, { numbers: number; texts: number }> = { easy: { numbers: 4, texts: 0 }, hard: { numbers: 4, texts: 3 } };
+
+export type SectionId = 'card' | 'pl' | 'bs' | 'cf' | 'notes' | 'ir';
+/** 上限の数え方の単位。カード = card、資料 1 = pl・bs・cf・notes、資料 2 = ir (docs/design-v3.md §1.3)。 */
+export type LimitGroup = 'card' | 'doc1' | 'doc2';
+export const limitGroupOf = (section: SectionId): LimitGroup => (section === 'card' ? 'card' : section === 'ir' ? 'doc2' : 'doc1');
+/** 数字・文欄の上限 (要件 7 と設計 §1.1・§1.3)。やさしいは文欄を持たない。 */
+export const CARD_LIMITS: Record<Difficulty, Partial<Record<LimitGroup, { numbers: number; texts: number }>>> = {
+  easy: { card: { numbers: 4, texts: 0 } },
+  hard: { card: { numbers: 4, texts: 0 }, doc1: { numbers: 10, texts: 5 }, doc2: { numbers: 5, texts: 3 } },
+};
+/** 見出し語の組 (増益・減益)。 */
+export const HEADLINE_WORDS = ['増益', '減益'] as const;
+/** card-sign の対象 (正でなければならない金額の欄。設計 §2.3 H-34 の 11 欄。売上高は E-25 も)。 */
+export const SIGN_TARGETS: readonly string[] = ['sales', 'ta', 'tlna', 'cash', 'arPrev', 'arCurr', 'cfEnd', 'irSales', 'irCashCur', 'irCashPrev', 'irDebtPrev'];
 
 export interface CardSlot {
   /** 欄の ID (形の中で一意)。 */
   key: string;
   kind: 'number' | 'text';
-  /** 数字の種類 (金額・比率)。文欄は text。標準の単位・書式を引くのに使う (検証器の card-unit・card-format)。 */
+  /** 画面の区切り (カード・資料 1 の損益・貸借・CF・注記・資料 2)。 */
+  section: SectionId;
+  /** 貸借の見出し (資産・負債及び純資産)。貸借の欄だけ。 */
+  heading?: '資産' | '負債及び純資産';
+  /** 前期・当期の列 (科目名の添え字は、欄と一緒に動く)。列を持たない欄は undefined。 */
+  column?: 'previous' | 'current';
+  /** 数字の種類 (金額・比率)。文欄は text。 */
   measure: 'money' | 'percent' | 'text';
   /** 科目名の項目キー (labels.ts)。科目名でない文欄は null。 */
   itemKey: string | null;
@@ -32,38 +41,31 @@ export interface CardSlot {
   unit: string;
   /** 元のセルの値。 */
   raw: number | string | boolean;
-  /** この欄が読むセル `<doc>.<path>`。科目名の行は空。 */
+  /** この欄が読むセル `<doc>.<path>`。 */
   reads: string[];
-}
-
-export interface CardBars {
-  axisMin: number;
-  axisReads: string[];
-  items: { key: 'previous' | 'current'; value: number; reads: string[] }[];
 }
 
 export interface CardFrame {
   companyName: string;
   securitiesCode: string;
+  emblem: string;
   periodLabel: string;
-  /** 短信型・やさしいのカードが見せる表の列見出しの期末日。IR 型は無い。 */
-  periodEnd?: string;
   reads: string[];
 }
 
 export interface Card {
-  /** 形の ID。cardCells が card.<shape>.<カードの番号>.<欄の key> のセルを作るのに使う。 */
-  shape: ShapeId;
-  doc: 'summary' | 'tanshin' | 'ir';
+  difficulty: Difficulty;
+  /** 表題 (社章・社名・期)。 */
   frame: CardFrame;
-  headline?: { word: string; reads: string[] };
+  headline?: { word: string; repeat: number; reads: string[] };
+  /** 足元 (期末日の表示 `2024年3月31日`)。欄の欠落 (period の drop) で無くなる。 */
+  footer?: { periodEnd: string; reads: string[] };
+  /** 資料 2 の表題 (むずかしいだけ。枠の外)。 */
+  irFrame?: { companyName: string; periodLabel: string; reads: string[] };
+  /** 表示順の全欄。 */
   slots: CardSlot[];
-  bars?: CardBars;
-  /** 別名: cell は、of (このカードが見せているセル) と正常では必ず等しいので、見えているとみなす (design-v2 §1.5 V2。E2 の棒の規則 chart-bars が読む IR の売上高)。 */
-  aliases: { cell: string; of: string }[];
 }
 
-type Screen = 'balanceSheet' | 'incomeStatement' | 'cashFlow';
 type Value = { raw: number | string | boolean; text?: string; reads: string[] };
 interface Ctx {
   p: Problem;
@@ -72,23 +74,19 @@ interface Ctx {
 interface SlotDef {
   key: string;
   kind: 'number' | 'text';
+  section: SectionId;
+  heading?: CardSlot['heading'];
   itemKey: string | null;
   /** 標準の名前 (LABELS の代わり)。 */
   base?: string;
-  suffix?: string;
+  suffix?: string | ((ctx: Ctx) => string);
+  column?: 'previous' | 'current';
+  /** 数字のセルに足して読むセル (科目名に出す語の出所。reads の 2 つ目以降)。 */
+  alsoReads?: string[];
   unit?: 'money' | 'pct';
   /** 科目名の差し替えを使わない固定の名前。 */
   label?: string;
   read: (ctx: Ctx) => Value | null;
-}
-interface CardDef {
-  doc: Card['doc'];
-  /** 枠の期末日に使う列見出しの画面 (短信型・やさしいだけ)。 */
-  screen?: Screen;
-  headline?: { metric: ClaimMetric; up: string; down: string };
-  bars?: boolean;
-  aliases?: [string, string][];
-  slots: SlotDef[];
 }
 
 /** `<doc>.<path>` のセルの値。 */
@@ -109,14 +107,38 @@ const num = (ctx: Ctx, ref: string): Value | null => {
   return typeof v === 'number' ? { raw: v, reads: [ref] } : null;
 };
 
-function numberSlot(key: string, ref: string, o: { base?: string; suffix?: string; unit?: 'money' | 'pct' } = {}): SlotDef {
-  return { key, kind: 'number', itemKey: itemKeyOf(docOf(ref), pathOf(ref)), base: o.base, suffix: o.suffix, unit: o.unit ?? 'money', read: (ctx) => num(ctx, ref) };
+interface NumberOptions {
+  section: SectionId;
+  heading?: CardSlot['heading'];
+  base?: string;
+  suffix?: string | ((ctx: Ctx) => string);
+  column?: 'previous' | 'current';
+  alsoReads?: string[];
+  unit?: 'money' | 'pct';
+}
+function numberSlot(key: string, ref: string, o: NumberOptions): SlotDef {
+  return {
+    key,
+    kind: 'number',
+    section: o.section,
+    heading: o.heading,
+    itemKey: itemKeyOf(docOf(ref), pathOf(ref)),
+    base: o.base,
+    suffix: o.suffix,
+    column: o.column,
+    unit: o.unit ?? 'money',
+    read: (ctx) => {
+      const v = num(ctx, ref);
+      return v === null || o.alsoReads === undefined ? v : { ...v, reads: [...v.reads, ...o.alsoReads] };
+    },
+  };
 }
 
-function textCell(key: string, ref: string, o: { base?: string; fallback?: string } = {}): SlotDef {
+function textCell(key: string, ref: string, section: SectionId, o: { base?: string; fallback?: string } = {}): SlotDef {
   return {
     key,
     kind: 'text',
+    section,
     itemKey: itemKeyOf(docOf(ref), pathOf(ref)),
     base: o.base,
     read: (ctx) => {
@@ -127,22 +149,22 @@ function textCell(key: string, ref: string, o: { base?: string; fallback?: strin
   };
 }
 
-function namesSlot(key: string, doc: 'tanshin' | 'ir'): SlotDef {
+function namesSlot(key: string, doc: 'tanshin' | 'ir', section: SectionId): SlotDef {
   return {
     key,
     kind: 'text',
+    section,
     itemKey: null,
     label: 'セグメント',
     read: (ctx) => {
-      const names =
-        doc === 'tanshin' ? ctx.p.tanshin.notes.segments.current.segments.map((s) => s.name) : ctx.p.ir.segments.items.map((s) => s.name);
+      const names = doc === 'tanshin' ? ctx.p.tanshin.notes.segments.current.segments.map((s) => s.name) : ctx.p.ir.segments.items.map((s) => s.name);
       const base = doc === 'tanshin' ? 'tanshin.notes.segments.current.segments' : 'ir.segments.items';
       return { raw: names.join('・'), reads: names.map((_, i) => `${base}.${i}.name`) };
     },
   };
 }
 
-/** metric の主張 (向きが up・down のもの) を持つ最初の文の添字と向き。無ければ null。見出し語と IR 型の文の欄は、同じこの文を使う (reads は 1 つの文だけ)。 */
+/** metric の主張 (向きが up・down のもの) を持つ最初の文の添字と向き。無ければ null。見出し語と資料 2 の文の欄は、同じこの文を使う (reads は 1 つの文だけ)。 */
 function findClaim(p: Problem, metric: ClaimMetric): { index: number; direction: 'up' | 'down' } | null {
   for (const [index, s] of p.ir.statements.entries()) {
     const c = s.claims.find((x) => x.metric === metric && (x.direction === 'up' || x.direction === 'down'));
@@ -151,194 +173,114 @@ function findClaim(p: Problem, metric: ClaimMetric): { index: number; direction:
   return null;
 }
 
-/** IR 型の文の欄。claims (metric の主張の向き) から型で作り、ir.statements の text は使わない (docs/design-v2.md §1.2 R-D5。text と claims がずれる経路を無くす)。 */
-function claimSentenceSlot(key: string, label: string, metric: ClaimMetric, sentence: (ctx: Ctx, direction: 'up' | 'down') => string): SlotDef {
-  return {
-    key,
-    kind: 'text',
-    itemKey: null,
-    label,
-    read: (ctx) => {
-      const found = findClaim(ctx.p, metric);
-      if (found === null) return null;
-      const text = sentence(ctx, found.direction);
-      return { raw: text, reads: [`ir.statements.${found.index}`] };
-    },
-  };
-}
-
 const OPERATING_CF = 'tanshin.cashFlow.operatingCashFlow';
-
 const IS = 'tanshin.incomeStatement';
 const BS = 'tanshin.balanceSheet';
 const CF = 'tanshin.cashFlow';
 
-const SECTION_WORD = { asset: '資産の部', liability: '負債の部', equity: '純資産の部', total: '' } as const;
-const RECEIVABLES = 'tanshin.balanceSheet.receivables';
+/** カード (やさしいのカード = むずかしいのカード。難易度によらず同じ作り)。 */
+const CARD_SLOTS: SlotDef[] = [
+  numberSlot('sales', `${IS}.current.netSales`, { section: 'card' }),
+  numberSlot('opPrev', `${IS}.previous.operatingIncome`, { section: 'card', suffix: ' (前期)', column: 'previous' }),
+  numberSlot('opCurr', `${IS}.current.operatingIncome`, { section: 'card', suffix: ' (当期)', column: 'current' }),
+  numberSlot('margin', 'tanshin.summary.operatingMargin', { section: 'card', unit: 'pct' }),
+];
 
-const SHAPE_DEFS: Record<ShapeId, CardDef[]> = {
-  E1: [
-    {
-      doc: 'summary',
-      screen: 'incomeStatement',
-      headline: { metric: 'operatingIncome', up: '増益', down: '減益' },
-      slots: [
-        numberSlot('netSales', `${IS}.current.netSales`),
-        numberSlot('opPrev', `${IS}.previous.operatingIncome`, { suffix: ' (前期)' }),
-        numberSlot('opCur', `${IS}.current.operatingIncome`, { suffix: ' (当期)' }),
-        numberSlot('margin', 'tanshin.summary.operatingMargin', { unit: 'pct' }),
-      ],
+/** むずかしいが、カードの下に足す資料 (資料 1: 決算短信のまとめ・資料 2: IR のひとこと。docs/design-v3.md §1.3 の表の順)。 */
+const DOC_SLOTS: SlotDef[] = [
+  numberSlot('pbt', `${IS}.current.incomeBeforeTax`, { section: 'pl', suffix: ' (損益)' }),
+  numberSlot('cash', `${BS}.current.cash`, { section: 'bs', heading: '資産' }),
+  numberSlot('arPrev', `${BS}.previous.receivables`, { section: 'bs', heading: '資産', suffix: ' (前期末)', column: 'previous' }),
+  numberSlot('arCurr', `${BS}.current.receivables`, { section: 'bs', heading: '資産', suffix: ' (当期末)', column: 'current' }),
+  numberSlot('ta', `${BS}.current.totalAssets`, { section: 'bs', heading: '資産' }),
+  numberSlot('tlna', `${BS}.current.totalLiabilitiesAndNetAssets`, { section: 'bs', heading: '負債及び純資産' }),
+  numberSlot('cfStart', `${CF}.incomeBeforeTax`, { section: 'cf', suffix: ' (CF)' }),
+  numberSlot('cfAr', `${CF}.receivablesChange`, { section: 'cf' }),
+  numberSlot('ocf', `${CF}.operatingCashFlow`, { section: 'cf' }),
+  numberSlot('cfEnd', `${CF}.cashEnding`, {
+    section: 'cf',
+    // 科目名に資金の範囲を出す (H-04 の正常を一意にする。範囲の語は notes.cashScope から作る。枠の外の語)
+    suffix: (ctx) => ` (資金の範囲 = ${ctx.p.tanshin.notes.cashScope})`,
+    alsoReads: ['tanshin.notes.cashScope'],
+  }),
+  textCell('audit', 'tanshin.summary.auditNote', 'notes'),
+  {
+    key: 'policyFlag',
+    kind: 'text',
+    section: 'notes',
+    itemKey: 'tanshin.summary.accountingPolicyChange',
+    base: '会計方針の変更の有無',
+    read: (ctx) => {
+      const v = ctx.p.tanshin.summary.accountingPolicyChange;
+      return typeof v === 'boolean' ? { raw: v, text: v ? 'あり' : 'なし', reads: ['tanshin.summary.accountingPolicyChange'] } : null;
     },
-  ],
-  E2: [
-    {
-      doc: 'summary',
-      screen: 'incomeStatement',
-      headline: { metric: 'netSales', up: '増収', down: '減収' },
-      bars: true,
-      aliases: [
-        ['ir.results.netSales.previous', `${IS}.previous.netSales`],
-        ['ir.results.netSales.current', `${IS}.current.netSales`],
-      ],
-      slots: [numberSlot('salesPrev', `${IS}.previous.netSales`, { suffix: ' (前期)' }), numberSlot('salesCur', `${IS}.current.netSales`, { suffix: ' (当期)' })],
+  },
+  textCell('policyNote', 'tanshin.notes.accountingPolicyNote', 'notes'),
+  textCell('subseq', 'tanshin.notes.subsequentEvents', 'notes'),
+  namesSlot('segs', 'tanshin', 'notes'),
+  numberSlot('irSales', 'ir.highlights.netSales.amount', { section: 'ir' }),
+  numberSlot('irCashCur', 'ir.supplement.cash.current', { section: 'ir', suffix: ' (当期)', column: 'current' }),
+  numberSlot('irCashPrev', 'ir.supplement.cash.previous', { section: 'ir', suffix: ' (前期)', column: 'previous' }),
+  numberSlot('irDebtPrev', 'ir.supplement.interestBearingDebt.previous', { section: 'ir', base: '有利子負債', suffix: ' (前期)', column: 'previous' }),
+  numberSlot('irNetDebtPrev', 'ir.supplement.netDebt.previous', { section: 'ir', suffix: ' (前期・有利子負債 − 現金)', column: 'previous' }),
+  {
+    // 資料 2 の営業 CF の文。claims から型で作り、ir.statements の text は使わない (R-D5)。主語は labels.ts の標準の名前だけ (labelOverrides は読まない:
+    // H-30 の誤字は短信の営業 CF の欄だけに出し、IR の文には写さない)。
+    key: 'irOcf',
+    kind: 'text',
+    section: 'ir',
+    itemKey: null,
+    label: `${LABELS[OPERATING_CF]}の説明`,
+    read: (ctx) => {
+      const found = findClaim(ctx.p, 'operatingCashFlow');
+      if (found === null) return null;
+      return { raw: `${LABELS[OPERATING_CF]}は${found.direction === 'up' ? 'プラス' : 'マイナス'}`, reads: [`ir.statements.${found.index}`] };
     },
-  ],
-  E3: [
-    {
-      doc: 'summary',
-      screen: 'balanceSheet',
-      slots: [
-        numberSlot('currentAssets', `${BS}.current.totalCurrentAssets`),
-        numberSlot('fixedAssets', `${BS}.current.totalFixedAssets`),
-        numberSlot('totalAssets', `${BS}.current.totalAssets`),
-      ],
-    },
-  ],
-  H1: [
-    {
-      doc: 'tanshin',
-      screen: 'incomeStatement',
-      slots: [
-        numberSlot('salesPrev', `${IS}.previous.netSales`, { suffix: ' (前期)' }),
-        numberSlot('salesCur', `${IS}.current.netSales`, { suffix: ' (当期)' }),
-        numberSlot('totalAssets', `${BS}.current.totalAssets`),
-        numberSlot('totalLiabNet', `${BS}.current.totalLiabilitiesAndNetAssets`),
-      ],
-    },
-    {
-      doc: 'ir',
-      slots: [
-        numberSlot('netSales', 'ir.highlights.netSales.amount'),
-        claimSentenceSlot('claim', '業績の説明', 'netSales', (_ctx, d) => `売上高は前期より${d === 'up' ? '増えた' : '減った'}`),
-      ],
-    },
-  ],
-  H2: [
-    {
-      doc: 'tanshin',
-      screen: 'cashFlow',
-      slots: [
-        numberSlot('recvPrev', `${BS}.previous.receivables`, { suffix: ' (前期末)' }),
-        numberSlot('recvCur', `${BS}.current.receivables`, { suffix: ' (当期末)' }),
-        numberSlot('recvChange', `${CF}.receivablesChange`),
-        numberSlot('operatingCf', `${CF}.operatingCashFlow`),
-        {
-          key: 'recvRow',
-          kind: 'text',
-          itemKey: RECEIVABLES,
-          label: '資産の科目',
-          read: (ctx) => {
-            const name = ctx.p.labelOverrides?.[RECEIVABLES] ?? LABELS[RECEIVABLES] ?? RECEIVABLES;
-            const section = SECTION_WORD[SECTION_OF_ITEM[RECEIVABLES] ?? 'total'];
-            return { raw: name, text: `${name} (${section})`, reads: [] };
-          },
-        },
-        {
-          key: 'policyChange',
-          kind: 'text',
-          itemKey: 'tanshin.summary.accountingPolicyChange',
-          base: '会計方針の変更の有無',
-          read: (ctx) => {
-            const v = ctx.p.tanshin.summary.accountingPolicyChange;
-            return typeof v === 'boolean' ? { raw: v, text: v ? 'あり' : 'なし', reads: ['tanshin.summary.accountingPolicyChange'] } : null;
-          },
-        },
-        textCell('policyNote', 'tanshin.notes.accountingPolicyNote'),
-      ],
-    },
-    {
-      doc: 'ir',
-      slots: [
-        // 主語は labels.ts の標準の名前だけ (labelOverrides は読まない: H-30 の誤字は短信の ④ だけに出し、IR の文には写さない)。欄の名前も同じ呼び名にする
-        claimSentenceSlot('claim', `${LABELS[OPERATING_CF]}の説明`, 'operatingCashFlow', (_ctx, d) => `${LABELS[OPERATING_CF]}は${d === 'up' ? 'プラス' : 'マイナス'}`),
-      ],
-    },
-  ],
-  H3: [
-    {
-      doc: 'tanshin',
-      screen: 'cashFlow',
-      slots: [
-        numberSlot('cfStart', `${CF}.incomeBeforeTax`, { base: LABELS['tanshin.cashFlow.incomeBeforeTax'], suffix: ' (CF)' }),
-        numberSlot('plStart', `${IS}.current.incomeBeforeTax`, { suffix: ' (損益)' }),
-        numberSlot('cash', `${BS}.current.cash`),
-        numberSlot('cfEnd', `${CF}.cashEnding`),
-        textCell('auditNote', 'tanshin.summary.auditNote'),
-        textCell('subsequent', 'tanshin.notes.subsequentEvents'),
-        namesSlot('segments', 'tanshin'),
-      ],
-    },
-    {
-      doc: 'ir',
-      slots: [
-        numberSlot('cashCur', 'ir.supplement.cash.current', { suffix: ' (当期)' }),
-        numberSlot('cashPrev', 'ir.supplement.cash.previous', { suffix: ' (前期)' }),
-        numberSlot('debtPrev', 'ir.supplement.interestBearingDebt.previous', { base: '有利子負債', suffix: ' (前期)' }),
-        numberSlot('netDebtPrev', 'ir.supplement.netDebt.previous', { suffix: ' (前期・有利子負債 − 現金)' }),
-        textCell('subsequent', 'ir.outlook.subsequentEvent', { fallback: 'なし' }),
-        namesSlot('segments', 'ir'),
-      ],
-    },
-  ],
-};
+  },
+  textCell('irSubseq', 'ir.outlook.subsequentEvent', 'ir', { fallback: 'なし' }),
+  namesSlot('irSegs', 'ir', 'ir'),
+];
 
-/** 形の欄の key の並び (カードごと)。検証器が、導出したカードの並びと照らす。 */
-export const templateKeys = (shape: ShapeId): string[][] => SHAPE_DEFS[shape].map((d) => d.slots.map((s) => s.key));
+const defsOf = (difficulty: Difficulty): SlotDef[] => (difficulty === 'easy' ? CARD_SLOTS : [...CARD_SLOTS, ...DOC_SLOTS]);
+
+/** 形の欄の key の並び (難易度ごと)。検証器が、導出したカードの並びと照らす。 */
+export const templateKeys = (difficulty: Difficulty): string[] => defsOf(difficulty).map((d) => d.key);
 
 // ---- 書式 ----
 
 const group = (digits: string): string => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const NEG = '△';
 
-interface Fmt {
-  decimals: number;
-  neg: string;
-}
-
-function formatNumber(v: number, f: Fmt, style: 'standard' | 'no-comma' | 'comma-shift' = 'standard'): string {
-  const [int = '', frac] = Math.abs(v).toFixed(f.decimals).split('.');
+function formatNumber(v: number, decimals: number, style: 'standard' | 'no-comma' | 'comma-shift' = 'standard'): string {
+  const [int = '', frac] = Math.abs(v).toFixed(decimals).split('.');
   let body: string;
   if (style === 'no-comma') body = int;
   else if (style === 'comma-shift') {
     if (int.length < 5) throw new RangeError(`桁区切りをずらせない (整数部が 5 桁未満): ${v}`);
     body = `${group(int.slice(0, -4))},${int.slice(-4)}`;
   } else body = group(int);
-  return `${v < 0 ? f.neg : ''}${body}${frac === undefined ? '' : `.${frac}`}`;
+  return `${v < 0 ? NEG : ''}${body}${frac === undefined ? '' : `.${frac}`}`;
+}
+
+/** 数字の欄の小数の桁: 比率は 1 桁、IR の金額は会社によらず 1 桁 (R-D7)、短信の金額は 0 桁。 */
+const decimalsOf = (measure: CardSlot['measure'], reads: string[]): number => (measure === 'percent' || reads[0]?.startsWith('ir.') ? 1 : 0);
+
+/** 数字の欄の標準の書式 (3 桁区切り・小数の桁・負の数は △)。 */
+export const standardText = (slot: CardSlot): string => (typeof slot.raw === 'number' ? formatNumber(slot.raw, decimalsOf(slot.measure, slot.reads)) : slot.text);
+
+/** `YYYY-MM-DD` を、Date を使わずに文字列を切り出して `YYYY年M月D日` にする (E-28 の日 32 が Invalid Date や繰り上がりにならない。設計 §3.2 #138-8)。 */
+function displayDate(iso: unknown, day?: number): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));
+  if (m === null) return String(iso);
+  return `${Number(m[1])}年${Number(m[2])}月${day ?? Number(m[3])}日`;
 }
 
 // ---- 導出 ----
 
 interface Built {
   slot: CardSlot;
-  fmt: Fmt;
-}
-
-function frameOf(ctx: Ctx, def: CardDef): CardFrame {
-  const doc = def.doc === 'ir' ? 'ir' : 'tanshin';
-  const h = ctx.p[doc].header;
-  const reads = [`${doc}.header.companyName`, `${doc}.header.securitiesCode`, `${doc}.header.periodLabel`];
-  if (def.screen === undefined) return { companyName: h.companyName, securitiesCode: h.securitiesCode, periodLabel: h.periodLabel, reads };
-  const ref = `tanshin.columnDates.${def.screen}.current`;
-  return { companyName: h.companyName, securitiesCode: h.securitiesCode, periodLabel: h.periodLabel, periodEnd: String(cell(ctx.p, ref)), reads: [...reads, ref] };
+  name: string;
+  decimals: number;
 }
 
 function build(def: SlotDef, ctx: Ctx): Built | null {
@@ -346,42 +288,28 @@ function build(def: SlotDef, ctx: Ctx): Built | null {
   if (v === null) return null;
   const overrides = ctx.p.labelOverrides ?? {};
   const name = def.label ?? (def.itemKey !== null ? overrides[def.itemKey] : undefined) ?? def.base ?? (def.itemKey !== null ? LABELS[def.itemKey] : undefined) ?? '';
-  const label = `${name}${def.suffix ?? ''}`;
-  const ref = v.reads[0] ?? '';
-  const sign = ctx.p.signOverrides?.[ref] ?? '△';
-  if (def.kind === 'text') {
-    return { slot: { key: def.key, kind: 'text', measure: 'text', itemKey: def.itemKey, label, text: v.text ?? String(v.raw), unit: '', raw: v.raw, reads: v.reads }, fmt: { decimals: 0, neg: sign } };
-  }
+  const suffix = typeof def.suffix === 'function' ? def.suffix(ctx) : (def.suffix ?? '');
+  const common = { key: def.key, section: def.section, ...(def.heading ? { heading: def.heading } : {}), itemKey: def.itemKey, label: `${name}${suffix}`, raw: v.raw, reads: v.reads };
+  if (def.kind === 'text') return { name, decimals: 0, slot: { ...common, kind: 'text', measure: 'text', text: v.text ?? String(v.raw), unit: '' } };
   const isPct = def.unit === 'pct';
-  const decimals = isPct || (docOf(ref) === 'ir' && ctx.c.irUnit === '億円') ? 1 : 0;
-  const fmt = { decimals, neg: sign };
-  let unit = '%';
-  if (!isPct) {
-    const doc = docOf(ref);
-    unit = ctx.p.unitOverrides?.[`${doc}.${ref.split('.')[1] ?? ''}`] ?? ctx.p[doc].header.unit;
-  }
-  return { slot: { key: def.key, kind: 'number', measure: isPct ? 'percent' : 'money', itemKey: def.itemKey, label, text: formatNumber(v.raw as number, fmt), unit, raw: v.raw, reads: v.reads }, fmt };
+  const measure = isPct ? 'percent' : 'money';
+  const decimals = decimalsOf(measure, v.reads);
+  const ref = v.reads[0] ?? '';
+  const unit = isPct ? '%' : ctx.p[docOf(ref)].header.unit;
+  return { name, decimals, slot: { ...common, kind: 'number', measure, ...(def.column ? { column: def.column } : {}), text: formatNumber(v.raw as number, decimals), unit } };
 }
 
-function headlineOf(def: CardDef, ctx: Ctx): Card['headline'] {
-  if (def.headline === undefined) return undefined;
-  const { metric, up, down } = def.headline;
-  const found = findClaim(ctx.p, metric);
-  return found === null ? undefined : { word: found.direction === 'up' ? up : down, reads: [`ir.statements.${found.index}`] };
-}
-
-function barsOf(ctx: Ctx): CardBars | undefined {
-  const chart = ctx.p.ir.results.chart.netSales;
-  const ref = 'ir.results.chart.netSales';
+function frameOf(ctx: Ctx): CardFrame {
   return {
-    axisMin: chart.axisMin,
-    axisReads: [`${ref}.axisMin`],
-    items: [
-      { key: 'previous', value: chart.previous, reads: [`${ref}.previous`] },
-      { key: 'current', value: chart.current, reads: [`${ref}.current`] },
-    ],
+    companyName: ctx.c.name,
+    securitiesCode: ctx.c.securitiesCode,
+    emblem: ctx.c.emblem,
+    periodLabel: ctx.p.tanshin.header.periodLabel,
+    reads: ['tanshin.header.companyName', 'tanshin.header.securitiesCode', 'tanshin.header.periodLabel'],
   };
 }
+
+const FOOTER_REF = 'tanshin.columnDates.incomeStatement.current';
 
 const find = (list: Built[], key: string, where: string): number => {
   const i = list.findIndex((b) => b.slot.key === key);
@@ -389,27 +317,33 @@ const find = (list: Built[], key: string, where: string): number => {
   return i;
 };
 
-function applyEdit(edit: CardEdit, built: Built[], card: Card, def: CardDef): void {
-  const where = `cardEdits (${edit.shape} カード ${edit.card} ${edit.op})`;
+function applyEdit(edit: CardEdit, built: Built[], card: Card, ctx: Ctx): void {
+  const where = `cardEdits (${edit.op})`;
+  if (edit.card !== 0) throw new RangeError(`${where}: card は 0 だけ (${String(edit.card)})`);
   switch (edit.op) {
     case 'drop':
+      if (edit.slot === 'period') {
+        if (card.footer === undefined) throw new RangeError(`${where}: 足元が無い`);
+        delete card.footer;
+        return;
+      }
       built.splice(find(built, edit.slot, where), 1);
       return;
-    case 'swap': {
-      const [a, b] = [find(built, edit.slots[0], where), find(built, edit.slots[1], where)];
-      [built[a], built[b]] = [built[b] as Built, built[a] as Built];
-      return;
-    }
     case 'dup': {
+      if (edit.slot === 'headline') {
+        if (card.headline === undefined) throw new RangeError(`${where}: 見出し語が無い`);
+        card.headline = { ...card.headline, repeat: 2 };
+        return;
+      }
       const i = find(built, edit.slot, where);
       const copy = built[i] as Built;
-      built.splice(i + 1, 0, { slot: { ...copy.slot, reads: [...copy.slot.reads] }, fmt: copy.fmt });
+      built.splice(i + 1, 0, { ...copy, slot: { ...copy.slot, reads: [...copy.slot.reads] } });
       return;
     }
     case 'format': {
       const b = built[find(built, edit.slot, where)] as Built;
       if (b.slot.kind !== 'number' || typeof b.slot.raw !== 'number') throw new RangeError(`${where}: 数字の欄でない ${edit.slot}`);
-      b.slot = { ...b.slot, text: formatNumber(b.slot.raw, b.fmt, edit.style) };
+      b.slot = { ...b.slot, text: formatNumber(b.slot.raw, b.decimals, edit.style) };
       return;
     }
     case 'unit': {
@@ -417,72 +351,89 @@ function applyEdit(edit: CardEdit, built: Built[], card: Card, def: CardDef): vo
       b.slot = { ...b.slot, unit: edit.unit };
       return;
     }
+    case 'suffix': {
+      if (edit.slot !== 'opPrev' && edit.slot !== 'opCurr') throw new RangeError(`${where}: 添え字を取り違えられるのは opPrev・opCurr だけ (${String(edit.slot)})`);
+      const b = built[find(built, edit.slot, where)] as Built;
+      b.slot = { ...b.slot, label: `${b.name} (${edit.word})` };
+      return;
+    }
+    case 'glyph': {
+      const b = built[find(built, edit.slot, where)] as Built;
+      const chars = [...b.slot.text];
+      if (!Number.isInteger(edit.at) || !/^\d$/.test(chars[edit.at] ?? '')) throw new RangeError(`${where}: ${edit.slot} の表示 ${b.slot.text} の添字 ${edit.at} は数字の文字でない`);
+      chars[edit.at] = 'X';
+      b.slot = { ...b.slot, text: chars.join('') };
+      return;
+    }
+    case 'sign': {
+      const b = built[find(built, edit.slot, where)] as Built;
+      if (b.slot.kind !== 'number') throw new RangeError(`${where}: 数字の欄でない ${edit.slot}`);
+      b.slot = { ...b.slot, text: `${NEG}${b.slot.text}` };
+      return;
+    }
+    case 'day':
+      if (card.footer === undefined) throw new RangeError(`${where}: 足元が無い`);
+      card.footer = { ...card.footer, periodEnd: displayDate(cell(ctx.p, FOOTER_REF), edit.day) };
+      return;
     case 'headline':
-      if (def.headline === undefined) throw new RangeError(`${where}: この形に見出し語は無い`);
-      card.headline = { word: edit.word, reads: card.headline?.reads ?? [] };
+      if (card.headline === undefined) throw new RangeError(`${where}: 見出し語が無い (営業利益の主張が無い問題には、見出し語の編集を当てられない)`);
+      card.headline = { ...card.headline, word: edit.word };
       return;
   }
 }
 
-/** 問題・会社・形 → カード (やさしい = 1 枚、むずかしい = [短信型, IR 型])。純関数。applyEdits: false は cardEdits を無視した形のとおりのカード (テンプレート)。 */
-export function deriveCards(problem: Problem, company: Company, shape: ShapeId, options: { applyEdits?: boolean } = {}): Card[] {
-  if (!(SHAPE_IDS as readonly string[]).includes(shape)) throw new RangeError(`形が未知: ${String(shape)}`);
-  if (difficultyOfShape(shape) !== problem.difficulty) throw new RangeError(`形 ${shape} は ${difficultyOfShape(shape)} の形で、問題 ${problem.id} は ${problem.difficulty}`);
+/** 問題・会社・難易度 → カード (やさしい = カード、むずかしい = カード + 資料。1 つの欄の並び)。純関数。applyEdits: false は cardEdits を無視した形のとおりのカード (テンプレート)。 */
+export function deriveCards(problem: Problem, company: Company, difficulty: Difficulty, options: { applyEdits?: boolean } = {}): Card {
+  if (difficulty !== 'easy' && difficulty !== 'hard') throw new RangeError(`難易度が未知: ${String(difficulty)}`);
+  if (difficulty !== problem.difficulty) throw new RangeError(`難易度 ${difficulty} の形を、${problem.difficulty} の問題 ${problem.id} から作れない`);
   const ctx: Ctx = { p: problem, c: company };
-  const defs = SHAPE_DEFS[shape];
-  const builts: Built[][] = defs.map((def) => def.slots.flatMap((s) => build(s, ctx) ?? []));
-  const cards: Card[] = defs.map((def) => ({
-    shape,
-    doc: def.doc,
-    frame: frameOf(ctx, def),
-    headline: headlineOf(def, ctx),
+  const built = defsOf(difficulty).flatMap((def) => build(def, ctx) ?? []);
+  const found = findClaim(problem, 'operatingIncome');
+  const card: Card = {
+    difficulty,
+    frame: frameOf(ctx),
+    ...(found === null ? {} : { headline: { word: found.direction === 'up' ? HEADLINE_WORDS[0] : HEADLINE_WORDS[1], repeat: 1, reads: [`ir.statements.${found.index}`] } }),
+    footer: { periodEnd: displayDate(cell(problem, FOOTER_REF)), reads: [FOOTER_REF] },
+    ...(difficulty === 'hard' ? { irFrame: { companyName: problem.ir.header.companyName, periodLabel: problem.ir.header.periodLabel, reads: ['ir.header.companyName', 'ir.header.periodLabel'] } } : {}),
     slots: [],
-    bars: def.bars ? barsOf(ctx) : undefined,
-    aliases: (def.aliases ?? []).map(([c, of]) => ({ cell: c, of })),
-  }));
-  if (options.applyEdits !== false) {
-    for (const edit of problem.cardEdits ?? []) {
-      if (edit.shape !== shape) continue;
-      const card = cards[edit.card];
-      const built = builts[edit.card];
-      const def = defs[edit.card];
-      if (card === undefined || built === undefined || def === undefined) throw new RangeError(`cardEdits: カード ${edit.card} が ${shape} に無い`);
-      applyEdit(edit, built, card, def);
-    }
-  }
-  cards.forEach((card, i) => {
-    card.slots = (builts[i] ?? []).map((b) => b.slot);
-    if (card.headline === undefined) delete card.headline;
-    if (card.bars === undefined) delete card.bars;
-  });
-  return cards;
+  };
+  if (options.applyEdits !== false) for (const edit of problem.cardEdits ?? []) applyEdit(edit, built, card, ctx);
+  card.slots = built.map((b) => b.slot);
+  return card;
 }
 
 // ---- カードの上のセル ----
 
-/** 枠の外を除いた数字の数 (棒 1 本も 1 つ)。 */
-export const countNumbers = (card: Card): number => card.slots.filter((s) => s.kind === 'number').length + (card.bars?.items.length ?? 0);
-/** 文欄の数 (見出し語は数えない)。 */
+/** 枠の外を除いた数字の欄の数。 */
+export const countNumbers = (card: Card): number => card.slots.filter((s) => s.kind === 'number').length;
+/** 文欄の数 (見出し語・表題・足元は数えない)。 */
 export const countTexts = (card: Card): number => card.slots.filter((s) => s.kind === 'text').length;
 
-/** カードが見せるセルの集合: 全欄の reads・itemKey・枠・見出し語・棒・別名。 */
-export function cardCells(cards: Card[]): Set<string> {
+const PERIOD_LABEL_REF = 'tanshin.header.periodLabel';
+/** 場所の key (frame.period = 表題の期と足元の期末日)。 */
+const framePeriodReads = (card: Card): string[] => (card.footer === undefined ? [PERIOD_LABEL_REF] : [PERIOD_LABEL_REF, ...card.footer.reads]);
+
+/** カードが見せるセルの集合: 全欄の reads・itemKey・枠・見出し語・足元・資料 2 の表題と、場所のセル card.0.<key>。 */
+export function cardCells(card: Card): Set<string> {
   const out = new Set<string>();
-  cards.forEach((card, ci) => {
-    // 形のずれの場所 (design-v2 §2.8): card.<形>.<カードの番号>.<欄の key>。見出し語は headline
-    for (const s of card.slots) out.add(`card.${card.shape}.${ci}.${s.key}`);
-    if (card.headline) out.add(`card.${card.shape}.${ci}.headline`);
-  });
-  for (const card of cards) {
-    card.frame.reads.forEach((r) => out.add(r));
-    card.headline?.reads.forEach((r) => out.add(r));
-    for (const s of card.slots) {
-      s.reads.forEach((r) => out.add(r));
-      if (s.itemKey !== null) out.add(s.itemKey);
-    }
-    card.bars?.axisReads.forEach((r) => out.add(r));
-    card.bars?.items.forEach((i) => i.reads.forEach((r) => out.add(r)));
-    for (const a of card.aliases) if (out.has(a.of)) out.add(a.cell);
+  for (const s of card.slots) {
+    out.add(`card.0.${s.key}`);
+    s.reads.forEach((r) => out.add(r));
+    if (s.itemKey !== null) out.add(s.itemKey);
+  }
+  card.frame.reads.forEach((r) => out.add(r));
+  for (const k of ['frame', 'frame.period']) out.add(`card.0.${k}`);
+  if (card.headline) {
+    out.add('card.0.headline');
+    card.headline.reads.forEach((r) => out.add(r));
+  }
+  if (card.footer) {
+    out.add('card.0.period');
+    card.footer.reads.forEach((r) => out.add(r));
+  }
+  if (card.irFrame) {
+    out.add('card.0.irHead');
+    card.irFrame.reads.forEach((r) => out.add(r));
   }
   return out;
 }
@@ -493,42 +444,22 @@ const covers = (read: string, key: string): boolean => key === read || key.start
 /** 場所 key (`<doc>.<path>` か itemKey) が、見えるセルの集合に載っているか。同じ・子・入れ物のいずれか (placeSlots と同じ決まり)。 */
 export const placeVisible = (cells: Set<string>, key: string): boolean => cells.has(key) || [...cells].some((c) => covers(c, key));
 
-/** 異変の場所を見せる欄 (R-D3)。パスの場所は reads が同じ・場所の親・場所の入れ物の下 (covers)、itemKey の場所は欄の itemKey が同じ。cardEdits の問題には applyEdits: false のカードを渡す。 */
-export function placeSlots(cards: Card[], place: AnomalyPlace): { card: number; key: string }[] {
-  const out: { card: number; key: string }[] = [];
+/** 異変の場所を見せる欄の key (R-D3)。パスの場所は reads が同じ・場所の親・場所の入れ物の下 (covers)、itemKey の場所は欄の itemKey が同じ。cardEdits の問題にはテンプレートのカードを渡す。 */
+export function placeSlots(card: Card, place: AnomalyPlace): string[] {
   if (place.doc === 'card') {
-    const card = cards[place.card];
-    if (card !== undefined && card.shape === place.shape && (card.slots.some((s) => s.key === place.slot) || (place.slot === 'headline' && card.headline !== undefined))) out.push({ card: place.card, key: place.slot });
-    return out;
+    if (place.card !== 0) return [];
+    const k = place.slot;
+    const exists = card.slots.some((s) => s.key === k) || (k === 'headline' && card.headline !== undefined) || k === 'frame' || k === 'frame.period' || (k === 'period' && card.footer !== undefined) || (k === 'irHead' && card.irFrame !== undefined);
+    return exists ? [k] : [];
   }
-  cards.forEach((card, ci) => {
-    if ('itemKey' in place) {
-      for (const s of card.slots) if (s.itemKey === place.itemKey) out.push({ card: ci, key: s.key });
-      return;
-    }
-    const key = `${place.doc}.${place.path}`;
-    if (card.headline?.reads.some((r) => covers(r, key))) out.push({ card: ci, key: 'headline' });
-    for (const s of card.slots) {
-      const viaAlias = card.aliases.some((a) => a.cell === key && s.reads.includes(a.of));
-      if (viaAlias || s.reads.some((r) => covers(r, key))) out.push({ card: ci, key: s.key });
-    }
-    if (card.bars && [...card.bars.axisReads, ...card.bars.items.flatMap((i) => i.reads)].some((r) => covers(r, key))) out.push({ card: ci, key: 'bars' });
-    if (card.frame.reads.some((r) => covers(r, key))) out.push({ card: ci, key: 'frame' });
-  });
+  if ('itemKey' in place) return card.slots.filter((s) => s.itemKey === place.itemKey).map((s) => s.key);
+  const key = `${place.doc}.${place.path}`;
+  const out: string[] = [];
+  if (card.headline?.reads.some((r) => covers(r, key))) out.push('headline');
+  for (const s of card.slots) if (s.reads.some((r) => covers(r, key))) out.push(s.key);
+  if (card.frame.reads.some((r) => covers(r, key))) out.push('frame');
+  if (framePeriodReads(card).some((r) => covers(r, key))) out.push('frame.period');
+  if (card.footer?.reads.some((r) => covers(r, key))) out.push('period');
+  if (card.irFrame?.reads.some((r) => covers(r, key))) out.push('irHead');
   return out;
-}
-
-// ---- 検証器が使う、形の定義と標準 ----
-
-/** 形・カードの見出し語の組 (増益・減益など)。見出し語の無い形は null。 */
-export function headlineWords(shape: ShapeId, card: number): [string, string] | null {
-  const h = SHAPE_DEFS[shape][card]?.headline;
-  return h === undefined ? null : [h.up, h.down];
-}
-
-/** 数字の欄の標準の書式 (3 桁区切り・小数の桁・比率は小数第一位)。負の記号は、欄に出ている記号をそのまま使う (記号の差し替えは sign-consistency の仕事)。 */
-export function standardText(slot: CardSlot, company: Company): string {
-  if (typeof slot.raw !== 'number') return slot.text;
-  const decimals = slot.measure === 'percent' || (slot.reads[0]?.startsWith('ir.') && company.irUnit === '億円') ? 1 : 0;
-  return formatNumber(slot.raw, { decimals, neg: slot.raw < 0 ? (slot.text[0] ?? '') : '' });
 }

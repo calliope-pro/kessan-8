@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 import companies from './companies.json';
 import kinds from './anomaly-kinds.json';
 import sample from './samples/sample.json';
+import { deriveCards } from '../domain/cards';
 import { ANOMALY_FAMILIES, FAMILY_DIFFICULTY } from '../domain/types';
+import type { Company, Problem } from '../domain/types';
+import { cardRelationIssues, cardStructureIssues } from '../verifier/cards';
 
 /** WCAG の相対輝度とコントラスト比 (docs/plans/companies.md §4 が「計算で確かめた」とした値を、ここで再計算する)。 */
 function luminance(hex: string): number {
@@ -76,6 +79,21 @@ describe('companies.json (docs/plans/companies.md §5 の 10 社)', () => {
     expect(sample.problem.anomaly).toBeNull();
   });
 
+  it('DM1b: 見本の問題から、両難易度の形でカード (むずかしいはカード + 資料) を作れる。構造と関係の検査を満たす (設計 v3 §1.2・§1.3 の「見本」。検証器 #138 の deriveCards)', () => {
+    const company = companies.find((c) => c.id === sample.problem.companyId);
+    expect(company, `見本の会社 ${sample.problem.companyId}`).toBeDefined();
+    for (const difficulty of ['easy', 'hard'] as const) {
+      // 見本は両方の難易度で共有する (問題の難易度の項目だけを、使う形に合わせる。検証器の見本の検査と同じ)
+      const card = deriveCards({ ...(sample.problem as Problem), difficulty }, company as Company, difficulty);
+      expect(card.difficulty).toBe(difficulty);
+      expect(card.slots.length, difficulty).toBeGreaterThan(0);
+      expect(card.headline, difficulty).toBeDefined();
+      expect('irFrame' in card, `${difficulty}: 資料 2 の表題は むずかしい だけ`).toBe(difficulty === 'hard');
+      expect(cardStructureIssues(card), difficulty).toEqual([]);
+      expect(cardRelationIssues(card), difficulty).toEqual([]);
+    }
+  });
+
   it('K7: 事業の説明は「会社」で終わる 1 文で、数字を含まず、全社で重複しない (companies.md §5.4)', () => {
     companies.forEach((c) => {
       expect(c.business.endsWith('会社')).toBe(true);
@@ -93,10 +111,10 @@ describe('anomaly-kinds.json (docs/plans/anomalies.md の 42 種類)', () => {
   const easy = kinds.filter((k) => k.id.startsWith('E-'));
   const hard = kinds.filter((k) => k.id.startsWith('H-'));
 
-  it('A1: 42 種類 = やさしい 17 (E-01〜E-17) + むずかしい 25 (H-01〜H-24 と H-28)。使わない H-25〜H-27 は含まない', () => {
-    expect(kinds.length).toBe(42);
-    expect(easy.map((k) => k.id)).toEqual(Array.from({ length: 17 }, (_, i) => `E-${String(i + 1).padStart(2, '0')}`));
-    expect(hard.map((k) => k.id)).toEqual([...Array.from({ length: 24 }, (_, i) => `H-${String(i + 1).padStart(2, '0')}`), 'H-28']);
+  it('A1: 58 種類 = やさしい 26 (E-01〜E-17 と v3 で足した E-19・E-21〜E-28) + むずかしい 32 (H-01〜H-24・H-28 と v3 で足した H-29〜H-35)。使わない H-25〜H-27 は含まない (台帳 v3 の印は cards の検査 KD1)', () => {
+    expect(kinds.length).toBe(58);
+    expect(easy.map((k) => k.id)).toEqual([...Array.from({ length: 17 }, (_, i) => `E-${String(i + 1).padStart(2, '0')}`), 'E-19', ...Array.from({ length: 8 }, (_, i) => `E-${i + 21}`)]);
+    expect(hard.map((k) => k.id)).toEqual([...Array.from({ length: 24 }, (_, i) => `H-${String(i + 1).padStart(2, '0')}`), 'H-28', ...Array.from({ length: 7 }, (_, i) => `H-${i + 29}`)]);
   });
 
   it('A2: 系統は型の系統のどれかで、ID の接頭辞が示す難易度と FAMILY_DIFFICULTY が合う', () => {
@@ -107,22 +125,22 @@ describe('anomaly-kinds.json (docs/plans/anomalies.md の 42 種類)', () => {
     });
   });
 
-  it('A3: 系統ごとの数 (anomalies.md §1: 見た目 8・計算 8・文章 1・会計 13・資料間 9・注記 4。手口は使わない)', () => {
+  it('A3: 系統ごとの数 (anomalies.md §1 の 42 種類に、v3 で E-02 を計算に直し、E-19・E-21〜E-28・H-29〜H-35 を足したもの。手口は使わない)', () => {
     const count = (f: string) => kinds.filter((k) => k.family === f).length;
     expect(Object.fromEntries(ANOMALY_FAMILIES.map((f) => [f, count(f)]))).toEqual({
-      appearance: 8,
-      calculation: 8,
+      appearance: 15,
+      calculation: 10,
       text: 1,
       accounting: 13,
-      'cross-document': 9,
+      'cross-document': 10,
       notes: 3,
       tactics: 0,
-      'card-form': 0,
+      'card-form': 6,
     });
   });
 
   it('A4: 名前は空でなく重複しない。主な規則は空でなく、許容集合に含まれる。規則 ID は小文字のハイフン区切り', () => {
-    expect(new Set(kinds.map((k) => k.name)).size).toBe(42);
+    expect(new Set(kinds.map((k) => k.name)).size).toBe(58);
     kinds.forEach((k) => {
       expect(k.name.trim()).not.toBe('');
       expect(k.primaryRules.length).toBeGreaterThan(0);
