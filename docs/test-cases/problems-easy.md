@@ -1,5 +1,7 @@
 # ケース表: やさしいの正常な資料 (Sub-task #70)
 
+> **置き換えられた (2026-11-09)**: 第 1 版のケース表。第 3 版は [problems-easy-v3.md](problems-easy-v3.md)。check.py・anomalies.py・spec.json は v3 で外した (commit 履歴に残る)。
+
 Task #25。設計表: [docs/plans/problems-easy.md](../plans/problems-easy.md)。検証器: ブランチ calliope/validator (`npm run verify:data`)。データの中身は、方針どおり、ケース表ではなく検証器で全問に当てて確かめる。ここには、検証器が見ない約束と、実行の手順を置く。
 
 ## 1. 手順と期待

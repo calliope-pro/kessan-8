@@ -389,6 +389,11 @@ export interface Anomaly {
   changed?: string[];
 }
 
+/** 出題の 1 枠 = 問題だけ (docs/design-v3.md §3.1 の表 21。形は難易度ごとに 1 つに決まるので、枠は形を持たない)。 */
+export interface Round {
+  problem: Problem;
+}
+
 /** 1 問 = 架空の 1 社の資料束。src/data/problems/<難易度>/<id>.json の中身そのもの。 */
 export interface Problem {
   /** 例: easy-001。ファイル名と同じ。 */

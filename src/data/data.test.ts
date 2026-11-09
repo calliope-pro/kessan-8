@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 import companies from './companies.json';
 import kinds from './anomaly-kinds.json';
 import sample from './samples/sample.json';
+import { deriveCards } from '../domain/cards';
 import { ANOMALY_FAMILIES, FAMILY_DIFFICULTY } from '../domain/types';
+import type { Company, Problem } from '../domain/types';
+import { cardRelationIssues, cardStructureIssues } from '../verifier/cards';
 
 /** WCAG の相対輝度とコントラスト比 (docs/plans/companies.md §4 が「計算で確かめた」とした値を、ここで再計算する)。 */
 function luminance(hex: string): number {
@@ -33,9 +36,8 @@ describe('companies.json (docs/plans/companies.md §5 の 10 社)', () => {
     expect(months).toEqual({ c01: 3, c02: 3, c03: 2, c04: 9, c05: 12, c06: 3, c07: 6, c08: 12, c09: 3, c10: 3 });
   });
 
-  it('K4: IR の単位は 百万円 か 億円。億円は c03・c05・c06・c08・c10 の 5 社', () => {
-    expect(companies.every((c) => c.irUnit === '百万円' || c.irUnit === '億円')).toBe(true);
-    expect(companies.filter((c) => c.irUnit === '億円').map((c) => c.id)).toEqual(['c03', 'c05', 'c06', 'c08', 'c10']);
+  it('K4: IR の単位は全社 億円 (設計 v3 R-D7。第 1 版は 百万円 が 5 社・億円 が c03・c05・c06・c08・c10 だった。#139 の commit 9b9e08a で全社に)', () => {
+    expect(companies.map((c) => c.irUnit)).toEqual(Array(10).fill('億円'));
   });
 
   it('K5: セグメントは 2 つか 3 つ。3 つは c01・c03・c06・c08・c10。名前は会社の中で重複しない', () => {
@@ -71,11 +73,23 @@ describe('companies.json (docs/plans/companies.md §5 の 10 社)', () => {
     reds.forEach((c) => expect(['●', '⬤', '◉', '⚫', '⏺']).not.toContain(c.emblem));
   });
 
-  it('N4-1: 見本の IR スライドの注釈は、短信と「同じ」と言うとき、IR を億円で出す会社があることを断る (包括レビュー n4)', () => {
-    for (const key of ['highlights', 'segments', 'outlook', 'supplement'] as const) {
-      const note = (sample.notes as Record<string, string>)[key] as string;
-      expect(note, key).toContain('同じ');
-      expect(note, key).toContain('億円');
+  it('DM1: 見本は正常な問題 1 つ (anomaly が null)。画面ごとの注釈 notes を持たない (出所は 1 つ。docs/test-cases/domain-v3.md §5)', () => {
+    expect(Object.keys(sample)).toEqual(['problem']);
+    expect(sample.problem.anomaly).toBeNull();
+  });
+
+  it('DM1b: 見本の問題から、両難易度の形でカード (むずかしいはカード + 資料) を作れる。構造と関係の検査を満たす (設計 v3 §1.2・§1.3 の「見本」。検証器 #138 の deriveCards)', () => {
+    const company = companies.find((c) => c.id === sample.problem.companyId);
+    expect(company, `見本の会社 ${sample.problem.companyId}`).toBeDefined();
+    for (const difficulty of ['easy', 'hard'] as const) {
+      // 見本は両方の難易度で共有する (問題の難易度の項目だけを、使う形に合わせる。検証器の見本の検査と同じ)
+      const card = deriveCards({ ...(sample.problem as Problem), difficulty }, company as Company, difficulty);
+      expect(card.difficulty).toBe(difficulty);
+      expect(card.slots.length, difficulty).toBeGreaterThan(0);
+      expect(card.headline, difficulty).toBeDefined();
+      expect('irFrame' in card, `${difficulty}: 資料 2 の表題は むずかしい だけ`).toBe(difficulty === 'hard');
+      expect(cardStructureIssues(card), difficulty).toEqual([]);
+      expect(cardRelationIssues(card), difficulty).toEqual([]);
     }
   });
 

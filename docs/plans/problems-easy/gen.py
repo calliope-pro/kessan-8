@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-"""やさしい 25 問 + 見本の正常な資料を作る (Sub-task #70)。標準ライブラリのみ。
-使いかた: python3 docs/plans/problems-easy/gen.py [--out <出力先のディレクトリ>] [--companies <companies.json>]
-spec.json (設計表) の会社 × 期 × 疑わしく見える要素から、整合の規則 (検証器 src/verifier/) をすべて満たす資料束を作る。
-会社ごとに 1 本の時系列 (前の期の当期 = 次の期の前期) で作る。乱数は会社 id から作った種で、同じ入力から同じ JSON が出る。
-金額は百万円の整数。IR の単位が億円の会社は、金額を 10 の倍数にして、百万円 ÷ 100 の四捨五入が誤差を出さないようにする。
+"""やさしいの正常な問題 10 問 + 見本を作る (v3。Sub-task #168。v1 は #70)。標準ライブラリのみ。
+使いかた: python3 docs/plans/problems-easy/gen.py --spec docs/plans/problems-easy/spec-v3.json [--out <出力先のディレクトリ>] [--companies <companies.json>]
+spec-v3.json (設計表 docs/plans/problems-easy-v3.md) の正常な問題 (kind が null) の会社 × 期 × 営業利益の向きから、整合の規則 (検証器 src/verifier/) をすべて満たす問題を作る。
+異変の問題は、この出力の正常な問題から scripts/gen-easy/run.ts が作る。
+会社ごとに 1 本の時系列 (基準年 2022 → 2025。前の期の当期 = 次の期の前期) で作る。乱数は会社 id から作った種で、同じ入力から同じ JSON が出る。
+金額は百万円の整数。IR は全社億円 (小数第 1 位) で、短信の金額を 10 の倍数にして、百万円 ÷ 100 の四捨五入が誤差を出さないようにする。
+営業利益の向きは、spec の op (up・down) の期だけ、その向きで前期比 2% 以上になるまで引き直す (設計表 §2)。ほかの期は v1 のまま (見本 c09 2023 年が変わらない)。
+疑わしく見える要素 (elements・knobs) は v3 では使わない (カードに載らない。設計表 §2)。
 """
 import argparse
 import calendar
@@ -14,7 +17,7 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from profiles import BASE_YEAR, PROFILES  # noqa: E402
+from profiles import BASE_YEAR, GROWTH_DOWN_FRAC, OM_DRIFT, OM_DRIFT_DOWN, PROFILES  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 NONE_TEXT = '該当事項はありません。'
@@ -137,37 +140,41 @@ def split_segments(co, sales, op, loss_index, adjust_ratio=0.03):
     return dict(sales=sales_list, profits=profits, adjustment=adj)
 
 
-def step(co, prev, year, knobs):
+def step(co, prev, year, knobs, want=None):
     """前期の状態 prev から、year 年の決算期の状態と、出力用の数字を作る。
     疑わしく見える要素を付けない年は、利益の増減率が ±20% に収まるまで乱数を引き直す (異変の問題の土台が、目立つ増減を持たないように)。
     例外: 要素のある年の翌年は、利益の戻りを許す (制限を外す)。そのため、異変の問題 easy-005・easy-022 には、前の期からの戻りとして大きな増減がある (答えは「あり」で判定は変わらない)。"""
     ni_prev = prev['is_']['netSales'] - prev['is_']['costOfSales'] - prev['is_']['sga'] + prev['is_']['nonOperatingIncome'] - prev['is_']['nonOperatingExpenses'] \
         + prev['is_']['extraordinaryGain'] - prev['is_']['extraordinaryLoss'] - prev['is_']['incomeTaxes']
     for _ in range(200):
-        state, cf, extra = _step(co, prev, year, knobs)
+        state, cf, extra = _step(co, prev, year, knobs, want)
         i = state['is_']
         ni = i['netSales'] - i['costOfSales'] - i['sga'] + i['nonOperatingIncome'] - i['nonOperatingExpenses'] + i['extraordinaryGain'] - i['extraordinaryLoss'] - i['incomeTaxes']
         op_cur = i['netSales'] - i['costOfSales'] - i['sga']
         op_prev = prev['is_']['netSales'] - prev['is_']['costOfSales'] - prev['is_']['sga']
         if op_cur == op_prev or i['netSales'] == prev['is_']['netSales']:
             continue  # 前期と同じ値だと、文章の増減の主張が成り立たない
+        if want is not None and ((op_cur > op_prev) != (want == 'up') or abs(op_cur / op_prev - 1) < 0.02):
+            continue  # 設計表の営業利益の向きと、前期比 2% 以上 (spec-v3 の op)
         if knobs or prev.get('flag_big') or abs(ni - ni_prev) / ni_prev < 0.20:
             state['flag_big'] = bool(knobs)
             return state, cf, extra
     raise SystemExit(f'{co.id} {year}: 利益の増減が収まらない')
 
 
-def _step(co, prev, year, knobs):
+def _step(co, prev, year, knobs, want=None):
     p, rq = co.p, co.rq
     rng = co.rng
     pb, pi = prev['bs'], prev['is_']
     lo, hi = p['growth']
+    if want == 'down':
+        hi = lo + (hi - lo) * GROWTH_DOWN_FRAC  # 減益の期は、伸びを下側から引く (profiles.py の OM_DRIFT_DOWN の説明)
     g = rng.uniform(lo, hi) / 100
     if 'big-change' in knobs:
         g = 0.04
     sales = rq(pi['netSales'] * (1 + g))
     gm = p['gm'] + rng.uniform(-0.004, 0.004)
-    om = p['om'] + rng.uniform(-0.004, 0.006)
+    om = p['om'] + rng.uniform(*(OM_DRIFT_DOWN if want == 'down' else OM_DRIFT))
     if 'big-change' in knobs:
         om = p['om'] * 0.62  # 純利益が大きく減る (増減率 −35% 前後)
     gp = rq(sales * gm)
@@ -386,8 +393,10 @@ def build_problem(co, pid, difficulty, year, prev, cur, cf, extra, knobs, tier):
     segments = dict(items=items, adjustment=dict(previous=ir(seg_prev['adjustment']), current=ir(seg_cur['adjustment'])),
                     consolidatedOperatingIncome=dict(previous=ir(PI['operatingIncome']), current=ir(CI['operatingIncome'])))
     # 見通し
-    fg = max(0.5, min(5.0, co.rng.uniform(1.0, 5.0)))
-    fo = co.rng.uniform(-0.5, 0.8)
+    # 次期の見通しは、問題ごとの乱数 (会社 id・期) から引く。時系列の乱数 (co.rng) の流れが、後の期の引き直しで変わっても、見本や前の期の問題が変わらないように
+    frng = random.Random(f'kessan-easy-forecast-{co.id}-{year}')
+    fg = max(0.5, min(5.0, frng.uniform(1.0, 5.0)))
+    fo = frng.uniform(-0.5, 0.8)
     f_sales = co.rq(CI['netSales'] * (1 + fg / 100))
     f_op = co.rq(CI['operatingIncome'] * (1 + fo / 10))
     if 'big-change' in knobs:
@@ -508,50 +517,37 @@ def simulate(co, years, knobs_by_year):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=None)
+    ap.add_argument('--spec', required=True, help='設計表の元データ (docs/plans/problems-easy/spec-v3.json)')
+    ap.add_argument('--out', default='src/data')
     ap.add_argument('--companies', default='src/data/companies.json', help='会社の設定 (docs/plans/companies.md の 10 社)')
-    ap.add_argument('--normals-only', action='store_true', help='異変を入れない (#70 の範囲)')
-    ap.add_argument('--base-out', default=None, help='異変の問題の土台 (要素なしの正常) を書く場所。コミットしない')
     args = ap.parse_args()
-    spec = json.load(open(os.path.join(HERE, 'spec.json'), encoding='utf-8'))
+    spec = json.load(open(args.spec, encoding='utf-8'))
     companies = {c['id']: c for c in json.load(open(args.companies, encoding='utf-8'))}
-    states, built = {}, {}
-    for cid in sorted({p['company'] for p in spec['problems']} | {spec['sample']['company']}):
+    normals = [p for p in spec['problems'] if p['kind'] is None]
+    built = {}
+    for cid in sorted({p['company'] for p in normals} | {spec['sample']['company']}):
         co = Co(cid, companies)
-        knobs_by_year = {p['fiscalYear']: p['elements'] for p in spec['problems'] if p['company'] == cid and p['kind'] is None}
-        years = list(range(BASE_YEAR + 1, 2026))
-        # 疑わしく見える要素は正常な問題の年にだけ付ける (異変の問題の土台は、要素なしの正常)
-        built[cid] = (co, simulate_with_prev(co, years, knobs_by_year))
-    out = args.out or 'src/data'
-    os.makedirs(os.path.join(out, 'problems', 'easy'), exist_ok=True)
-    os.makedirs(os.path.join(out, 'samples'), exist_ok=True)
-    written = []
-    for p in spec['problems']:
+        want = {p['fiscalYear']: p['op'] for p in normals if p['company'] == cid}
+        built[cid] = (co, simulate_with_prev(co, list(range(BASE_YEAR + 1, 2026)), {}, want))
+    out = args.out
+    easy = os.path.join(out, 'problems', 'easy')
+    os.makedirs(easy, exist_ok=True)
+    for f in os.listdir(easy):
+        if f.startswith('easy-') and f.endswith('.json'):
+            os.remove(os.path.join(easy, f))  # 古い問題を残さない
+    for p in normals:
         co, sim = built[p['company']]
         prev, cur, cf, extra, knobs = sim[p['fiscalYear']]
-        prob = build_problem(co, p['id'], 'easy', p['fiscalYear'], prev, cur, cf, extra, knobs, p['tier'])
-        if p['kind'] is None:
-            path = os.path.join(out, 'problems', 'easy', p['id'] + '.json')
-            write_json(path, prob)
-            written.append(path)
-        else:
-            if args.base_out:
-                write_json(os.path.join(args.base_out, p['id'] + '.json'), prob)
-            if not args.normals_only:
-                import anomalies  # noqa: E402
-                final = anomalies.apply(prob, p, co)
-                path = os.path.join(out, 'problems', 'easy', p['id'] + '.json')
-                write_json(path, final)
-                written.append(path)
+        prob = build_problem(co, p['id'], 'easy', p['fiscalYear'], prev, cur, cf, extra, knobs, None)
+        del prob['tier']  # 正常な問題は段を持たない (設計 §2.7)
+        write_json(os.path.join(easy, p['id'] + '.json'), prob)
     s = spec['sample']
     co, sim = built[s['company']]
     prev, cur, cf, extra, knobs = sim[s['fiscalYear']]
     prob = build_problem(co, 'sample', 'easy', s['fiscalYear'], prev, cur, cf, extra, knobs, None)
     del prob['tier']  # 見本は出題のプールの外
-    write_json(os.path.join(out, 'samples', 'sample.json'), dict(problem=prob, notes=sample_notes(prob)))
-    if args.base_out:
-        write_json(os.path.join(args.base_out, 'sample.json'), prob)
-    print(f'{len(written)} 問と見本を {out} に書いた')
+    write_json(os.path.join(out, 'samples', 'sample.json'), dict(problem=prob))  # notes は main の #165 で除かれた
+    print(f'正常な問題 {len(normals)} 問と見本を {out} に書いた')
 
 
 def sample_notes(prob):
@@ -573,12 +569,12 @@ def sample_notes(prob):
     )
 
 
-def simulate_with_prev(co, years, knobs_by_year):
+def simulate_with_prev(co, years, knobs_by_year, want_by_year=None):
     state = base_state(co)
     out = {}
     for y in years:
         k = knobs_by_year.get(y, [])
-        new, cf, extra = step(co, state, y, k)
+        new, cf, extra = step(co, state, y, k, (want_by_year or {}).get(y))
         out[y] = (state, new, cf, extra, k)
         state = new
     return out

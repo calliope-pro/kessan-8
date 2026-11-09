@@ -179,7 +179,7 @@ describe('K12 今のデータ', () => {
     }
   });
   it('今の異変の問題 (cardEdits なし) は card-period 以外の新しい規則を落とさない。card-period は E-04 だけ', () => {
-    // cardEdits を持つ異変は、新しい規則 (card-*) を落とすのが本来の姿なので除く (題の「cardEdits なし」)
+    // cardEdits を持つ異変 (形のずれの規則が落ちるのが当然) は、ここでは見ない。見るのは cardEdits を持たない異変 (題の「cardEdits なし」)
     for (const p of problems.filter((q) => q.anomaly !== null && q.cardEdits === undefined)) {
       const c = companies.find((x) => x.id === p.companyId) as Company;
       const v = verifyProblem(p, c).hard.filter((x) => NEW_RULES.includes(x.rule) && x.rule !== 'xdoc-seg-names');

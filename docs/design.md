@@ -514,6 +514,11 @@ export interface Anomaly {
   changed?: string[];
 }
 
+/** 出題の 1 枠 = 問題だけ (docs/design-v3.md §3.1 の表 21。形は難易度ごとに 1 つに決まるので、枠は形を持たない)。 */
+export interface Round {
+  problem: Problem;
+}
+
 /** 1 問 = 架空の 1 社の資料束。src/data/problems/<難易度>/<id>.json の中身そのもの。 */
 export interface Problem {
   /** 例: easy-001。ファイル名と同じ。 */
@@ -591,6 +596,8 @@ export interface Problem {
 **問題に使わない種類として #40 に返すもの**: H-25 (継続企業の前提)・H-26 (売上の前倒しの疑い)・H-27 (在庫の水増しの疑い)。anomalies.md が確度 C (境界の判断が入る) とし、会計の分かる人の確認が済むまで使わないとしている種類で、型も検証器の規則も足さない (確認が済んで使うときは、規則を足すチケットを切る)。それ以外の 42 種類は、型の上で表せる。
 
 ## 5. 画面の遷移の骨組み
+
+> **v3 で置き換え済み (Task #155)**: 状態と action は [design-v2.md](design-v2.md) §3.2 (0 社目 `sample`・`BEGIN`・`RESTART` が 0 社目へ)、枠 `Round` は問題だけ (設計 v3 §3.1 の表 21)、出題は [design-v3.md](design-v3.md) §1.5・§2.7 (形を引かない・段は累積・履歴は直近 16 件・R-S6)、保存は `SESSION_VERSION` = 2・`RECORDS_VERSION` = 2。ケース表は [test-cases/domain-v3.md](test-cases/domain-v3.md)。以下の §5.1〜§5.4 は第 1 版の記録で、`view`・`marks`・`VIEW`・`TOGGLE_MARK`・資料束の 10 画面を前提にしている。
 
 状態は `domain/game.ts` の純粋な関数 `reduce(state, action)` が持つ。画面 (`ui/`) は状態を受け取って描き、操作を action にして返す。DOM に触らないので、状態遷移の全パターンを単体テストで確かめられる。
 
@@ -690,7 +697,7 @@ export interface Problem {
 | 問題データ | `npm run verify:data` | `scripts/verify-data.ts` + 検証器 (`src/verifier/`)。`npm test` の次に CI で回る | 全問: 型の形・正常な問題は会計の整合をすべて満たす・異変の問題は指定した規則だけが破れる・ファイル名と `id`・置き場と `difficulty`・会社と異変の種類への参照・難易度ごとの問題数と「両面の会社が 8 社以上」(§4.3)・`labelOverrides` のキーがすべて `labels.ts` の項目キーにあり、値が標準と違う・`anomaly.places` の `path` が実在する値を指す・**正常な問題の見出しの社名・証券コード・期・単位、セグメント名・数が `companies.json` と `fiscalYear` と一致する**・正常な問題に `labelOverrides`・`unitOverrides`・`signOverrides` が無い・`anomaly.expectedRules` が実際に落ちた集合と一致し、種類の `primaryRules`・`allowedRules` に合う・`itemKey` の場所が `labels.ts` の項目キーにある・異変あり・なしの問題数の比 (§4.3)・系統の偏り (§4.5 の閾値) |
 | E2E | `e2e/*.spec.ts` | Playwright | 受け入れ条件 1〜4・9 を 1 本ずつ + スマホ幅 375 px で 1 本。ビルドした成果物 (`vite preview`) に対して回す。**問題データが main に入るまでは、`npm run build:e2e` が、試験用の問題 (`src/testing/`) に差し替えて回す** (本番のバンドルには入れない)。データが入ったら、本番のビルドに対して回す project を足す (ケース表 flow.md §4) |
 
-- E2E の projects は、デスクトップ (1280×800) とスマホ (375 px 幅)。CI は Chrome だけで回す。Safari (WebKit)・Firefox (対応ブラウザは方針) は、本番ビルドに対する通し (`e2e/live.spec.ts`。docs/test-cases/release.md §4) を手で回して確かめる。結果は release.md §4.1 に記録した (WebKit iPhone 13・WebKit 1280・Firefox 1280 で通った)
+- E2E の projects は、デスクトップ (1280×800) とスマホ (375 px 幅)。CI は Chrome だけで回す。Safari (WebKit)・Firefox (対応ブラウザは方針) は、本番ビルドに対する通し (`e2e/live.spec.ts`。docs/test-cases/release.md §4) を手で回して確かめる (**古い画面の E2E は #155 で消した。画面を作り直す #141 が置き換える**)。結果は release.md §4.1 に記録した (WebKit iPhone 13・WebKit 1280・Firefox 1280 で通った)
 - 受け入れ条件 5・6・8 (問題の数・異変の系統の偏り・実在の名前が無いこと) は、問題データのテストが受け持つ (6 の閾値は §4.5。8 は §8)。E2E には載せない
 - E2E は **外部への通信が無い**ことも確かめる (ページの全リクエストが同じ生成元)。方針の「外部への通信をしない静的サイト」
 - E2E は、`vercel.json` のセキュリティヘッダ (CSP) を、`vite.config.ts` が同じファイルから読んで `preview.headers` に当てた状態で回す。ヘッダの出所は `vercel.json` の 1 か所で、公開した版と同じ CSP の下で画面が動くことを CI が確かめる (`setAttribute('style', …)` や style 属性つきの HTML 文字列で描くと、ここで落ちる)

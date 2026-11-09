@@ -1,0 +1,459 @@
+{
+ "id": "easy-061",
+ "difficulty": "easy",
+ "companyId": "c08",
+ "fiscalYear": 2025,
+ "tier": 1,
+ "tanshin": {
+  "header": {
+   "companyName": "セレニア不動産株式会社",
+   "securitiesCode": "0808",
+   "periodLabel": "2025年12月期",
+   "unit": "百万円"
+  },
+  "summary": {
+   "netSales": {
+    "current": 27530,
+    "previous": 27510,
+    "changeRate": 0.1
+   },
+   "operatingIncome": {
+    "current": 4530,
+    "previous": 4640,
+    "changeRate": -2.4
+   },
+   "ordinaryIncome": {
+    "current": 4340,
+    "previous": 4430,
+    "changeRate": -2
+   },
+   "netIncomeParent": {
+    "current": 2990,
+    "previous": 3060,
+    "changeRate": -2.3
+   },
+   "operatingMargin": 16.5,
+   "roe": 18.4,
+   "eps": 166.11,
+   "totalAssets": 39146,
+   "netAssets": 17276,
+   "equity": 17276,
+   "equityRatio": 44.1,
+   "bps": 959.78,
+   "annualDividend": 54,
+   "interimDividend": 0,
+   "annualDividendPrevious": 54,
+   "interimDividendPrevious": 0,
+   "dividendTotal": 972,
+   "payoutRatio": 32.5,
+   "accountingPolicyChange": false,
+   "auditNote": "決算短信は公認会計士又は監査法人の監査の対象外です"
+  },
+  "dates": {
+   "periodEnd": "2025-12-31",
+   "previousPeriodEnd": "2024-12-31",
+   "disclosure": "2026-02-14",
+   "shareholdersMeeting": "2026-03-29"
+  },
+  "columnDates": {
+   "balanceSheet": {
+    "previous": "2024-12-31",
+    "current": "2025-12-31"
+   },
+   "incomeStatement": {
+    "previous": "2024-12-31",
+    "current": "2025-12-31"
+   },
+   "cashFlow": {
+    "previous": "2024-12-31",
+    "current": "2025-12-31"
+   }
+  },
+  "balanceSheet": {
+   "previous": {
+    "cash": 4028,
+    "receivables": 1510,
+    "inventories": 2430,
+    "otherCurrentAssets": 410,
+    "totalCurrentAssets": 8378,
+    "tangibleAssets": 28760,
+    "investments": 1360,
+    "totalFixedAssets": 30120,
+    "totalAssets": 38498,
+    "payables": 1010,
+    "shortTermDebt": 1100,
+    "incomeTaxesPayable": 680,
+    "otherCurrentLiabilities": 830,
+    "totalCurrentLiabilities": 3620,
+    "longTermDebt": 19620,
+    "totalLiabilities": 23240,
+    "capitalStock": 1760,
+    "capitalSurplus": 1320,
+    "retainedEarnings": 12178,
+    "totalShareholdersEquity": 15258,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 15258,
+    "totalLiabilitiesAndNetAssets": 38498
+   },
+   "current": {
+    "cash": 4566,
+    "receivables": 1510,
+    "inventories": 2430,
+    "otherCurrentAssets": 410,
+    "totalCurrentAssets": 8916,
+    "tangibleAssets": 28840,
+    "investments": 1390,
+    "totalFixedAssets": 30230,
+    "totalAssets": 39146,
+    "payables": 1010,
+    "shortTermDebt": 1100,
+    "incomeTaxesPayable": 680,
+    "otherCurrentLiabilities": 830,
+    "totalCurrentLiabilities": 3620,
+    "longTermDebt": 18250,
+    "totalLiabilities": 21870,
+    "capitalStock": 1760,
+    "capitalSurplus": 1320,
+    "retainedEarnings": 14196,
+    "totalShareholdersEquity": 17276,
+    "nonControllingInterests": 0,
+    "totalNetAssets": 17276,
+    "totalLiabilitiesAndNetAssets": 39146
+   }
+  },
+  "incomeStatement": {
+   "previous": {
+    "netSales": 27510,
+    "costOfSales": 14790,
+    "grossProfit": 12720,
+    "sga": 8080,
+    "operatingIncome": 4640,
+    "nonOperatingIncome": 60,
+    "nonOperatingExpenses": 270,
+    "ordinaryIncome": 4430,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 4430,
+    "incomeTaxes": 1370,
+    "netIncome": 3060,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 3060
+   },
+   "current": {
+    "netSales": 27530,
+    "costOfSales": 14800,
+    "grossProfit": 12730,
+    "sga": 8200,
+    "operatingIncome": 4530,
+    "nonOperatingIncome": 60,
+    "nonOperatingExpenses": 250,
+    "ordinaryIncome": 4340,
+    "extraordinaryGain": 0,
+    "extraordinaryLoss": 0,
+    "incomeBeforeTax": 4340,
+    "incomeTaxes": 1350,
+    "netIncome": 2990,
+    "netIncomeNonControlling": 0,
+    "netIncomeParent": 2990
+   }
+  },
+  "cashFlow": {
+   "incomeBeforeTax": 4340,
+   "depreciation": 1010,
+   "interestDividendIncome": -60,
+   "interestExpense": 250,
+   "receivablesChange": 0,
+   "inventoriesChange": 0,
+   "payablesChange": 0,
+   "otherAssetsChange": 0,
+   "otherLiabilitiesChange": 0,
+   "subtotal": 5540,
+   "interestDividendReceived": 60,
+   "interestPaid": -250,
+   "incomeTaxesPaid": -1350,
+   "operatingCashFlow": 4000,
+   "capex": -1090,
+   "otherInvestingChange": -30,
+   "investingCashFlow": -1120,
+   "shortTermDebtChange": 0,
+   "longTermBorrowings": 0,
+   "longTermRepayments": -1370,
+   "dividendsPaid": -972,
+   "financingCashFlow": -2342,
+   "fxEffect": 0,
+   "netChangeInCash": 538,
+   "cashBeginning": 4028,
+   "cashEnding": 4566
+  },
+  "notes": {
+   "goingConcern": "該当事項はありません。",
+   "cashScope": "現金及び預金",
+   "segments": {
+    "previous": {
+     "segments": [
+      {
+       "name": "賃貸事業",
+       "netSales": 13940,
+       "profit": 2740
+      },
+      {
+       "name": "分譲事業",
+       "netSales": 7960,
+       "profit": 1360
+      },
+      {
+       "name": "管理事業",
+       "netSales": 5610,
+       "profit": 680
+      }
+     ],
+     "adjustment": -140,
+     "consolidatedNetSales": 27510,
+     "consolidatedOperatingIncome": 4640
+    },
+    "current": {
+     "segments": [
+      {
+       "name": "賃貸事業",
+       "netSales": 13430,
+       "profit": 2590
+      },
+      {
+       "name": "分譲事業",
+       "netSales": 8600,
+       "profit": 1440
+      },
+      {
+       "name": "管理事業",
+       "netSales": 5500,
+       "profit": 640
+      }
+     ],
+     "adjustment": -140,
+     "consolidatedNetSales": 27530,
+     "consolidatedOperatingIncome": 4530
+    }
+   },
+   "averageSharesThousand": 18000,
+   "bps": 959.78,
+   "eps": 166.11,
+   "subsequentEvents": "該当事項はありません。",
+   "accountingPolicyNote": "該当事項はありません。"
+  }
+ },
+ "ir": {
+  "header": {
+   "companyName": "セレニア不動産株式会社",
+   "securitiesCode": "0808",
+   "periodLabel": "2025年12月期",
+   "unit": "億円"
+  },
+  "highlights": {
+   "netSales": {
+    "amount": 275.3,
+    "changeRate": 0.1
+   },
+   "operatingIncome": {
+    "amount": 45.3,
+    "changeRate": -2.4
+   },
+   "ordinaryIncome": {
+    "amount": 43.4,
+    "changeRate": -2
+   },
+   "netIncomeParent": {
+    "amount": 29.9,
+    "changeRate": -2.3
+   },
+   "annualDividend": 54,
+   "payoutRatio": 32.5
+  },
+  "results": {
+   "netSales": {
+    "previous": 275.1,
+    "current": 275.3
+   },
+   "grossProfit": {
+    "previous": 127.2,
+    "current": 127.3
+   },
+   "grossMargin": {
+    "previous": 46.2,
+    "current": 46.2
+   },
+   "operatingIncome": {
+    "previous": 46.4,
+    "current": 45.3
+   },
+   "operatingMargin": {
+    "previous": 16.9,
+    "current": 16.5
+   },
+   "chart": {
+    "netSales": {
+     "axisMin": 0,
+     "previous": 275.1,
+     "current": 275.3
+    },
+    "operatingIncome": {
+     "axisMin": 0,
+     "previous": 46.4,
+     "current": 45.3
+    }
+   }
+  },
+  "segments": {
+   "items": [
+    {
+     "name": "賃貸事業",
+     "netSales": {
+      "previous": 139.4,
+      "current": 134.3,
+      "changeRate": -3.7
+     },
+     "profit": {
+      "previous": 27.4,
+      "current": 25.9,
+      "changeRate": -5.5
+     },
+     "salesShare": 48.8
+    },
+    {
+     "name": "分譲事業",
+     "netSales": {
+      "previous": 79.6,
+      "current": 86,
+      "changeRate": 8
+     },
+     "profit": {
+      "previous": 13.6,
+      "current": 14.4,
+      "changeRate": 5.9
+     },
+     "salesShare": 31.2
+    },
+    {
+     "name": "管理事業",
+     "netSales": {
+      "previous": 56.1,
+      "current": 55,
+      "changeRate": -2
+     },
+     "profit": {
+      "previous": 6.8,
+      "current": 6.4,
+      "changeRate": -5.9
+     },
+     "salesShare": 20
+    }
+   ],
+   "adjustment": {
+    "previous": -1.4,
+    "current": -1.4
+   },
+   "consolidatedOperatingIncome": {
+    "previous": 46.4,
+    "current": 45.3
+   }
+  },
+  "outlook": {
+   "forecast": {
+    "netSales": 281.8,
+    "netSalesChangeRate": 2.4,
+    "operatingIncome": 45,
+    "operatingIncomeChangeRate": -0.7,
+    "capex": 11.4,
+    "depreciation": 10.5,
+    "annualDividend": 54
+   },
+   "actual": {
+    "netSales": 275.3,
+    "operatingIncome": 45.3,
+    "capex": 10.9,
+    "depreciation": 10.1
+   },
+   "subsequentEvent": null
+  },
+  "supplement": {
+   "capex": {
+    "previous": null,
+    "current": 10.9
+   },
+   "depreciation": {
+    "previous": null,
+    "current": 10.1
+   },
+   "interestBearingDebt": {
+    "previous": 207.2,
+    "current": 193.5
+   },
+   "cash": {
+    "previous": 40.3,
+    "current": 45.7
+   },
+   "netDebt": {
+    "previous": 166.9,
+    "current": 147.8
+   },
+   "equityRatio": 44.1
+  },
+  "statements": [
+   {
+    "slide": "highlights",
+    "text": "賃料収入を含む売上高は前期を上回りました。営業利益は前期を上回りました。",
+    "claims": [
+     {
+      "metric": "netSales",
+      "direction": "up"
+     },
+     {
+      "metric": "operatingIncome",
+      "direction": "up"
+     }
+    ]
+   },
+   {
+    "slide": "outlook",
+    "text": "次期は増収減益を見込んでおります。",
+    "claims": [
+     {
+      "metric": "forecastNetSales",
+      "direction": "up"
+     },
+     {
+      "metric": "forecastOperatingIncome",
+      "direction": "down"
+     }
+    ]
+   },
+   {
+    "slide": "supplement",
+    "text": "営業キャッシュ・フローは着実に積み上がりました。",
+    "claims": [
+     {
+      "metric": "operatingCashFlow",
+      "direction": "up"
+     }
+    ]
+   }
+  ]
+ },
+ "anomaly": {
+  "kind": "E-17",
+  "places": [
+   {
+    "doc": "ir",
+    "path": "statements.0"
+   }
+  ],
+  "explanation": "見出しは「増益」ですが、営業利益は前期 4,640 から当期 4,530 へ減っています。見出しと数字の向きが逆です。",
+  "expectedRules": [
+   "claims-direction"
+  ],
+  "base": "easy-060",
+  "changed": [
+   "ir.statements.0.text",
+   "ir.statements.0.claims.1.direction"
+  ]
+ }
+}
