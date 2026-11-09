@@ -52,7 +52,9 @@ export function mountApp(root: HTMLElement, env: AppEnv): void {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const stage = h('div', { class: 'stage' });
-  root.replaceChildren(stage);
+  // 判定の結果・さっきの異変は、画面が替わっても読み上げに届くよう、常にある 1 つの領域に入れる (WCAG 4.1.3)
+  const live = h('p', { class: 'sr', role: 'status', 'aria-live': 'polite', 'data-testid': 'live' });
+  root.replaceChildren(stage, live);
   document.title = MESSAGES.title;
 
   const company = (id: string): Company => {
@@ -120,14 +122,14 @@ export function mountApp(root: HTMLElement, env: AppEnv): void {
     const v = titleView(pool, records);
     const btn = (d: Difficulty): HTMLButtonElement => {
       const t = v[d];
-      const b = seal(MESSAGES.difficulty[d], 'diff primary', () => pick(d), null);
+      const b = seal(MESSAGES.difficulty[d], d === 'easy' ? 'diff primary' : 'diff', () => pick(d), null);
       b.querySelector('span')!.append(h('small', {}, MESSAGES.difficultyNote[d]));
       if (t.best !== null) b.querySelector('span')!.append(h('small', { class: 'best' }, fill(MESSAGES.best, { n: t.best })));
       if (!t.enabled) { b.disabled = true; b.querySelector('span')!.append(h('small', { class: 'soon' }, t.note)); }
       return b;
     };
     const main = h('main', { class: 'desk title-screen', 'data-testid': 'app', tabindex: '-1' },
-      h('h1', { class: 'game-title', tabindex: '-1' }, MESSAGES.title),
+      h('div', { class: 'title-mark' }, h('h1', { class: 'game-title', tabindex: '-1' }, MESSAGES.title), h('span', { class: 'stamp title-stamp', 'aria-hidden': 'true' }, MESSAGES.titleStamp)),
       h('p', { class: 'lead' }, v.allUnavailable ? MESSAGES.allUnavailable : MESSAGES.tagline),
       h('div', { class: 'diffs' }, btn('easy'), btn('hard')));
     const actions = h('footer', { class: 'actions single' }, seal(MESSAGES.records, 'quiet', () => { view = 'records'; render(); }));
@@ -188,7 +190,7 @@ export function mountApp(root: HTMLElement, env: AppEnv): void {
       if (state.phase === 'reading') {
         for (const a of ['normal', 'anomaly'] as const) actions.append(seal(MESSAGES.seal[a], '', () => dispatch({ type: 'ANSWER', answer: a as Answer })));
       } else if (state.correct) {
-        slipOf(sheet).append(h('span', { class: 'stamp', 'data-testid': 'stamp', 'aria-hidden': 'true' }, MESSAGES.seal[state.answer]));
+        slipOf(sheet).append(h('span', { class: `stamp${MESSAGES.seal[state.answer].length > 4 ? ' stamp-long' : ''}`, 'data-testid': 'stamp', 'aria-hidden': 'true' }, MESSAGES.seal[state.answer]));
         slipOf(sheet).classList.add('sink');
         actions.classList.add('single', 'with-feedback');
         actions.append(feedback(true, r.problem.anomaly ? r.problem.anomaly.explanation : null), seal(state.round === ROUNDS_TO_CLEAR - 1 ? MESSAGES.toCleared : MESSAGES.next, 'primary', () => dispatch({ type: 'NEXT' })));
@@ -213,16 +215,23 @@ export function mountApp(root: HTMLElement, env: AppEnv): void {
       desk = h('main', { class: 'desk', 'data-testid': 'cleared', tabindex: '-1' },
         h('span', { class: 'stamp big-stamp', 'aria-hidden': 'true' }, MESSAGES.cleared.heading),
         h('p', { class: 'verdict ok' }, MESSAGES.cleared.done),
-        list,
         h('p', { class: 'found-line' }, fill(MESSAGES.cleared.found, { n: s.n, N: s.N }), s.added > 0 ? h('span', { class: 'added' }, ` ${fill(MESSAGES.cleared.added, { k: s.added })}`) : null),
-        d === 'easy' ? h('p', { class: 'lead' }, MESSAGES.cleared.suggestHard) : null);
+        d === 'easy' ? h('p', { class: 'lead' }, MESSAGES.cleared.suggestHard) : null,
+        list);
       const d1 = d;
       actions = h('footer', { class: 'actions' }, seal(MESSAGES.cleared.again, 'primary', () => dispatch({ type: 'PICK', difficulty: d1, rounds: rounds(d1) })), seal(MESSAGES.cleared.other, '', () => dispatch({ type: 'TO_DIFFICULTY' })));
+    }
+    live.textContent = '';
+    if (view !== 'records') {
+      if (state.phase === 'revealed') live.textContent = state.correct ? `${MESSAGES.result.ok}。${state.rounds[state.round]!.problem.anomaly?.explanation ?? MESSAGES.result.none}` : `${MESSAGES.result.ng}。${MESSAGES.sentBack}`;
+      else if (state.phase === 'sample' && state.missed) live.textContent = state.missed.problem.anomaly ? fill(MESSAGES.sample.lastAnomaly, { text: state.missed.problem.anomaly.explanation }) : MESSAGES.sample.lastNone;
     }
     const kids = [head, desk, ...(actions ? [actions] : [])];
     stage.replaceChildren(...kids);
     if (actions) arm(actions);
-    (head.querySelector<HTMLElement>('h1') ?? desk).focus({ preventScroll: true });
+    const h1 = head.querySelector<HTMLElement>('h1') ?? desk.querySelector<HTMLElement>('h1');
+    document.title = h1 && h1.textContent !== MESSAGES.title ? `${h1.textContent} | ${MESSAGES.title}` : MESSAGES.title;
+    (h1 ?? desk).focus({ preventScroll: true });
     window.scrollTo(0, 0);
     if (actions) scrollMarksIntoView(actions);
   }

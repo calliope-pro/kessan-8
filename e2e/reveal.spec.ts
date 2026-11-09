@@ -30,7 +30,7 @@ test('S12・S13: 押印の字は押した札と同じ言葉。異変は朱で囲
     } else {
       sawNormal = true;
       await expect(page.locator('.marked')).toHaveCount(0);
-      await expect(page.getByText('異変はありませんでした')).toBeVisible();
+      await expect(page.locator('.lead', { hasText: '異変はありませんでした' })).toBeVisible();
     }
     await tap(page, i === 7 ? '完了票へ' : '次へ');
   }

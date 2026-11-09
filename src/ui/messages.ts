@@ -3,6 +3,7 @@
 export const MESSAGES = {
   title: '８期連続',
   tagline: '決算の“いつも通り”を覚えて、異変を見つけよう',
+  titleStamp: '決算',
   difficulty: { easy: 'やさしい', hard: 'むずかしい' },
   difficultyNote: { easy: '会計を知らなくても', hard: '決算短信と IR を見比べる' },
   unavailable: '準備中',
