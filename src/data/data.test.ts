@@ -36,9 +36,8 @@ describe('companies.json (docs/plans/companies.md §5 の 10 社)', () => {
     expect(months).toEqual({ c01: 3, c02: 3, c03: 2, c04: 9, c05: 12, c06: 3, c07: 6, c08: 12, c09: 3, c10: 3 });
   });
 
-  it('K4: IR の単位は 百万円 か 億円。億円は c03・c05・c06・c08・c10 の 5 社', () => {
-    expect(companies.every((c) => c.irUnit === '百万円' || c.irUnit === '億円')).toBe(true);
-    expect(companies.filter((c) => c.irUnit === '億円').map((c) => c.id)).toEqual(['c03', 'c05', 'c06', 'c08', 'c10']);
+  it('K4: IR の単位は全社 億円 (設計 v3 R-D7。第 1 版は 百万円 が 5 社・億円 が c03・c05・c06・c08・c10 だった。#139 の commit 9b9e08a で全社に)', () => {
+    expect(companies.map((c) => c.irUnit)).toEqual(Array(10).fill('億円'));
   });
 
   it('K5: セグメントは 2 つか 3 つ。3 つは c01・c03・c06・c08・c10。名前は会社の中で重複しない', () => {

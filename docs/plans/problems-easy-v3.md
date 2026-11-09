@@ -40,6 +40,8 @@ Sub-task #167 (Task #139)。作成: 2026-11-09。置き換えるもの: 第 1 �
 | c10 ヨクトス商事 | 2025年3月期 | **減益** | 1.8% | 減益 (R-S5 (f))。E-02 は減益の基なので 1/10。売上高が 6 桁 (約 20 万百万円) の会社に 10 倍の異変を置かない |
 
 **正常な問題の作り方 (設計。生成器 #168 の約束)**:
+- **営業利益の向きは、spec の `op` の期だけ、その向きで前期比 2% 以上になるまで引き直す** (`gen.py` の `step` の `want`)。減益の期は、営業利益率を下げ寄りに (`OM_DRIFT_DOWN` = U(−0.010, +0.002)) 引き、売上高の伸びも下側の 40% の範囲から引く (`profiles.py`)。v1 のゆらぎ (U(−0.004, +0.006)) では、c08 2025 年の減益が 200 回引いても出なかった (測った。`gen.py` が「利益の増減が収まらない」で止まった)。増益の期とほかの期は v1 のまま (見本 c09 2023 年の数字が動かない。ただし次期の見通しは §2 の次の約束のとおり変わった)。
+- **次期の見通し (IR の `outlook.forecast`) は、問題ごとの乱数 (会社 id・期) から引く** (時系列の乱数の流れが、後の期の引き直しで変わっても、見本や前の期の問題が変わらないように)。見本 c09 2023 年は、commit 9b9e08a のものと、この見通しの 4 つの数字 (売上高・同前期比・営業利益・同前期比) だけが違う。
 - **同じ会社の期は 1 本の時系列でつなぐ** (基準年 2022 → 期。前期の数字は前の期の当期)。見本 c09 2023 年と c09 2025 年は同じ時系列 (2024 年を飛ばす)。生成の乱数は会社 id から作った種で、同じ入力から同じ JSON が出る (今の `gen.py` と同じ)。
 - **期は過去** (発表日が 2026-11 より前)。
 - **営業赤字・最終赤字は使わない**。**カードの 4 欄 (売上高・営業利益 前期・当期・営業利益率) は負にしない** (設計 §3.2 #139 の 3)。営業利益は前期比 ±20% 以内を目安にし、検証器の `card-relation` の R-range (0.5 ≤ ③ ÷ ② ≤ 2)・R-ne (③ ≠ ②)・R-lt (③ < ①) を満たす。営業利益率は小数第 1 位に四捨五入。期末日は期の月の末日。
@@ -239,19 +241,21 @@ Sub-task #167 (Task #139)。作成: 2026-11-09。置き換えるもの: 第 1 �
 
 出典: Flyvbjerg (2006) https://arxiv.org/abs/1302.3642 (PDF https://arxiv.org/pdf/1302.3642) ・ https://www.pmi.org/learning/library/nobel-project-management-reference-class-forecasting-8068 / The University of Oxford report, Reference class forecasting (Edinburgh trams) https://www.edinburgh.gov.uk/tramstonewhaven/downloads/file/90/the-university-of-oxford-report-reference-class-forecasting / https://eight2late.com/2010/05/13/the-reference-class-problem-and-its-implications-for-project-management
 
-## 7. 生成の手順と確かめ方 (#168・#169 が使う)
+## 7. 生成の手順と確かめ方 (#168・#169)
 
-1. `python3 docs/plans/problems-easy/make-spec-v3.py` が spec-v3.json を作る (済み。SP11)。
-2. #168: `gen.py` を spec-v3 から読む形に直し、正常 10 問と見本を作る → TypeScript の注入スクリプトが基の正常な問題から異変 75 問を作る (`anomaly` の `base`・`changed`・`places`・`expectedRules`・`explanation`)。ケース表 → レッド (データを置く前の `verify:data -- --require-cards=easy` は終了 1) → グリーン。
-3. #169: `npm run verify:data -- --require-complete --require-cards=easy` が終了 0 (致命 0・`card-*` の shortfalls 0)。CI の `verify:data` に `--require-cards=easy` を足す。
+1. `python3 docs/plans/problems-easy/make-spec-v3.py` が spec-v3.json を作る (SP11)。
+2. `python3 docs/plans/problems-easy/gen.py --spec docs/plans/problems-easy/spec-v3.json --out src/data` が、正常な問題 10 問と見本を書く (`src/data/problems/easy/easy-*.json` を先に消す)。
+3. `node --experimental-strip-types --no-warnings scripts/gen-easy/run.ts` が、異変の問題 75 問を同じ所に書く (`scripts/gen-easy/inject.ts`。1 つの異変 = 1 つの変更。`anomaly` の `expectedRules` は検証器で実際に落ちた hard の規則、`changed` は基との実際の差、`explanation` は種類ごとの型 (ケース表 A4))。
+4. ケース表 [problems-easy-v3.md](../test-cases/problems-easy-v3.md) のテスト: `npx vitest run scripts/gen-easy scripts/problems-easy-spec.test.ts` (道具の境界値 U1〜U8・正常 N1〜N12・異変 A1〜A6・全体 D1〜D5・再現 R1)。
+5. #169: `npm run verify:data -- --require-complete --require-cards=easy` が終了 0 (致命 0・`card-*` の shortfalls 0)。CI に `--require-cards=easy` を足す。
 
-**この Sub-task の確かめ方**: `npx vitest run scripts/problems-easy-spec.test.ts` (SP1〜SP14)。元データを壊して赤になることを確かめた記録は #167 のコメント。
+**この Sub-task の確かめ方 (#167 の成果物)**: `npx vitest run scripts/problems-easy-spec.test.ts` (SP1〜SP14)。
 
 ## 8. 未確認・申し送り
 
 - **未確認**: 金額が 6 桁以内か (§1 は導いた上限。生成後に全セルを数えるのは #168)。E-21・E-24・E-26〜E-28 が、会計を知らない人に本当に「おかしい」と分かるか (設計 §3.4。試作 #141)。
 - **全体のテスト (#169 へ)**: `npx vitest run` の全体は今 10 件赤 (旧データ・irUnit の全社億円化に追随していないテスト: data.test.ts K4・N4-1、problems-hard.test.ts 5 件、verify-data.test.ts L7・Lc4、dataset-cards.test.ts KD5)。#168 (easy 分)・#140 (hard 分) の作り直しで直す。#168 のレビューの前に、この 10 件を退行と見分けられるよう、直す対象の一覧を #168 のコメントに残す。**#169 の PR の前に、全体が緑であることを確かめる**。
-- **約束 (#168 へ)**: E-02 の増益の基の営業利益率は、gen.py のゆらぎ (`om` = 目安 + U(−0.004, +0.006)) の最大でも c06 の 5.6% で、8% まで 2.4 ポイントの余裕がある (導いた。spec-v3.json の `omRange`。SP7 が 8% 以下を数える)。#168 が `om` のゆらぎの幅を変えたら、`make-spec-v3.py` の `OM_LO`・`OM_HI` を合わせて直す (SP7 が `omRange` で見る)。
+- **約束 (#168 へ)**: E-02 の増益の基の営業利益率は、gen.py のゆらぎ (`om` = 目安 + U(−0.004, +0.006)。`profiles.py` の `OM_DRIFT`) の最大でも c06 の 5.6% で、8% まで 2.4 ポイントの余裕がある (導いた。spec-v3.json の `omRange`。SP7 が 8% 以下を数える)。`om` のゆらぎの幅は `profiles.py` の `OM_DRIFT`・`OM_DRIFT_DOWN`・`GROWTH_DOWN_FRAC` が 1 か所の出所で、`gen.py` と `make-spec-v3.py` が同じ値を読む (幅を変えて spec を作り直せば、SP7・SP14 が範囲を見直す)。
 - **#155 (出題) へ**: §3 の試算は、`draw` の段の指定を累積にした版 (設計 §2.7 の採用案) で測った。本体の `draw` はまだ「段がちょうど同じ」なので、#155 が累積にするまでは、この表のプールでも 3〜5 社目・6〜8 社目で種類が絞られる (設計 §2.7 の「今のとおり」の行)。
 - **#140 (むずかしい) へ**: `companies.json` の `irUnit` と見本は本ブランチの commit 9b9e08a で全社億円になっている (責任者の決定)。#140 はこれを取り込む。見本は両方の難易度で共有。
 - **第 2 版の設計表からの変更**: 問題 44 → 85。形 3 → 1 (E1〜E3 を捨て、もうけ 1 つ)。15 種類のうち E-18・E-20・E-06・E-07・E-09 を外し、E-24〜E-28 を足した。(会社 × 期) 11 → 10 (1 社 1 期。第 2 版は c01 が 2 期)。減収の正常な問題は要らない (見出し語が営業利益の主張だけ)。

@@ -156,9 +156,9 @@ describe('正常な問題 10 問と見本 (N 群。コミットした src/data)'
     }
   });
 
-  it('N11: 見本 c09 2023 の problem は、commit 9b9e08a のものと同一 (SHA-256 が同じ。notes は main の #165 で除かれた)', () => {
+  it('N11: 見本 c09 2023 の problem の SHA-256 が、この Sub-task で決めた値のまま (生成器が変わって見本が動いたら赤)。9b9e08a のものとは、IR の見通し (次期予想) の数字だけが違う', () => {
     const sha = createHash('sha256').update(JSON.stringify(sampleFile.problem)).digest('hex');
-    expect(sha).toBe('068ce3620264e070e1d42de9507cb593c392bb14be87f122f0a7980458c40587');
+    expect(sha).toBe('c659240da19bdb00f6fc34e9eade1ff2ee9f56e9533903648050049a9a8f822a');
   });
 });
 
@@ -260,23 +260,24 @@ describe('異変の問題 75 問 (A 群。コミットした src/data)', () => {
       const bc = cardOf(base);
       const sl = (key: string) => slotOf(card, key)?.text as string;
       const e = edit(s);
-      const need: string[] = {
-        'E-17': [card.headline?.word as string, sl('opPrev'), sl('opCurr')],
-        'E-02': [sl('opPrev'), sl('opCurr')],
-        'E-24': [sl('sales'), sl('opCurr')],
-        'E-12': [sl('margin'), slotOf(bc, 'margin')?.text as string],
-        'E-04': [card.frame.periodLabel, card.footer?.periodEnd as string],
-        'E-03': [nameOf(slotOf(card, e.slot as string)?.label as string), '億円', '百万円'],
-        'E-21': [sl(e.slot as string), slotOf(bc, e.slot as string)?.text as string],
-        'E-25': [sl('sales')],
-        'E-26': [sl('opPrev'), sl('opCurr'), e.word as string],
-        'E-27': [sl(e.slot as string)],
-        'E-28': [card.footer?.periodEnd as string],
-        'E-05': [e.word as string, LABELS[e.itemKey as string] as string],
-        'E-19': [nameOf(slotOf(bc, e.slot as string)?.label as string)],
-        'E-22': [e.slot === 'headline' ? (card.headline?.word as string) : nameOf(slotOf(card, e.slot as string)?.label as string)],
-        'E-23': [e.word as string, bc.headline?.word as string, sl('opPrev'), sl('opCurr')],
-      }[s.kind as string] as string[];
+      const needs: Record<string, () => string[]> = {
+        'E-17': () => [card.headline?.word as string, sl('opPrev'), sl('opCurr')],
+        'E-02': () => [sl('opPrev'), sl('opCurr')],
+        'E-24': () => [sl('sales'), sl('opCurr')],
+        'E-12': () => [sl('margin'), slotOf(bc, 'margin')?.text as string],
+        'E-04': () => [card.frame.periodLabel, card.footer?.periodEnd as string],
+        'E-03': () => [nameOf(slotOf(card, e.slot as string)?.label as string), '億円', '百万円'],
+        'E-21': () => [sl(e.slot as string), slotOf(bc, e.slot as string)?.text as string],
+        'E-25': () => [sl('sales')],
+        'E-26': () => [sl('opPrev'), sl('opCurr'), e.word as string],
+        'E-27': () => [sl(e.slot as string)],
+        'E-28': () => [card.footer?.periodEnd as string],
+        'E-05': () => [e.word as string, LABELS[e.itemKey as string] as string],
+        'E-19': () => [nameOf(slotOf(bc, e.slot as string)?.label as string)],
+        'E-22': () => [e.slot === 'headline' ? (card.headline?.word as string) : nameOf(slotOf(card, e.slot as string)?.label as string)],
+        'E-23': () => [e.word as string, bc.headline?.word as string, sl('opPrev'), sl('opCurr')],
+      };
+      const need = (needs[s.kind as string] as () => string[])();
       for (const v of need) expect(text, `${s.id} (${s.kind}) に「${v}」`).toContain(v);
     }
   });
@@ -314,8 +315,8 @@ describe('データ全体 (D 群)', () => {
     const r = verifyDataset({
       companies,
       kinds,
-      problems: files.map((f, i) => ({ file: f, value: problems[i] })),
-      samples: [{ file: 'sample.json', value: sampleFile }],
+      problems: files.map((f, i) => ({ file: `${DATA}/problems/easy/${f}`, value: problems[i] })),
+      samples: [{ file: `${DATA}/samples/sample.json`, value: sampleFile }],
     });
     expect(r.errors.map((e) => `[${e.code}] ${e.message}`)).toEqual([]);
     expect(r.shortfalls.filter((e) => e.difficulty === 'easy').map((e) => `[${e.code}] ${e.message}`)).toEqual([]);

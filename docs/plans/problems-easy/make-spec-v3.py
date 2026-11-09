@@ -18,7 +18,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from profiles import BASE_YEAR, PROFILES  # noqa: E402  数字の係数 (gen.py と同じ)
+from profiles import BASE_YEAR, GROWTH_DOWN_FRAC, OM_DRIFT, OM_DRIFT_DOWN, PROFILES  # noqa: E402  数字の係数・ゆらぎ (gen.py と同じ)
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 
@@ -65,19 +65,22 @@ BY = {c['company']: c for c in COMPANIES}
 
 # 営業利益率のゆらぎ (gen.py の _step: om = p.om + U(−0.004, +0.006))・売上高の伸び (p.growth の % の範囲) から、1 社 1 期の売上高・営業利益の取りうる範囲を導く。
 # 期までの期数 = fy − BASE_YEAR (基準年の前期から数える。gen.py の years = BASE_YEAR+1 …)。丸め (10 の倍数) の ±5 は営業利益の下限・上限に足す。
-OM_LO, OM_HI = -0.004, 0.006
-
 
 def ranges(c):
     p = PROFILES[c['company']]
     steps = c['fy'] - BASE_YEAR
     lo, hi = p['growth']
+    om_lo, om_hi = OM_DRIFT
+    # 目標の期 (最後の期) だけ、減益 (down) は下側の分布 (gen.py と同じ)。途中の期は上と同じ分布で、最大・最小は同じ式で包む
     sales_min = p['sales0'] * (1 + lo / 100) ** steps
     sales_max = p['sales0'] * (1 + hi / 100) ** steps
+    if c['op'] == 'down':
+        om_lo = min(om_lo, OM_DRIFT_DOWN[0])
+        om_hi = max(om_hi, OM_DRIFT_DOWN[1])
     return dict(
         salesRange=[int(sales_min), int(sales_max)],
-        opRange=[int(sales_min * (p['om'] + OM_LO) - 5), int(sales_max * (p['om'] + OM_HI) + 5)],
-        omRange=[round(p['om'] + OM_LO, 4), round(p['om'] + OM_HI, 4)],
+        opRange=[int(sales_min * (p['om'] + om_lo) - 5), int(sales_max * (p['om'] + om_hi) + 5)],
+        omRange=[round(p['om'] + om_lo, 4), round(p['om'] + om_hi, 4)],
     )
 
 
