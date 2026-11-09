@@ -91,6 +91,15 @@ describe('DS1・DS2・DS9・DS20 errors', () => {
     expect(verifyDataset(replace(input, target.id, shortComma)).errors.some((e) => e.code === 'card-edit-op' && e.problem === target.id)).toBe(true);
     expect(verifyDataset(input).errors.filter((e) => e.code === 'card-edit-op')).toEqual([]);
   });
+  it('DS20b: 種類の editOp と違う op の cardEdits (H-33 = dup の問題に drop)・editOp の無い種類の cardEdits → errors の card-edit-op (種類の取り違えを通さない。包括レビュー N1)', () => {
+    const input = pool({ difficulty: 'hard' });
+    const target = anomalyIn(input, 'H-33');
+    const wrongOp = { ...target, cardEdits: [{ card: 0, slot: 'audit', op: 'drop' }] } as Problem;
+    const r = verifyDataset(replace(input, target.id, wrongOp));
+    expect(r.errors.some((e) => e.code === 'card-edit-op' && e.problem === target.id && e.message.includes('dup'))).toBe(true);
+    const noOp = { ...input, kinds: input.kinds.map((k) => (k.id === 'H-33' ? (({ editOp: _dropped, ...rest }) => rest)(k) : k)) as AnomalyKind[] };
+    expect(verifyDataset(noOp).errors.some((e) => e.code === 'card-edit-op' && e.problem === target.id)).toBe(true);
+  });
 });
 
 describe('DS3 card-relation-extra・DS4 card-text-length・DS5 card-invisible', () => {
@@ -361,6 +370,13 @@ describe('KD 種類の定義 (anomaly-kinds.json。§6.4)', () => {
     expect(byId('E-17').relationChecks).toEqual(['R-dir']);
     expect(byId('E-03').primaryRules).toContain('card-unit');
     expect(byId('E-03').primaryRules).toContain('unit-consistency');
+  });
+  it('KD6: cardEdits を使う種類は editOp を持つ (種類 → op の対応。包括レビュー N1)。ほかの種類は持たない', () => {
+    const ops: Record<string, string> = {
+      'E-03': 'unit', 'E-19': 'drop', 'E-21': 'format', 'E-22': 'dup', 'E-23': 'headline', 'E-25': 'sign', 'E-26': 'suffix', 'E-27': 'glyph', 'E-28': 'day',
+      'H-29': 'unit', 'H-31': 'drop', 'H-32': 'format', 'H-33': 'dup', 'H-34': 'sign',
+    };
+    for (const k of dataKinds) expect(k.editOp, k.id).toBe(ops[k.id]);
   });
   it('KD4: 種類が参照する規則はすべて存在する', () => {
     const all = [...HARD_RULE_IDS, ...SOFT_RULE_IDS];

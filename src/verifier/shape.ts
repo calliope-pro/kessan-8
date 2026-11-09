@@ -1,5 +1,5 @@
 // 型の形の検証 (実行時)。記述子は型から機械的に写し、キーの漏れ・余りは tsc が止める。
-import { ANOMALY_FAMILIES, CLAIM_METRICS, IR_SLIDES, RELATION_CHECKS } from '../domain/types.ts';
+import { ANOMALY_FAMILIES, CARD_EDIT_OPS, CLAIM_METRICS, IR_SLIDES, RELATION_CHECKS } from '../domain/types.ts';
 import type {
   Anomaly,
   AnomalyKind,
@@ -127,7 +127,7 @@ const COMPANY = obj<Company>(
   },
   { business: S },
 );
-const KIND = obj<AnomalyKind>({ id: S, family: { enum: ANOMALY_FAMILIES }, name: S, primaryRules: list(S), allowedRules: list(S) }, { tip: S, relationChecks: list({ enum: RELATION_CHECKS }), ledger: { enum: ['v3'] } });
+const KIND = obj<AnomalyKind>({ id: S, family: { enum: ANOMALY_FAMILIES }, name: S, primaryRules: list(S), allowedRules: list(S) }, { tip: S, relationChecks: list({ enum: RELATION_CHECKS }), ledger: { enum: ['v3'] }, editOp: { enum: CARD_EDIT_OPS } });
 
 const typeName = (v: unknown): string => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
 

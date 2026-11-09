@@ -95,7 +95,8 @@ export function cardRelationIssues(card: Card): RelationIssue[] {
 /** この異変の問題で、落ちてよい card-relation の検査: 種類の relationChecks + 欄の drop で落とした欄を読む検査 (設計 §1.2 の表)。 */
 export function relationAllowed(problem: Problem, kind: AnomalyKind): RelationCheck[] {
   const allowed = new Set<RelationCheck>(kind.relationChecks ?? []);
-  for (const e of problem.cardEdits ?? []) {
+  // 欄の drop で落ちる検査を許すのは、drop の種類 (E-19・H-31) だけ。dup の種類などに drop の問題が来ても許さない (種類の取り違えを通さない)
+  for (const e of kind.editOp === 'drop' ? (problem.cardEdits ?? []) : []) {
     if (e.op !== 'drop') continue;
     for (const check of RELATION_CHECKS) if (RELATION_READS[check].includes(e.slot)) allowed.add(check);
   }
@@ -105,7 +106,7 @@ export function relationAllowed(problem: Problem, kind: AnomalyKind): RelationCh
 // ---- cardEdits の当てかた (設計 §1.6) ----
 
 /** cardEdits が、§1.6 の op ごとに当ててよい欄に当たっているか (検査 5 とは別の検査)。形に無い欄の編集は、ここでは数えない (anomalyIssues が拾う)。 */
-export function cardEditIssues(problem: Problem, company: Company): string[] {
+export function cardEditIssues(problem: Problem, company: Company, kinds?: AnomalyKind[]): string[] {
   const edits = problem.cardEdits ?? [];
   if (edits.length === 0) return [];
   let card: Card;
@@ -116,6 +117,15 @@ export function cardEditIssues(problem: Problem, company: Company): string[] {
     throw error;
   }
   const out: string[] = [];
+  // 種類と op の対応 (kinds を渡したとき): 種類の editOp と違う op・editOp の無い種類の cardEdits は、種類の取り違え (答え合わせの文言とカードの見え方が食い違う)
+  if (kinds !== undefined && problem.anomaly !== null) {
+    const kind = kinds.find((k) => k.id === problem.anomaly?.kind);
+    for (const e of edits) {
+      if (kind === undefined) out.push(`cardEdits (${e.op}): 種類 ${problem.anomaly.kind} が一覧に無い`);
+      else if (kind.editOp === undefined) out.push(`cardEdits (${e.op}): 種類 ${kind.id} は cardEdits を使わない (editOp が無い)`);
+      else if (kind.editOp !== e.op) out.push(`cardEdits (${e.op}): 種類 ${kind.id} が使う op は ${kind.editOp}`);
+    }
+  }
   const intDigits = (text: string) => (text.replace(/[^\d.]/g, '').split('.')[0] ?? '').length;
   for (const e of edits) {
     const at = `cardEdits (${e.op})`;
@@ -155,9 +165,14 @@ export function cardEditIssues(problem: Problem, company: Company): string[] {
       case 'day':
         if (e.slot !== 'period') out.push(`${at}: 日を変えられるのは period だけ`);
         break;
-      case 'headline':
-        if (!['増収', '減収'].includes(e.word)) out.push(`${at}: 見出し語 ${e.word} は、元の語の組 (${HEADLINE_WORDS.join('・')}) の外 (増収・減収) でない`);
+      case 'headline': {
+        // 向きを変えない語だけ (増益 → 増収、減益 → 減収)。向きが逆の語は E-17 と同時に見える (設計 §2.2 E-23)
+        const original = card.headline?.word;
+        const want = original === HEADLINE_WORDS[0] ? '増収' : original === HEADLINE_WORDS[1] ? '減収' : undefined;
+        if (want === undefined) out.push(`${at}: 元の見出し語が無い (営業利益の主張が無い問題には、見出し語の編集を当てられない)`);
+        else if (e.word !== want) out.push(`${at}: 元の見出し語 ${original} に対して ${e.word} は、向きを変えない語でない (${want} だけ)`);
         break;
+      }
       case 'drop':
         if (e.slot === 'headline' || e.slot === 'frame') out.push(`${at}: 表題・見出し語は消さない (${e.slot})`);
         break;

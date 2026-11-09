@@ -248,7 +248,7 @@ function cardChecks(judged: { p: Problem; company: Company; result: VerifyResult
       continue;
     }
     // cardEdits を当てたカードも、数字・文の数の上限を守る (dup を持つ異変のカードは +1。設計 §1.1)。導けない編集 (RangeError) は握りつぶさず errors
-    for (const m of cardEditIssues(p, company)) errors.push({ code: 'card-edit-op', problem: p.id, message: `${p.id}: ${m}` });
+    for (const m of cardEditIssues(p, company, kinds)) errors.push({ code: 'card-edit-op', problem: p.id, message: `${p.id}: ${m}` });
     let edited: ReturnType<typeof deriveCards> | undefined;
     try {
       edited = deriveCards(p, company, p.difficulty);
