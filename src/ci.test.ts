@@ -105,7 +105,7 @@ describe('.github/workflows/ci.yml', () => {
   });
 });
 
-describe('カード v2 の検証 (docs/test-cases/cards.md L4・L5)', () => {
+describe('カード v3 の検証 (docs/test-cases/cards.md L4・L5)', () => {
   it('L5: check ジョブが verify:data --require-complete を回し、--require-cards をデータの Task が足すと書いてある', () => {
     const check = jobs().check ?? '';
     expect(check).toContain('npm run verify:data -- --require-complete');

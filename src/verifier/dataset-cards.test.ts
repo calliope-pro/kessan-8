@@ -98,7 +98,7 @@ describe('DS3 card-relation-extra・DS4 card-text-length・DS5 card-invisible', 
     const input = pool();
     expect(codesOf(verifyDataset(input))).not.toContain('card-relation-extra');
     const target = anomalyIn(input, 'E-12');
-    const noChecks = { ...input, kinds: input.kinds.map((k) => (k.id === 'E-12' ? { ...k, relationChecks: undefined } : k)) as AnomalyKind[] };
+    const noChecks = { ...input, kinds: input.kinds.map((k) => (k.id === 'E-12' ? (({ relationChecks: _dropped, ...rest }) => rest)(k) : k)) as AnomalyKind[] };
     const r = verifyDataset(noChecks);
     const e = r.shortfalls.filter((s) => s.code === 'card-relation-extra');
     expect(e.map((s) => s.problem)).toEqual(pb(noChecks).filter((p) => p.anomaly?.kind === 'E-12').map((p) => p.id));
@@ -269,7 +269,7 @@ describe('DS17・DS18 二重の食い違い・最小のずれ・場所・cashSco
     const normal = normalIn(input);
     const p0 = set({ ...normal, id: 'easy-906' }, 'tanshin.incomeStatement.current.operatingIncome', 124);
     const actual = [...new Set(verifyProblem(p0, companyB()).hard.map((v) => v.rule))].sort();
-    const p = set(p0, 'anomaly', { kind: 'E-02x', places: [{ doc: 'tanshin', path: 'summary.operatingMargin' }], explanation: 'x', expectedRules: actual, base: normal.id, changed: changedCells(normal, p0) });
+    const p = set(p0, 'anomaly', { kind: 'E-02x', places: [{ doc: 'tanshin', path: 'incomeStatement.current.operatingIncome' }], explanation: 'x', expectedRules: actual, base: normal.id, changed: changedCells(normal, p0) });
     const kind = { ...kindOf('E-02x', 'calculation', ['ratio-operating-margin'], actual), ledger: 'v3' as const };
     const r = verifyDataset({ ...plus(input, p), kinds: [...input.kinds, kind] });
     const e = r.shortfalls.find((s) => s.code === 'card-double-discrepancy');

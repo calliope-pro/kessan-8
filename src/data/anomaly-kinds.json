@@ -22,15 +22,17 @@
   },
   {
     "id": "E-02",
-    "family": "appearance",
+    "family": "calculation",
     "name": "桁の取り違え",
     "primaryRules": [
       "sum-net-sales",
       "sum-operating-income",
       "sum-ordinary-income",
-      "sum-net-income-parent"
+      "sum-net-income-parent",
+      "ratio-operating-margin"
     ],
     "allowedRules": [
+      "ratio-operating-margin",
       "sum-change-net-income-parent",
       "sum-change-net-sales",
       "sum-change-operating-income",
@@ -39,7 +41,12 @@
       "sum-net-sales",
       "sum-operating-income",
       "sum-ordinary-income"
-    ]
+    ],
+    "relationChecks": [
+      "R-margin",
+      "R-range"
+    ],
+    "ledger": "v3"
   },
   {
     "id": "E-03",
@@ -47,12 +54,15 @@
     "name": "表記ルールの食い違い (単位・負の数)",
     "primaryRules": [
       "unit-consistency",
-      "sign-consistency"
+      "sign-consistency",
+      "card-unit"
     ],
     "allowedRules": [
+      "card-unit",
       "sign-consistency",
       "unit-consistency"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "E-04",
@@ -71,7 +81,8 @@
       "dates-order",
       "dates-period-end",
       "header-period-label"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "E-05",
@@ -82,7 +93,8 @@
     ],
     "allowedRules": [
       "label-spelling"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "E-06",
@@ -208,7 +220,11 @@
       "ratio-equity-ratio",
       "ratio-operating-margin",
       "xdoc-supp-equity-ratio"
-    ]
+    ],
+    "relationChecks": [
+      "R-margin"
+    ],
+    "ledger": "v3"
   },
   {
     "id": "E-13",
@@ -305,7 +321,126 @@
     ],
     "allowedRules": [
       "claims-direction"
-    ]
+    ],
+    "relationChecks": [
+      "R-dir"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-19",
+    "family": "appearance",
+    "name": "欄が 1 つ足りない",
+    "primaryRules": [
+      "card-slots"
+    ],
+    "allowedRules": [
+      "card-slots"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-21",
+    "family": "appearance",
+    "name": "数字のカンマの位置が違う",
+    "primaryRules": [
+      "card-format"
+    ],
+    "allowedRules": [
+      "card-format"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-22",
+    "family": "appearance",
+    "name": "同じ欄が 2 回出る",
+    "primaryRules": [
+      "card-slots"
+    ],
+    "allowedRules": [
+      "card-slots"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-23",
+    "family": "appearance",
+    "name": "見出し語が別の型の語",
+    "primaryRules": [
+      "card-headline"
+    ],
+    "allowedRules": [
+      "card-headline"
+    ],
+    "relationChecks": [
+      "R-dir"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-24",
+    "family": "calculation",
+    "name": "売上高が営業利益より小さい",
+    "primaryRules": [
+      "ratio-operating-margin"
+    ],
+    "allowedRules": [
+      "ratio-operating-margin"
+    ],
+    "relationChecks": [
+      "R-margin",
+      "R-lt"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-25",
+    "family": "appearance",
+    "name": "あり得ない符号",
+    "primaryRules": [
+      "card-sign"
+    ],
+    "allowedRules": [
+      "card-sign"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-26",
+    "family": "appearance",
+    "name": "添え字が取り違えられている",
+    "primaryRules": [
+      "card-column-suffix"
+    ],
+    "allowedRules": [
+      "card-column-suffix"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-27",
+    "family": "appearance",
+    "name": "数字に数字でない字が混じる",
+    "primaryRules": [
+      "card-digits"
+    ],
+    "allowedRules": [
+      "card-digits"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "E-28",
+    "family": "appearance",
+    "name": "期末日が存在しない日付",
+    "primaryRules": [
+      "card-date-valid"
+    ],
+    "allowedRules": [
+      "card-date-valid"
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-01",
@@ -336,7 +471,8 @@
       "xdoc-supp-cash",
       "xdoc-supp-debt",
       "xdoc-supp-equity-ratio"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-02",
@@ -375,7 +511,8 @@
       "cf-subtotal",
       "link-cf-cash-end",
       "link-cf-start"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-04",
@@ -387,7 +524,8 @@
     "allowedRules": [
       "cf-ending",
       "link-cf-cash-end"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-05",
@@ -403,7 +541,8 @@
       "cf-subtotal",
       "link-cf-cash-end",
       "link-cf-receivables"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-06",
@@ -553,7 +692,8 @@
       "xdoc-results-operating-income",
       "xdoc-supp-capex-depreciation",
       "xdoc-supp-cash"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-14",
@@ -641,7 +781,8 @@
       "xdoc-supp-capex-depreciation",
       "xdoc-supp-cash",
       "xdoc-supp-debt"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-18",
@@ -679,7 +820,8 @@
       "xdoc-seg-names",
       "xdoc-seg-profit",
       "xdoc-seg-sales"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-20",
@@ -690,7 +832,8 @@
     ],
     "allowedRules": [
       "ir-supp-net-debt"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-21",
@@ -701,7 +844,8 @@
     ],
     "allowedRules": [
       "claims-direction"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-22",
@@ -712,7 +856,8 @@
     ],
     "allowedRules": [
       "audit-note"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-23",
@@ -723,7 +868,8 @@
     ],
     "allowedRules": [
       "accounting-policy-match"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-24",
@@ -734,7 +880,8 @@
     ],
     "allowedRules": [
       "subsequent-event-match"
-    ]
+    ],
+    "ledger": "v3"
   },
   {
     "id": "H-28",
@@ -745,6 +892,91 @@
     ],
     "allowedRules": [
       "account-section"
-    ]
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "H-29",
+    "family": "card-form",
+    "name": "資料の金額の単位の語が 1 つだけ違う",
+    "primaryRules": [
+      "card-unit"
+    ],
+    "allowedRules": [
+      "card-unit"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "H-30",
+    "family": "card-form",
+    "name": "資料の科目名の誤字",
+    "primaryRules": [
+      "label-spelling"
+    ],
+    "allowedRules": [
+      "label-spelling"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "H-31",
+    "family": "card-form",
+    "name": "資料の欄が 1 つ足りない",
+    "primaryRules": [
+      "card-slots"
+    ],
+    "allowedRules": [
+      "card-slots"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "H-32",
+    "family": "card-form",
+    "name": "資料の数字のカンマの位置が違う",
+    "primaryRules": [
+      "card-format"
+    ],
+    "allowedRules": [
+      "card-format"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "H-33",
+    "family": "card-form",
+    "name": "資料の同じ欄が 2 回出る",
+    "primaryRules": [
+      "card-slots"
+    ],
+    "allowedRules": [
+      "card-slots"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "H-34",
+    "family": "card-form",
+    "name": "資料にあり得ない符号",
+    "primaryRules": [
+      "card-sign"
+    ],
+    "allowedRules": [
+      "card-sign"
+    ],
+    "ledger": "v3"
+  },
+  {
+    "id": "H-35",
+    "family": "cross-document",
+    "name": "社名が短信と IR で違う",
+    "primaryRules": [
+      "header-company-name"
+    ],
+    "allowedRules": [
+      "header-company-name"
+    ],
+    "ledger": "v3"
   }
 ]

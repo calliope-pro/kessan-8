@@ -1,5 +1,5 @@
 // 型の形の検証 (実行時)。記述子は型から機械的に写し、キーの漏れ・余りは tsc が止める。
-import { ANOMALY_FAMILIES, CLAIM_METRICS, IR_SLIDES, SHAPE_IDS } from '../domain/types.ts';
+import { ANOMALY_FAMILIES, CLAIM_METRICS, IR_SLIDES, RELATION_CHECKS } from '../domain/types.ts';
 import type {
   Anomaly,
   AnomalyKind,
@@ -127,7 +127,7 @@ const COMPANY = obj<Company>(
   },
   { business: S },
 );
-const KIND = obj<AnomalyKind>({ id: S, family: { enum: ANOMALY_FAMILIES }, name: S, primaryRules: list(S), allowedRules: list(S) }, { tip: S });
+const KIND = obj<AnomalyKind>({ id: S, family: { enum: ANOMALY_FAMILIES }, name: S, primaryRules: list(S), allowedRules: list(S) }, { tip: S, relationChecks: list({ enum: RELATION_CHECKS }), ledger: { enum: ['v3'] } });
 
 const typeName = (v: unknown): string => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
 
@@ -177,10 +177,9 @@ function checkPlace(value: unknown, where: string, out: string[]): void {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return void out.push(`${where}: 型が違う (期待 object、実際 ${typeName(value)})`);
   const r = value as Record<string, unknown>;
   if (r.doc === 'card') {
-    if (!SHAPE_IDS.includes(r.shape as never)) out.push(`${where}.shape: ${JSON.stringify(r.shape)} は ${JSON.stringify(SHAPE_IDS)} のどれでもない`);
-    if (typeof r.card !== 'number' || !Number.isInteger(r.card) || r.card < 0) out.push(`${where}.card: 0 以上の整数でない`);
+    if (r.card !== 0) out.push(`${where}.card: 0 でない (カードと資料は 1 つの欄の並び)`);
     if (typeof r.slot !== 'string') out.push(`${where}.slot: 文字列でない`);
-    for (const k of Object.keys(r)) if (!['doc', 'shape', 'card', 'slot'].includes(k)) out.push(`${where}.${k}: 未知のキー`);
+    for (const k of Object.keys(r)) if (!['doc', 'card', 'slot'].includes(k)) out.push(`${where}.${k}: 未知のキー`);
     return;
   }
   if (r.doc !== 'tanshin' && r.doc !== 'ir') out.push(`${where}.doc: ${JSON.stringify(r.doc)} は tanshin・ir・card のどれか`);
@@ -191,13 +190,16 @@ function checkPlace(value: unknown, where: string, out: string[]): void {
   for (const k of Object.keys(r)) if (!['doc', 'path', 'itemKey'].includes(k)) out.push(`${where}.${k}: 未知のキー`);
 }
 
-/** 形のずれの編集 (CardEdit)。op ごとに、持つキーが決まっている。 */
+/** 形のずれの編集 (CardEdit)。op ごとに、持つキーが決まっている (docs/design-v3.md §1.6)。 */
 const EDIT_KEYS: Record<string, string[]> = {
   drop: ['slot'],
-  swap: ['slots'],
   format: ['slot', 'style'],
   unit: ['slot', 'unit'],
   dup: ['slot'],
+  suffix: ['slot', 'word'],
+  glyph: ['slot', 'at'],
+  sign: ['slot'],
+  day: ['slot', 'day'],
   headline: ['word'],
 };
 
@@ -207,17 +209,21 @@ function checkCardEdit(value: unknown, where: string, out: string[]): void {
   const op = typeof r.op === 'string' ? r.op : '';
   const needed = EDIT_KEYS[op];
   if (needed === undefined) out.push(`${where}.op: ${JSON.stringify(r.op)} は ${JSON.stringify(Object.keys(EDIT_KEYS))} のどれでもない`);
-  if (!SHAPE_IDS.includes(r.shape as never)) out.push(`${where}.shape: ${JSON.stringify(r.shape)} は ${JSON.stringify(SHAPE_IDS)} のどれでもない`);
-  if (typeof r.card !== 'number' || !Number.isInteger(r.card) || r.card < 0) out.push(`${where}.card: 0 以上の整数でない`);
+  if (r.card !== 0) out.push(`${where}.card: 0 でない (カードと資料は 1 つの欄の並び)`);
   for (const k of needed ?? []) {
     if (!(k in r)) out.push(`${where}.${k}: 欠けている`);
-    else if (k === 'slots') {
-      if (!Array.isArray(r.slots) || r.slots.length !== 2 || r.slots.some((x) => typeof x !== 'string')) out.push(`${where}.slots: 文字列 2 つの配列でない`);
-    } else if (k === 'style') {
+    else if (k === 'style') {
       if (r.style !== 'no-comma' && r.style !== 'comma-shift') out.push(`${where}.style: ${JSON.stringify(r.style)} は no-comma か comma-shift`);
+    } else if (k === 'at') {
+      if (typeof r.at !== 'number' || !Number.isInteger(r.at)) out.push(`${where}.at: 整数でない`);
+    } else if (k === 'day') {
+      if (r.day !== 32) out.push(`${where}.day: ${JSON.stringify(r.day)} は 32 でない`);
     } else if (typeof r[k] !== 'string') out.push(`${where}.${k}: 文字列でない`);
+    else if (op === 'suffix' && k === 'word' && r.word !== '前期' && r.word !== '当期') out.push(`${where}.word: ${JSON.stringify(r.word)} は 前期 か 当期`);
+    else if (op === 'suffix' && k === 'slot' && r.slot !== 'opPrev' && r.slot !== 'opCurr') out.push(`${where}.slot: ${JSON.stringify(r.slot)} は opPrev か opCurr`);
+    else if (op === 'day' && k === 'slot' && r.slot !== 'period') out.push(`${where}.slot: ${JSON.stringify(r.slot)} は period`);
   }
-  for (const k of Object.keys(r)) if (!['shape', 'card', 'op', ...(needed ?? [])].includes(k)) out.push(`${where}.${k}: 未知のキー`);
+  for (const k of Object.keys(r)) if (!['card', 'op', ...(needed ?? [])].includes(k)) out.push(`${where}.${k}: 未知のキー`);
 }
 
 /** 未検証の JSON が Problem の形か。誤りの配列 (空 = 形は正しい)。 */
