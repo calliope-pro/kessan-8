@@ -105,6 +105,8 @@ describe('6.2 異変の問題に許す検査 (AL1〜AL11)', () => {
   const E17 = k('E-17', ['R-dir']);
   const E23 = k('E-23', ['R-dir']);
   const bare = k('E-99');
+  const dropKind: AnomalyKind = { ...k('E-19'), editOp: 'drop' };
+  const dupKind: AnomalyKind = { ...k('E-22'), editOp: 'dup' };
   const extra = (p: Problem, kind: AnomalyKind): string[] => checks(p).filter((c) => !relationAllowed(p, kind).includes(c));
   const big = (): Problem => set(set(easy(), 'tanshin.incomeStatement.current.netSales', 20000), 'tanshin.summary.operatingMargin', 6.2); // 1,240 ÷ 20,000
 
@@ -153,15 +155,19 @@ describe('6.2 異変の問題に許す検査 (AL1〜AL11)', () => {
       ['opPrev', ['R-dir', 'R-ne', 'R-range']],
     ] as const) {
       const p = withEdit(easy(), { card: 0, slot, op: 'drop' });
-      expect([...relationAllowed(p, bare)].sort(), slot).toEqual([...want]);
-      expect(extra(p, bare), slot).toEqual([]);
+      expect([...relationAllowed(p, dropKind)].sort(), slot).toEqual([...want]);
+      expect(extra(p, dropKind), slot).toEqual([]);
+      // 欄の drop を許すのは drop の種類だけ (dup の種類・editOp の無い種類に drop の問題が来ても、落とした欄を読む検査は許さない)
+      expect(relationAllowed(p, dupKind), slot).toEqual([]);
+      expect(relationAllowed(p, bare), slot).toEqual([]);
+      expect(extra(p, dupKind).length, slot).toBeGreaterThan(0);
     }
   });
   it('AL8 H-31 (むずかしいの drop): 5 検査は落ちず、許す検査は空', () => {
     for (const slot of ['pbt', 'audit', 'irSales', 'period'])  {
       const p = withEdit(hard(), { card: 0, slot, op: 'drop' });
       expect(checks(p), slot).toEqual([]);
-      expect(relationAllowed(p, bare), slot).toEqual([]);
+      expect(relationAllowed(p, { ...dropKind, id: 'H-31' }), slot).toEqual([]);
     }
   });
   it('AL9 上のほかのすべての種類は 5 検査が落ちない (表示だけを変える・カードの外を変える)', () => {
@@ -325,16 +331,40 @@ describe('2.2 cardEditIssues (K11a〜K11j。op ごとに当ててよい欄)', ()
   });
   it('K11g day・K11h headline・K11i drop', () => {
     expect(at(easy(), { card: 0, slot: 'period', op: 'day', day: 32 })).toEqual([]);
+    // 見出し語の編集は、向きを変えない語だけ (増益 → 増収、減益 → 減収)。向きが逆の語は E-17 と同時に見える (設計 §2.2 E-23。包括レビュー B1)
     expect(at(easy(), { card: 0, op: 'headline', word: '増収' })).toEqual([]);
-    expect(at(easy(), { card: 0, op: 'headline', word: '減収' })).toEqual([]);
+    expect(at(easy(), { card: 0, op: 'headline', word: '減収' }).length).toBe(1); // 増益のカードに減収
+    const down = set(easy(), 'ir.statements.0.claims.1.direction', 'down'); // 減益のカード
+    expect(at(down, { card: 0, op: 'headline', word: '減収' })).toEqual([]);
+    expect(at(down, { card: 0, op: 'headline', word: '増収' }).length).toBe(1); // 減益のカードに増収
     expect(at(easy(), { card: 0, op: 'headline', word: '減益' }).length).toBe(1);
     expect(at(easy(), { card: 0, op: 'headline', word: '増益' }).length).toBe(1);
+    expect(at(set(easy(), 'ir.statements', []), { card: 0, op: 'headline', word: '増収' }).length).toBe(1); // 見出し語が無い
     for (const [p, slot] of [[easy(), 'margin'], [hard(), 'audit'], [hard(), 'period'], [hard(), 'irSales']] as const) expect(at(p, { card: 0, slot, op: 'drop' }), slot).toEqual([]);
     for (const slot of ['headline', 'frame']) expect(at(easy(), { card: 0, slot, op: 'drop' }).length, slot).toBe(1);
   });
   it('編集が無い問題は空・形に無い欄の編集は例外にならない', () => {
     expect(cardEditIssues(easy(), C)).toEqual([]);
     expect(() => at(easy(), { card: 0, slot: 'nope', op: 'drop' })).not.toThrow();
+  });
+});
+
+describe('2.2 種類と cardEdits の op の対応 (K11k。包括レビュー N1)', () => {
+  const kind = (id: string, editOp?: CardEdit['op']): AnomalyKind => ({ ...kindOf(id, 'appearance', ['card-slots']), ...(editOp ? { editOp } : {}) });
+  const drop = withEdit(easy(), { card: 0, slot: 'margin', op: 'drop' });
+  const dup = withEdit(easy(), { card: 0, slot: 'opCurr', op: 'dup' });
+  it('種類の editOp と編集の op が同じなら誤りなし。違えば card-edit-op の文 (E-19 に dup・E-22 に drop)', () => {
+    expect(cardEditIssues(drop, C, [kind('E-19', 'drop')])).toEqual([]);
+    expect(cardEditIssues(dup, C, [kind('E-22', 'dup')])).toEqual([]);
+    expect(cardEditIssues({ ...dup, anomaly: { kind: 'E-19', places: [], explanation: 'x', expectedRules: [] } }, C, [kind('E-19', 'drop')]).length).toBe(1);
+    expect(cardEditIssues({ ...drop, anomaly: { kind: 'E-22', places: [], explanation: 'x', expectedRules: [] } }, C, [kind('E-22', 'dup')]).length).toBe(1);
+  });
+  it('編集を持つ異変の種類が editOp を持たない・種類が引けない → 文。kinds を渡さなければ見ない。編集が無ければ見ない', () => {
+    const anomalous = (p: Problem, id: string): Problem => ({ ...p, anomaly: { kind: id, places: [], explanation: 'x', expectedRules: [] } });
+    expect(cardEditIssues(anomalous(drop, 'E-99'), C, [kind('E-99')]).length).toBe(1);
+    expect(cardEditIssues(anomalous(drop, 'E-00'), C, [kind('E-99', 'drop')]).length).toBe(1);
+    expect(cardEditIssues(anomalous(drop, 'E-99'), C)).toEqual([]);
+    expect(cardEditIssues(anomalous(easy(), 'E-19'), C, [kind('E-19', 'drop')])).toEqual([]);
   });
 });
 

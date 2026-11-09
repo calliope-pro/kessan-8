@@ -182,14 +182,14 @@ export function normalOf(id: string, difficulty: Difficulty, companyId: string):
   return { ...clone(normalB()), id, difficulty, companyId };
 }
 
-type Maker = { place: Problem['anomaly'] extends infer A ? (A extends { places: infer P } ? P : never) : never; primary: string[]; relationChecks?: string[]; change: (p: Problem) => Problem };
+type Maker = { editOp?: string; place: Problem['anomaly'] extends infer A ? (A extends { places: infer P } ? P : never) : never; primary: string[]; relationChecks?: string[]; change: (p: Problem) => Problem };
 const T = (path: string) => ({ doc: 'tanshin' as const, path });
 /** 台帳 v3 の種類のうち、データ全件のテストに使う 4 つ。見える・二重の食い違いが無い・許す検査だけが落ちる。 */
 const MAKERS: Record<string, Maker & { family: AnomalyKind['family']; difficulty: Difficulty }> = {
   'E-12': { family: 'calculation', difficulty: 'easy', place: [T('summary.operatingMargin')], primary: ['ratio-operating-margin'], relationChecks: ['R-margin'], change: (p) => set(p, 'tanshin.summary.operatingMargin', 22) },
   'E-24': { family: 'calculation', difficulty: 'easy', place: [T('incomeStatement.current.netSales')], primary: ['ratio-operating-margin'], relationChecks: ['R-margin', 'R-lt'], change: (p) => set(p, 'tanshin.incomeStatement.current.netSales', 744) },
   'H-22': { family: 'notes', difficulty: 'hard', place: [T('summary.auditNote')], primary: ['audit-note'], change: (p) => set(p, 'tanshin.summary.auditNote', '決算短信は監査済みです') },
-  'H-33': { family: 'card-form', difficulty: 'hard', place: [{ doc: 'card', card: 0, slot: 'audit' }], primary: ['card-slots'], change: (p) => ({ ...p, cardEdits: [{ card: 0, slot: 'audit', op: 'dup' }] }) },
+  'H-33': { editOp: 'dup', family: 'card-form', difficulty: 'hard', place: [{ doc: 'card', card: 0, slot: 'audit' }], primary: ['card-slots'], change: (p) => ({ ...p, cardEdits: [{ card: 0, slot: 'audit', op: 'dup' }] }) },
 };
 
 /** 台帳 v3 の種類の定義 (ledger: 'v3')。allowedRules は実際に落ちた規則。 */
@@ -198,7 +198,7 @@ export function ledgerKind(id: string, extra: Partial<AnomalyKind> = {}): Anomal
   if (!m) throw new Error(`作り方が無い: ${id}`);
   const sample = m.change(normalOf('x', m.difficulty, 'c1'));
   const actual = [...new Set(verifyProblem(sample, companyB()).hard.map((v) => v.rule))].sort();
-  return { ...kindOf(id, m.family, m.primary, [...new Set([...m.primary, ...actual])]), ledger: 'v3', ...(m.relationChecks ? { relationChecks: m.relationChecks as AnomalyKind['relationChecks'] } : {}), ...extra };
+  return { ...kindOf(id, m.family, m.primary, [...new Set([...m.primary, ...actual])]), ledger: 'v3', ...(m.relationChecks ? { relationChecks: m.relationChecks as AnomalyKind['relationChecks'] } : {}), ...(m.editOp ? { editOp: m.editOp as AnomalyKind['editOp'] } : {}), ...extra };
 }
 
 /** 基の正常な問題 base から、種類 id の異変を 1 つ作る (base・changed つき。tier は任意)。 */

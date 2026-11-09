@@ -178,6 +178,7 @@ describe('shapeErrors', () => {
       expect(kind({})).toEqual([]);
       expect(kind({ relationChecks: ['R-margin', 'R-lt'], ledger: 'v3' })).toEqual([]);
       expect(kind({ relationChecks: [] })).toEqual([]);
+      for (const op of ['drop', 'format', 'unit', 'dup', 'suffix', 'glyph', 'sign', 'day', 'headline']) expect(kind({ editOp: op }), op).toEqual([]);
     });
     it.each<[string, Record<string, unknown>]>([
       ['relationChecks に未知の名前', { relationChecks: ['R-margin', 'R-x'] }],
@@ -185,6 +186,8 @@ describe('shapeErrors', () => {
       ['ledger が v3 以外 (V3)', { ledger: 'V3' }],
       ['ledger が v3 以外 (v2)', { ledger: 'v2' }],
       ['ledger が真偽値', { ledger: true }],
+      ['editOp が未知', { editOp: 'swap' }],
+      ['editOp が配列', { editOp: ['drop'] }],
     ])('誤り: %s', (_n, extra) => expect(kind(extra).length).toBeGreaterThan(0));
   });
 });
