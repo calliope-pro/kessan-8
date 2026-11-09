@@ -208,7 +208,7 @@ Sub-task #167 (Task #139)。作成: 2026-11-09。置き換えるもの: 第 1 �
 
 **単位 (定義)**: 時間 = **組の経過時間**。Sub-task に取りかかってから、監視役と合意して閉じるまで (進める役の作業と、監視役のレビュー往復を含む。責任者・人間の待ちは含まない)。測り方: 同じ組の Sub-task が順に閉じるので、「直前の Sub-task が閉じた時刻 (最初は取りかかりの時刻) → その Sub-task が閉じた時刻」。時刻は GitHub の issue の `createdAt`・`closedAt` (`gh issue view <番号> --json createdAt,closedAt`。UTC。JST は +9 時間)。commit の時刻は使わない (第 1 版の commit は 11-04 02:57〜03:46 JST に固まっていて作業時間を表さない)。見積もりの欄には **P80** を入れる (日程を組む値)。
 
-**方法**: 参照クラス予測 (似た過去の仕事の実際の所要から、1 点でなく分布で出す。Flyvbjerg 2006「From Nobel Prize to Project Management: Getting Risks Right」(Project Management Journal 37(3))。P50・P80 の使い方は、Oxford の報告 (Edinburgh 市のトラム事業の参考資料) の例を参照した。出典は下)。手順 = ① 参照クラスを決める → ② 実績の分布を出す → ③ この仕事に当てる。
+**方法**: 参照クラス予測 (似た過去の仕事の実際の所要から、1 点でなく分布で出す。Flyvbjerg 2006「From Nobel Prize to Project Management: Getting Risks Right」(Project Management Journal 37(3))。P50・P80 の使い方は、同じ論文の Table 4 と Oxford の報告 (Edinburgh 市のトラム事業の参考資料) の Table 1 を参照した。出典と、読んだ範囲は下)。手順 = ① 参照クラスを決める → ② 実績の分布を出す → ③ この仕事に当てる。
 
 **参照クラスと実績** (**測った**。再現: 下の issue 番号の `createdAt`・`closedAt` から上の定義で引く。すべて 2026-11 のこのリポジトリ):
 
@@ -235,9 +235,9 @@ Sub-task #167 (Task #139)。作成: 2026-11-09。置き換えるもの: 第 1 �
 **この見積もりの弱い所 (仮定・未確認)**:
 - **参照クラスは薄い**: 「実装・データを作る」9 件・2 系統 (v1 のデータ 2 本・#138 の 3 本)。85 問を生成する仕事の前例は無い。v1 は 25 問・手書きの異変 13 問・生成器 927 行 (gen.py 595・anomalies.py 205・check.py 127。`wc -l`) を 19 分で作った。v3 は 85 問・15 種類の注入で、生成器・検証器を再利用する分と、新しい種類 (E-24〜E-28。実データで未測定) の分が相殺すると**仮定**した。P80 ÷ P50 の 2.4 は、この 9 件から出した比で、85 問に当てて足りる保証は無い。
 - **反復の余地**: 実データを初めて検証器 v3 に通すと、種類ごとの作り方の直しが出る (v2 の #153・#154 のように)。この分は P80 の比 2.4 に含めたつもりだが、根拠は 9 件の分布だけ。#168 の途中で、検証器に通した 1 回目の結果を #168 のコメントに残し、P80 を超えそうなら責任者に伝える。
-- **出典を読んだ範囲**: eight2late.com の記事 (2010-05-13。参照クラスの件数が足りることを求め、過去のプロジェクトの分布と比べるとある。50%・80% の語は書かれていない。取得して読んだ)。Oxford の報告 (edinburgh.gov.uk の公開ファイル) の P50・P80 の例は、検索結果の要約で確かめた (報告の本文は読んでいない)。concepts.dsebastien.net のページは本文を取得できず、読めていない。
+- **出典を読んだ範囲** (2026-11-09 に PDF を取得して本文を読んだ): Flyvbjerg 2006 (arxiv.org/pdf/1302.3642。PMJ 37(3) pp.5-15) の本文に「Table 4 presents an overview of applicable optimism bias uplifts for the 50% and 80% percentiles」とあり、続けて「The 80% percentile--corresponding to a risk of cost overrun of 20%--is the level of risk that the UK Department for Transport is typically willing to accept」「The 50% percentile is pertinent to the investor with a large project portfolio」とある。Oxford の報告 (edinburgh.gov.uk の file/90。PDF 9 ページ) の Table 1 に「50% acceptable chance of overrun (P50)」「20% acceptable chance of overrun (P80)」とある。eight2late.com の記事 (2010-05-13) は、参照クラスの件数が足りることを求め、過去のプロジェクトの分布と比べるとある (50%・80% の語は無い)。**この 3 つはコストの超過の話で、所要時間に当てるのは類推**。P50 = 「複数の仕事を持つ組が、ならして守る値」、P80 = 「日程を組むときに超えたくない値」として使った (**仮定**)。concepts.dsebastien.net は本文を確かめていないので出典にしない。
 
-出典: Flyvbjerg (2006) https://arxiv.org/abs/1302.3642 ・ https://www.pmi.org/learning/library/nobel-project-management-reference-class-forecasting-8068 / The University of Oxford report, Reference class forecasting (Edinburgh trams) https://www.edinburgh.gov.uk/tramstonewhaven/downloads/file/90/the-university-of-oxford-report-reference-class-forecasting / https://eight2late.com/2010/05/13/the-reference-class-problem-and-its-implications-for-project-management
+出典: Flyvbjerg (2006) https://arxiv.org/abs/1302.3642 (PDF https://arxiv.org/pdf/1302.3642) ・ https://www.pmi.org/learning/library/nobel-project-management-reference-class-forecasting-8068 / The University of Oxford report, Reference class forecasting (Edinburgh trams) https://www.edinburgh.gov.uk/tramstonewhaven/downloads/file/90/the-university-of-oxford-report-reference-class-forecasting / https://eight2late.com/2010/05/13/the-reference-class-problem-and-its-implications-for-project-management
 
 ## 7. 生成の手順と確かめ方 (#168・#169 が使う)
 
@@ -250,6 +250,7 @@ Sub-task #167 (Task #139)。作成: 2026-11-09。置き換えるもの: 第 1 �
 ## 8. 未確認・申し送り
 
 - **未確認**: 金額が 6 桁以内か (§1 は導いた上限。生成後に全セルを数えるのは #168)。E-21・E-24・E-26〜E-28 が、会計を知らない人に本当に「おかしい」と分かるか (設計 §3.4。試作 #141)。
+- **全体のテスト (#169 へ)**: `npx vitest run` の全体は今 10 件赤 (旧データ・irUnit の全社億円化に追随していないテスト: data.test.ts K4・N4-1、problems-hard.test.ts 5 件、verify-data.test.ts L7・Lc4、dataset-cards.test.ts KD5)。#168 (easy 分)・#140 (hard 分) の作り直しで直す。#168 のレビューの前に、この 10 件を退行と見分けられるよう、直す対象の一覧を #168 のコメントに残す。**#169 の PR の前に、全体が緑であることを確かめる**。
 - **約束 (#168 へ)**: E-02 の増益の基の営業利益率は、gen.py のゆらぎ (`om` = 目安 + U(−0.004, +0.006)) の最大でも c06 の 5.6% で、8% まで 2.4 ポイントの余裕がある (導いた。spec-v3.json の `omRange`。SP7 が 8% 以下を数える)。#168 が `om` のゆらぎの幅を変えたら、`make-spec-v3.py` の `OM_LO`・`OM_HI` を合わせて直す (SP7 が `omRange` で見る)。
 - **#155 (出題) へ**: §3 の試算は、`draw` の段の指定を累積にした版 (設計 §2.7 の採用案) で測った。本体の `draw` はまだ「段がちょうど同じ」なので、#155 が累積にするまでは、この表のプールでも 3〜5 社目・6〜8 社目で種類が絞られる (設計 §2.7 の「今のとおり」の行)。
 - **#140 (むずかしい) へ**: `companies.json` の `irUnit` と見本は本ブランチの commit 9b9e08a で全社億円になっている (責任者の決定)。#140 はこれを取り込む。見本は両方の難易度で共有。
