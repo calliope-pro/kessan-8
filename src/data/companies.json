@@ -10,7 +10,7 @@
       "保守サービス事業"
     ],
     "fiscalYearEndMonth": 3,
-    "irUnit": "百万円",
+    "irUnit": "億円",
     "emblem": "◆",
     "colors": {
       "main": "#1F4E79",
@@ -28,7 +28,7 @@
       "業務用事業"
     ],
     "fiscalYearEndMonth": 3,
-    "irUnit": "百万円",
+    "irUnit": "億円",
     "emblem": "▰",
     "colors": {
       "main": "#A8431A",
@@ -65,7 +65,7 @@
       "受託開発事業"
     ],
     "fiscalYearEndMonth": 9,
-    "irUnit": "百万円",
+    "irUnit": "億円",
     "emblem": "▲",
     "colors": {
       "main": "#5B3FA8",
@@ -120,7 +120,7 @@
       "倉庫・センター運営事業"
     ],
     "fiscalYearEndMonth": 6,
-    "irUnit": "百万円",
+    "irUnit": "億円",
     "emblem": "◐",
     "colors": {
       "main": "#12687A",
@@ -157,7 +157,7 @@
       "通信講座事業"
     ],
     "fiscalYearEndMonth": 3,
-    "irUnit": "百万円",
+    "irUnit": "億円",
     "emblem": "★",
     "colors": {
       "main": "#A12B7C",
