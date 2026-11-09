@@ -1,6 +1,6 @@
 // 試作のカード導出 (docs/design-v3.md §1.2・§1.3・§1.4・§1.6)。純関数: 問題データと難易度だけから、表示する文字列を作る。
 // 形は難易度ごとに 1 種類: やさしい = カード (もうけ)、むずかしい = カード + 資料 1 (決算短信のまとめ) + 資料 2 (IR のひとこと)。
-// 製品の `src/domain/cards.ts` (#138・#187) が、これを手本に作り直す。
+// 製品の `src/domain/cards.ts` (#138・#187) が、これを手本に作り直す (ただし、純有利子負債を表示で作り直すのは試作だけ。下の irNetDebtPrev)。
 import type { Company, Problem } from '../domain/types';
 
 export type Difficulty = 'easy' | 'hard';
@@ -184,7 +184,7 @@ const HARD_SLOTS: SlotDef[] = [
   ir('irCashCur', '現金 (当期)', 'ir.supplement.cash.current'),
   ir('irCashPrev', '現金 (前期)', 'ir.supplement.cash.previous'),
   ir('irDebtPrev', '有利子負債 (前期)', 'ir.supplement.interestBearingDebt.previous'),
-  // 純有利子負債は、表示する (丸めた) 有利子負債 − 丸めた現金で作る (百万円の会社は 100 で割って丸めるので、セルを丸めると表示の引き算と 0.1 ずれる。設計 §3.2 #139-3 と同じ順)。セルとの差は C6 が見る
+  // 純有利子負債は、表示する (丸めた) 有利子負債 − 丸めた現金で作る (百万円の会社は 100 で割って丸めるので、セルを丸めると表示の引き算と 0.1 ずれる。設計 §3.2 #139-3 と同じ順)。セルとの差は C6 が見る。**表示で作り直すのは試作だけ (今のデータの丸めの都合)。製品はセルを見せ、データ側を #139-3 のとおり直す** (そうしないと、このセルをずらす異変 H-20 が画面に出ない)
   { ...ir('irNetDebtPrev', '純有利子負債 (前期) = 有利子負債 − 現金', 'ir.supplement.netDebt.previous'), get: (p, c) => Math.round((irOku(getCell(p, 'ir.supplement.interestBearingDebt.previous') as number, c) - irOku(getCell(p, 'ir.supplement.cash.previous') as number, c)) * 10) / 10 },
   text('irOcf', 'ir', '営業キャッシュ・フロー', ['ir.statements'], (p) => {
     const n = ocfClaimIndex(p);
