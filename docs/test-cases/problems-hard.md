@@ -113,6 +113,20 @@ R-S5 (f) が正常に求める「営業 CF がマイナス」を、参考の規�
 | レッド: 設計表のテストが緑の状態で、`src/data/problems-hard.test.ts` と S14〜S16 を足す (JSON は今の 32 問・生成器は v2 の recipe) | J・K・A のほとんどと S14 が赤 |
 | グリーン: soft 規則を直す → 生成器 (`gen.ts` の直し 4 点)・注入 (`inject.ts` の 20 種類)・`build.ts`・`run.ts` を作って 132 問を書く | すべて緑。`verify:data -- --require-cards=hard` が終了コード 0 |
 
-## 3. CI (#172)
+## 3. CI (#172。`src/ci.test.ts`・`scripts/verify-data.test.ts`・`.github/workflows/ci.yml`)
 
-#172 の着手のときに書く (ケース表 → レッド → グリーン)。`ci.yml` の `verify:data` に `--require-cards=hard` を足す。`src/ci.test.ts` の C3b に対応する約束を足す。
+#140 の追加の受け入れ条件 (責任者): **CI の `verify:data` に `--require-cards=hard` を足し、終了コード 0 (カードの検査 `card-*` が 0 件)**。#139 のデータ (やさしい 85 問) の上に積んだので、全データ (217 問) でも確かめる。
+
+| ID | 約束 | 入力 → 期待 | 印 |
+| --- | --- | --- | --- |
+| CI1 | CI の job `check` の `verify:data` の行に、**`--require-cards` (全難易度) か `--require-cards=hard`** が付く (`--require-cards=easy` だけにしない)。`--require-complete` (全難易度) も付いたまま | `ci.yml` の行が `--require-complete(\s)` と `--require-cards(=hard)?(\s|$)` に合う。`--require-cards=easy` だけではない (C3c) | 責任者の追加の受け入れ条件 (#140) |
+| CI2 | 全データ (src/data。217 問) で `verify:data --require-complete --require-cards` が終了コード 0 で、`card-` の警告が出ない (カードの検査 0 件) | `run('--require-complete', '--require-cards')` = 終了コード 0・出力に `card-` が無い (Lc4 を、データが揃った状態に直す。旧は『警告として出る』) | 追加の受け入れ条件・#139 のデータ |
+| CI3 | `--require-cards=hard` だけでも、全データで終了コード 0 | `run('--require-cards=hard').code` = 0 (Lc5) | 追加の受け入れ条件 |
+| CI4 | むずかしいを欠かすと、`--require-cards=hard` が終了コード 1 になる (致命の検査が効いている。CI に足した検査が空振りでないこと) | 全データから、むずかしいの異変の問題の `places` を空にした一時のデータ → `--require-cards=hard` が 1・`--require-cards=easy` が 0 (Lc6) | 決めた |
+
+### 3.1 レッド → グリーン (#172)
+
+| 手順 | 期待 |
+| --- | --- |
+| レッド: C3c・Lc4 (直したあと)・Lc5・Lc6 を足す。`ci.yml` は `--require-complete` だけ | C3c が赤・Lc4 (データが揃った状態の期待) が赤 (今のデータは警告 0 で、旧 Lc4 の『警告が出る』が赤になっているのを直す)。Lc5・Lc6 は検証器が既にできているので緑 (空振りでないことの確認) |
+| グリーン: `ci.yml` の `npm run verify:data` に `--require-cards=hard` を足す・コメントを直す | すべて緑。CI と同じ手順 (`npm ci` → typecheck → test → verify:data → build → check:size) がローカルで通る |

@@ -64,6 +64,13 @@ describe('.github/workflows/ci.yml', () => {
     expect(line).not.toMatch(/--require-complete=/); // easy だけ・hard だけにしない (両方)
   });
 
+  it('C3c: verify:data は --require-cards=hard (または全難易度の --require-cards) でも回す。カードの検査 (card-*) を警告で見逃さない。--require-cards=easy だけにしない (#140 の追加の受け入れ条件)', () => {
+    const line = (jobs()['check'] ?? '').split('\n').find((l) => l.includes('npm run verify:data')) ?? '';
+    expect(line).toMatch(/--require-cards(=hard)?(\s|$)/);
+    expect(line).not.toMatch(/--require-cards=easy/);
+    expect(line).toMatch(/--require-complete(\s|$)/); // C3b のまま
+  });
+
   it('C4: Node 22 と npm のキャッシュ (engines と整合)', () => {
     expect(yml).toContain('actions/setup-node@');
     expect(yml).toMatch(/node-version: 22\b/);
