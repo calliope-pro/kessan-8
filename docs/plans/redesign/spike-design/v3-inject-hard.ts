@@ -49,11 +49,18 @@ const mul = (doc: 'tanshin' | 'ir', path: string, m: number) => (q: any) => { co
 const flip = (metric: string) => (q: any) => { for (const s of q.ir.statements) for (const c of s.claims) if (c.metric === metric) c.direction = c.direction === 'up' ? 'down' : 'up'; };
 // 科目名の規則 (label-spelling・account-section) の違反の paths は、セルでなく項目キー。形にその項目キーの欄があれば形に載る (設計 v2 §1.5 V2)
 const SHOWN_KEYS = [T('balanceSheet.receivables'), T('cashFlow.operatingCashFlow'), T('cashFlow.receivablesChange'), T('incomeStatement.netSales'), T('incomeStatement.operatingIncome'), T('summary.operatingMargin')];
-// card-relation の関係 3 つ (設計 v3 §1.2): r1 = ③ ÷ ② が [0.5, 2] の外・r2 = ③ = ②・r3 = ③ ≥ ①。むずかしいの種類はカードの数字を変えないので、どの注入でも 0 のはず (#174 包括レビュー B1)
+// card-relation の中の検査 5 つ (設計 v3 §1.2。v3-inject-easy.ts と同じ名前・同じ式): R-dir = 見出し語の向き・R-margin = 営業利益率・R-range = 0.5 ≤ ③ ÷ ② ≤ 2・R-ne = ③ ≠ ②・R-lt = ③ < ①。
+// むずかしいの種類は (H-31 の drop を除き) カードの数字・見出し語を変えないので、どの注入でも 0 のはず (#174 包括レビュー B1・2 回目 B1)
 const relBroken = (q: any): string[] => {
-  const t = q.tanshin.incomeStatement, s1 = t.current.netSales, o0 = t.previous.operatingIncome, o1 = t.current.operatingIncome;
+  const t = q.tanshin.incomeStatement, s1 = t.current.netSales, o0 = t.previous.operatingIncome, o1 = t.current.operatingIncome, m = q.tanshin.summary.operatingMargin;
+  const word = q.ir.statements.find((x: any) => x.claims.some((c: any) => c.metric === 'operatingIncome')).claims.find((c: any) => c.metric === 'operatingIncome').direction === 'up' ? '増益' : '減益';
+  const chg = o1 - o0; const expected = chg > 0 ? '増益' : chg < 0 ? '減益' : undefined;
   const r: string[] = []; const ratio = o1 / o0;
-  if (!(ratio >= 0.5 && ratio <= 2)) r.push('r1'); if (o1 === o0) r.push('r2'); if (!(o1 < s1)) r.push('r3');
+  if (word !== expected) r.push('R-dir');
+  if (!(s1 !== 0 && Math.round(m * 10) === Math.round((o1 * 1000) / s1))) r.push('R-margin');
+  if (!(ratio >= 0.5 && ratio <= 2)) r.push('R-range');
+  if (o1 === o0) r.push('R-ne');
+  if (!(o1 < s1)) r.push('R-lt');
   return r;
 };
 const RECIPES: { kind: string; label: string; make: (q: any) => void; primary?: string[] }[] = [

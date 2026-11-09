@@ -28,6 +28,23 @@ const bases = readdirSync(resolve(root, 'src/data/problems/easy')).sort().map((f
 const co = (p: any) => companies.find((c: any) => c.id === p.companyId);
 console.log(`基: やさしいの正常な問題 ${bases.length} 問`);
 
+// card-relation の中の検査 5 つ (設計 v3 §1.2。名前は節をまたいで同じ。PR #157 の src/verifier/cards.ts の cardRelationIssues (E1 の見出し語の向き `headlineIssue`・営業利益率の一致) を写し、関係 3 を足したもの):
+//   R-dir = 見出し語の向き (増益なら ② < ③。見出し語は営業利益の主張 claims から作る)・R-margin = 営業利益率 (小数第 1 位) = ③ ÷ ① × 100 (四捨五入)・R-range = 0.5 ≤ ③ ÷ ② ≤ 2・R-ne = ③ ≠ ②・R-lt = ③ < ①
+// 欄が無いとき (drop) は値が NaN で、その欄を読む検査が落ちる (#157 の num() と同じ)。reads = 検査が読む欄。
+const RELREADS: Record<string, string[]> = { 'R-dir': ['headline', 'opPrev', 'opCurr'], 'R-margin': ['margin', 'opCurr', 'sales'], 'R-range': ['opPrev', 'opCurr'], 'R-ne': ['opPrev', 'opCurr'], 'R-lt': ['opCurr', 'sales'] };
+const claimWord = (q: any) => (q.ir.statements[stmtIndex(q, 'operatingIncome')].claims.find((c: any) => c.metric === 'operatingIncome').direction === 'up' ? '増益' : '減益');
+const relBroken = (q: any, o: { drop?: string; word?: string } = {}): string[] => {
+  const g = (path: string, slot: string) => (o.drop === slot ? NaN : gv(q, path));
+  const s1 = g(`${IS}.current.netSales`, 'sales'), o0 = g(`${IS}.previous.operatingIncome`, 'opPrev'), o1 = g(`${IS}.current.operatingIncome`, 'opCurr'), m = g('summary.operatingMargin', 'margin');
+  const word = o.word ?? claimWord(q); const chg = o1 - o0; const expected = chg > 0 ? '増益' : chg < 0 ? '減益' : undefined;
+  const r: string[] = []; const ratio = o1 / o0;
+  if (word !== expected) r.push('R-dir');
+  if (!(s1 !== 0 && Math.round(m * 10) === Math.round((o1 * 1000) / s1))) r.push('R-margin');
+  if (!(ratio >= 0.5 && ratio <= 2)) r.push('R-range');
+  if (Number.isNaN(o0) || Number.isNaN(o1) || o1 === o0) r.push('R-ne');
+  if (!(o1 < s1)) r.push('R-lt');
+  return r;
+};
 // (1) 正常な問題が形の上で食い違わない (カードはやさしいもむずかしいも同じなので、正常 28 問 = やさしい 12 + むずかしい 16 のそれぞれで測る)
 for (const dir of ['easy', 'hard']) {
   const ps = readdirSync(resolve(root, `src/data/problems/${dir}`)).sort().map((f) => read(`src/data/problems/${dir}/${f}`)).filter((p) => !p.anomaly);
@@ -49,30 +66,24 @@ for (const dir of ['easy', 'hard']) {
     const end = String(gv(p, 'columnDates.incomeStatement.current'));
     if (!mm || end !== new Date(Date.UTC(Number(mm[1]), Number(mm[2]), 0)).toISOString().slice(0, 10)) periodBad++;
   }
-  console.log(`(1) ${dir} 正常 ${ps.length} 問: 形に載るセルだけで落ちる hard の違反 ${violations} 件 / 営業利益率と (③ ÷ ① × 100) の差の最大 ${maxGap.toFixed(3)} ポイント / ③ ÷ ② の範囲 ${minRatio.toFixed(2)}〜${maxRatio.toFixed(2)} / 前期比の変化の最小 ${(minChange * 100).toFixed(1)}% / ① ÷ ③ の最小 ${minShare.toFixed(1)} (負なら ① ≦ ③ の問題あり) / 負の数を持つ問題 ${negatives} / 期末日が期の末日と合わない ${periodBad} / 減益 ${down.length} 問: ${down.join(' ')} / 営業 CF がマイナス ${ocfNeg} 問`);
+  const relNormal = ps.filter((p) => relBroken(p).length > 0).length;
+  console.log(`(1) ${dir} 正常 ${ps.length} 問: card-relation の 5 検査が落ちる ${relNormal} 問 / 形に載るセルだけで落ちる hard の違反 ${violations} 件 / 営業利益率と (③ ÷ ① × 100) の差の最大 ${maxGap.toFixed(3)} ポイント / ③ ÷ ② の範囲 ${minRatio.toFixed(2)}〜${maxRatio.toFixed(2)} / 前期比の変化の最小 ${(minChange * 100).toFixed(1)}% / ① ÷ ③ の最小 ${minShare.toFixed(1)} (負なら ① ≦ ③ の問題あり) / 負の数を持つ問題 ${negatives} / 期末日が期の末日と合わない ${periodBad} / 減益 ${down.length} 問: ${down.join(' ')} / 営業 CF がマイナス ${ocfNeg} 問`);
 }
 
 // (2) 数字・文を変える種類の注入
-// card-relation の関係 3 つ (設計 v3 §1.2。PR #157 の cardRelationIssues に足す): r1 = ③ ÷ ② が [0.5, 2] の外・r2 = ③ = ②・r3 = ③ ≥ ① (③ は ① より小さい)
-const relBroken = (q: any): string[] => {
-  const s1 = gv(q, `${IS}.current.netSales`), o0 = gv(q, `${IS}.previous.operatingIncome`), o1 = gv(q, `${IS}.current.operatingIncome`);
-  const r: string[] = []; const ratio = o1 / o0;
-  if (!(ratio >= 0.5 && ratio <= 2)) r.push('r1'); if (o1 === o0) r.push('r2'); if (!(o1 < s1)) r.push('r3');
-  return r;
-};
-// rel = その種類の主な手がかりとして card-relation の関係が落ちてよいもの (E-02 は r1・E-24 は r3)。ほかの関係が落ちたら、遊び手に 2 つ目の手がかりが見える二重の食い違い
+// rel = その種類に許す card-relation の検査 (設計 v3 §2.9 の表。許す検査はすべて落ちるのが期待、ほかが落ちたら遊び手に 2 つ目の手がかりが見える二重の食い違い)
 type Recipe = { kind: string; label: string; primary: string[]; make: (q: any) => any | null; rel?: string[]; min?: (b: any, q: any) => string };
 // 科目名の規則 (label-spelling) の違反の paths は項目キー。形にその項目キーの欄があれば形に載る
 const SHOWN_KEYS = [T('incomeStatement.netSales'), T('incomeStatement.operatingIncome'), T('summary.operatingMargin')];
 const flip = (q: any) => { for (const s of q.ir.statements) for (const c of s.claims) if (c.metric === 'operatingIncome') c.direction = c.direction === 'up' ? 'down' : 'up'; return q; };
 const RECIPES: Recipe[] = [
-  { kind: 'E-17', label: '営業利益の主張の向きを逆にする (見出し語が数字と逆)', primary: ['claims-direction'], make: (b) => flip(clone(b)) },
-  { kind: 'E-12', label: '営業利益率を 2.2 倍にする (道具なしで気づける 2 倍以上)', primary: ['ratio-operating-margin'], make: (b) => { const q = clone(b); sv(q, 'summary.operatingMargin', Math.round(gv(b, 'summary.operatingMargin') * 2.2 * 10) / 10); return q; } },
+  { kind: 'E-17', label: '営業利益の主張の向きを逆にする (見出し語が数字と逆)', primary: ['claims-direction'], rel: ['R-dir'], make: (b) => flip(clone(b)) },
+  { kind: 'E-12', label: '営業利益率を 2.2 倍にする (道具なしで気づける 2 倍以上)', primary: ['ratio-operating-margin'], rel: ['R-margin'], make: (b) => { const q = clone(b); sv(q, 'summary.operatingMargin', Math.round(gv(b, 'summary.operatingMargin') * 2.2 * 10) / 10); return q; } },
   // 無条件に 10 倍すると、営業利益率が 8% を超える基では ③ が ① を超え、E-24 の見え方も出る (#174 包括レビュー B1)。採用は、10 × ③ ≤ 0.8 × ① の基だけ
-  { kind: 'E-02 (旧: 基を限らない)', label: '当期の営業利益を 10 倍 (増益) か 1/10 (減益) にする。再計算しない', primary: ['ratio-operating-margin'], rel: ['r1'], make: (b) => { const q = clone(b); const k = `${IS}.current.operatingIncome`; const up = gv(b, k) > gv(b, `${IS}.previous.operatingIncome`); sv(q, k, up ? gv(b, k) * 10 : Math.round(gv(b, k) / 10)); return q; } },
-  { kind: 'E-02 (採用: 増益は 10×③ ≤ 0.8×① の基だけ)', label: '当期の営業利益を 10 倍 (増益。10 × ③ ≤ 0.8 × ① の基だけ) か 1/10 (減益) にする。再計算しない', primary: ['ratio-operating-margin'], rel: ['r1'], make: (b) => { const q = clone(b); const k = `${IS}.current.operatingIncome`; const up = gv(b, k) > gv(b, `${IS}.previous.operatingIncome`); if (up && 10 * gv(b, k) > 0.8 * gv(b, `${IS}.current.netSales`)) return null; sv(q, k, up ? gv(b, k) * 10 : Math.round(gv(b, k) / 10)); return q; } },
+  { kind: 'E-02 (旧: 基を限らない)', label: '当期の営業利益を 10 倍 (増益) か 1/10 (減益) にする。再計算しない', primary: ['ratio-operating-margin'], rel: ['R-margin', 'R-range'], make: (b) => { const q = clone(b); const k = `${IS}.current.operatingIncome`; const up = gv(b, k) > gv(b, `${IS}.previous.operatingIncome`); sv(q, k, up ? gv(b, k) * 10 : Math.round(gv(b, k) / 10)); return q; } },
+  { kind: 'E-02 (採用: 増益は 10×③ ≤ 0.8×① の基だけ)', label: '当期の営業利益を 10 倍 (増益。10 × ③ ≤ 0.8 × ① の基だけ) か 1/10 (減益) にする。再計算しない', primary: ['ratio-operating-margin'], rel: ['R-margin', 'R-range'], make: (b) => { const q = clone(b); const k = `${IS}.current.operatingIncome`; const up = gv(b, k) > gv(b, `${IS}.previous.operatingIncome`); if (up && 10 * gv(b, k) > 0.8 * gv(b, `${IS}.current.netSales`)) return null; sv(q, k, up ? gv(b, k) * 10 : Math.round(gv(b, k) / 10)); return q; } },
   { kind: 'E-05', label: '営業利益の科目名を「営業和益」にする (labelOverrides。営業利益は 2 欄に出る)', primary: ['label-spelling'], make: (b) => { const q = clone(b); q.labelOverrides = { ...(q.labelOverrides ?? {}), [T('incomeStatement.operatingIncome')]: '営業和益' }; return q; } },
-  { kind: 'E-24', label: '当期の売上高を、営業利益の 0.6 倍にする (売上高が営業利益より小さい)。再計算しない', primary: ['ratio-operating-margin'], rel: ['r3'], make: (b) => { const q = clone(b); sv(q, `${IS}.current.netSales`, Math.round(gv(b, `${IS}.current.operatingIncome`) * 0.6)); return q; } },
+  { kind: 'E-24', label: '当期の売上高を、営業利益の 0.6 倍にする (売上高が営業利益より小さい)。再計算しない', primary: ['ratio-operating-margin'], rel: ['R-margin', 'R-lt'], make: (b) => { const q = clone(b); sv(q, `${IS}.current.netSales`, Math.round(gv(b, `${IS}.current.operatingIncome`) * 0.6)); return q; } },
 ];
 for (const r of RECIPES) {
   let applied = 0, skipped = 0, doubled = 0, noPrimary = 0, same = 0, relDoubled = 0, relPrimary = 0; const extras = new Set<string>(); const relExtras = new Set<string>();
@@ -90,7 +101,7 @@ for (const r of RECIPES) {
     if (extra.length) { doubled++; extra.forEach((x) => extras.add(x)); }
     if (!onCard.some((v: any) => r.primary.includes(v.rule))) noPrimary++;
   }
-  console.log(`(2) ${r.kind} ${r.label}: 適用 ${applied}・適用できない ${skipped} / 二重の食い違い ${doubled}${extras.size ? ` (${[...extras].join(', ')})` : ''} / 形に載る主な規則が無い ${noPrimary} / 表示が変わらない ${same} / card-relation の主な関係 (${(r.rel ?? []).join('・') || 'なし'}) が落ちる ${relPrimary} / card-relation の別の関係が落ちる二重の食い違い ${relDoubled}${relExtras.size ? ` (${[...relExtras].join(', ')})` : ''}`);
+  console.log(`(2) ${r.kind} ${r.label}: 適用 ${applied}・適用できない ${skipped} / 二重の食い違い ${doubled}${extras.size ? ` (${[...extras].join(', ')})` : ''} / 形に載る主な規則が無い ${noPrimary} / 表示が変わらない ${same} / card-relation の許す検査 (${(r.rel ?? []).join('・') || 'なし'}) がすべて落ちる ${relPrimary} / 許す検査の外が落ちる二重の食い違い ${relDoubled}${relExtras.size ? ` (${[...relExtras].join(', ')})` : ''}`);
 }
 
 // (3) 表示だけを変える種類の当てられる数
@@ -151,4 +162,18 @@ for (const r of RECIPES) {
     if (onCard.length) dd++; if (relBroken(q).length) rd++;
   }
   console.log(`(6) E-25 表示だけに △ を付ける作り方 (採用。データは基のまま): 形に載る別の規則が落ちる ${dd}/${bases.length} / card-relation が落ちる ${rd}/${bases.length} / 売上高が正で △ を付けられる ${bases.filter((p) => gv(p, `${IS}.current.netSales`) > 0).length}/${bases.length}`);
+}
+
+// (7) 表示だけを変える種類のうち、card-relation の読む欄に触れる 2 つ (§2.9 の許す検査の表):
+//     E-19 (欄の drop) = 落とした欄を読む検査だけが落ちる (ほかは落ちない)。E-23 (見出し語を別の型の語にする) = R-dir だけが落ちる。ほかの表示だけの種類 (E-03・E-21・E-22・E-25・E-26・E-27・E-28・E-04・E-05) は数字の値・見出し語の向きを変えないので 0 (構成上)
+{
+  for (const slot of ['sales', 'opPrev', 'opCurr', 'margin']) {
+    const want = Object.keys(RELREADS).filter((k) => RELREADS[k]!.includes(slot)).sort().join(',');
+    let exact = 0, outside = 0;
+    for (const b of bases) { const f = relBroken(b, { drop: slot }); if (f.slice().sort().join(',') === want) exact++; outside += f.filter((x) => !RELREADS[x]!.includes(slot)).length; }
+    console.log(`(7) E-19 欄 ${slot} を落とす: 落ちる検査 = ${want} (その欄を読む検査すべて) が ${exact}/${bases.length} 問・読まない検査が落ちる ${outside} 件`);
+  }
+  let ok = 0, other = 0;
+  for (const b of bases) { const f = relBroken(b, { word: claimWord(b) === '増益' ? '増収' : '減収' }); if (f.length === 1 && f[0] === 'R-dir') ok++; else other++; }
+  console.log(`(7) E-23 見出し語を 増収/減収 にする: R-dir だけが落ちる ${ok}/${bases.length} 問・ほかの結果 ${other} 問`);
 }
