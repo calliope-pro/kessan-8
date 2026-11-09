@@ -27,9 +27,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      # カード v3 の検査 (card-*・anomaly-min-deviation の shortfalls) を致命にする (docs/test-cases/cards.md §11)。
-      # むずかしいは #140 で --require-cards=hard を足した (カードの検査 0 件)。やさしいは #139 の完了時に --require-cards=easy を足して全難易度 (--require-cards) にする
-      - run: npm run verify:data -- --require-complete --require-cards=hard
+      # カード v3 の検査 (card-*・anomaly-min-deviation の shortfalls) を、全難易度で致命にする (docs/test-cases/cards.md §11・docs/test-cases/ci.md C3c)。
+      # やさしいは #139 が --require-cards=easy で、むずかしいは #140 が足した。CLI は最初の --require-cards だけを読むので、値なしの 1 つにする (2 つ並べると後ろが黙って外れる)
+      - run: npm run verify:data -- --require-complete --require-cards
       - run: npm run build
       - run: npm run check:size
 

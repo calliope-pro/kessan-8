@@ -247,6 +247,10 @@ describe('異変の問題 75 問 (A 群。コミットした src/data)', () => {
   it('A4: 答え合わせの文は 2 文まで・1 文 60 字以内・専門語なし・比べる 2 つの値を表示のとおりに含む', () => {
     const FORBIDDEN = ['検証器', '規則', 'セル', 'cardEdits', 'slot', 'tier', 'primaryRules', 'expectedRules', 'R-'];
     const nameOf = (label: string): string => label.replace(/ \(.*\)$/, '');
+    const correctEnd = (periodLabel: string): string => {
+      const m = /^(\d{4})年(\d{1,2})月期$/.exec(periodLabel) as RegExpExecArray;
+      return `${m[1]}年${Number(m[2])}月${lastDay(Number(m[1]), Number(m[2]))}日`;
+    };
     for (const s of anomalySpecs) {
       const p = get(s.id);
       const base = get(s.base as string);
@@ -263,18 +267,18 @@ describe('異変の問題 75 問 (A 群。コミットした src/data)', () => {
       const needs: Record<string, () => string[]> = {
         'E-17': () => [card.headline?.word as string, sl('opPrev'), sl('opCurr')],
         'E-02': () => [sl('opPrev'), sl('opCurr')],
-        'E-24': () => [sl('sales'), sl('opCurr')],
-        'E-12': () => [sl('margin'), slotOf(bc, 'margin')?.text as string],
-        'E-04': () => [card.frame.periodLabel, card.footer?.periodEnd as string],
-        'E-03': () => [nameOf(slotOf(card, e.slot as string)?.label as string), '億円', '百万円'],
-        'E-21': () => [sl(e.slot as string), slotOf(bc, e.slot as string)?.text as string],
+        'E-24': () => [sl('sales'), sl('opCurr'), '売上高から費用を引いた残り'],
+        'E-12': () => [sl('margin'), slotOf(bc, 'margin')?.text as string, sl('opCurr'), sl('sales')],
+        'E-04': () => [card.frame.periodLabel, card.footer?.periodEnd as string, correctEnd(card.frame.periodLabel)],
+        'E-03': () => [slotOf(card, e.slot as string)?.label as string, '億円', '百万円'],
+        'E-21': () => [slotOf(card, e.slot as string)?.label as string, sl(e.slot as string), slotOf(bc, e.slot as string)?.text as string],
         'E-25': () => [sl('sales')],
         'E-26': () => [sl('opPrev'), sl('opCurr'), e.word as string],
-        'E-27': () => [sl(e.slot as string)],
+        'E-27': () => [slotOf(card, e.slot as string)?.label as string, sl(e.slot as string)],
         'E-28': () => [card.footer?.periodEnd as string],
         'E-05': () => [e.word as string, LABELS[e.itemKey as string] as string],
         'E-19': () => [nameOf(slotOf(bc, e.slot as string)?.label as string)],
-        'E-22': () => [e.slot === 'headline' ? (card.headline?.word as string) : nameOf(slotOf(card, e.slot as string)?.label as string)],
+        'E-22': () => [e.slot === 'headline' ? (card.headline?.word as string) : (slotOf(card, e.slot as string)?.label as string)],
         'E-23': () => [e.word as string, bc.headline?.word as string, sl('opPrev'), sl('opCurr')],
       };
       const need = (needs[s.kind as string] as () => string[])();

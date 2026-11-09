@@ -455,7 +455,7 @@
     "slot": "opCurr"
    }
   ],
-  "explanation": "営業利益の数字が 4530 と書かれています。正しくは 4,530 です。",
+  "explanation": "「営業利益 (当期)」の数字が 4530 と書かれています。正しくは 4,530 です。",
   "expectedRules": [
    "card-format"
   ],

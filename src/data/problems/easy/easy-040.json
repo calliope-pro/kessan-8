@@ -431,7 +431,7 @@
     "slot": "opPrev"
    }
   ],
-  "explanation": "5,2X0 の数字に「X」が混じっています。数字の欄に、数字以外の字は入りません。",
+  "explanation": "「営業利益 (前期)」の数字 5,2X0 に「X」が混じっています。数字の欄に、数字以外の字は入りません。",
   "expectedRules": [
    "card-digits"
   ],

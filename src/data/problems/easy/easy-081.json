@@ -455,7 +455,7 @@
     "slot": "opPrev"
    }
   ],
-  "explanation": "営業利益の数字が 4730 と書かれています。正しくは 4,730 です。",
+  "explanation": "「営業利益 (前期)」の数字が 4730 と書かれています。正しくは 4,730 です。",
   "expectedRules": [
    "card-format"
   ],

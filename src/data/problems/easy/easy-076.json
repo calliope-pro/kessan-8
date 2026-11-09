@@ -426,7 +426,7 @@
     "path": "header.periodLabel"
    }
   ],
-  "explanation": "表題は 2025年3月期 ですが、足元の期末日は 2024年3月31日 です。期末日は、その期の末日のはずです。",
+  "explanation": "表題は 2025年3月期 ですが、足元の期末日は 2024年3月31日 です。2025年3月期の期末日は 2025年3月31日 です。",
   "expectedRules": [
    "card-period",
    "dates-column-headings"

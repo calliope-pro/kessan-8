@@ -431,7 +431,7 @@
     "slot": "sales"
    }
   ],
-  "explanation": "「売上高」だけ単位が「億円」で、ほかの欄は「百万円」です。",
+  "explanation": "「売上高」だけ単位が「億円」で、ほかの金額の欄は「百万円」です。",
   "expectedRules": [
    "card-unit"
   ],
