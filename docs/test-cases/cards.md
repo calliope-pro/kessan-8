@@ -29,7 +29,7 @@
 | `deviationIssues(problem, company)` | §9。種類ごとの最小のずれ |
 | `verifyDataset` の追加 | §7 |
 | 規則 (`HARD_RULE_IDS` に足す。どれも問題だけを見る) | `card-slots`・`card-unit`・`card-format`・`card-headline`・`card-period`・`xdoc-seg-names` (v2 から。直す所は §4)、**新規** `card-sign`・`card-column-suffix`・`card-digits`・`card-date-valid` |
-| 型 (`types.ts`) | `ShapeId`・`SHAPE_IDS` を消す。`CardEdit` = §2.1。`AnomalyPlace` の card の場所 = `{ doc: 'card'; card: 0; slot: string }` (**決めた**: `shape` を捨てる。場所のセル = `card.0.<slot>`)。`AnomalyKind.relationChecks?: ('R-dir'｜'R-margin'｜'R-range'｜'R-ne'｜'R-lt')[]` を足す。`Anomaly.base`・`changed` は今のまま |
+| 型 (`types.ts`) | `ShapeId`・`SHAPE_IDS` を消す。`CardEdit` = §2.1。`AnomalyPlace` の card の場所 = `{ doc: 'card'; card: 0; slot: string }` (**決めた**: `shape` を捨てる。場所のセル = `card.0.<slot>`)。`AnomalyKind.relationChecks?: ('R-dir'｜'R-margin'｜'R-range'｜'R-ne'｜'R-lt')[]` と `AnomalyKind.ledger?: 'v3'` (台帳 v3 の種類の印。§6.4) を足す。`Anomaly.base`・`changed` は今のまま |
 
 **基準問題** (`src/verifier/fixtures/`): **B** = `normal-b.problem.json` (億円・セグメント 3)、**A** = `normal.problem.json` (百万円・セグメント 2)。どちらも `difficulty: 'easy'` で入っているので、むずかしいの形は `{ ...B, difficulty: 'hard' }` で使う。**v3 の基準は B** (IR が億円。A は IR が百万円で、R-D7 に反するデータの例として §7 の DS11 だけに使う)。以下の値は **測った** (fixture を読んだ値。再現: `src/verifier/fixtures/*.json`)。
 
@@ -92,7 +92,7 @@
 | DH2 | B・むずかしい: `section` の並び = `card`×4・`pl`・`bs`×5・`cf`×4・`notes`×5・`ir`×8。`heading`: `cash`・`arPrev`・`arCurr`・`ta` = `資産`、`tlna` = `負債及び純資産`、`bs` 以外は無い |
 | DH3 | B・むずかしい: 値 = §1.2 の表と基準の表。`text`: `1,250`・`2,300`・`2,900`・`3,000`・`15,200`・`15,200`・`1,250`・`△100`・`1,500`・`2,300`・`124.0`・`23.0`・`21.0`・`48.3`・`27.3`。`unit`: 短信の金額 `百万円`、IR の金額 `億円`。文: `audit` = 標準の注意書き (`決算短信は公認会計士又は監査法人の監査の対象外です`)・`policyFlag` = `なし`・`policyNote`・`subseq` = `該当事項はありません。`・`segs` = `電機部品事業・計測機器事業・産業機器事業`・`irOcf` = `営業活動によるキャッシュ・フローはプラス`・`irSubseq` = `なし`・`irSegs` = 3 つの名前。`label`: §1.2 の表のとおり (`cfEnd` = `現金及び現金同等物の期末残高 (資金の範囲 = 現金及び預金)`)。`irFrame` = B の IR の社名・期 |
 | DH4 | `cfEnd` の `reads` = [`tanshin.cashFlow.cashEnding`, `tanshin.notes.cashScope`] (数字のセルが先。`cardCells` に `cashScope` が入る)。`cashScope` を書き換えるとラベルの範囲が変わる (範囲の語は枠の外で、数字・文の数に入らない)。`labelOverrides` の科目名の差し替えは、範囲の語の前の名前に効く |
-| DH5 | `irOcf`: 営業 CF の主張が `up` → `…はプラス`、`down` → `…はマイナス`。**主語は `labels.ts` の標準の名前だけ** (`labelOverrides` は読まない。短信の `ocf` だけに誤字を出す H-30 が、IR の文にも写らないように)。`reads` = [`ir.statements.<N>`] (その 1 つの文だけ)。`ir.statements` の `text` を書き換えてもカードは変わらない。主張が無い・`zero` → その欄は出ない (例外にしない。構造の検査 ST1 が拾う)。型の文は最長 21 字 (`営業活動によるキャッシュ・フローはマイナス`) で 40 字に収まる |
+| DH5 | `irOcf`: 営業 CF の主張が `up` → `…はプラス`、`down` → `…はマイナス`。**主語は `labels.ts` の標準の名前だけ** (`labelOverrides` は読まない。短信の `ocf` だけに誤字を出す H-30 が、IR の文にも写らないように)。`reads` = [`ir.statements.<N>`] (その 1 つの文だけ)。`ir.statements` の `text` を書き換えてもカードは変わらない。主張が無い・`zero` → その欄は出ない (例外にしない。構造の検査 ST2・ST3 が拾う)。型の文は最長 21 字 (`営業活動によるキャッシュ・フローはマイナス`) で 40 字に収まる |
 | DH6 | `irSubseq`: `ir.outlook.subsequentEvent` が文なら `text` がその文・`reads` = `ir.outlook.subsequentEvent`。null → `なし` |
 | DH7 | `arCurr`・`arPrev` の科目名は `labelOverrides['tanshin.balanceSheet.receivables']` = `買掛金` で両方 `買掛金 (…)` になる (H-28。見出しは `資産` のまま)。`cfAr` の科目名は変わらない (売掛金の行の差し替えを読まない)。`opPrev`・`opCurr` は `labelOverrides['tanshin.incomeStatement.operatingIncome']` = `営業和益` で両方 `営業和益 (…)` (E-05。**科目名は `itemKey` ごとに差し替える**) |
 | DH8 | `column` = 前期・当期の欄だけに付く (§1.1・§1.2 の欄)。ほかは `undefined`。科目名の添え字 (`(前期)`・`(当期)`・`(前期末)`・`(当期末)`・`(前期・…)`) は `column` と対応する |
@@ -143,7 +143,7 @@ type CardEdit =
 | DX3 | `unit` `sales` `億円` | `sales` の `unit` = `億円`。ほかは変わらない |
 | DX4 | `dup` `opCurr` | `opCurr` が 2 回並ぶ (key `opCurr` が 2 つ、1 つ目の直後)。`countNumbers` = 5。`dup` `headline` → `headline.repeat` = 2。文欄・資料の欄 (むずかしい) の `dup` も同じ |
 | DX5 | `suffix` `opPrev` `当期` | `opPrev` の `label` = `営業利益 (当期)` (`opCurr` と同じ名前が 2 行。値は前期の 1,120 のまま・`column` は previous のまま)。`opCurr` に `前期` → `営業利益 (前期)` |
-| DX6 | `glyph` `opCurr` `at: 3` | `text` = `1,X40` (`1,240` の添字 3 の 2 を `X` に。`at` は `text` の文字の添字で、数字の文字を指す)。`raw` は変わらない。`at` が数字でない文字 (`,`) か範囲外 → `RangeError`。比率・文欄にも当てられる (数字を含む欄なら可。`10.0` の `at: 0` → `X0.0`) |
+| DX6 | `glyph` `opCurr` `at: 2` | `text` = `1,X40` (`1,240` の文字は [`1`・`,`・`2`・`4`・`0`] で、添字 2 の `2` を `X` に。`at` は `text` の文字の添字で、数字の文字を指す)。`at: 3` → `1,2X0`。`raw` は変わらない。`at` が数字でない文字 (`at: 1` の `,`) か範囲外 (`at: 5`) → `RangeError`。比率・文欄にも当てられる (数字を含む欄なら可。`10.0` の `at: 0` → `X0.0`) |
 | DX7 | `sign` `sales` | `text` = `△12,400` (**値は正のまま**。`raw` = 12400)。`sign` は `raw` > 0 の金額の欄だけ (§2.2) |
 | DX8 | `day` `period` 32 | DD4 |
 | DX9 | `headline` `増収` | `headline.word` = `増収` (`reads` はそのまま) |
@@ -161,7 +161,7 @@ type CardEdit =
 | K11b | `format` | `no-comma` = 金額の欄で整数部が 4 桁以上 (B の `sales`・`opPrev`・`opCurr`)。`comma-shift` = 5 桁以上 (B の `sales` は 12,400 で可。`opCurr` 1,240 は不可) | 比率・文欄・整数部が足りない欄 (`cfAr` の `△100` の `no-comma`) |
 | K11c | `dup` | 数字の欄・文欄・`headline` | — (どれでもよい) |
 | K11d | `suffix` | `opPrev`・`opCurr` | ほかの欄 (`sales`)。**型が `slot: 'opPrev' | 'opCurr'` なので、ほかは `shapeErrors` (§8) も弾く** |
-| K11e | `glyph` | 数字を含む欄 | 文欄・`at` が数字の文字でない (`RangeError`・または `cardEditIssues`) |
+| K11e | `glyph` | 数字を含む欄 | 文欄・`at` が数字の文字でない・範囲外。**`cardEditIssues` が文を返し (errors の `card-edit-op`)、`deriveCards` も `RangeError` を投げる (両方)**。`format` の `comma-shift` が 5 桁未満 (DX2) も同じ (両方) |
 | K11f | `sign` | **値が正の金額の欄で、`card-sign` の対象 (売上高 `sales`・`ta`・`tlna`・`cash`・`arPrev`・`arCurr`・`cfEnd`・`irSales`・`irCashCur`・`irCashPrev`・`irDebtPrev` の 11 欄)** | 対象外 (`opPrev`・`opCurr`・`margin`・`pbt`・`cfStart`・`ocf`・`cfAr`・`irNetDebtPrev`)・値が 0 の欄 (無借金の `irDebtPrev`)・値が負の欄 |
 | K11g | `day` | `period` だけ | (型が `slot: 'period'`) |
 | K11h | `headline` | 元の語の組の外の語 (増益・減益 → `増収`・`減収`) | 組の中の語 (`減益`・`増益`) |
@@ -190,7 +190,7 @@ type CardEdit =
 | ST3 | `headline` が無いカード (主張が無い問題) → 文 (見出し語が出ていない) |
 | ST4 | `cardLimitIssues(カード)`: やさしいに数字の欄を 1 つ足す (5 つ) → 上限超えの文。むずかしいで `ir` の数字を 6 つにする・`notes` の文欄を 6 つにする → 超えの文。`cardLimitIssues(カード, 1)` (`dup` を持つ異変) では、やさしいの数字 5 は可・6 は不可 |
 | ST5 | `cardTextLengthIssues`: 文欄の `text` が 40 字ちょうど → 空、41 字 → 1 件。数字の欄は長さを見ない。文字数は `[...text].length` |
-| ST6 | **今の正常な問題**に当てる: `cardStructureIssues` は全問で空 (**測った**でなく #180 で測る。PR に書く)。`cardTextLengthIssues` の今の件数 (むずかしい 7 問・10 欄の見込み。H1 の IR 主張 4 欄は v3 のカードに無い) は #180 で測り、データの課題の一覧 (§10) に書く |
+| ST6 | **今の正常な問題**に当てる: `cardStructureIssues` は全問で空 (#180 で測り、PR に書く)。`cardTextLengthIssues` の今の件数は #180 で測り、データの課題の一覧 (§10) に書く。**見込み** (v2 の測定。ケース表 v2 の C8・S18): 正常な問題は **4 問・6 欄** (hard-023 方針注記 56・hard-024 後発事象 47 と IR 後発 47・hard-031 方針注記 56・hard-032 後発事象 49 と IR 後発 49。型の文 `irOcf` は 21 字以内)、異変の問題を含めると **6 問** (さらに hard-018 方針注記 56・hard-019 IR 後発 69)、やさしいは 0。v3 のカードの文欄は v2 の H3・H2 の文欄の和集合なので同じ数になるはず。ずれたら理由を §10 に書く |
 
 ## 4. 検証器の規則 (形のずれ。問題に `cardEdits` が付くと落ちる。v2 の K1〜K6 の直しと、新規 4 つ)
 
@@ -206,7 +206,7 @@ type CardEdit =
 | K6 | `xdoc-seg-names` | IR のセグメントの名前の並びが短信と違う (欠ける・並びが違う・綴りが違う) → 違反 1 件 (`paths` = 短信の名前のセル全部と IR の名前のセル全部)。正常 → 満たす |
 | K7 | `card-sign` (新規) | 対象の欄 (`sales`・`ta`・`tlna`・`cash`・`arPrev`・`arCurr`・`cfEnd`・`irSales`・`irCashCur`・`irCashPrev`・`irDebtPrev`) の導出した表示に負の記号 (`△`・`−`・`-`) が付くと違反 (`paths` = `card.0.<欄>`)。`sign` の編集 (`sales`・`ta`) → 違反 1 件。**値が 0 の欄は落とさない** (`irDebtPrev` = 0 の問題に、表示 `0` は正常)。**対象外の欄 (`opPrev`・`opCurr`・`margin`・`pbt`・`cfStart`・`ocf`・`cfAr`・`irNetDebtPrev`) の負・△ は落とさない** (`cfAr` の `△100` は正常)。正常 (B) → 満たす |
 | K8 | `card-column-suffix` (新規) | `column` を持つ欄の科目名の添え字が、`column` と合う (previous = `(前期…)`、current = `(当期…)`)。`suffix` の編集 (`opPrev` に `当期`) → 違反 1 件 (`paths` = `card.0.opPrev`)。正常 → 満たす。`labelOverrides` の誤字は添え字に影響しない |
-| K9 | `card-digits` (新規) | 数字の欄の表示は、数字・カンマ・小数点だけ (負の記号 `△` は先頭に許す)。`glyph` の編集 (`opCurr` `at: 3`) → 違反 1 件 (`paths` = `card.0.opCurr`)。正常 → 満たす。文欄は見ない |
+| K9 | `card-digits` (新規) | 数字の欄の表示は、数字・カンマ・小数点だけ (負の記号 `△` は先頭に許す)。`glyph` の編集 (`opCurr` `at: 2`。`1,X40`) → 違反 1 件 (`paths` = `card.0.opCurr`)。正常 → 満たす。文欄は見ない |
 | K10 | `card-date-valid` (新規) | 足元の表示 `YYYY年M月D日` の日が、その年月に実在する。`day` の編集 (32) → 違反 1 件 (`paths` = `card.0.period`)。正常・`2024年2月29日`・`2025年2月28日` → 満たす。`2025年2月29日` (存在しない日) → 違反。**足元のセル `columnDates` が正しいまま、表示だけが 32 になる** (E-28) |
 | K12 | 既存の正常な問題との共存 | 今の正常な問題 (`src/data`) が、新しい規則 (`card-sign`・`card-column-suffix`・`card-digits`・`card-date-valid`) と、直した `card-period`・`card-unit` で違反 0 件。**IR の単位が百万円の会社の正常な問題で `card-unit` が落ちないこと** (規則は `ir.header.unit` と比べる。K2) |
 | K13 | `shapeErrors` (§8) | `cardEdits` の誤りを返す |
@@ -292,9 +292,25 @@ type CardEdit =
 | AL6 | E-17 (営業利益の主張の向きを逆) | R-dir だけ → 出ない。E-23 (見出し語を `増収` に) も R-dir だけ → 出ない |
 | AL7 | E-19 で `margin` を落とす (`drop`) | R-margin だけ → 出ない (落とした欄を読む検査だけを許す)。`sales` を落とす → R-margin・R-lt → 出ない。`opCurr` を落とす → 5 検査すべて落ちるが許す → 出ない |
 | AL8 | H-31 (むずかしいの `drop` `pbt`・`audit`) | 5 検査はどれも落ちない → 出ない。読まない検査が落ちたら出る |
-| AL9 | 上のほかのすべての種類 (E-03・E-04・E-05・E-21・E-22・E-25〜E-28、H-01〜H-35 など。数字の値・見出し語の向きを変えない) | 5 検査はどれも落ちない → 出ない。**落ちたら `card-relation-extra`** (許す外) |
+| AL9 | 上のほかのすべての種類。**`cardRelationIssues` が読むのは `raw` (データの値) と見出し語の語で、`text` (表示の文字列) ではない** (表示を数にして読むと、E-25 の `△12,400` で R-margin・R-lt、E-27 の `1,2X0` で NaN になり、許す検査が「なし」の種類が 4 検査落ちる)。次の行を**種類ごとに個別のテスト**にする。落ちたら `card-relation-extra` (許す外) | 5 検査はどれも落ちない → 出ない |
+| AL9a | E-25: `sign` `sales` (`text` = `△12,400`・`raw` = 12400) | 5 検査すべて落ちない |
+| AL9b | E-27: `glyph` `opCurr` `at: 2` (`text` = `1,X40`・`raw` = 1240) | 5 検査すべて落ちない |
+| AL9c | E-21: `format` `sales` `no-comma` (`12400`)・E-03: `unit` `sales`・E-22: `dup` `opCurr`・`dup` `headline`・E-26: `suffix` `opPrev` `当期`・E-28: `day` 32・E-04: `columnDates.incomeStatement.current` のずれ・E-05: `labelOverrides` の誤字 (営業和益) | それぞれ 5 検査すべて落ちない (E-22 の `dup` `opCurr` は `find` が最初の欄を読むので値は同じ) |
+| AL9d | むずかしいの種類 (H-01・H-03・H-04・H-05・H-13・H-17・H-19〜H-24・H-28〜H-30・H-32〜H-35 を 1 つずつ。基は B・むずかしい。H-34 は `sign` `ta`) | 5 検査すべて落ちない (カードの 4 欄・見出し語を変えないので) |
 | AL10 | `relationChecks` を持たない種類・種類が引けない異変の問題 | 落ちた検査があれば `card-relation-extra` (種類が引けないときは `unknown-kind` が別に出る) |
 | AL11 | **正常な問題・見本** | 5 検査すべてが落ちない (RC7)。落ちると errors の `card-relation` |
+
+### 6.4 種類の定義 `anomaly-kinds.json` (設計 §3.2 #138-6。#138 が足す・印を付ける。既存の種類の定義は**足すだけで、外さない**)
+
+今のデータの `expectedRules`・主な規則の検査 (errors) を壊さないため、既存の種類の `primaryRules`・`allowedRules` は**足すだけ** (外さない)。台帳から外れた種類 (E-01・E-06〜E-11・E-13〜E-16・H-02・H-06〜H-12・H-14〜H-16・H-18) は残し、`ledger` の印を付けない。
+
+| ID | 入力 → 期待 |
+| --- | --- |
+| KD1 | **台帳 v3 の印 `ledger: 'v3'`**: やさしい = E-02・E-03・E-04・E-05・E-12・E-17 (既存) と E-19・E-21〜E-28 の新規 = **15 種類**。むずかしい = H-01・H-03・H-04・H-05・H-13・H-17・H-19〜H-24・H-28 (既存。H-19・H-20・H-21・H-22・H-23・H-24 を含む 13 種類) と H-29〜H-35 (新規) = **20 種類**。印の無い種類はそれ以外。データ検査: 印のある種類を `kind-shape` が受け入れ、印の値が `'v3'` 以外なら誤り (SE4) |
+| KD2 | **新しい種類** (id・系統・`primaryRules`。`allowedRules` = `primaryRules` + 既存の種類と同様に必要な規則 (`changed` を読む違反は `changed` の許容で通るので、足すのは主な規則だけ)): E-19 (appearance・`card-slots`)・E-21 (appearance・`card-format`)・E-22 (appearance・`card-slots`)・E-23 (appearance・`card-headline`)・E-24 (calculation・`ratio-operating-margin`)・E-25 (appearance・`card-sign`)・E-26 (appearance・`card-column-suffix`)・E-27 (appearance・`card-digits`)・E-28 (appearance・`card-date-valid`)・H-29 (card-form・`card-unit`)・H-30 (card-form・`label-spelling`)・H-31 (card-form・`card-slots`)・H-32 (card-form・`card-format`)・H-33 (card-form・`card-slots`)・H-34 (card-form・`card-sign`)・H-35 (cross-document・`header-company-name`)。`relationChecks`: E-23 = R-dir・E-24 = R-margin・R-lt。ほかの新しい種類は持たない (E-19・H-31 の `drop` は `drop` した欄を読む検査をコードで足す。RC6・AL7) |
+| KD3 | **既存の種類に足す** (N1): E-02 = `primaryRules`・`allowedRules` に `ratio-operating-margin` を足し、系統を `calculation` に (設計 §2.3)。`relationChecks` = R-margin・R-range。E-12 に `relationChecks` = R-margin。E-17 に R-dir。E-03 の `primaryRules`・`allowedRules` に `card-unit` を足す (v3 の `cardEdits` の `unit`。今の `unit-consistency`・`sign-consistency` は残す)。E-04・E-05 は足すものが無い (E-04 は `card-period` を持つ)。むずかしいの既存の種類は、`ledger` の印だけ |
+| KD4 | `unknown-rule` (errors): 種類が参照する規則 ID はすべて `HARD_RULE_IDS` か `SOFT_RULE_IDS` にある (KD2 の `card-sign` などが規則に入っている)。`kind-primary-not-allowed`・`kind-no-primary` の検査は新しい種類も通る |
+| KD5 | **今のデータ** (`src/data`) に当てて、`errors` が 0 件のまま (E-02 の定義を足しても今の E-02 の問題の `expectedRules`・主な規則の検査が壊れない)。壊れるなら足さずに §10 と §13 の申し送りに書く |
 
 ### 6.3 二重の食い違いの禁止 (`doubleDiscrepancies`。v2 の X1〜X5 を 1 形に)
 
@@ -325,16 +341,17 @@ type CardEdit =
 | DS9 | `claims-count` (errors) | 1 問の中で **`operatingIncome`・`operatingCashFlow` の主張がちょうど 1 つ**でない (0 個・2 個以上)。問題 × metric ごとに 1 件。**`netSales` は数えない** (R-D5)。異変の問題・正常な問題・見本の全部 |
 | DS10 | `card-ir-unit` (shortfalls。R-D7) | IR の単位が億円でない問題 (`ir.header.unit` ≠ `億円`。問題ごとに 1 件)・`companies.json` の `irUnit` が `億円` でない会社 (会社ごとに 1 件。**今は 5 社**: c03・c05・c06・c08・c10 が億円で、c01・c02・c04・c07・c09 が百万円。設計 §1.4・**測った**: `companies.json`) |
 | DS11 | 基準問題 A (百万円の IR) | `card-ir-unit` の shortfall が出る・`card-unit` (規則) は落ちない (K2・K12) |
-| DS12 | `card-tier-balance` (shortfalls。設計 §2.7・§3.2 #138-5) | 各社が持つ異変の問題の数が、**段ごとに 1 問以内の差** (会社の中の段ごとの数の最大 − 最小 ≤ 1。段のある異変の問題だけ。会社を列挙して 1 件) |
+| DS12 | `card-tier-balance` (shortfalls。設計 §2.7・§3.2 #138-5) | **段ごとに、会社どうしの差が 1 問以内** (設計 §2.7・§1.5「各社が持つ異変の問題の数が、段ごとに 1 問以内の差」。段 t について、各社が持つ段 t の異変の問題の数の最大 − 最小 ≤ 1。段 1・2・3 のそれぞれで当てる。**1 社の中の段どうしの差ではない**: 設計の推奨のプールは 1 社に段 1 が 5 問・段 3 が 1 問で、会社の中の差は 4 になる。段を持つ異変の問題だけ数える。違反した段と会社を列挙して 1 件) |
 | DS13 | `card-normal-tier` (shortfalls) | 正常な問題が `tier` を持つ (問題ごとに 1 件) |
-| DS14 | `card-kind-count` (shortfalls) | 種類ごとの異変の問題の数が 5 問 (むずかしいの会計・資料間の 11 種類は 7 問) でない (種類を列挙して 1 件)。**その種類を、会社 5 社以上が持つ** (`card-kind-companies`。種類を列挙して 1 件) |
-| DS15 | `card-pool-size` (shortfalls) | 難易度の問題数が やさしい 85・むずかしい 132 に足りない (設計 §1.5)。**`pool-size` (25 問。要件) は今のまま** (`--require-complete` の致命。85・132 を入れると今のデータで CI が赤になる) |
+| DS14 | `card-kind-count` (shortfalls) | **数える種類 = `anomaly-kinds.json` の `ledger: 'v3'` の印を持つ種類** (§6.4。台帳 v3 のやさしい 15・むずかしい 20。`anomaly-kinds.json` には台帳から外れた種類 (E-01・E-06〜E-11・E-13〜E-16・H-02・H-06〜H-12・H-14〜H-16・H-18) が残るが、**印の無い種類は数えない**)。難易度の印のある種類ごとに、異変の問題の数が 5 問でない (むずかしいの会計 (accounting) と資料間 (cross-document) の印のある 11 種類は 7 問でない。**0 問も出る**。種類を列挙して 1 件)。`card-kind-companies` = 印のある種類ごとに、その種類の異変の問題を持つ会社が 5 社未満 (0 問を含む。種類を列挙して 1 件)。印の無い種類の問題は、この 2 つの数え方に入らない (印の無い種類の問題が残っていても出ない) |
+| DS15 | `card-pool-size` (shortfalls) | 難易度の問題数が やさしい 85・むずかしい 132 でない (設計 §1.5。数は 15 × 5 + 10 と 11 × 7 + 9 × 5 + 10 で、DS14 の数え方の和 + 正常 10。印の無い種類の問題は含めない)。**`pool-size` (25 問。要件) は今のまま** (`--require-complete` の致命。85・132 を入れると今のデータで CI が赤になる) |
 | DS16 | `card-anomaly-base` (shortfalls)・`anomaly-base`・`anomaly-changed-mismatch` (errors) | v2 の S12〜S14 のまま (§12 の BC1〜BC6) |
 | DS17 | `card-double-discrepancy`・`anomaly-min-deviation`・`card-place-text`・`cash-scope` | `card-double-discrepancy` = `doubleDiscrepancies` ≠ 空 (問題ごと)。`anomaly-min-deviation` = `deviationIssues` ≠ 空 (§9)。`card-place-text` = 異変の `places` が `ir.statements.<N>.text` を指す (shortfalls。カードの文は claims から作り、`text` は読まない)。`cash-scope` (errors) = `notes.cashScope` が標準の名前と違う |
 | DS18 | 既存の維持 | `pool-size`・`both-sided-companies`・`family-balance` は今のまま (`stats` の形も)。`anomaly-ratio` は出さない |
+| DS20 | `card-edit-op` (errors) | `deriveCards` が `RangeError` を投げる `cardEdits` (形に無い欄・`comma-shift` が 5 桁未満・`glyph` の `at` が数字でない・見出し語に `drop` など) を持つ異変の問題 → `verifyDataset` は `RangeError` を握りつぶさず、`card-edit-op` を errors に出す (メッセージに `RangeError` の内容)。v2 は `card-invisible` (shortfalls) にしか出ず、注入の添字ずれが `--require-complete` を素通りした |
 | DS19 | 外すもの | `card-shape-companies`・`card-shape-both-sided`・`card-shape-kinds` (形ごとの検査)。コードは出ない |
 
-テスト: 小さな合成のデータ (会社 2〜3 社・問題 数件を、基準問題 B から作る) で、各コードが条件どおり出る・出ない (境界: DS4 は 40 字 → 出ない・41 字 → 出る、DS12 は差 1 → 出ない・差 2 → 出る、DS14 は 5 問 → 出ない・4 問 → 出る)。実データ (`src/data`) には、`errors` が 0 件のまま (`card-structure`・`card-relation` を含む) で、shortfalls に `card-*` が出ること。測った件数を PR と §10 に書く。
+テスト: 小さな合成のデータ (会社 2〜3 社・問題 数件を、基準問題 B から作る) で、各コードが条件どおり出る・出ない (境界: DS4 は 40 字 → 出ない・41 字 → 出る、DS12 は「段 1 の問題を会社 a が 5 問・会社 b が 4 問」(差 1) → 出ない・「会社 a が 5 問・会社 b が 3 問」(差 2) → 出る・「会社 a に段 1 が 5 問・段 3 が 1 問で、どの会社もそうなっている」 → 出ない (会社の中の差は見ない)、DS14 は 5 問 → 出ない・4 問 → 出る・印のある種類が 0 問 → 出る・印の無い種類が 3 問 → 出ない (数えない)・むずかしいの accounting の印のある種類は 7 問 → 出ない・5 問 → 出る)。実データ (`src/data`) には、`errors` が 0 件のまま (`card-structure`・`card-relation` を含む) で、shortfalls に `card-*` が出ること。測った件数を PR と §10 に書く。
 
 ## 8. 型の検証 `shapeErrors` (K13)
 
@@ -401,7 +418,10 @@ type CardEdit =
 | B6 | 差の取り方: セルは `tanshin`・`ir` の全リーフ (数・文・真偽・null)。配列 (`statements`・`segments.items`) は添字つきのパス `ir.statements.0.text`。要素の数が違えば、足りない・余った添字のパスが差 | `changed` はそのパスで書く |
 
 
-## 13. この Task でやらないこと (範囲の外。理由つき)
+## 13. この Task でやらないこと・設計 v3 と読み替えた所 (範囲の外。理由つき)
+
+**設計 v3 と読み替えた所** (中身は設計の許可表と同じ。#139・#140 が設計の文のまま書くと種類の定義が誤りになるので、ここに残す): ① 設計 §2.9 の「E-02 の `primaryRules` に `card-relation` の R-range、E-24 に R-lt を足す」は、`card-relation` を規則の ID にすると今の異変の問題の `expectedRules` (実際に落ちた集合との一致を求める errors) が壊れるので、**`primaryRules` には足さず、種類の `relationChecks` (R-range・R-lt を含む許す検査) で表す** (§6.2・§6.4)。`primaryRules` に `R-range` と書くと、規則の ID に無いので `unknown-rule` の誤りになる。② 設計 §3.2 #138-3 の「`card-unit` から `irUnit` の分岐を外す (IR = 億円)」は、規則は `ir.header.unit` と比べ、IR が億円であることはデータの検査 `card-ir-unit` (shortfalls) に置く (K2・DS10)。理由: 規則で `億円` を直書きすると、今 IR が百万円の 5 社 (c01・c02・c04・c07・c09) の正常な問題が致命になる。どちらも最後は `--require-cards=easy|hard` の終了 0 (#139・#140 の受け入れ条件) で致命になる。
+
 
 | 事柄 | 理由 | 担当 |
 | --- | --- | --- |
