@@ -4,11 +4,12 @@ import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import type { Company, Problem } from '../src/domain/types';
 
-const dir = join(import.meta.dirname, '../src/data/problems/easy');
-export const NORMALS: Problem[] = readdirSync(dir)
-  .sort()
-  .map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8')) as Problem)
-  .filter((p) => p.anomaly === null);
+const load = (name: string): Problem[] => {
+  const dir = join(import.meta.dirname, '../src/data/problems', name);
+  return readdirSync(dir).sort().map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8')) as Problem).filter((p) => p.anomaly === null);
+};
+export const NORMALS: Problem[] = load('easy');
+export const HARD_NORMALS: Problem[] = load('hard');
 
 /** buildDeck の 4 つ目の引数: アプリ本体と同じ見本 (src/data/samples) と会社。 */
 export const DECK_REF: { sample: Problem; companies: Company[] } = {

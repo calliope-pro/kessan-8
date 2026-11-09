@@ -1,7 +1,7 @@
 // 受け入れ条件 7・9 と、設計 §4 の条件 (#137): 横にはみ出さない・文字 18 px 以上・320 px で 7 桁の金額が桁マスに 18 px 以上で収まる。
 import { expect, test, type Page } from '@playwright/test';
 import { drawRun } from '../src/proto/draw';
-import { answer, NORMALS } from './support';
+import { answer, HARD_NORMALS, NORMALS } from './support';
 
 const noOverflow = (page: Page) => page.evaluate(() => ({ doc: document.documentElement.scrollWidth, view: innerWidth, body: document.body.scrollWidth }));
 
@@ -46,21 +46,33 @@ test('どの画面も横にはみ出さず、文字は 18 px 以上 (0 社目・
   await check('差し戻し');
 });
 
-test('3 形の伝票が、答える前も答えたあとも横にはみ出さない', async ({ page }) => {
-  // 確かめの画面は 1 形ごと。E2 (棒グラフ) は遊びの出題で出るまで周を替えて確かめる
-  const seen = new Set<string>();
-  for (let seed = 1; seed < 60 && seen.size < 3; seed++) {
-    await page.goto(`/proto.html?seed=${seed}`);
+test('むずかしい (カード + 資料 1・2) が、答える前も答えたあとも横にはみ出さない。札の帯は見え、伝票の長さを記録する', async ({ page }, info) => {
+  const out: Record<string, unknown> = {};
+  for (const seed of [21, 22, 23]) {
+    await page.goto(`/proto.html?seed=${seed}&difficulty=hard`);
     await page.getByRole('button', { name: '1 社目へ' }).click();
-    const r = drawRun(seed, NORMALS)[0]!;
-    seen.add(r.shape);
+    const r = drawRun(seed, HARD_NORMALS, { difficulty: 'hard' })[0]!;
     const w = await noOverflow(page);
-    expect(w.doc).toBeLessThanOrEqual(w.view);
+    expect(w.doc, `seed ${seed}`).toBeLessThanOrEqual(w.view);
+    expect(w.body, `seed ${seed}`).toBeLessThanOrEqual(w.view);
+    // 資料の文字は 16 px 以上 (18 px は、やさしいのカードの条件。むずかしいの資料は会計の基礎がある人向けの読み物)
+    expect(await smallText(page, 16), `seed ${seed} の 16 px 未満の文字`).toEqual([]);
+    const m = await page.evaluate(() => ({
+      pageHeight: document.documentElement.scrollHeight,
+      viewport: innerHeight,
+      actionsVisible: (() => { const a = document.querySelector('.actions')!.getBoundingClientRect(); return a.top >= 0 && a.bottom <= innerHeight + 1; })(),
+      cardBottom: Math.round(document.querySelector('.slip')!.getBoundingClientRect().bottom),
+      docsRows: document.querySelectorAll('.doc .row').length,
+    }));
+    expect(m.actionsVisible, `seed ${seed}: 札が画面の下に見える`).toBe(true);
+    out[`seed${seed}`] = { ...m, screens: Math.round((m.pageHeight / m.viewport) * 10) / 10 };
     await answer(page, r.anomaly !== null);
+    await page.waitForTimeout(350); // 押印の動き (160 ms。印が大きく落ちてくる) が終わるまで
     const w2 = await noOverflow(page);
     expect(w2.doc).toBeLessThanOrEqual(w2.view);
   }
-  expect([...seen].sort()).toEqual(['E1', 'E2', 'E3']);
+  console.log(`[hard-layout ${info.project.name}] ${JSON.stringify(out)}`);
+  info.annotations.push({ type: 'hard-layout', description: JSON.stringify(out) });
 });
 
 test('7 桁の金額が桁マスに 18 px 以上で収まる (実データの最大と、7 桁の最大 9,999,999)', async ({ page }, info) => {
@@ -143,8 +155,8 @@ test('押した印 (と、不正解の「差戻」) は、答えた直後にど�
 
 test('伝票が札の帯の上に全部収まるか (記録)', async ({ page }, info) => {
   const out: Record<string, { footBottom: number; actionsTop: number }> = {};
-  for (const shape of ['E1', 'E3'] as const) {
-    await page.goto(`/proto.html?mode=test&shape=${shape}&seed=11&sample=off`);
+  for (const shape of ['easy'] as const) {
+    await page.goto(`/proto.html?mode=test&seed=11&sample=off`);
     await page.getByRole('button', { name: '1 枚目へ' }).click();
     await page.waitForTimeout(300);
     out[shape] = await page.evaluate(() => ({

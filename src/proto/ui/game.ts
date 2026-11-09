@@ -1,6 +1,6 @@
 // 遊びの画面 (docs/design-v2.md §3.1): 0 社目 (見本) → n 社目 → 答え合わせ → 間違えたら 0 社目へ自動で戻る / 8 社連続でクリア。
 import type { Company, Problem } from '../../domain/types';
-import { deriveCard, locate, SHAPES, type ShapeId } from '../cards';
+import { deriveCards, locate, type Difficulty } from '../cards';
 import { drawRun, ROUNDS_TO_CLEAR, type Round } from '../draw';
 import { initial, reduce, type Action, type Answer, type State } from '../flow';
 import { arm, h, scrollMarksIntoView, screenHeading, seal, setVar } from './dom';
@@ -11,6 +11,7 @@ export interface GameEnv {
   companies: readonly Company[];
   sample: Problem;
   seed: number;
+  difficulty: Difficulty;
 }
 
 /** 不正解の演出の長さ (約 1 秒。docs/design-v2.md §3.1)。 */
@@ -23,8 +24,8 @@ export function companyOf(env: Pick<GameEnv, 'companies'>, p: Problem): Company 
   return c;
 }
 
-export function cardOf(env: Pick<GameEnv, 'companies'>, r: Round) {
-  return deriveCard(r.problem, companyOf(env, r.problem), r.shape, r.edits);
+export function cardOf(env: Pick<GameEnv, 'companies' | 'difficulty'>, r: Round) {
+  return deriveCards(r.problem, companyOf(env, r.problem), env.difficulty, r.edits);
 }
 
 /** 答え合わせの文 (正解・不正解と、異変の内容)。下端の帯に置く: 朱書きを画面に出すために伝票を送っても、内容の文は常に見える。 */
@@ -45,11 +46,11 @@ export function mountGame(root: HTMLElement, env: GameEnv): void {
   const live = h('p', { class: 'sr', role: 'status' });
   const view = h('div', { class: 'stage' });
   root.replaceChildren(view, live);
-  let state = initial(drawRun(env.seed, env.normals, { history }));
+  let state = initial(drawRun(env.seed, env.normals, { history, difficulty: env.difficulty }));
   let timer: ReturnType<typeof setTimeout> | undefined;
   let pressed: Answer | null = null;
 
-  const redraw = () => drawRun(env.seed + state.draws * 7919, env.normals, { history });
+  const redraw = () => drawRun(env.seed + state.draws * 7919, env.normals, { history, difficulty: env.difficulty });
 
   function dispatch(a: Action): void {
     if (timer) clearTimeout(timer);
@@ -83,7 +84,7 @@ export function mountGame(root: HTMLElement, env: GameEnv): void {
         if (m.anomaly) desk.append(renderSlip(card, { marks: locate(card, m.anomaly.places) }));
       }
       desk.append(h('p', { class: 'lead' }, h('strong', {}, 'これが「いつも通り」。'), 'ここからずれたら、異変です。'));
-      for (const shape of SHAPES) desk.append(renderSlip(deriveCard(env.sample, companyOf(env, env.sample), shape), { example: true }));
+      desk.append(renderSlip(deriveCards(env.sample, companyOf(env, env.sample), env.difficulty), { example: true }));
       actions.classList.add('single');
       actions.append(seal('1 社目へ', null, 'primary', () => dispatch({ type: 'BEGIN' })));
     } else if (state.phase === 'reading' || state.phase === 'revealed') {

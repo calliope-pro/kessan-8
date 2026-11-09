@@ -1,7 +1,7 @@
 // 確かめの画面 (?mode=test): plans.md §8.1 の「① の測り方」。1 人 8 枚 (異変 4 + 正常 4) を続けて見せ、記録を出す。
 // 遊びの本体と同じ伝票・押印・答え合わせを使う。違い: 間違えても 0 社目に戻らず、8 枚を最後まで見せる (8 枚の答えを全部記録するため)。
 import type { Company, Problem } from '../../domain/types';
-import { deriveCard, locate, type ShapeId } from '../cards';
+import { deriveCards, locate } from '../cards';
 import { isCorrect, type Answer } from '../flow';
 import { buildDeck, scoreSession, type Response } from '../playtest';
 import { cardOf, checks, feedback } from './game';
@@ -13,7 +13,6 @@ export interface TestEnv {
   companies: readonly Company[];
   sample: Problem;
   seed: number;
-  shape: ShapeId;
   withSample: boolean;
   pid: string;
 }
@@ -23,7 +22,7 @@ export function recordText(env: TestEnv, deck: ReturnType<typeof buildDeck>, rs:
   const lines = [
     '８期連続 試作 確かめ記録',
     `参加者: ${env.pid || '(未記入)'}`,
-    `条件: 形=${env.shape} 0社目=${env.withSample ? 'あり' : 'なし'} 種=${env.seed}`,
+    `条件: 0社目=${env.withSample ? 'あり' : 'なし'} 種=${env.seed}`,
     `結果: 異変 ${sc.found}/${sc.anomalies} を見つけた / 正常 ${sc.falseAlarms}/${sc.normals} を異変と答えた → ${sc.pass ? '合格' : '不合格'} (基準: 見つけ 3 以上かつ誤り 1 以下)`,
     '',
   ];
@@ -36,7 +35,7 @@ export function recordText(env: TestEnv, deck: ReturnType<typeof buildDeck>, rs:
 }
 
 export function mountPlaytest(root: HTMLElement, env: TestEnv): void {
-  const deck = buildDeck(env.seed, env.shape, env.normals, { sample: env.sample, companies: env.companies });
+  const deck = buildDeck(env.seed, env.normals, { sample: env.sample, companies: env.companies });
   const responses: Response[] = [];
   const times: number[] = [];
   let index = -1; // -1 = はじめの画面、0.. = n 枚目
@@ -76,13 +75,13 @@ export function mountPlaytest(root: HTMLElement, env: TestEnv): void {
       head = checks('0 社目 (見本)', -1, 0);
       desk.append(
         h('p', { class: 'lead' }, h('strong', {}, 'これが「いつも通り」。'), 'ここからずれたら、異変です。'),
-        renderSlip(deriveCard(env.sample, env.companies.find((c) => c.id === env.sample.companyId)!, env.shape), { example: true }),
+        renderSlip(deriveCards(env.sample, env.companies.find((c) => c.id === env.sample.companyId)!, 'easy'), { example: true }),
       );
       actions.classList.add('single');
       actions.append(seal('1 枚目へ', null, 'primary', next));
     } else if (phase === 'reading' || phase === 'revealed') {
       const r = deck[index]!;
-      const card = cardOf(env, r);
+      const card = cardOf({ companies: env.companies, difficulty: 'easy' }, r);
       head = checks(`${index + 1} 枚目`, index, index);
       const revealed = phase === 'revealed';
       const sheet = renderSlip(card, { marks: revealed && r.anomaly ? locate(card, r.anomaly.places) : [] });

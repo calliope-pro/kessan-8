@@ -20,8 +20,8 @@ export function summaryText(text: string): string {
     `判定: ${a.verdict} (合格 ${a.passed} / ${a.n} 人。基準: 0 社目ありの条件で、見つけ 3/4 以上かつ誤り 1/4 以下)`,
     footnote(a.n, a.passed),
     '',
-    '人 | 0 社目 | 形 | 種 | 見つけ | 誤り | 合否',
-    ...records.map((r) => `${r.pid || '(未記入)'} | ${r.withSample ? 'あり' : 'なし'} | ${r.shape} | ${r.seed} | ${r.found}/${r.anomalies} | ${r.falseAlarms}/${r.normals} | ${r.pass ? '合格' : '不合格'}`),
+    '人 | 0 社目 | 種 | 見つけ | 誤り | 合否',
+    ...records.map((r) => `${r.pid || '(未記入)'} | ${r.withSample ? 'あり' : 'なし'} | ${r.seed} | ${r.found}/${r.anomalies} | ${r.falseAlarms}/${r.normals} | ${r.pass ? '合格' : '不合格'}`),
   ];
   if (a.aux.length > 0) {
     lines.push('', '補助 (同じ人の 0 社目あり − なし の見つけ数):');

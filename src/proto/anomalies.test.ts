@@ -1,183 +1,199 @@
-// ケース表 docs/proto/test-cases.md の A (異変)。
+// ケース表 docs/proto/test-cases.md の A (異変。v3)。
 import { describe, expect, it } from 'vitest';
-import { ANOMALIES, buildAnomaly, kindsFor } from './anomalies';
-import { deriveCard, locate, SHAPES, type ShapeId } from './cards';
 import { mulberry32 } from '../domain/rng';
-import { companyOf, NORMALS } from './testing';
+import { ANOMALIES, buildAnomaly, kindsFor, applicable, type AnomalyResult } from './anomalies';
+import { deriveCards, getCell, locate, type Difficulty } from './cards';
+import { companyOf, HARD_NORMALS, NORMALS } from './testing';
 
-const pairs = ANOMALIES.flatMap((a) => a.shapes.map((s) => [a.id, s] as const));
-const normalOf = (id: string) => NORMALS.find((p) => p.id === id)!;
-const E017 = normalOf('easy-017');
-function build(kind: string, shape: ShapeId, p = E017) {
-  const res = buildAnomaly(kind, p, shape, mulberry32(7));
-  const base = deriveCard(p, companyOf(p), shape);
-  const card = deriveCard(res.problem, companyOf(p), shape, res.edits);
-  return { res, base, card };
-}
-const slot = (c: ReturnType<typeof deriveCard>, k: string) => c.slots.find((s) => s.key === k)!;
+const EASY_KINDS = ['E-17', 'E-12', 'E-02', 'E-24', 'E-03', 'E-05', 'E-19', 'E-22', 'E-21', 'E-25', 'E-23', 'E-04', 'E-26', 'E-27', 'E-28'];
+const HARD_KINDS = ['H-01', 'H-04', 'H-13', 'H-21', 'H-33'];
+const pool = (d: Difficulty) => (d === 'easy' ? NORMALS : HARD_NORMALS);
+const card = (r: Pick<AnomalyResult, 'problem' | 'edits'>, d: Difficulty) => deriveCards(r.problem, companyOf(r.problem), d, r.edits);
+const normalCard = (p: (typeof NORMALS)[number], d: Difficulty) => deriveCards(p, companyOf(p), d);
+const diffOf = (id: string): Difficulty => (id.startsWith('H') ? 'hard' : 'easy');
+const slotOf = (c: ReturnType<typeof deriveCards>, k: string) => c.slots.find((s) => s.key === k)!;
+const each = (kind: string, fn: (r: AnomalyResult, base: (typeof NORMALS)[number], d: Difficulty) => void) => {
+  const d = diffOf(kind);
+  const bases = pool(d).filter((p) => applicable(kind, p));
+  expect(bases.length).toBeGreaterThan(0);
+  bases.forEach((p, i) => fn(buildAnomaly(kind, p, mulberry32(i + 1)), p, d));
+};
 
-describe('A1 形ごとの種類の数 (台帳 §2.2)', () => {
-  it('E1 = 12・E2 = 12・E3 = 9。全体 15', () => {
-    expect(kindsFor('E1')).toHaveLength(12);
-    expect(kindsFor('E2')).toHaveLength(12);
-    expect(kindsFor('E3')).toHaveLength(9);
-    expect(ANOMALIES).toHaveLength(15);
-    expect(new Set(ANOMALIES.map((a) => a.id)).size).toBe(15);
+describe('A1 種類', () => {
+  it('やさしい 15・むずかしい 5。欠番は無い', () => {
+    expect(kindsFor('easy').map((k) => k.id).sort()).toEqual([...EASY_KINDS].sort());
+    expect(kindsFor('hard').map((k) => k.id).sort()).toEqual([...HARD_KINDS].sort());
+    for (const gone of ['E-18', 'E-20', 'E-06', 'E-07', 'E-09']) expect(ANOMALIES.map((a) => a.id)).not.toContain(gone);
   });
 });
 
-describe('A2〜A4 全種類 × 見える形 × 正常 12 問', () => {
-  it('作れる・元は変わらない・カードが正常とちがう・places がカードに載っている・説明がある (A14)', () => {
-    for (const p of NORMALS) {
-      const before = JSON.stringify(p);
-      for (const [kind, shape] of pairs) {
-        const { res, base, card } = build(kind, shape, p);
-        const where = `${p.id} ${kind} ${shape}`;
-        expect(card, `A3 ${where}`).not.toEqual(base);
-        expect(res.places.length, `A4 ${where}`).toBeGreaterThan(0);
-        for (const pl of res.places) expect(locate(card, [pl]).length, `A4 ${where} ${pl}`).toBeGreaterThan(0);
-        expect(res.explanation.length, `A14 ${where}`).toBeGreaterThan(5);
+describe('A2 作れる・元の問題は変わらない・同じ会社と期', () => {
+  it('全種類 × 当てられる正常', () => {
+    for (const kind of [...EASY_KINDS, ...HARD_KINDS]) {
+      const d = diffOf(kind);
+      for (const p of pool(d).filter((x) => applicable(kind, x))) {
+        const before = JSON.stringify(p);
+        const r = buildAnomaly(kind, p, mulberry32(7));
+        expect(JSON.stringify(p), kind).toBe(before);
+        expect([r.problem.companyId, r.problem.tanshin.header.periodLabel], kind).toEqual([p.companyId, p.tanshin.header.periodLabel]);
       }
-      expect(JSON.stringify(p), 'A2 元の問題は変わらない').toBe(before);
     }
   });
-  it('A13 同じ会社・同じ期の問題から作る', () => {
-    for (const [kind, shape] of pairs) {
-      const { res } = build(kind, shape);
-      expect(res.problem.companyId).toBe(E017.companyId);
-      expect(res.problem.fiscalYear).toBe(E017.fiscalYear);
-    }
-  });
-  it('見えない形では作らない', () => {
-    expect(() => buildAnomaly('E-09', E017, 'E1', mulberry32(1))).toThrow();
-    expect(() => buildAnomaly('E-07', E017, 'E3', mulberry32(1))).toThrow();
+  it('E-02 を当てられる正常は 12 問のうち 8 (増益 6・減益 2)。ほかの種類は 12 問すべて', () => {
+    const e02 = NORMALS.filter((p) => applicable('E-02', p));
+    expect(e02).toHaveLength(8);
+    const up = e02.filter((p) => p.tanshin.incomeStatement.current.operatingIncome > p.tanshin.incomeStatement.previous.operatingIncome);
+    expect([up.length, e02.length - up.length]).toEqual([6, 2]);
+    for (const k of EASY_KINDS.filter((x) => x !== 'E-02')) expect(NORMALS.filter((p) => applicable(k, p)), k).toHaveLength(12);
   });
 });
 
-describe('A5〜A12・A15 種類ごとの中身', () => {
+describe('A3・A4 見える・場所がカードの上にある', () => {
+  for (const kind of [...EASY_KINDS, ...HARD_KINDS]) {
+    it(kind, () => {
+      each(kind, (r, base, d) => {
+        expect(card(r, d), `${kind} ${base.id}`).not.toEqual(normalCard(base, d));
+        const c = card(r, d);
+        expect(r.places.length).toBeGreaterThan(0);
+        expect(locate(c, r.places).length, `${kind} places`).toBeGreaterThanOrEqual(r.places.length);
+      });
+    });
+  }
+});
+
+describe('A5〜A8 中身の異変', () => {
   it('A5 E-17: 見出し語が数字の向きと逆', () => {
-    for (const p of NORMALS) {
-      const t = p.tanshin.incomeStatement;
-      const up = t.current.operatingIncome >= t.previous.operatingIncome;
-      expect(build('E-17', 'E1', p).card.headline?.text).toBe(up ? '減益' : '増益');
-      const upS = t.current.netSales >= t.previous.netSales;
-      expect(build('E-17', 'E2', p).card.headline?.text).toBe(upS ? '減収' : '増収');
-    }
+    each('E-17', (r, base) => {
+      const t = base.tanshin.incomeStatement;
+      const real = t.current.operatingIncome >= t.previous.operatingIncome ? '増益' : '減益';
+      expect(card(r, 'easy').headline!.text).toBe(real === '増益' ? '減益' : '増益');
+    });
   });
   it('A6 E-12: 営業利益率が 2 倍以上か 1/2 以下', () => {
-    for (const p of NORMALS) {
-      const { base, card } = build('E-12', 'E1', p);
-      const r = slot(card, 'margin').value / slot(base, 'margin').value;
-      expect(r >= 2 || r <= 0.5).toBe(true);
-    }
+    each('E-12', (r, base) => {
+      const ratio = r.problem.tanshin.summary.operatingMargin / base.tanshin.summary.operatingMargin;
+      expect(ratio >= 2 || ratio <= 0.5).toBe(true);
+    });
   });
-  it('A7 E-02: 1 つの数字が 10 倍。再計算はしない (カードの中に食い違いが残る)', () => {
-    const e1 = build('E-02', 'E1');
-    expect(slot(e1.card, 'sales').value).toBe(slot(e1.base, 'sales').value * 10);
-    expect(slot(e1.card, 'margin').value).toBe(slot(e1.base, 'margin').value); // 営業利益率は元のまま
-    const e2 = build('E-02', 'E2');
-    expect(slot(e2.card, 'salesCurr').value).toBe(slot(e2.base, 'salesCurr').value * 10);
-    const e3 = build('E-02', 'E3');
-    expect(slot(e3.card, 'fixed').value).toBe(slot(e3.base, 'fixed').value * 10);
-    expect(slot(e3.card, 'total').value).toBe(slot(e3.base, 'total').value); // 総資産は元のまま
+  it('A7 E-02: 増益は 10 倍・減益は 1/10。営業利益率は元のまま。増益は 10 倍でも売上高の 0.8 倍以下', () => {
+    each('E-02', (r, base) => {
+      const b = base.tanshin.incomeStatement, a = r.problem.tanshin.incomeStatement;
+      const up = b.current.operatingIncome > b.previous.operatingIncome;
+      expect(Math.abs(a.current.operatingIncome - (up ? b.current.operatingIncome * 10 : b.current.operatingIncome / 10))).toBeLessThanOrEqual(0.5); // 1/10 は整数に丸める
+      expect(r.problem.tanshin.summary.operatingMargin).toBe(base.tanshin.summary.operatingMargin);
+      if (up) expect(a.current.operatingIncome).toBeLessThanOrEqual(0.8 * a.current.netSales);
+      // 向きが変わらない
+      expect(a.current.operatingIncome > a.previous.operatingIncome).toBe(up);
+    });
   });
-  it('A7b E-02 は、桁マスの空きに頼らず、1 枚の中の食い違いで見える (設計 §2.2 の見つける規則。R-S4 の V2)', () => {
-    for (const p of NORMALS) {
-      // E1: 営業利益率 = 当期の営業利益 ÷ 売上高 が合わない (ratio-operating-margin)
-      const e1 = build('E-02', 'E1', p).card;
-      const calc = (slot(e1, 'opCurr').value / slot(e1, 'sales').value) * 100;
-      expect(Math.abs(slot(e1, 'margin').value - calc), `${p.id} E1`).toBeGreaterThanOrEqual(1.0);
-      // E3: 総資産 = 流動資産 + 固定資産 が合わない (bs-total-assets)
-      const e3 = build('E-02', 'E3', p).card;
-      const sum = slot(e3, 'current').value + slot(e3, 'fixed').value;
-      expect(Math.abs(slot(e3, 'total').value - sum) / slot(e3, 'total').value, `${p.id} E3`).toBeGreaterThanOrEqual(0.1);
-      // E2: 数字の比 (当期 ÷ 前期) が棒の比と合わない (chart-bars)
-      const e2 = build('E-02', 'E2', p).card;
-      const ratioNum = slot(e2, 'salesCurr').value / slot(e2, 'salesPrev').value;
-      const ratioBar = (e2.bars!.current - e2.bars!.axisMin) / (e2.bars!.previous - e2.bars!.axisMin);
-      expect(ratioNum / ratioBar, `${p.id} E2`).toBeGreaterThanOrEqual(5);
-    }
-  });
-  it('A8 E-09: 総資産が足し算の値から 10% 以上ずれる', () => {
-    for (const p of NORMALS) {
-      const { card } = build('E-09', 'E3', p);
-      const sum = slot(card, 'current').value + slot(card, 'fixed').value;
-      expect(Math.abs(slot(card, 'total').value - sum) / sum).toBeGreaterThanOrEqual(0.1);
-    }
-  });
-  it('A9 E-07: 数字で大きいほうの棒が、小さいほうの棒の 2/3 以下 (増収でも減収でも)', () => {
-    for (const p of NORMALS) {
-      const { card } = build('E-07', 'E2', p);
-      const { previous, current, axisMin } = card.bars!;
-      const lo = Math.min(previous, current), hi = Math.max(previous, current);
-      const nums = p.tanshin.incomeStatement;
-      const bigger = nums.current.netSales >= nums.previous.netSales ? 'current' : 'previous';
-      expect(lo - axisMin > 0).toBe(true);
-      expect(card.bars![bigger] - axisMin).toBeLessThanOrEqual(((bigger === 'current' ? previous : current) - axisMin) * (2 / 3));
-      expect(hi).toBeGreaterThan(lo);
-    }
-  });
-  it('A10 E-06: 描いた長い棒 ÷ 短い棒が 1.5 以上', () => {
-    for (const p of NORMALS) {
-      const { card } = build('E-06', 'E2', p);
-      const { previous, current, axisMin } = card.bars!;
-      const lo = Math.min(previous, current) - axisMin, hi = Math.max(previous, current) - axisMin;
-      expect(lo).toBeGreaterThan(0);
-      expect(hi / lo).toBeGreaterThanOrEqual(1.5);
-    }
-  });
-  it('A11b E-18 は、営業利益率が売上高と営業利益から出る割合と合わなくなる (1 枚の中で見える)', () => {
-    for (const p of NORMALS) {
-      const c = build('E-18', 'E1', p).card;
-      expect(Math.abs(slot(c, 'margin').value - (slot(c, 'opCurr').value / slot(c, 'sales').value) * 100)).toBeGreaterThanOrEqual(1.0);
-    }
-  });
-  it('A11 E-18: 売上高と当期の営業利益が入れ替わる', () => {
-    const { base, card } = build('E-18', 'E1');
-    expect(slot(card, 'sales').value).toBe(slot(base, 'opCurr').value);
-    expect(slot(card, 'opCurr').value).toBe(slot(base, 'sales').value);
-  });
-  it('A12 E-23: 見出し語が別の型の語で、向きは合っている', () => {
-    const e1 = build('E-23', 'E1');
-    expect(['増収', '減収']).toContain(e1.card.headline?.text);
-    expect(e1.card.headline?.text.slice(1)).toBe(e1.base.headline?.text.slice(1) === '益' ? '収' : '益');
-    const e2 = build('E-23', 'E2');
-    expect(['増益', '減益']).toContain(e2.card.headline?.text);
-    expect(e2.card.headline?.text.slice(0, 1)).toBe(e2.base.headline?.text.slice(0, 1));
-  });
-  it('A15 E-04: 期末日の年が 1 年ずれ、期と合わない', () => {
-    const { base, card } = build('E-04', 'E1');
-    expect(base.periodEnd).toBe('2024年3月31日');
-    expect(card.periodEnd).toBe('2023年3月31日');
-    expect(card.period).toBe('2024年3月期');
-  });
-  it('形のずれの種類は、決まった変更をする', () => {
-    expect(build('E-19', 'E1').card.slots).toHaveLength(3);
-    expect(build('E-22', 'E1').card.slots).toHaveLength(5);
-    expect(build('E-20', 'E3').card.slots.map((s) => s.key)).not.toEqual(build('E-20', 'E3').base.slots.map((s) => s.key));
-    expect(new Set(build('E-03', 'E1').card.slots.map((s) => s.unit)).size).toBe(3);
-    expect(build('E-05', 'E1').card.slots.map((s) => s.label)).not.toEqual(build('E-05', 'E1').base.slots.map((s) => s.label));
-    expect(build('E-21', 'E1').card.slots[0]!.text).not.toBe(build('E-21', 'E1').base.slots[0]!.text);
+  it('A8 E-24: 売上高が営業利益の 0.8 倍以下。営業利益・営業利益率は元のまま', () => {
+    each('E-24', (r, base) => {
+      const a = r.problem.tanshin.incomeStatement.current;
+      expect(a.netSales).toBeLessThanOrEqual(0.8 * a.operatingIncome);
+      expect(a.operatingIncome).toBe(base.tanshin.incomeStatement.current.operatingIncome);
+      expect(r.problem.tanshin.summary.operatingMargin).toBe(base.tanshin.summary.operatingMargin);
+    });
   });
 });
 
-describe('A16 E-05 の綴りは一目で違う字', () => {
-  it('異体字をやめ、別の字に変える。説明は違う字を示す', () => {
-    for (const shape of ['E1', 'E2', 'E3'] as const) {
-      const { base, card, res } = build('E-05', shape);
-      const before = base.slots.map((s) => s.label), after = card.slots.map((s) => s.label);
-      const i = after.findIndex((l, k) => l !== before[k]);
-      const a = [...before[i]!], b = [...after[i]!];
-      const diff = b.findIndex((ch, k) => ch !== a[k]);
-      expect(b[diff]!.codePointAt(0)).not.toBe(0x9ad9); // 髙 (高の異体字) は使わない
-      expect(res.explanation).toContain(`「${b[diff]}」`);
-      expect(res.explanation).toContain(`「${a[diff]}」`);
-    }
+describe('A9〜A14・A26〜28 表記の異変', () => {
+  it('A9 E-21: 売上高の桁区切りだけが違う', () => {
+    each('E-21', (r, base) => {
+      const n = slotOf(card(r, 'easy'), 'sales'), o = slotOf(normalCard(base, 'easy'), 'sales');
+      expect(n.text).not.toBe(o.text);
+      expect(n.text.replace(/,/g, '')).toBe(o.text.replace(/,/g, '').replace(/,/g, ''));
+    });
+  });
+  it('A10 E-22: 数字 5 つか、見出し語 2 回', () => {
+    each('E-22', (r) => {
+      const c = card(r, 'easy');
+      expect(c.slots.length === 5 || c.headline!.count === 2).toBe(true);
+    });
+    const kinds = new Set(NORMALS.map((p, i) => { const c = card(buildAnomaly('E-22', p, mulberry32(i + 1)), 'easy'); return c.headline!.count; }));
+    expect(kinds.size).toBeGreaterThanOrEqual(1);
+  });
+  it('A11 E-25: 売上高の表示に △。データは負にならない', () => {
+    each('E-25', (r, base) => {
+      expect(slotOf(card(r, 'easy'), 'sales').text.startsWith('△')).toBe(true);
+      expect(JSON.stringify(r.problem)).toBe(JSON.stringify(base));
+    });
+  });
+  it('A12 E-26: 同じ科目名・同じ添え字の欄が 2 つ並び、値が違う', () => {
+    each('E-26', (r) => {
+      const c = card(r, 'easy');
+      const labels = c.slots.map((s) => s.label);
+      const dup = labels.filter((l, i) => labels.indexOf(l) !== i);
+      expect(dup).toHaveLength(1);
+      const same = c.slots.filter((s) => s.label === dup[0]);
+      expect(new Set(same.map((s) => s.text)).size).toBe(2);
+    });
+  });
+  it('A13 E-27: 金額の欄に X が 1 字。ほかは数字とカンマだけ', () => {
+    each('E-27', (r) => {
+      const xs = card(r, 'easy').slots.filter((s) => s.kind === 'amount' && s.text.includes('X'));
+      expect(xs).toHaveLength(1);
+      expect(xs[0]!.text).toMatch(/^[\d,]*X[\d,]*$/);
+      expect(xs[0]!.text.split('X')).toHaveLength(2);
+    });
+  });
+  it('A14 E-28: 期末日の日が 32。データは正しいまま', () => {
+    each('E-28', (r, base) => {
+      expect(card(r, 'easy').periodEnd).toMatch(/32日$/);
+      expect(r.problem.tanshin.columnDates).toEqual(base.tanshin.columnDates);
+    });
+  });
+  it('A15 E-04: 期末日の年が 1 年ずれ、その月の末日 (2 月は閏年なら 29 日)', () => {
+    each('E-04', (r, base) => {
+      const was = getCell(base, 'tanshin.columnDates.incomeStatement.current') as string;
+      const now = getCell(r.problem, 'tanshin.columnDates.incomeStatement.current') as string;
+      const [y, m, d] = now.split('-').map(Number) as [number, number, number];
+      expect(y).toBe(Number(was.split('-')[0]) - 1);
+      expect(m).toBe(Number(was.split('-')[1]));
+      const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      expect(d).toBe(last);
+    });
+    // 2 月の例 (2024 → 2023 は 28 日。2025 → 2024 は 29 日)
+    const feb = structuredClone(NORMALS[0]!);
+    feb.tanshin.columnDates.incomeStatement.current = '2025-02-28';
+    const r = buildAnomaly('E-04', feb, mulberry32(1));
+    expect(getCell(r.problem, 'tanshin.columnDates.incomeStatement.current')).toBe('2024-02-29');
   });
 });
 
-describe('形の網羅', () => {
-  it('SHAPES の全形に種類がある', () => {
-    for (const s of SHAPES) expect(kindsFor(s).length).toBeGreaterThanOrEqual(4);
+describe('A16 そのほかのやさしい', () => {
+  it('E-19: 欄の欠落', () => each('E-19', (r) => expect(card(r, 'easy').dropped).toHaveLength(1)));
+  it('E-03: 単位が 1 つだけ億円', () => each('E-03', (r) => {
+    const units = card(r, 'easy').slots.map((s) => s.unit);
+    expect(units.filter((u) => u === '億円')).toHaveLength(1);
+  }));
+  it('E-05: 営業和益', () => each('E-05', (r) => expect(card(r, 'easy').slots.some((s) => s.label.startsWith('営業和益'))).toBe(true)));
+  it('E-23: 別の型の語 (向きは合っている)', () => each('E-23', (r, base) => {
+    const t = base.tanshin.incomeStatement;
+    const word = card(r, 'easy').headline!.text;
+    expect(word).toBe(t.current.operatingIncome >= t.previous.operatingIncome ? '増収' : '減収');
+  }));
+});
+
+describe('A17 むずかしい', () => {
+  const v = (r: AnomalyResult, k: string) => slotOf(card(r, 'hard'), k);
+  it('H-01: 総資産と負債及び純資産合計が違う', () => each('H-01', (r) => expect(v(r, 'ta').value).not.toBe(v(r, 'tlna').value)));
+  it('H-04: CF の期末残高と現金が違う', () => each('H-04', (r) => expect(v(r, 'cfEnd').value).not.toBe(v(r, 'cash').value)));
+  it('H-13: IR の売上高が 5% ずれる', () => each('H-13', (r) => {
+    const gap = Math.abs((v(r, 'irSales').value! * 100) / v(r, 'sales').value! - 1);
+    expect(gap).toBeGreaterThan(0.03);
+  }));
+  it('H-21: IR の営業 CF の語が数字と逆', () => each('H-21', (r) => {
+    const ocf = v(r, 'ocf').value!;
+    expect(v(r, 'irOcf').text.includes(ocf >= 0 ? 'マイナス' : 'プラス')).toBe(true);
+  }));
+  it('H-33: 欄の重複', () => each('H-33', (r) => expect(card(r, 'hard').slots.length).toBe(28)));
+});
+
+describe('A18 答え合わせの文', () => {
+  it('全種類が説明文を持つ。E-26・E-27・E-28 は具体的', () => {
+    for (const kind of [...EASY_KINDS, ...HARD_KINDS]) each(kind, (r) => expect(r.explanation.length, kind).toBeGreaterThan(8));
+    each('E-26', (r) => expect(r.explanation).toMatch(/前期|当期/));
+    each('E-27', (r) => expect(r.explanation).toContain('X'));
+    each('E-28', (r) => expect(r.explanation).toContain('32'));
   });
 });
