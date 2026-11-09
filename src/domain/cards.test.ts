@@ -275,6 +275,8 @@ describe('2.1 cardEdits の効果 (DX1〜DX12)', () => {
     expect(() => E({ card: 1 as 0, slot: 'margin', op: 'drop' })).toThrow(RangeError);
     expect(() => E({ card: 0, slot: 'headline', op: 'drop' })).toThrow(RangeError);
     expect(() => E({ card: 0, slot: 'frame', op: 'drop' })).toThrow(RangeError);
+    expect(() => E({ card: 0, op: 'headline', word: '増収' }, set(easyB(), 'ir.statements', []))).toThrow(RangeError); // 見出し語の無い問題に headline の編集
+    expect(() => E({ card: 0, slot: 'headline', op: 'dup' }, set(easyB(), 'ir.statements', []))).toThrow(RangeError);
   });
   it('DX11: applyEdits: false はテンプレートのカード', () => {
     const edits: CardEdit[] = [

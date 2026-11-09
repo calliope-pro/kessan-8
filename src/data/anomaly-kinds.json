@@ -898,7 +898,7 @@
   {
     "id": "H-29",
     "family": "card-form",
-    "name": "資料の金額の単位の語が 1 つだけ違う",
+    "name": "金額の単位の語の食い違い",
     "primaryRules": [
       "card-unit"
     ],
@@ -910,7 +910,7 @@
   {
     "id": "H-30",
     "family": "card-form",
-    "name": "資料の科目名の誤字",
+    "name": "科目名の綴りの間違い",
     "primaryRules": [
       "label-spelling"
     ],
@@ -922,7 +922,7 @@
   {
     "id": "H-31",
     "family": "card-form",
-    "name": "資料の欄が 1 つ足りない",
+    "name": "欄の欠落",
     "primaryRules": [
       "card-slots"
     ],
@@ -934,7 +934,7 @@
   {
     "id": "H-32",
     "family": "card-form",
-    "name": "資料の数字のカンマの位置が違う",
+    "name": "カンマの位置のずれ",
     "primaryRules": [
       "card-format"
     ],
@@ -946,7 +946,7 @@
   {
     "id": "H-33",
     "family": "card-form",
-    "name": "資料の同じ欄が 2 回出る",
+    "name": "欄の重複",
     "primaryRules": [
       "card-slots"
     ],
@@ -958,7 +958,7 @@
   {
     "id": "H-34",
     "family": "card-form",
-    "name": "資料にあり得ない符号",
+    "name": "符号がおかしい",
     "primaryRules": [
       "card-sign"
     ],

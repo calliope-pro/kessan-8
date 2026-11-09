@@ -376,7 +376,8 @@ function applyEdit(edit: CardEdit, built: Built[], card: Card, ctx: Ctx): void {
       card.footer = { ...card.footer, periodEnd: displayDate(cell(ctx.p, FOOTER_REF), edit.day) };
       return;
     case 'headline':
-      card.headline = { word: edit.word, repeat: 1, reads: card.headline?.reads ?? [] };
+      if (card.headline === undefined) throw new RangeError(`${where}: 見出し語が無い (営業利益の主張が無い問題には、見出し語の編集を当てられない)`);
+      card.headline = { ...card.headline, word: edit.word };
       return;
   }
 }
