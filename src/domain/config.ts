@@ -14,6 +14,12 @@ export const ANOMALY_RATIO_TOLERANCE = 3;
 /** 受け入れ条件 6 の「多め」の閾値 (design §4.5): やさしい = 見た目 + 計算、むずかしい = 会計 + 資料間 が異変の問題に占める割合の下限。 */
 export const FAMILY_SHARE_MIN = { easy: 0.8, hard: 0.6 } as const;
 
+/**
+ * 出題が「答えた」と数える履歴の幅 (直近の件数。docs/design-v3.md §2.7・責任者の決定 2026-11-09)。履歴の全部を数えると、段が累積のとき 6〜8 社目の種類の出方が少数に寄る。
+ * 値は 2 周分 (2 × ROUNDS_TO_CLEAR)。
+ */
+export const HISTORY_WINDOW = 2 * ROUNDS_TO_CLEAR;
+
 /** 枠 (何社目か。0 始まり) ごとの狙いの段 (P1)。1〜2 社目 = 目立つ異変、3〜5 社目 = 中、6〜8 社目 = 紛らわしい異変。 */
 export const TIER_BY_ROUND: readonly (1 | 2 | 3)[] = [1, 1, 2, 2, 2, 3, 3, 3];
 

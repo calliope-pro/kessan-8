@@ -1,352 +1,443 @@
-// DW1〜DW29 (docs/test-cases/domain-v2.md §1.1〜§1.4)。出題 v2: 枠ごとに形を先に引く (R-S1〜S3・R-S6)。
+// DW1〜DW33 (docs/test-cases/domain-v3.md §1)。出題 v3: 形を引かない・段は累積・履歴は直近 K 件・R-S6 は種類の出方 (設計 v3 §1.5・§2.7)。
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { buildPool, counting, makePoolV2, makeSkewedPool, mergePools, range, type TestPool } from '../testing/pool-v2';
-import { shapesOf } from './cards';
-import { TIER_BY_ROUND } from './config';
+import { buildPool, EASY_KINDS, HARD_KINDS, HARD_PRIMARY, kindsOf, makeRecommendedPool, makeSmallPool, makeUnevenPool, mergePools, range } from '../testing/pool-v3';
+import { checkGroups, GROUPS, simulate, type SimOptions, type SimResult } from '../testing/rs6';
+import { HISTORY_WINDOW, TIER_BY_ROUND } from './config';
 import { canDraw, draw, type DrawOptions } from './draw';
 import { mulberry32 } from './rng';
-import { emptyRecords, recordAnswer, type Records } from './records';
-import type { Difficulty, Round, ShapeId } from './types';
+import type { Difficulty, Problem, Round } from './types';
 
-const run = (t: TestPool, difficulty: Difficulty, seed: number, extra: Partial<DrawOptions> = {}): Round[] =>
-  draw(t.pool, { difficulty, rng: mulberry32(seed), visible: t.visible, ...extra });
+const BOTH: Difficulty[] = ['easy', 'hard'];
+const run = (pool: Problem[], difficulty: Difficulty, seed: number, extra: Partial<DrawOptions> = {}): Round[] => draw(pool, { difficulty, rng: mulberry32(seed), ...extra });
 const seeds = (n: number): number[] => range(1, n);
 const ids = (rs: Round[]): string[] => rs.map((r) => r.problem.id);
-const shapes = (rs: Round[]): ShapeId[] => rs.map((r) => r.shape);
 const anomalyCount = (rs: Round[]): number => rs.filter((r) => r.problem.anomaly !== null).length;
-/** 8 枠すべてに、その難易度の形が付いている (形が無いまま「同じ」と比べて通らないように)。 */
-const hasValidShapes = (rs: Round[], d: Difficulty): boolean => rs.length === 8 && rs.every((r) => shapesOf(d).includes(r.shape));
-const BOTH: Difficulty[] = ['easy', 'hard'];
+const kindOf = (r: Round): string | undefined => r.problem.anomaly?.kind;
+const companyNumber = (r: Round): number => Number(r.problem.companyId.slice(1));
 
-const easy = makePoolV2({ difficulty: 'easy' });
-const hard = makePoolV2({ difficulty: 'hard' });
-const standard = (d: Difficulty): TestPool => (d === 'easy' ? easy : hard);
-const skewed = (d: Difficulty): TestPool => makeSkewedPool(d);
+const small = (d: Difficulty): Problem[] => makeSmallPool(d);
 
-describe('形・異変の有無・候補 (R-S1〜R-S3)', () => {
-  it('DW1: 毎回 8 枠で、問題も会社も重複せず、その難易度の問題と形だけ', () => {
+describe('異変の有無・候補・段 (R-S2・R-S3・段は累積)', () => {
+  it('DW1: 毎回 8 枠で、問題も会社も重複せず、その難易度の問題だけ。枠は問題だけを持つ (形が無い)', () => {
     for (const d of BOTH) {
       for (const seed of seeds(200)) {
-        const rs = run(standard(d), d, seed);
+        const rs = run(small(d), d, seed);
         expect(rs).toHaveLength(8);
         expect(new Set(ids(rs)).size).toBe(8);
         expect(new Set(rs.map((r) => r.problem.companyId)).size).toBe(8);
         expect(rs.every((r) => r.problem.difficulty === d)).toBe(true);
-        expect(rs.every((r) => shapesOf(d).includes(r.shape))).toBe(true);
+        expect(rs.every((r) => Object.keys(r).join() === 'problem')).toBe(true);
       }
     }
   });
 
-  it('DW2: 各枠の問題は、その枠の形で見える。正常な問題はどの形の枠にも出る', () => {
+  it('DW2: 推奨のプールの全問が少なくとも 1 回は出る。正常な問題はどの枠の位置にも出る', () => {
     for (const d of BOTH) {
-      for (const t of [standard(d), skewed(d)]) {
-        const normalShapes = new Set<ShapeId>();
-        for (const seed of seeds(200)) {
-          for (const r of run(t, d, seed)) {
-            expect(t.visible(r.problem), `${r.problem.id} は ${r.shape} で見える`).toContain(r.shape);
-            if (r.problem.anomaly === null) normalShapes.add(r.shape);
-          }
-        }
-        expect([...normalShapes].sort()).toEqual([...shapesOf(d)].sort());
+      const pool = makeRecommendedPool(d);
+      const seen = new Set<string>();
+      const normalSlots = new Set<number>();
+      for (const seed of seeds(3000)) {
+        run(pool, d, seed).forEach((r, slot) => {
+          seen.add(r.problem.id);
+          if (r.problem.anomaly === null) normalSlots.add(slot);
+        });
       }
+      expect(pool.filter((p) => !seen.has(p.id)).map((p) => p.id), `${d} で出なかった問題`).toEqual([]);
+      expect([...normalSlots].sort()).toEqual(range(0, 7));
     }
   });
 
-  it('DW3: 形の並びは、異変の比・プール・履歴・見つけた種類に依らず、同じ種なら同じ', () => {
+  it('DW5: 異変の比 0.5 で、異変ありの枠の数の平均は 4 の付近。枠ごとに独立 (4 でない回・6 以上の回がある)', () => {
     for (const d of BOTH) {
-      const kindless = makePoolV2({ difficulty: d, kindsPerShape: 2 });
-      const bigger = makePoolV2({ difficulty: d, companies: 12 });
-      const normals = standard(d).pool.filter((p) => p.anomaly === null).map((p) => p.id);
-      for (const seed of seeds(30)) {
-        const baseRounds = run(standard(d), d, seed, { anomalyRatio: 0.5 });
-        expect(hasValidShapes(baseRounds, d)).toBe(true);
-        const base = shapes(baseRounds);
-        for (const ratio of [0, 1]) expect(shapes(run(standard(d), d, seed, { anomalyRatio: ratio }))).toEqual(base);
-        for (const t of [skewed(d), kindless, bigger]) expect(shapes(run(t, d, seed))).toEqual(base);
-        expect(shapes(run(standard(d), d, seed, { history: normals }))).toEqual(base);
-        expect(shapes(run(standard(d), d, seed, { foundKinds: ['kA', 'kB'] }))).toEqual(base);
-        expect(shapes(run(standard(d), d, seed, { history: normals, foundKinds: ['kA'], anomalyRatio: 1 }))).toEqual(base);
-      }
+      const counts = seeds(400).map((seed) => anomalyCount(run(small(d), d, seed, { anomalyRatio: 0.5 })));
+      const mean = counts.reduce((a, b) => a + b, 0) / counts.length;
+      expect(mean).toBeGreaterThanOrEqual(3.7);
+      expect(mean).toBeLessThanOrEqual(4.3);
+      expect(counts.some((c) => c !== 4)).toBe(true);
+      expect(counts.some((c) => c >= 6)).toBe(true);
     }
-  });
-
-  it('DW4: 枠の位置ごとに、3 形のそれぞれが 1/3 ± 4 ポイント以内', () => {
-    for (const d of BOTH) {
-      const n = 3000;
-      const count = Array.from({ length: 8 }, () => new Map<ShapeId, number>());
-      for (const seed of seeds(n)) shapes(run(standard(d), d, seed)).forEach((s, i) => count[i]!.set(s, (count[i]!.get(s) ?? 0) + 1));
-      count.forEach((m, pos) => {
-        for (const s of shapesOf(d)) expect(Math.abs((m.get(s) ?? 0) / n - 1 / 3), `位置 ${pos} の ${s}`).toBeLessThanOrEqual(0.04);
-      });
-    }
-  });
-
-  it('DW5: 比 0.5 のとき、異変ありの枠の数は枠ごとに独立 (平均 4 前後、4 以外の回もある)', () => {
-    const counts = seeds(400).map((seed) => anomalyCount(run(easy, 'easy', seed, { anomalyRatio: 0.5 })));
-    const mean = counts.reduce((a, b) => a + b, 0) / counts.length;
-    expect(mean).toBeGreaterThanOrEqual(3.7);
-    expect(mean).toBeLessThanOrEqual(4.3);
-    expect(counts.some((c) => c !== 4)).toBe(true);
-    expect(counts.some((c) => c >= 6)).toBe(true);
   });
 
   it('DW6: 比 0 はすべて正常、比 1 はすべて異変', () => {
-    for (const seed of seeds(50)) {
-      expect(anomalyCount(run(easy, 'easy', seed, { anomalyRatio: 0 }))).toBe(0);
-      expect(anomalyCount(run(easy, 'easy', seed, { anomalyRatio: 1 }))).toBe(8);
-    }
-  });
-
-  it('DW7: 同じ種・同じ入力なら (問題 ID, 形) の並びまで同じ。種が違えば散らばる', () => {
-    const key = (rs: Round[]) => rs.map((r) => `${r.problem.id}@${r.shape}`).join(',');
-    expect(key(run(easy, 'easy', 5, { history: ['easy-1-n2'] }))).toBe(key(run(easy, 'easy', 5, { history: ['easy-1-n2'] })));
-    expect(new Set(seeds(50).map((seed) => key(run(easy, 'easy', seed)))).size).toBeGreaterThanOrEqual(40);
-  });
-
-  it('DW8: 段がそろうプールでは、枠 1・2 は段 1、3〜5 は段 2、6〜8 は段 3', () => {
-    expect(TIER_BY_ROUND).toEqual([1, 1, 2, 2, 2, 3, 3, 3]);
     for (const d of BOTH) {
-      const t = makePoolV2({ difficulty: d, tiers: 'all' });
-      for (const seed of seeds(200)) expect(run(t, d, seed).map((r) => r.problem.tier)).toEqual([...TIER_BY_ROUND]);
-    }
-  });
-
-  it('DW9: 段が足りない・段の項目が無いプールでも 8 枠引ける', () => {
-    for (const tiers of [[3] as const, null]) {
-      const t = makePoolV2({ difficulty: 'easy', tiers: tiers === null ? null : [...tiers] });
-      expect(hasValidShapes(run(t, 'easy', 1), 'easy')).toBe(true);
-    }
-  });
-
-  it('DW10: 見える形が 2 つ (E1・E2) の問題は、E1 の枠にも E2 の枠にも出て、E3 の枠には出ない', () => {
-    const t = buildPool('easy', range(1, 10), () => [
-      { tag: 'n', tier: 1 },
-      { tag: 'both', kind: 'kA', shapes: ['E1', 'E2'], tier: 1 },
-      { tag: 'e3', kind: 'kB', shapes: ['E3'], tier: 1 },
-    ]);
-    const seen = new Set<string>();
-    for (const seed of seeds(300)) {
-      for (const r of run(t, 'easy', seed, { anomalyRatio: 1 })) {
-        const tag = r.problem.id.split('-')[2];
-        seen.add(`${tag}@${r.shape}`);
-        expect(tag, `${r.problem.id} の枠の形 ${r.shape}`).toBe(r.shape === 'E3' ? 'e3' : 'both');
-      }
-    }
-    expect([...seen].sort()).toEqual(['both@E1', 'both@E2', 'e3@E3']);
-  });
-
-  it('DW11: 難易度の違う問題が混じったプールでは、指定した難易度の問題だけから引く', () => {
-    const t = mergePools(easy, hard);
-    for (const d of BOTH) {
-      for (const seed of seeds(30)) {
-        const rs = run(t, d, seed);
-        expect(rs.every((r) => r.problem.difficulty === d && shapesOf(d).includes(r.shape))).toBe(true);
+      for (const seed of seeds(50)) {
+        expect(anomalyCount(run(small(d), d, seed, { anomalyRatio: 0 }))).toBe(0);
+        expect(anomalyCount(run(small(d), d, seed, { anomalyRatio: 1 }))).toBe(8);
       }
     }
   });
 
-  it('DW12: 履歴・見つけた種類にプールに無い ID が混じっても、無視して出題できる', () => {
-    for (const seed of seeds(20)) {
-      expect(hasValidShapes(run(easy, 'easy', seed, { history: ['no-such', 'easy-1-n2'], foundKinds: ['k-none', 'kA'] }), 'easy')).toBe(true);
+  it('DW7: 同じ種・同じ入力なら同じ並び。種を変えると散らばる', () => {
+    for (const d of BOTH) {
+      for (const seed of seeds(20)) expect(ids(run(small(d), d, seed))).toEqual(ids(run(small(d), d, seed)));
+      expect(new Set(seeds(50).map((seed) => ids(run(small(d), d, seed)).join())).size).toBeGreaterThanOrEqual(40);
+    }
+  });
+
+  it('DW8: 段は累積 — 1〜2 社目は段 1 だけ、3〜5 社目は段 1・2、6〜8 社目は段 1・2・3', () => {
+    for (const d of BOTH) {
+      const tiersBySlot = range(0, 7).map(() => new Set<number>());
+      for (const seed of seeds(500)) {
+        run(small(d), d, seed, { anomalyRatio: 1 }).forEach((r, slot) => tiersBySlot[slot]!.add(r.problem.tier!));
+      }
+      const tiers = tiersBySlot.map((s) => [...s].sort());
+      expect(tiers.slice(0, 2)).toEqual([[1], [1]]);
+      expect(tiers.slice(2, 5)).toEqual([[1, 2], [1, 2], [1, 2]]);
+      expect(tiers.slice(5)).toEqual([[1, 2, 3], [1, 2, 3], [1, 2, 3]]);
+      // 狙いの段は設定値 (TIER_BY_ROUND) のとおり
+      expect(TIER_BY_ROUND).toEqual([1, 1, 2, 2, 2, 3, 3, 3]);
+    }
+  });
+
+  it('DW8b: 比 0 (全枠が正常) で毎回 8 枠引け、正常な問題は段を持たない', () => {
+    for (const d of BOTH) {
+      for (const pool of [small(d), makeRecommendedPool(d)]) {
+        for (const seed of seeds(200)) {
+          const rs = run(pool, d, seed, { anomalyRatio: 0 });
+          expect(rs).toHaveLength(8);
+          expect(rs.every((r) => r.problem.tier === undefined && r.problem.anomaly === null)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('DW9: 段 3 の異変の問題しか無いとき、1 枠目にも段 3 が出る。段の項目が無いプールでも引ける', () => {
+    for (const d of BOTH) {
+      const tier3 = buildPool(d, range(1, 10), () => [{ tag: 'n' }, { tag: 'a', kind: 'K3', tier: 3 }]);
+      const noTier = buildPool(d, range(1, 10), () => [{ tag: 'n' }, { tag: 'a', kind: 'K0' }]);
+      for (const seed of seeds(100)) {
+        const rs = run(tier3, d, seed, { anomalyRatio: 1 });
+        expect(rs).toHaveLength(8);
+        expect(rs.every((r) => r.problem.tier === 3)).toBe(true);
+        expect(run(noTier, d, seed)).toHaveLength(8);
+      }
+    }
+  });
+
+  it('DW9b: 段 1 の会社が c01 だけのとき、段を無視するのは必要な枠だけ (毎回 1・2 枠目の 1 つが c01 の段 1、もう 1 つと 3〜8 枠目は段 3)', () => {
+    for (const d of BOTH) {
+      const pool = buildPool(d, range(1, 10), (c) => (c === 1 ? [{ tag: 'n' }, { tag: 't1', kind: 'K1', tier: 1 }] : [{ tag: 'n' }, { tag: 't3', kind: 'K3', tier: 3 }]));
+      for (const seed of seeds(200)) {
+        const rs = run(pool, d, seed, { anomalyRatio: 1 });
+        const first = rs.slice(0, 2);
+        expect(first.filter((r) => r.problem.tier === 1 && r.problem.companyId === 'c01'), `seed ${seed}`).toHaveLength(1);
+        expect(first.filter((r) => r.problem.tier === 3), `seed ${seed}`).toHaveLength(1);
+        expect(rs.slice(2).every((r) => r.problem.tier === 3), `seed ${seed}`).toBe(true);
+      }
+    }
+  });
+
+  it('DW11: 難易度の違う問題が混じっても、指定した難易度の問題だけから引く', () => {
+    const mixed = mergePools(small('easy'), small('hard'));
+    for (const d of BOTH) for (const seed of seeds(100)) expect(run(mixed, d, seed).every((r) => r.problem.difficulty === d)).toBe(true);
+  });
+
+  it('DW12: 履歴・見つけた種類にプールに無い ID が混じっても出題できる', () => {
+    for (const d of BOTH) {
+      const rs = run(small(d), d, 1, { history: ['nothing-1', 'nothing-2'], foundKinds: ['no-such-kind'] });
+      expect(rs).toHaveLength(8);
+      expect(ids(rs)).toEqual(ids(run(small(d), d, 1)));
     }
   });
 });
 
-describe('履歴と見つけた種類 (設計 §3.4 ⑤)', () => {
-  const twoNormals = buildPool('easy', range(1, 12), () => [{ tag: 'n1' }, { tag: 'n2' }]);
-  const n = (c: number, k: 1 | 2) => `easy-${c}-n${k}`;
+describe('履歴と見つけた種類', () => {
+  const historyPool = buildPool('easy', range(1, 12), () => [{ tag: 'n1' }, { tag: 'n2' }]);
+  const n1 = (companies: number[]): string[] => companies.map((c) => `easy-${c}-n1`);
+  const n2 = (companies: number[]): string[] => companies.map((c) => `easy-${c}-n2`);
+  const normalOnly = { anomalyRatio: 0 };
 
-  it('DW13: 答えていない問題を優先する', () => {
-    const history = range(1, 12).map((c) => n(c, 1));
+  it('DW13: 履歴が 12 社の n1 なら、毎回 n2 を引く (答えていない問題を優先)', () => {
+    expect(12).toBeLessThanOrEqual(HISTORY_WINDOW);
     for (const seed of seeds(50)) {
-      expect(ids(run(twoNormals, 'easy', seed, { anomalyRatio: 0, history })).every((id) => id.endsWith('-n2'))).toBe(true);
+      const rs = run(historyPool, 'easy', seed, { ...normalOnly, history: n1(range(1, 12)) });
+      expect(rs.every((r) => r.problem.id.endsWith('-n2'))).toBe(true);
     }
   });
 
-  it('DW14: 全部答えていれば、履歴の古い方から (会社が違う範囲で)', () => {
-    const history = [...range(1, 12).map((c) => n(c, 1)), ...range(1, 12).map((c) => n(c, 2))];
-    const expected = range(1, 8).map((c) => n(c, 1)).sort();
-    for (const seed of seeds(50)) expect(ids(run(twoNormals, 'easy', seed, { anomalyRatio: 0, history })).sort()).toEqual(expected);
-  });
-
-  const kinds2 = makePoolV2({ difficulty: 'easy', kindsPerShape: 2, tiers: null });
-  const kindOf = (r: Round) => r.problem.anomaly?.kind;
-
-  it('DW15: 見つけた種類の問題は後回し (見つけていない種類が先)', () => {
+  it('DW14: 履歴が n1 ×12・n2 ×12 (24 件) なら、窓の外の n1 の c01〜c08 を引く', () => {
+    const history = [...n1(range(1, 12)), ...n2(range(1, 12))];
     for (const seed of seeds(50)) {
-      const rs = run(kinds2, 'easy', seed, { anomalyRatio: 1, foundKinds: ['kB'] });
-      expect(rs.map(kindOf)).toEqual(Array(8).fill('kA'));
+      expect(new Set(ids(run(historyPool, 'easy', seed, { ...normalOnly, history })))).toEqual(new Set(n1(range(1, 8))));
     }
   });
 
-  it('DW16: 全種類を見つけていても、例外にならず 8 枠引ける (後回しであって除外ではない)', () => {
-    for (const seed of seeds(50)) expect(hasValidShapes(run(kinds2, 'easy', seed, { anomalyRatio: 1, foundKinds: ['kA', 'kB'] }), 'easy')).toBe(true);
+  it(`DW14b: 履歴が窓の 2.5 倍あるとき、窓の中の問題は選ばれず、窓の外はすべて同順位 (選ばれる会社が古い順に固定されない)`, () => {
+    expect(HISTORY_WINDOW).toBe(16);
+    const companies = (HISTORY_WINDOW * 5) / 4; // 20 社 → 履歴 40 件 = 窓の 2.5 倍
+    const pool = buildPool('easy', range(1, companies), () => [{ tag: 'n1' }, { tag: 'n2' }]);
+    const all = range(1, companies);
+    const history = [...n1(all), ...n2(all)];
+    const windowIds = new Set(history.slice(-HISTORY_WINDOW));
+    expect(windowIds.size).toBe(HISTORY_WINDOW);
+    const chosenCompanies = new Set<number>();
+    for (const seed of seeds(200)) {
+      const rs = run(pool, 'easy', seed, { ...normalOnly, history });
+      expect(rs.filter((r) => windowIds.has(r.problem.id)).map((r) => r.problem.id), `seed ${seed}`).toEqual([]);
+      rs.forEach((r) => chosenCompanies.add(companyNumber(r)));
+    }
+    expect([...chosenCompanies].some((c) => c >= 9)).toBe(true);
   });
 
-  it('DW17: 種類が履歴の順位より先 (答えていない見つけた種類 B より、答えた未発見の種類 A)', () => {
-    const history = kinds2.pool.filter((p) => p.anomaly?.kind === 'kA').map((p) => p.id);
+  const kindPool = buildPool('easy', range(1, 12), () => [
+    { tag: 'a', kind: 'A' },
+    { tag: 'b', kind: 'B' },
+  ]);
+  const anomaliesOnly = { anomalyRatio: 1 };
+
+  it('DW15: 見つけた種類 = {B} なら、異変の枠はすべて種類 A (後回し)', () => {
     for (const seed of seeds(50)) {
-      const rs = run(kinds2, 'easy', seed, { anomalyRatio: 1, foundKinds: ['kB'], history });
-      expect(rs.map(kindOf)).toEqual(Array(8).fill('kA'));
+      expect(run(kindPool, 'easy', seed, { ...anomaliesOnly, foundKinds: ['B'] }).map(kindOf)).toEqual(Array(8).fill('A'));
     }
   });
 
-  it('DW18: 見つけた種類を渡しても、正常な問題の選び方は変わらない', () => {
-    const history = [...range(1, 12).map((c) => n(c, 1)), ...range(1, 12).map((c) => n(c, 2))];
+  it('DW16: 見つけた種類が全種類でも例外にならない (除外でなく後回し)', () => {
+    for (const seed of seeds(50)) expect(run(kindPool, 'easy', seed, { ...anomaliesOnly, foundKinds: ['A', 'B'] })).toHaveLength(8);
+  });
+
+  it('DW17: 見つけた種類 = {B}・履歴 = 種類 A の全問 なら、答えていない B より答えた A を選ぶ (種類が履歴より先)', () => {
+    const history = range(1, 12).map((c) => `easy-${c}-a`);
     for (const seed of seeds(50)) {
-      const plain = run(twoNormals, 'easy', seed, { anomalyRatio: 0, history });
-      const withKinds = run(twoNormals, 'easy', seed, { anomalyRatio: 0, history, foundKinds: ['kA', 'kB'] });
-      expect(withKinds.map((r) => `${r.problem.id}@${r.shape}`)).toEqual(plain.map((r) => `${r.problem.id}@${r.shape}`));
+      expect(run(kindPool, 'easy', seed, { ...anomaliesOnly, foundKinds: ['B'], history }).map(kindOf)).toEqual(Array(8).fill('A'));
     }
+  });
+
+  it('DW18: 正常な問題だけの枠 (比 0) では、見つけた種類を渡しても結果が変わらない', () => {
+    const history = [...n1(range(1, 12)), ...n2(range(1, 12))];
+    for (const seed of seeds(50)) {
+      for (const h of [undefined, n1(range(1, 12)), history]) {
+        const base = ids(run(historyPool, 'easy', seed, { ...normalOnly, history: h }));
+        expect(ids(run(historyPool, 'easy', seed, { ...normalOnly, history: h, foundKinds: ['A', 'B'] }))).toEqual(base);
+      }
+    }
+  });
+
+  it('DW33: 段は候補の絞り込み、種類は候補の並び — 見つけた種類 = {K1} でも 1・2 枠目は K1、3〜5 枠目は K2、6〜8 枠目は K2 か K3', () => {
+    const pool = small('easy');
+    const midWithoutFound = new Set<string>();
+    for (const seed of seeds(200)) {
+      const rs = run(pool, 'easy', seed, { ...anomaliesOnly, foundKinds: ['K1'] });
+      expect(rs.slice(0, 2).map(kindOf), `seed ${seed}`).toEqual(['K1', 'K1']);
+      expect(rs.slice(2, 5).map(kindOf), `seed ${seed}`).toEqual(['K2', 'K2', 'K2']);
+      expect(rs.slice(5).every((r) => kindOf(r) === 'K2' || kindOf(r) === 'K3'), `seed ${seed}`).toBe(true);
+      run(pool, 'easy', seed, anomaliesOnly)
+        .slice(2, 5)
+        .forEach((r) => midWithoutFound.add(kindOf(r)!));
+    }
+    // 対照: 見つけた種類が無ければ、3〜5 枠目に K1 と K2 の両方が出る
+    expect([...midWithoutFound].sort()).toEqual(['K1', 'K2']);
   });
 });
 
 describe('出題できないとき・canDraw', () => {
-  it('DW19: 会社が 7 社だけのプールは例外 (黙って重複させない)', () => {
-    expect(() => run(makePoolV2({ difficulty: 'easy', companies: 7 }), 'easy', 1)).toThrow(/出題できません/);
+  it('DW19: 会社が 7 社だけなら例外 (黙って重複させない)', () => {
+    for (const d of BOTH) expect(() => run(makeSmallPool(d, 7), d, 1)).toThrow('出題できません');
   });
 
-  it('DW20: 異変の問題を持つ会社が 7 社だけなら、比 1 で毎回例外', () => {
-    const t = buildPool('easy', range(1, 12), (c) => [
-      { tag: 'n' },
-      ...(c <= 7 ? shapesOf('easy').map((s) => ({ tag: s, kind: 'kA', shapes: [s] })) : []),
+  /** 異変の問題を持つ会社が anomalyCompanies 社、正常な問題を持つ会社が normalCompanies 社 (c01 から)。 */
+  const sided = (d: Difficulty, anomalyCompanies: number, normalCompanies: number, companies = 10): Problem[] =>
+    buildPool(d, range(1, companies), (c) => [
+      ...(c <= normalCompanies ? [{ tag: 'n' }] : []),
+      ...(c <= anomalyCompanies
+        ? [
+            { tag: 't1', kind: 'K1', tier: 1 as const },
+            { tag: 't2', kind: 'K2', tier: 2 as const },
+            { tag: 't3', kind: 'K3', tier: 3 as const },
+          ]
+        : []),
     ]);
-    for (const seed of seeds(20)) expect(() => run(t, 'easy', seed, { anomalyRatio: 1 })).toThrow(/出題できません/);
+
+  it('DW20: 異変の問題を持つ会社が 7 社だけなら、比 1 は毎回例外', () => {
+    for (const d of BOTH) for (const seed of seeds(20)) expect(() => run(sided(d, 7, 10), d, seed, { anomalyRatio: 1 })).toThrow('出題できません');
   });
 
-  it('DW21: 会社がちょうど 8 社なら、毎回 8 枠・会社 8 社がすべて違う', () => {
-    const t = makePoolV2({ difficulty: 'easy', companies: 8 });
-    for (const seed of seeds(100)) {
-      const rs = run(t, 'easy', seed);
-      expect(rs).toHaveLength(8);
-      expect(new Set(rs.map((r) => r.problem.companyId)).size).toBe(8);
-    }
-  });
-
-  it('DW22: canDraw は、会社 10 社の試験用プールで true', () => {
-    for (const d of BOTH) expect(canDraw(standard(d).pool, d, standard(d).visible)).toBe(true);
-  });
-
-  it('DW23: canDraw は、どれか 1 つの形で見える異変を持つ会社が 7 社なら false (形ごとに確かめる。ほかの難易度は影響を受けない)', () => {
+  it('DW21: 会社 8 社 (全社が正常・異変を持つ) なら、毎回 8 枠・会社 8 社がすべて違う', () => {
     for (const d of BOTH) {
-      const other: Difficulty = d === 'easy' ? 'hard' : 'easy';
-      for (const lacking of shapesOf(d)) {
-        const part = buildPool(d, range(1, 10), (c) => [
-          { tag: 'n' },
-          ...shapesOf(d).map((s) => ({ tag: s, kind: 'kA', shapes: s === lacking && c > 7 ? [shapesOf(d).find((x) => x !== lacking)!] : [s] })),
-        ]);
-        const t = mergePools(part, makePoolV2({ difficulty: other }));
-        expect(canDraw(t.pool, d, t.visible), `${lacking} が 7 社`).toBe(false);
-        expect(canDraw(t.pool, other, t.visible)).toBe(true);
+      for (const seed of seeds(100)) {
+        const rs = run(makeSmallPool(d, 8), d, seed);
+        expect(rs).toHaveLength(8);
+        expect(new Set(rs.map((r) => r.problem.companyId)).size).toBe(8);
       }
     }
   });
 
-  it('DW24: canDraw は、正常な問題を持つ会社が 7 社・その難易度の問題が無いとき false', () => {
-    const t = buildPool('easy', range(1, 10), (c) => [
-      ...(c <= 7 ? [{ tag: 'n' }] : []),
-      ...shapesOf('easy').map((s) => ({ tag: s, kind: 'kA', shapes: [s] })),
-    ]);
-    expect(canDraw(t.pool, 'easy', t.visible)).toBe(false);
-    expect(canDraw([], 'easy', () => [])).toBe(false);
-    expect(canDraw(easy.pool, 'hard', easy.visible)).toBe(false);
-  });
-
-  it('DW25: canDraw が true のプールは、比 0・0.5・1 のどれでも、種 1〜500 で例外にならない', () => {
-    const pools: [Difficulty, TestPool][] = [['easy', easy], ['hard', hard], ['easy', skewed('easy')], ['hard', skewed('hard')], ['easy', makePoolV2({ difficulty: 'easy', companies: 8 })]];
-    for (const [d, t] of pools) {
-      expect(canDraw(t.pool, d, t.visible)).toBe(true);
-      for (const ratio of [0, 0.5, 1]) for (const seed of seeds(500)) expect(() => run(t, d, seed, { anomalyRatio: ratio })).not.toThrow();
+  it('DW22: canDraw は、小プール・推奨のプールで true', () => {
+    for (const d of BOTH) {
+      expect(canDraw(small(d), d)).toBe(true);
+      expect(canDraw(makeRecommendedPool(d), d)).toBe(true);
     }
   });
 
-  it('DW25b: 異変だけの会社と正常だけの会社に分かれたプールでも、canDraw は true で draw は例外にならない', () => {
-    const t = buildPool('easy', range(1, 16), (c) =>
-      c <= 8 ? shapesOf('easy').map((s) => ({ tag: s, kind: 'kA', shapes: [s] })) : [{ tag: 'n' }],
-    );
-    expect(canDraw(t.pool, 'easy', t.visible)).toBe(true);
-    for (const ratio of [0, 0.5, 1]) {
-      for (const seed of seeds(500)) {
-        const rs = run(t, 'easy', seed, { anomalyRatio: ratio });
-        expect(new Set(rs.map((r) => r.problem.companyId)).size).toBe(8);
-        for (const r of rs) {
-          const c = Number(r.problem.companyId.slice(1));
-          expect(r.problem.anomaly !== null ? c <= 8 : c >= 9).toBe(true);
+  it('DW23: canDraw は、異変の問題を持つ会社が 7 社なら false・8 社なら true (難易度ごと)', () => {
+    for (const d of BOTH) {
+      const other: Difficulty = d === 'easy' ? 'hard' : 'easy';
+      expect(canDraw(sided(d, 7, 10), d)).toBe(false);
+      expect(canDraw(sided(d, 8, 10), d)).toBe(true);
+      // 同じプールのもう一方の難易度 (10 社) は true
+      expect(canDraw(mergePools(sided(d, 7, 10), sided(other, 10, 10)), other)).toBe(true);
+      expect(canDraw(mergePools(sided(d, 7, 10), sided(other, 10, 10)), d)).toBe(false);
+    }
+  });
+
+  it('DW24: canDraw は、正常な問題を持つ会社が 7 社なら false・8 社なら true。その難易度の問題が無ければ false', () => {
+    for (const d of BOTH) {
+      const other: Difficulty = d === 'easy' ? 'hard' : 'easy';
+      expect(canDraw(sided(d, 10, 7), d)).toBe(false);
+      expect(canDraw(sided(d, 10, 8), d)).toBe(true);
+      expect(canDraw(small(other), d)).toBe(false);
+    }
+  });
+
+  it('DW25: canDraw が true のプールは、どの比・種でも draw が例外にならない', () => {
+    for (const d of BOTH) {
+      for (const [pool, n] of [[small(d), 500], [makeSmallPool(d, 8), 500], [makeRecommendedPool(d), 100]] as const) {
+        expect(canDraw(pool, d)).toBe(true);
+        for (const ratio of [0, 0.5, 1]) for (const seed of seeds(n)) expect(run(pool, d, seed, { anomalyRatio: ratio })).toHaveLength(8);
+      }
+    }
+  });
+
+  it('DW25b: 異変だけの会社 c01〜c08 と正常だけの会社 c09〜c16 に分かれたプールでも、canDraw は true で draw は通る (会社が両方を持つことを求めない)', () => {
+    for (const d of BOTH) {
+      const pool = buildPool(d, range(1, 16), (c) =>
+        c <= 8
+          ? [
+              { tag: 't1', kind: 'K1', tier: 1 as const },
+              { tag: 't2', kind: 'K2', tier: 2 as const },
+              { tag: 't3', kind: 'K3', tier: 3 as const },
+            ]
+          : [{ tag: 'n' }],
+      );
+      expect(canDraw(pool, d)).toBe(true);
+      for (const ratio of [0, 0.5, 1]) {
+        for (const seed of seeds(500)) {
+          const rs = run(pool, d, seed, { anomalyRatio: ratio });
+          expect(rs).toHaveLength(8);
+          expect(new Set(rs.map((r) => r.problem.companyId)).size).toBe(8);
+          for (const r of rs) expect(companyNumber(r) <= 8, `${r.problem.id}`).toBe(r.problem.anomaly !== null);
         }
       }
     }
   });
 
-  it('DW25c: draw・canDraw は、1 回の呼び出しで visible を各問題に高々 1 回しか呼ばない。結果は変わらない', () => {
-    for (const seed of seeds(50)) {
-      const c = counting(easy.visible);
-      const rs = run({ pool: easy.pool, visible: c.visible }, 'easy', seed, { anomalyRatio: 0.5 });
-      expect([...c.calls.values()].every((n) => n <= 1)).toBe(true);
-      expect(rs.map((r) => `${r.problem.id}@${r.shape}`)).toEqual(run(easy, 'easy', seed, { anomalyRatio: 0.5 }).map((r) => `${r.problem.id}@${r.shape}`));
+  it('DW25d: 異変の問題が全社とも段 3 だけでも、canDraw は true で draw は通る (累積の第 1 候補が空の枠は段を無視する)', () => {
+    for (const d of BOTH) {
+      const pool = buildPool(d, range(1, 10), () => [{ tag: 'n' }, { tag: 't3', kind: 'K3', tier: 3 as const }]);
+      expect(canDraw(pool, d)).toBe(true);
+      for (const ratio of [0, 0.5, 1]) for (const seed of seeds(200)) expect(run(pool, d, seed, { anomalyRatio: ratio })).toHaveLength(8);
     }
-    const c = counting(easy.visible);
-    expect(canDraw(easy.pool, 'easy', c.visible)).toBe(true);
-    expect([...c.calls.values()].every((n) => n <= 1)).toBe(true);
   });
 });
 
-describe('形の出方が正常と異変でそろう (R-S6)', () => {
+describe('種類の出方 (R-S6 の置き換え)', () => {
+  const memo = new Map<string, SimResult>();
+  const measure = (name: string, pool: Problem[], d: Difficulty, o: SimOptions): SimResult => {
+    const key = `${name}/${d}/${JSON.stringify(o)}`;
+    if (!memo.has(key)) memo.set(key, simulate(pool, d, o));
+    return memo.get(key)!;
+  };
+  const recommended = (d: Difficulty, o: SimOptions): SimResult => measure('recommended', makeRecommendedPool(d), d, o);
   const LAPS = 10_000;
-  const tolerance = 0.015;
+  const LONG = 120_000; // テストの時間切れ (ms)
 
-  interface Tally {
-    anomaly: Map<ShapeId, number>;
-    normal: Map<ShapeId, number>;
-    slots: number;
-  }
-  const tally = (laps: Iterable<Round[]>): Tally => {
-    const t: Tally = { anomaly: new Map(), normal: new Map(), slots: 0 };
-    for (const rs of laps) {
-      for (const r of rs) {
-        const m = r.problem.anomaly !== null ? t.anomaly : t.normal;
-        m.set(r.shape, (m.get(r.shape) ?? 0) + 1);
-        t.slots++;
+  it('DW26: 1 万周で、異変の枠の割合は 0.5 ± 1.5 ポイント', () => {
+    for (const d of BOTH) {
+      const r = recommended(d, { laps: LAPS });
+      expect(r.slots).toBe(LAPS * 8);
+      expect(Math.abs(r.anomalySlots / r.slots - 0.5)).toBeLessThanOrEqual(0.015);
+    }
+  }, LONG);
+
+  it('DW27: 難易度のどの種類 ID も、1 万周の異変の枠のどこかで出る', () => {
+    for (const d of BOTH) {
+      const seen = new Set(recommended(d, { laps: LAPS }).kindCounts.flatMap((m) => [...m.keys()]));
+      expect([...seen].sort()).toEqual(kindsOf(d).map((k) => k.id).sort());
+    }
+  }, LONG);
+
+  it('DW28: 枠の群ごとに、最大の割合が一様の割合の 1.5 倍以内で、出る ID の集合が群の候補 (段が狙い以下) の集合と同じ', () => {
+    for (const d of BOTH) {
+      const checks = checkGroups(recommended(d, { laps: LAPS }), kindsOf(d));
+      expect(checks).toHaveLength(GROUPS.length);
+      checks.forEach((c, gi) => {
+        expect(c.sameIds, `${d} 群 ${gi}: 候補 ${c.candidateIds.join()} / 出た ${c.seenIds.join()}`).toBe(true);
+        expect(c.maxRatio, `${d} 群 ${gi}`).toBeLessThanOrEqual(1.5);
+      });
+      // 候補の ID の数: やさしい 10・13・15、むずかしい 8・15・20
+      expect(checks.map((c) => c.candidateIds.length)).toEqual(d === 'easy' ? [10, 13, 15] : [8, 15, 20]);
+    }
+  }, LONG);
+
+  it('DW29: 履歴と見つけた種類を引き継いで 1 万周 (全問正解) しても、DW26〜DW28 と同じ幅に収まる', () => {
+    for (const d of BOTH) {
+      const r = recommended(d, { laps: LAPS, carry: true });
+      expect(Math.abs(r.anomalySlots / r.slots - 0.5)).toBeLessThanOrEqual(0.015);
+      const seen = new Set(r.kindCounts.flatMap((m) => [...m.keys()]));
+      expect([...seen].sort()).toEqual(kindsOf(d).map((k) => k.id).sort());
+      checkGroups(r, kindsOf(d)).forEach((c, gi) => {
+        expect(c.sameIds, `${d} 群 ${gi}`).toBe(true);
+        expect(c.maxRatio, `${d} 群 ${gi}`).toBeLessThanOrEqual(1.5);
+      });
+    }
+  }, LONG);
+
+  it('DW29d: 遊び手が途中で落ちる遊び方 (各答え 0.85 で正解・3 万周・見た枠だけ数える) でも、群ごとに 1.5 倍以内', () => {
+    for (const d of BOTH) {
+      const r = recommended(d, { laps: 30_000, carry: true, accuracy: 0.85 });
+      checkGroups(r, kindsOf(d)).forEach((c, gi) => expect(c.maxRatio, `${d} 群 ${gi}`).toBeLessThanOrEqual(1.5));
+    }
+  }, LONG);
+
+  it('DW29b: 偏ったプールでは、検査 (R-S6 (c)) がどれかの群で 1.5 倍超を返す (検査が偏りを見逃さない)', () => {
+    for (const d of BOTH) {
+      const checks = checkGroups(measure('uneven', makeUnevenPool(d), d, { laps: LAPS }), kindsOf(d));
+      expect(Math.max(...checks.map((c) => c.maxRatio)), d).toBeGreaterThan(1.5);
+    }
+  }, LONG);
+
+  describe('DW29c: 推奨のプールの構成 (試験用の道具の確かめ)', () => {
+    const design = readFileSync(fileURLToPath(new URL('../../docs/design-v3.md', import.meta.url)), 'utf-8');
+
+    it('問題の数・正常は各社 1 問で段なし・種類ごとの数・会社への散らし方', () => {
+      for (const d of BOTH) {
+        const pool = makeRecommendedPool(d);
+        expect(pool).toHaveLength(d === 'easy' ? 85 : 132);
+        const normals = pool.filter((p) => p.anomaly === null);
+        expect(normals.map((p) => p.companyId).sort()).toEqual(range(1, 10).map((c) => `c${String(c).padStart(2, '0')}`));
+        expect(normals.every((p) => p.tier === undefined)).toBe(true);
+        for (const k of kindsOf(d)) {
+          const of = pool.filter((p) => p.anomaly?.kind === k.id);
+          expect(of, k.id).toHaveLength(k.count);
+          expect(new Set(of.map((p) => p.companyId)).size, `${k.id} は 1 社に 1 問以下`).toBe(k.count);
+          expect(of.every((p) => p.tier === k.tier)).toBe(true);
+        }
+        for (const tier of [1, 2, 3]) {
+          const perCompany = range(1, 10).map((c) => pool.filter((p) => p.tier === tier && p.companyId === `c${String(c).padStart(2, '0')}`).length);
+          expect(Math.max(...perCompany) - Math.min(...perCompany), `段 ${tier} の会社ごとの数 ${perCompany.join()}`).toBeLessThanOrEqual(1);
+        }
       }
-    }
-    return t;
-  };
-  const total = (m: Map<ShapeId, number>) => [...m.values()].reduce((a, b) => a + b, 0);
-  const expectSteady = (t: Tally, d: Difficulty) => {
-    expect(t.slots).toBe(LAPS * 8);
-    for (const [name, m] of [['異変の枠', t.anomaly], ['正常の枠', t.normal]] as const) {
-      for (const s of shapesOf(d)) expect(Math.abs((m.get(s) ?? 0) / total(m) - 1 / 3), `${name}の ${s}`).toBeLessThanOrEqual(tolerance);
-    }
-    expect(Math.abs(total(t.anomaly) / t.slots - 0.5), '異変の枠の割合').toBeLessThanOrEqual(tolerance);
-  };
+    });
 
-  it('DW26・DW27: 偏ったプールの 1 万周で、異変の枠でも正常の枠でも各形が 1/3 ± 1.5 ポイント、異変の枠の割合が 0.5 ± 1.5 ポイント', () => {
-    for (const d of BOTH) {
-      const t = skewed(d);
-      expectSteady(tally(seeds(LAPS).map((seed) => run(t, d, seed))), d);
-    }
-  });
-
-  it('DW28: 履歴と見つけた種類を引き継いで (毎周、全問を正しく答える) 1 万周回しても、同じ幅に収まる', () => {
-    for (const d of BOTH) {
-      const t = skewed(d);
-      let rec: Records = emptyRecords();
-      const laps: Round[][] = [];
-      for (const seed of seeds(LAPS)) {
-        const rs = run(t, d, seed, { history: rec[d].history, foundKinds: rec[d].kinds });
-        laps.push(rs);
-        rs.forEach((r, round) => {
-          const answer = r.problem.anomaly !== null ? 'anomaly' : 'normal';
-          rec = recordAnswer(rec, { difficulty: d, round, problem: r.problem, answer, correct: true });
-        });
-      }
-      expectSteady(tally(laps), d);
-    }
-  });
-
-  it('DW29: 形ごとに 1 対 1 の異変を持つ試験用プールでも、同じ幅に収まる', () => {
-    for (const d of BOTH) {
-      expectSteady(tally(seeds(LAPS).map((seed) => run(standard(d), d, seed))), d);
-    }
+    it('種類 ID と段は、設計 v3 §2.2・§2.3 の表と同じ。7 問の 11 種類は §2.3 の系統の 会計 5・資料間 6', () => {
+      const rows = (from: string, to: string, prefix: string): [string, number][] => {
+        const text = design.slice(design.indexOf(from), design.indexOf(to));
+        return [...text.matchAll(new RegExp(`^\\| (${prefix}-\\d+) \\|.*\\| (\\d) \\|$`, 'gm'))].map((m) => [m[1]!, Number(m[2])]);
+      };
+      const easyRows = rows('### 2.2 ', '### 2.3 ', 'E');
+      const hardRows = rows('### 2.3 ', '### 2.4 ', 'H');
+      expect(easyRows).toHaveLength(15);
+      expect(hardRows).toHaveLength(20);
+      expect(EASY_KINDS.map((k) => [k.id, k.tier]).sort()).toEqual(easyRows.sort());
+      expect(HARD_KINDS.map((k) => [k.id, k.tier]).sort()).toEqual(hardRows.sort());
+      const m = /会計 5 \(([^)]*)\)、資料間 6 \(([^)]*)\)/.exec(design);
+      expect(m).not.toBeNull();
+      expect([...HARD_PRIMARY].sort()).toEqual([...(m![1]!.match(/H-\d+/g) ?? []), ...(m![2]!.match(/H-\d+/g) ?? [])].sort());
+      // 段ごとの種類の数: やさしい 10・3・2、むずかしい 8・7・5
+      const count = (ks: readonly { tier: number }[], t: number): number => ks.filter((k) => k.tier === t).length;
+      expect([1, 2, 3].map((t) => count(EASY_KINDS, t))).toEqual([10, 3, 2]);
+      expect([1, 2, 3].map((t) => count(HARD_KINDS, t))).toEqual([8, 7, 5]);
+    });
   });
 });
-
