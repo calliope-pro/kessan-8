@@ -269,10 +269,11 @@ describe('verifyDataset', () => {
       }
     });
 
-    it('D36: 見本の notes のキーが画面の ID でない (打ち間違い) → sample-shape。画面の ID なら通る', () => {
+    it('D36: 見本は notes (画面ごとの注釈) を持たず、検証器は notes を検査しない (DM2。古い notes があっても形の誤りにしない)', () => {
       const g = goodSample();
-      expect(codes(verifyDataset(withSample({ ...g, notes: { incomeStatment: '注釈' } })))).toContain('sample-shape');
-      expect(verifyDataset(withSample({ ...g, notes: { incomeStatement: '注釈', highlights: '注釈' } })).errors).toEqual([]);
+      expect(Object.keys(g)).toEqual(['problem']);
+      expect(verifyDataset(withSample(g)).errors).toEqual([]);
+      expect(codes(verifyDataset(withSample({ ...g, notes: { incomeStatment: '注釈' } })))).not.toContain('sample-shape');
     });
 
     it('D34: 見本の会社が一覧に無い → unknown-company。見本の id がプールの id と同じ → duplicate-id', () => {

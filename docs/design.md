@@ -584,6 +584,8 @@ export interface Problem {
 
 ## 5. 画面の遷移の骨組み
 
+> **v3 で置き換え済み (Task #155)**: 状態と action は [design-v2.md](design-v2.md) §3.2 (0 社目 `sample`・`BEGIN`・`RESTART` が 0 社目へ)、枠 `Round` は問題だけ (設計 v3 §3.1 の表 21)、出題は [design-v3.md](design-v3.md) §1.5・§2.7 (形を引かない・段は累積・履歴は直近 16 件・R-S6)、保存は `SESSION_VERSION` = 2・`RECORDS_VERSION` = 2。ケース表は [test-cases/domain-v3.md](test-cases/domain-v3.md)。以下の §5.1〜§5.4 は第 1 版の記録で、`view`・`marks`・`VIEW`・`TOGGLE_MARK`・資料束の 10 画面を前提にしている。
+
 状態は `domain/game.ts` の純粋な関数 `reduce(state, action)` が持つ。画面 (`ui/`) は状態を受け取って描き、操作を action にして返す。DOM に触らないので、状態遷移の全パターンを単体テストで確かめられる。
 
 ### 5.1 状態

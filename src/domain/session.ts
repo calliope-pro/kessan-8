@@ -1,14 +1,16 @@
-// 走行 (状態の全体) の保存と読み出し (experience.md §6.6)。reduce の外。問題は ID だけを保存し、読み出すときに引く。
+// 走行 (状態の全体) の保存と読み出し (docs/design-v2.md §3.3。ケース表 docs/test-cases/domain-v3.md §3)。reduce の外。
+// 問題は ID だけを保存し、読み出すときに引く。版違い・壊れた値は捨てる。
 import { ROUNDS_TO_CLEAR } from './config';
-import { isScreen, type GameState, type Run } from './game';
+import type { GameState, Reading, Revealed } from './game';
 import { type KeyValueStore, safeGet, safeRemove, safeSet } from './storage';
-import type { Difficulty, Problem } from './types';
-import { IR_SLIDES, TANSHIN_SCREENS } from './types';
-import type { ScreenRef } from './screen';
+import type { Difficulty, Problem, Round } from './types';
 
 export type { KeyValueStore } from './storage';
-export const SESSION_VERSION = 1;
+/** 2 = 枠が問題だけ (形を持たない) の最初の形式。今の版 (1) は捨てる。 */
+export const SESSION_VERSION = 2;
 export const RUN_KEY = 'kessan8.run';
+
+const ids = (rounds: Round[]): string[] => rounds.map((r) => r.problem.id);
 
 export function serialize(state: GameState): string {
   const base = { version: SESSION_VERSION, phase: state.phase, draws: state.draws };
@@ -17,10 +19,12 @@ export function serialize(state: GameState): string {
     case 'difficulty':
       return JSON.stringify(base);
     case 'cleared':
-      return JSON.stringify({ ...base, difficulty: state.difficulty, problemIds: state.problems.map((p) => p.id) });
+      return JSON.stringify({ ...base, difficulty: state.difficulty, problemIds: ids(state.rounds) });
+    case 'sample':
+      return JSON.stringify({ ...base, difficulty: state.difficulty, problemIds: ids(state.rounds), ...(state.missed ? { missedId: state.missed.problem.id } : {}) });
     case 'reading':
     case 'revealed': {
-      const run = { difficulty: state.difficulty, problemIds: state.problems.map((p) => p.id), round: state.round, view: state.view, marks: state.marks };
+      const run = { difficulty: state.difficulty, problemIds: ids(state.rounds), round: state.round };
       return JSON.stringify(state.phase === 'reading' ? { ...base, ...run } : { ...base, ...run, answer: state.answer, correct: state.correct });
     }
   }
@@ -29,14 +33,6 @@ export function serialize(state: GameState): string {
 const isInt = (x: unknown): x is number => typeof x === 'number' && Number.isInteger(x);
 const isDifficulty = (x: unknown): x is Difficulty => x === 'easy' || x === 'hard';
 const isStrings = (x: unknown): x is string[] => Array.isArray(x) && x.every((s) => typeof s === 'string');
-
-function isView(x: unknown): x is ScreenRef {
-  if (typeof x !== 'object' || x === null) return false;
-  const v = x as { doc?: unknown; screen?: unknown };
-  if (v.doc === 'tanshin') return (TANSHIN_SCREENS as readonly unknown[]).includes(v.screen);
-  if (v.doc === 'ir') return (IR_SLIDES as readonly unknown[]).includes(v.screen);
-  return false;
-}
 
 /** 読み出す。壊れた値・版違い・存在しない問題 ID・範囲外・形の違う値は捨てて undefined (例外にしない)。 */
 export function hydrate(raw: unknown, lookup: (id: string) => Problem | undefined): GameState | undefined {
@@ -57,23 +53,29 @@ export function hydrate(raw: unknown, lookup: (id: string) => Problem | undefine
     case 'difficulty':
       return { phase: 'difficulty', draws };
     case 'cleared':
+    case 'sample':
     case 'reading':
     case 'revealed': {
       if (!isDifficulty(v.difficulty) || !isStrings(v.problemIds) || v.problemIds.length !== ROUNDS_TO_CLEAR) return undefined;
-      const problems: Problem[] = [];
+      const rounds: Round[] = [];
       for (const id of v.problemIds) {
         const p = lookup(id);
         if (!p || p.difficulty !== v.difficulty) return undefined;
-        problems.push(p);
+        rounds.push({ problem: p });
       }
-      if (v.phase === 'cleared') return { phase: 'cleared', draws, difficulty: v.difficulty, problems };
-      if (!isInt(v.round) || v.round < 0 || v.round >= ROUNDS_TO_CLEAR || !isView(v.view) || !isStrings(v.marks)) return undefined;
-      const run: Run = { draws, difficulty: v.difficulty, problems, round: v.round, view: v.view, marks: v.marks };
-      if (v.phase === 'reading') return { phase: 'reading', ...run };
+      if (v.phase === 'cleared') return { phase: 'cleared', draws, difficulty: v.difficulty, rounds };
+      if (v.phase === 'sample') {
+        if (v.missedId === undefined) return { phase: 'sample', draws, difficulty: v.difficulty, rounds };
+        const missed = typeof v.missedId === 'string' ? lookup(v.missedId) : undefined;
+        return missed ? { phase: 'sample', draws, difficulty: v.difficulty, rounds, missed: { problem: missed } } : undefined;
+      }
+      if (!isInt(v.round) || v.round < 0 || v.round >= ROUNDS_TO_CLEAR) return undefined;
+      const run = { draws, difficulty: v.difficulty, rounds, round: v.round };
+      if (v.phase === 'reading') return { phase: 'reading', ...run } satisfies Reading;
       if ((v.answer !== 'anomaly' && v.answer !== 'normal') || typeof v.correct !== 'boolean') return undefined;
       // 正誤は問題から決まる。食い違う値は捨てる
-      if (v.correct !== ((v.answer === 'anomaly') === (problems[v.round]!.anomaly !== null))) return undefined;
-      return { phase: 'revealed', ...run, answer: v.answer, correct: v.correct };
+      if (v.correct !== ((v.answer === 'anomaly') === (rounds[v.round]!.problem.anomaly !== null))) return undefined;
+      return { phase: 'revealed', ...run, answer: v.answer, correct: v.correct } satisfies Revealed;
     }
     default:
       return undefined;
@@ -92,5 +94,3 @@ export function saveState(store: KeyValueStore, state: GameState): boolean {
 export function clearState(store: KeyValueStore): void {
   safeRemove(store, RUN_KEY);
 }
-
-export { isScreen };

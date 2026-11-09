@@ -240,3 +240,23 @@
 | (追加の確認) 履歴の順位を逆にする (新しい方が先) | DW13・DW14・DW14b・DW29・DW29d |
 
 生き残った壊し方は、DW15b を足したあとは無い (レビュー 1 回目 B1 の前は ⑪ が生き残っていた)。DW29b (偏ったプールを検査が見逃さない) は、実装が正しい状態で、やさしい・むずかしいとも通る (偏ったプールでどれかの群が 1.5 倍を超える)。
+
+## 12. 検出力の確認の結果 (#165。実装のあと、テストを書き換えずに、`game.ts`・`session.ts`・`records.ts` を 1 か所ずつ壊して `game.test.ts`・`session.test.ts`・`records.test.ts` を回した)
+
+| 壊し方 | 赤になったケース |
+| --- | --- |
+| `reading` からも `BEGIN` を受ける | DT1 |
+| `RESTART` が `missed` を持たない / `sample` でなく `reading` に行く | `missed` なし: DT11・DT16・DT19。`reading` へ: DT1・DT11・DT16・DT19・DP3・DP6 |
+| 不正解でも `NEXT` を受ける | DT1・DT10 |
+| `cleared` の `PICK` が action の難易度を使う | DT4 |
+| `sample` からも `TO_DIFFICULTY` を受ける | DT1・DT13 |
+| `BEGIN` で `draws` が増える | DT5・DT9・DT16 |
+| 8 社目の `NEXT` で `cleared` にならない | DT1・DT4・DT9・DT13・DT15 |
+| `TO_TITLE` が `draws` を捨てる | DT14 |
+| `ANSWER` の正誤を逆にする | DC7・DP1・DP3・DP6 (ほか DT のファイルが読み込みで落ちる) |
+| `sample` の保存がタイトルに戻る / 版を 1 のまま | DP1・DP3 |
+| 正誤の食い違い・`missedId` の存在・枠の数・難易度の違う問題・`round` の範囲を確かめない (5 通り) | DP3 |
+| `sample → reading` などでも記録を更新する / いつも 1 社目の問題で数える | DC7 |
+| 記録の版を 1 のまま / 履歴を重複させる / 見つけた種類を不正解でも入れる | DC8 / DC6 / DC5 |
+
+生き残った壊し方は無い (22 通り)。DX3 は `npm run test:e2e` (仮画面: 題名と「作り直し中」・外部通信なし・幅 320・375・414 でのはみ出しなし・CSP) で、DX2 は `npm run typecheck`・`npm test` (905 件)・`npm run verify:data -- --require-complete`・`npm run build`・`npm run check:size` で確かめた。
